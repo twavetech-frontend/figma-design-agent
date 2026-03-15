@@ -1406,7 +1406,10 @@ async function setImageFill(params) {
   var scaleMode = (params && params.scaleMode) || "FILL";
 
   if (!nodeId) throw new Error("Missing nodeId parameter");
-  if (!imageData) throw new Error("Missing imageData parameter (base64)");
+  if (params && params.url && !imageData) {
+    throw new Error("set_image_fill does NOT support 'url' parameter. Use 'imageData' (base64-encoded PNG/JPEG) instead. Read the file and base64-encode it.");
+  }
+  if (!imageData) throw new Error("Missing imageData parameter (base64-encoded PNG/JPEG string)");
 
   var node = await figma.getNodeByIdAsync(nodeId);
   if (!node) throw new Error("Node not found: " + nodeId);
@@ -6023,8 +6026,10 @@ async function batchBuildScreen(params) {
       // Sections in VERTICAL parents should HUG content height, NOT be FIXED at blueprint height
       // The LLM often copies root height (852) to sections, causing massive empty space
       // Pencil reference: ALL sections use FILL×HUG pattern (never FIXED height)
-      // Exception: if layoutSizingVertical is explicitly set in the blueprint, that takes priority
-      if (parentNode && parentNode.layoutMode === "VERTICAL" && !spec.layoutSizingVertical) {
+      // Exception 1: if layoutSizingVertical is explicitly set in the blueprint, that takes priority
+      // Exception 2: if height is explicitly set (e.g. CTA Button height:52), respect FIXED
+      //   — height-copying issue should be fixed in blueprints, not by silent override
+      if (parentNode && parentNode.layoutMode === "VERTICAL" && !spec.layoutSizingVertical && !spec.height) {
         if ((nodeType === "frame" || nodeType === "component") && spec.autoLayout) {
           vSizing = "HUG";
         }

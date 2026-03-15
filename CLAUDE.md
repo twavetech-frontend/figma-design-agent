@@ -221,6 +221,13 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - 하나라도 안 보이면 **완료 선언 금지** — 원인 파악 후 수정
 - 체크 순서: PRD 섹션 목록 나열 → 스크린샷에서 각 섹션 존재 확인 → 누락 시 수정
 
+### 20. ⚠️ CTA/Button 프레임 — autoLayout에 paddingTop/Bottom 필수
+- CTA Button, Submit Button 등 **텍스트를 포함한 버튼 프레임**에 `autoLayout` padding 필수
+- `height: 52`만 지정하고 padding을 빼면, HUG 사이징에서 높이가 텍스트(~20px)로 축소됨
+- **올바른 패턴**: `autoLayout: { ..., paddingTop: 16, paddingBottom: 16 }` → HUG여도 16+20+16 = 52px
+- `height`에 의존하지 말고 **padding으로 높이를 확보**하는 것이 안전
+- `validate_blueprint`의 R5 규칙이 자동 검증
+
 ### 16. 이미지 자동 생성 — Blueprint `imageGen` 필드
 - Blueprint 노드에 `imageGen` 필드를 추가하면 **디자인 빌드 후 자동으로 Gemini 이미지 생성 + 적용**
 - 디자인 빌드 한 번으로 **빌드 → post-fix → 이미지 생성/적용**까지 전부 자동 실행
@@ -243,6 +250,11 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   - `style` (선택): 스타일 오버라이드
 - **주의**: `imageGen.prompt`에 3D 스타일 키워드는 자동 적용되지 않음 — 프롬프트에 직접 포함할 것
 - **⚠️ MCP generate_image(isHero=true) 수동 호출 시 주의**: Banner Card nodeId를 전달해야 하며, Hero Section이나 Carousel nodeId를 전달하면 안 됨. `isHero=true`는 전달된 nodeId의 크기를 자동 감지하여 이미지를 적용하므로, 부모 프레임을 전달하면 부모에 이미지가 적용됨. Blueprint의 `imageGen` 필드를 사용하면 nodeMap으로 정확한 nodeId가 매핑되어 이 문제가 발생하지 않음.
+- **⚠️ `set_image_fill`은 `imageData` (base64) 전용 — `url` 파라미터 절대 사용 금지**
+  - Figma 플러그인에 URL 다운로드 기능 없음 — `url`을 전달하면 `"Missing imageData"` 에러
+  - 반드시 파일을 읽어서 `base64.b64encode()` 후 `imageData`로 전달
+  - `figma_mcp_client.py`의 `call_tool`에 `url` 사용 시 자동 차단 로직 있음 (ValueError)
+  - `figma-mcp-embedded.ts` 스키마에서 `url` 파라미터 제거됨, `imageData` required
 
 ---
 
@@ -256,10 +268,19 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 **post-fix가 자동 수정하는 항목 (5단계):**
 ```
 1. FILL 검증/수정: 모든 FRAME 자식 → FILL (FAB/Tab Bar 제외, SPACE_BETWEEN 마지막 HUG 자식 보존)
+   - _walk: 재귀적 FILL 수정 (parent_layout_mode 빈 문자열이면 skip 안 함)
+   - 안전장치: 재귀적 FILL 강제 (depth 4까지, VERTICAL 부모의 모든 FRAME 자식)
 2. 섹션 간격: 배경색 동일 + divider 없는 인접 섹션 → gap 0
 3. Tab Bar/FAB: ABSOLUTE 배치 + 루트 하단 위치 + FAB width 복원 (HUG)
 4. Tab Bar item FILL 통일 + Tab Row individual stroke (bottom-only)
-5. zero-width 텍스트: width=0 TEXT → textAutoResize="WIDTH_AND_HEIGHT" + FILL
+5. zero-width 텍스트: width=0 TEXT → textAutoResize="WIDTH_AND_HEIGHT" + FILL (Banner Card 내부 텍스트는 FIXED 160px)
+```
+
+**cmd_build 루트 auto-layout 보호:**
+```
+- batch_build_screen 완료 후, 루트가 이미 VERTICAL이면 set_auto_layout 재호출 금지
+- layoutMode 재설정 시 Figma가 자식 layoutSizingHorizontal을 HUG로 리셋하는 버그 방지
+- 루트가 VERTICAL 아닐 때만 set_auto_layout 호출 (최초 설정용)
 ```
 
 **post-fix가 수정하지 않는 항목 (수동 확인 필요):**

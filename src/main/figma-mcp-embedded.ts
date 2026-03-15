@@ -553,15 +553,14 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['nodeId', 'bindings']
   }, async (params) => cmd('set_bound_variables', params));
 
-  reg('set_image_fill', 'Set image fill on a node', {
+  reg('set_image_fill', 'Set image fill on a node. imageData must be base64-encoded PNG/JPEG. URL is NOT supported.', {
     type: 'object',
     properties: {
-      nodeId: { type: 'string' },
-      url: { type: 'string' },
-      imageData: { type: 'string' },
-      scaleMode: { type: 'string' }
+      nodeId: { type: 'string', description: 'Target node ID' },
+      imageData: { type: 'string', description: 'Base64-encoded image data (PNG or JPEG). Required.' },
+      scaleMode: { type: 'string', description: 'FILL, FIT, CROP, or TILE' }
     },
-    required: ['nodeId']
+    required: ['nodeId', 'imageData']
   }, async (params) => cmd('set_image_fill', params));
 
   // ============================================================

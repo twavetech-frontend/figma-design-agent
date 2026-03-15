@@ -24,6 +24,7 @@ import json
 import sys
 import os
 import time
+import re
 import requests
 import base64
 import io
@@ -185,8 +186,11 @@ def validate_blueprint(blueprint: dict) -> list:
                 # Skip small frames (icons, tags, chips, indicators, dots)
                 w = node.get("width", 999)
                 skip_keywords = ("Tag", "Chip", "Badge", "Dot", "Icon", "Indicator", "Nav Right", "DI1 Left", "DI2 Left", "DI3 Left")
+                _validate_skip_re = re.compile(
+                    r'\b(?:' + '|'.join(re.escape(kw.lower()) for kw in skip_keywords) + r')\b'
+                )
                 is_small = w <= 60
-                is_skip = any(kw in node_name for kw in skip_keywords)
+                is_skip = bool(_validate_skip_re.search(node_name.lower()))
                 # Only warn for section/card-level frames and their direct children
                 depth = path.count("/")
                 if not is_small and not is_skip and depth <= 3:
@@ -219,6 +223,17 @@ def validate_blueprint(blueprint: dict) -> list:
             has_text = any(c.get("type") in ("text", "TEXT") for c in children)
             if has_text and w < 100:
                 issues.append(f"WARN {path}: FAB has text but width={w} — use pill shape (width >= 100)")
+
+        # R5: CTA/Button frames with text children must have vertical padding
+        # Without padding, HUG sizing collapses height to text-only (~20px instead of ~52px)
+        cta_keywords = ("CTA Button", "CTA", "Button")
+        if is_frame and al and any(kw.lower() in node_name.lower() for kw in cta_keywords):
+            children = node.get("children", [])
+            has_text = any(c.get("type") in ("text", "TEXT") for c in children)
+            pt = al.get("paddingTop", 0)
+            pb = al.get("paddingBottom", 0)
+            if has_text and pt == 0 and pb == 0:
+                issues.append(f"WARN {path}: CTA/Button '{node_name}' has no vertical padding in autoLayout — add paddingTop/Bottom (e.g. 16) for proper height")
 
         # Check children
         for i, child in enumerate(node.get("children", [])):
@@ -356,6 +371,13 @@ def init_session() -> str:
 
 def call_tool(name: str, args: dict, msg_id: int = 1) -> List[dict]:
     """Call an MCP tool and return content array."""
+    # 방어: set_image_fill에 url 파라미터 사용 차단
+    if name == "set_image_fill" and "url" in args:
+        raise ValueError(
+            "set_image_fill does NOT support 'url'. "
+            "Use 'imageData' (base64-encoded PNG/JPEG). "
+            "Read the file with open(path,'rb') and base64.b64encode()."
+        )
     result = mcp_request("tools/call", {
         "name": name,
         "arguments": args
@@ -579,29 +601,47 @@ def cmd_build(blueprint_file: str):
     if result["images"]:
         print(f"[Screenshot returned: {result['images'][0]['data_length']} bytes]")
 
-    # Step E-0: 루트 auto-layout 보장 (batch_build_screen이 미적용할 수 있음)
+    # Step E-0: 루트 clipsContent + FIXED 설정 (layoutMode 재설정 금지!)
+    # ★ 주의: set_auto_layout으로 layoutMode를 재설정하면 Figma가 자식들의
+    #   layoutSizingHorizontal을 HUG로 리셋함 → 반드시 개별 속성만 설정
     if root_id:
         try:
-            call_tool("set_auto_layout", {
-                "nodeId": root_id,
-                "layoutMode": "VERTICAL",
-                "itemSpacing": 0,
-                "paddingTop": 0,
-                "paddingBottom": 0,
-                "paddingLeft": 0,
-                "paddingRight": 0,
-                "clipsContent": True
-            })
-            # ★ 핵심: set_auto_layout(VERTICAL) 후 기본 layoutSizingVertical이 HUG가 됨
+            # clipsContent만 별도 설정 (layoutMode 재설정 없이)
+            # get_node_info로 현재 layoutMode 확인 후 필요 시에만 설정
+            try:
+                root_info_content = call_tool("get_node_info", {"nodeId": root_id})
+                root_info = parse_content(root_info_content).get("json") or {}
+                root_layout = root_info.get("layoutMode", "")
+            except Exception:
+                root_layout = ""
+
+            if root_layout != "VERTICAL":
+                # auto-layout이 아직 미설정인 경우에만 설정
+                call_tool("set_auto_layout", {
+                    "nodeId": root_id,
+                    "layoutMode": "VERTICAL",
+                    "itemSpacing": 0,
+                    "paddingTop": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "paddingRight": 0,
+                    "clipsContent": True
+                })
+                print("\n✅ 루트 auto-layout VERTICAL 설정 완료 (최초)")
+            else:
+                # 이미 VERTICAL → layoutMode 재설정 금지 (자식 sizing 리셋 방지)
+                # clipsContent는 batch_build_screen에서 이미 설정됨
+                print("\n✅ 루트 이미 VERTICAL — layoutMode 재설정 건너뜀 (자식 sizing 보호)")
+
+            # ★ 핵심: layoutSizingVertical을 FIXED로 설정
             # ABSOLUTE 자식(FAB/Tab Bar)이 흐름에서 빠지면 HUG가 높이를 축소시키므로
             # FIXED로 강제 설정하여 post-fix의 resize_node가 작동하도록 보장
             call_tool("set_layout_sizing", {
                 "nodeId": root_id,
                 "vertical": "FIXED"
             })
-            print("\n✅ 루트 auto-layout VERTICAL + FIXED 설정 완료")
         except Exception as e:
-            print(f"\n⚠️ 루트 auto-layout 설정 실패 (무시): {e}")
+            print(f"\n⚠️ 루트 설정 실패 (무시): {e}")
 
     # Step E: post-fix
     if root_id:
@@ -802,7 +842,7 @@ def _pre_generate_single(spec: dict, api_key: str, output_dir: str) -> dict:
                 "contents": [{"parts": parts}],
                 "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]},
             },
-            timeout=90,
+            timeout=180,
         )
         data = resp.json()
 
@@ -1002,6 +1042,10 @@ def _fix_fill_sizing(tree: dict) -> int:
     """
     SKIP_KEYWORDS = ("icon", "chevron", "dot", "Tag", "Badge", "Indicator",
                      "Nav Right", "Vector", "Icon", "Chevron", "Dot")
+    # 단어 경계 매칭용 정규식 — substring 매칭("tag" ⊂ "stage") 버그 방지
+    _SKIP_RE = re.compile(
+        r'\b(?:' + '|'.join(re.escape(kw.lower()) for kw in SKIP_KEYWORDS) + r')\b'
+    )
     # FAB/Tab Bar는 ABSOLUTE로 배치되므로 FILL 변환하면 안 됨
     ABSOLUTE_NAME_KEYWORDS = ("fab", "tab bar", "tabbar")
     fix_count = 0
@@ -1025,13 +1069,15 @@ def _fix_fill_sizing(tree: dict) -> int:
                 skip = True
             # HUG 보존 규칙:
             #   VERTICAL 부모의 HUG FRAME → FILL로 수정 (가로 채움 필수)
-            #   HORIZONTAL/기타 부모의 HUG FRAME → 유지 (FILL이면 tab/tag 레이아웃 깨짐)
-            if sizing_h == "HUG" and parent_layout_mode != "VERTICAL":
+            #   HORIZONTAL 부모의 HUG FRAME → 유지 (FILL이면 tab/tag 레이아웃 깨짐)
+            #   부모 layoutMode 미확인("")일 때는 skip 안 함 — _collect_tree 실패 시
+            #   빈 문자열이 되어 VERTICAL 자식까지 skip되는 버그 방지
+            if sizing_h == "HUG" and parent_layout_mode and parent_layout_mode != "VERTICAL":
                 skip = True
             if width <= 60:
                 skip = True
-            # 키워드 매칭 (대소문자 무시)
-            if any(kw.lower() in name_lower for kw in SKIP_KEYWORDS):
+            # 키워드 매칭 (단어 경계, 대소문자 무시)
+            if _SKIP_RE.search(name_lower):
                 skip = True
             # HORIZONTAL 부모 안의 Banner Card (캐로셀)
             if parent_layout_mode == "HORIZONTAL" and "banner" in name_lower:
@@ -1067,6 +1113,49 @@ def _fix_fill_sizing(tree: dict) -> int:
                   is_last_child=(i == len(children) - 1))
 
     _walk(tree)
+
+    # ★ 안전장치: 루트부터 재귀적으로 FRAME 자식을 FILL 강제 (FAB/Tab Bar 제외)
+    # _walk에서 데이터 누락이나 조건 스킵으로 빠져나갈 수 있으므로,
+    # VERTICAL 부모의 모든 FRAME 자식을 재귀적으로 검증/수정
+    ABSOLUTE_NAME_KEYWORDS_LOWER = ("fab", "tab bar", "tabbar")
+
+    def _force_fill_recursive(parent_node: dict, depth: int = 0, max_depth: int = 4):
+        """VERTICAL 부모의 FRAME 자식을 재귀적으로 FILL 강제."""
+        nonlocal fix_count
+        parent_layout = (parent_node.get("layoutMode") or "").upper()
+        # 루트(depth=0)이거나 VERTICAL 부모인 경우 자식 검사
+        is_vertical_parent = (depth == 0) or parent_layout == "VERTICAL"
+
+        for child in parent_node.get("_children_full", []):
+            child_type = (child.get("type") or "").upper()
+            child_name = (child.get("name") or "").lower()
+            child_id = child.get("id")
+            child_sizing = child.get("layoutSizingHorizontal", "")
+
+            if (is_vertical_parent
+                    and child_type in ("FRAME", "COMPONENT") and child_id
+                    and child_sizing != "FILL"
+                    and child.get("width", 999) > 60
+                    and not any(kw in child_name for kw in ABSOLUTE_NAME_KEYWORDS_LOWER)
+                    and not _SKIP_RE.search(child_name)
+                    and child.get("layoutPositioning") != "ABSOLUTE"):
+                try:
+                    call_tool("set_layout_sizing", {
+                        "nodeId": child_id,
+                        "horizontal": "FILL"
+                    })
+                    fix_count += 1
+                    depth_label = "루트 자식" if depth == 0 else f"depth {depth + 1}"
+                    print(f"  FILL 강제({depth_label}): {child.get('name', '?')} ({child_id}) [{child_sizing} → FILL]")
+                except Exception as e:
+                    print(f"  FILL 강제 실패: {child.get('name', '?')} ({child_id}): {e}")
+
+            # 재귀: FRAME/COMPONENT 자식의 하위도 검사
+            if child_type in ("FRAME", "COMPONENT") and depth < max_depth:
+                _force_fill_recursive(child, depth + 1, max_depth)
+
+    _force_fill_recursive(tree)
+
     return fix_count
 
 
@@ -1170,7 +1259,31 @@ def _fix_layout_and_positions(tree: dict) -> dict:
                 except Exception as e:
                     print(f"  갭 제거 실패: {curr.get('name')}: {e}")
 
-    # content_bottom 계산 (갭 제거 후 재계산)
+    # ★ content_bottom 계산: 갭 제거 후, Figma에서 최신 좌표를 다시 조회
+    #    FILL 수정 + 갭 제거로 y/height가 변경되었으므로 캐시 데이터는 부정확
+    content_ids = [n.get("id") for n in content_nodes if n.get("id")]
+    if content_ids:
+        try:
+            fresh_content = call_tool("get_nodes_info", {"nodeIds": content_ids})
+            fresh_result = parse_content(fresh_content)
+            fresh_items = fresh_result.get("json") or []
+            if isinstance(fresh_items, list):
+                root_bb = tree.get("absoluteBoundingBox") or {}
+                root_y = root_bb.get("y", 0)
+                for item in fresh_items:
+                    doc = item.get("document") or item
+                    bb = doc.get("absoluteBoundingBox") or {}
+                    nid = doc.get("id")
+                    if nid and bb:
+                        for node in content_nodes:
+                            if node.get("id") == nid:
+                                node["y"] = bb.get("y", 0) - root_y
+                                node["height"] = bb.get("height", 0)
+                                break
+                print(f"  content_bottom 재조회 완료 ({len(fresh_items)}건)")
+        except Exception as e:
+            print(f"  ⚠️ content_bottom 재조회 실패 (기존 값 사용): {e}")
+
     content_bottom = 0
     for node in content_nodes:
         bottom = (node.get("y") or 0) + (node.get("height") or 0)
@@ -1348,14 +1461,21 @@ def _apply_individual_strokes(node: dict):
 
 
 def _fix_zero_width_text(tree: dict) -> int:
-    """width=0인 TEXT 노드를 수정: textAutoResize → WIDTH_AND_HEIGHT, 그 후 FILL."""
+    """width=0인 TEXT 노드를 수정: textAutoResize → WIDTH_AND_HEIGHT, 그 후 FILL.
+
+    Banner Card 내부 텍스트는 FILL 대신 FIXED 160px로 설정 (이미지 영역 침범 방지).
+    """
     fix_count = 0
 
-    def _walk(node: dict):
+    def _walk(node: dict, inside_banner: bool = False):
         nonlocal fix_count
         node_type = (node.get("type") or "").upper()
         node_id = node.get("id")
+        node_name = node.get("name", "")
         width = node.get("width", 1)
+
+        # Banner Card 내부인지 추적
+        is_banner = inside_banner or "banner card" in node_name.lower()
 
         if node_type == "TEXT" and width <= 1 and node_id:
             try:
@@ -1363,17 +1483,31 @@ def _fix_zero_width_text(tree: dict) -> int:
                     "nodeId": node_id,
                     "textAutoResize": "WIDTH_AND_HEIGHT"
                 })
-                call_tool("set_layout_sizing", {
-                    "nodeId": node_id,
-                    "horizontal": "FILL"
-                })
-                fix_count += 1
-                print(f"  텍스트 수정: {node.get('name', '?')} ({node_id}) [width=0 → FILL]")
+                if is_banner:
+                    # 배너 텍스트: FIXED 160px (이미지 영역 침범 방지)
+                    call_tool("set_layout_sizing", {
+                        "nodeId": node_id,
+                        "horizontal": "FIXED"
+                    })
+                    call_tool("resize_node", {
+                        "nodeId": node_id,
+                        "width": 160,
+                        "height": 60
+                    })
+                    fix_count += 1
+                    print(f"  텍스트 수정: {node_name} ({node_id}) [width=0 → FIXED 160px (배너)]")
+                else:
+                    call_tool("set_layout_sizing", {
+                        "nodeId": node_id,
+                        "horizontal": "FILL"
+                    })
+                    fix_count += 1
+                    print(f"  텍스트 수정: {node_name} ({node_id}) [width=0 → FILL]")
             except Exception as e:
-                print(f"  텍스트 수정 실패: {node.get('name', '?')} ({node_id}): {e}")
+                print(f"  텍스트 수정 실패: {node_name} ({node_id}): {e}")
 
         for child in node.get("_children_full", []):
-            _walk(child)
+            _walk(child, inside_banner=is_banner)
 
     _walk(tree)
     return fix_count

@@ -1,6 +1,6 @@
 {
   "source": "https://stresslee.github.io/design-system-docs",
-  "lastFetched": "2026-03-09T20:09:03.792Z",
+  "lastFetched": "2026-03-13T10:34:33.360Z",
   "foundation": [
     {
       "name": "Colors",
@@ -96,7 +96,7 @@
       "name": "Action Button",
       "category": "components",
       "path": "/design-system-docs/components/buttons/action-button",
-      "description": "가장 일반적으로 사용되는 버튼 컴포넌트입니다.",
+      "description": "가장 일반적으��� 사용되는 버튼 컴포넌트입니다.",
       "figmaComponentName": "Buttons/Button",
       "variants": [
         {

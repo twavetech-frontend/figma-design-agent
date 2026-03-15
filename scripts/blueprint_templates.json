@@ -273,6 +273,8 @@
           "layoutMode": "HORIZONTAL",
           "primaryAxisAlignItems": "CENTER",
           "counterAxisAlignItems": "CENTER",
+          "paddingTop": 13,
+          "paddingBottom": 13,
           "paddingLeft": 16,
           "paddingRight": 16,
           "itemSpacing": 6
@@ -590,6 +592,8 @@
           "primaryAxisAlignItems": "CENTER",
           "counterAxisAlignItems": "CENTER",
           "itemSpacing": 6,
+          "paddingTop": 10,
+          "paddingBottom": 10,
           "paddingLeft": 16,
           "paddingRight": 16
         },
