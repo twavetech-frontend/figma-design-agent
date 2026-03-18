@@ -194,30 +194,28 @@
       "children": [
         { "name": "Section Title", "type": "text", "text": "매일매일 혜택받기", "fontSize": 20, "fontWeight": 700, "fontColor": "$token(fg-primary)" },
         {
-          "name": "Task Item 1", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 56,
-          "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 12, "paddingBottom": 12 },
+          "name": "Task Item 1", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 52,
+          "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 14, "paddingBottom": 14 },
           "children": [
-            { "name": "Task Icon 1", "type": "frame", "width": 24, "height": 24, "cornerRadius": 0, "imageGen": { "prompt": "2D flat illustration of people helping each other, simple clean lines, Tossface emoji style. Pure white background. No text.", "isHero": false, "width": 24, "height": 24 } },
+            { "name": "Task Icon 1", "type": "icon", "iconName": "users-01", "size": 24, "iconColor": "$token(fg-brand-primary)" },
             { "name": "Task Text 1", "type": "text", "text": "친구 구조대", "fontSize": 16, "fontWeight": 500, "fontColor": "$token(fg-primary)" },
             { "name": "Task Chevron 1", "type": "icon", "iconName": "chevron-right", "size": 20, "iconColor": "$token(fg-quaternary)" }
           ]
         },
-        { "name": "Task Divider 1", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 1, "fill": "$token(border-secondary)" },
         {
-          "name": "Task Item 2", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 56,
-          "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 12, "paddingBottom": 12 },
+          "name": "Task Item 2", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 52,
+          "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 14, "paddingBottom": 14 },
           "children": [
-            { "name": "Task Icon 2", "type": "frame", "width": 24, "height": 24, "cornerRadius": 0, "imageGen": { "prompt": "2D flat illustration of a calendar with checkmark, simple clean lines, Tossface emoji style. Pure white background. No text.", "isHero": false, "width": 24, "height": 24 } },
+            { "name": "Task Icon 2", "type": "icon", "iconName": "calendar-check-01", "size": 24, "iconColor": "$token(fg-success-primary)" },
             { "name": "Task Text 2", "type": "text", "text": "출석체크", "fontSize": 16, "fontWeight": 500, "fontColor": "$token(fg-primary)" },
             { "name": "Task Chevron 2", "type": "icon", "iconName": "chevron-right", "size": 20, "iconColor": "$token(fg-quaternary)" }
           ]
         },
-        { "name": "Task Divider 2", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 1, "fill": "$token(border-secondary)" },
         {
-          "name": "Task Item 3", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 56,
-          "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 12, "paddingBottom": 12 },
+          "name": "Task Item 3", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 52,
+          "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 14, "paddingBottom": 14 },
           "children": [
-            { "name": "Task Icon 3", "type": "frame", "width": 24, "height": 24, "cornerRadius": 0, "imageGen": { "prompt": "2D flat illustration of lightning bolt with coin, simple clean lines, Tossface emoji style. Pure white background. No text.", "isHero": false, "width": 24, "height": 24 } },
+            { "name": "Task Icon 3", "type": "icon", "iconName": "zap", "size": 24, "iconColor": "$token(fg-warning-primary)" },
             { "name": "Task Text 3", "type": "text", "text": "포인트 충전소", "fontSize": 16, "fontWeight": 500, "fontColor": "$token(fg-primary)" },
             { "name": "Task Chevron 3", "type": "icon", "iconName": "chevron-right", "size": 20, "iconColor": "$token(fg-quaternary)" }
           ]
