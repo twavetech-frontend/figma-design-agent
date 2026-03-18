@@ -1412,11 +1412,34 @@ def _fix_layout_and_positions(tree: dict, pre_computed_layout: dict = None) -> d
         except Exception as e:
             print(f"  ⚠️ content_bottom 재조회 실패 (기존 값 사용): {e}")
 
+    # ★ content_bottom 최종 계산: get_nodes_info의 absoluteBoundingBox로 정확한 값 사용
+    #    _collect_tree 캐시 데이터는 FILL 수정 전이라 부정확할 수 있음
     content_bottom = 0
-    for node in content_nodes:
-        bottom = (node.get("y") or 0) + (node.get("height") or 0)
-        if bottom > content_bottom:
-            content_bottom = bottom
+    root_id = tree.get("id")
+    try:
+        root_info_content = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        root_info_result = parse_content(root_info_content)
+        root_info_items = root_info_result.get("json") or []
+        if isinstance(root_info_items, list) and root_info_items:
+            doc = root_info_items[0].get("document") or root_info_items[0]
+            root_bb = doc.get("absoluteBoundingBox", {})
+            root_y = root_bb.get("y", 0)
+            for c in doc.get("children", []):
+                c_name = (c.get("name") or "").lower()
+                c_lp = c.get("layoutPositioning", "AUTO")
+                if c_lp == "ABSOLUTE" or "fab" in c_name or "tab bar" in c_name or "tab_bar" in c_name:
+                    continue
+                c_bb = c.get("absoluteBoundingBox", {})
+                c_bottom = (c_bb.get("y", 0) - root_y) + c_bb.get("height", 0)
+                if c_bottom > content_bottom:
+                    content_bottom = c_bottom
+            print(f"  content_bottom (최종 조회): {round(content_bottom)}")
+    except Exception as e:
+        print(f"  ⚠️ content_bottom 최종 조회 실패, 캐시 사용: {e}")
+        for node in content_nodes:
+            bottom = (node.get("y") or 0) + (node.get("height") or 0)
+            if bottom > content_bottom:
+                content_bottom = bottom
 
     result = {"content_bottom": content_bottom, "fab_y": None, "tab_y": None, "root_height": None}
 
