@@ -539,6 +539,49 @@ def cmd_build(blueprint_file: str):
     root_name = blueprint.get('name', 'unnamed')
     print(f"Building '{root_name}' with {children_count} top-level children...")
 
+    # ── Step 3.5: Yoga 레이아웃 시뮬레이션 ──
+    sim_result = None
+    print("\n[SIM] Yoga 레이아웃 시뮬레이션 중...")
+    sim_start = time.time()
+    try:
+        sim_content = call_tool("simulate_layout", {"blueprint": blueprint})
+        if isinstance(sim_content, list):
+            for item in sim_content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    import json as _json
+                    try:
+                        sim_result = _json.loads(item["text"])
+                    except Exception:
+                        pass
+        elif isinstance(sim_content, dict):
+            sim_result = sim_content
+
+        if sim_result:
+            issues_count = sim_result.get("issues_count", 0)
+            elapsed = sim_result.get("elapsed_ms", 0)
+            layout_info = sim_result.get("layout", {})
+
+            if issues_count > 0:
+                print(f"[SIM] {issues_count}개 이슈 탐지 ({elapsed}ms)")
+                for issue in sim_result.get("issues", [])[:10]:
+                    print(f"  - [{issue.get('type')}] {issue.get('message')}")
+                fixed = sim_result.get("fixedBlueprint")
+                if fixed:
+                    blueprint = fixed
+                    print(f"[SIM] Blueprint 자동 수정 적용 완료")
+            else:
+                print(f"[SIM] 이슈 없음 ({elapsed}ms)")
+
+            if layout_info.get("suggestedRootHeight"):
+                print(f"[SIM] 사전 계산: contentBottom={layout_info.get('contentBottom')}, "
+                      f"fabY={layout_info.get('suggestedFabY')}, "
+                      f"tabY={layout_info.get('suggestedTabBarY')}, "
+                      f"rootH={layout_info.get('suggestedRootHeight')}")
+
+        print(f"[SIM] 완료 ({time.time() - sim_start:.1f}s)")
+    except Exception as e:
+        print(f"[SIM] 시뮬레이션 실패 (무시하고 계속): {e}")
+
     # ──── 병렬 실행: 이미지 사전 생성 + 빌드 동시 시작 ────
     # Step A: Blueprint에서 imageGen 스펙을 빌드 전에 추출 (nodeId 불필요)
     image_specs_raw = []
@@ -646,7 +689,8 @@ def cmd_build(blueprint_file: str):
     # Step E: post-fix
     if root_id:
         print("\n🔧 자동 후처리 실행 중...")
-        cmd_post_fix(root_id)
+        sim_layout = sim_result.get("layout") if sim_result else None
+        cmd_post_fix(root_id, pre_computed_layout=sim_layout)
     else:
         print("⚠️  rootId를 찾을 수 없어 post-fix를 건너뜁니다.")
 
@@ -1159,7 +1203,7 @@ def _fix_fill_sizing(tree: dict) -> int:
     return fix_count
 
 
-def _fix_layout_and_positions(tree: dict) -> dict:
+def _fix_layout_and_positions(tree: dict, pre_computed_layout: dict = None) -> dict:
     """Tab Bar/FAB를 ABSOLUTE로 루트 하단에 배치하고, 인접 섹션 간 갭 조정.
 
     Returns:
@@ -1181,6 +1225,13 @@ def _fix_layout_and_positions(tree: dict) -> dict:
             fab = child
         else:
             content_nodes.append(child)
+
+    # Fast path: 사전 계산값이 있으면 get_nodes_info 재조회 건너뜀
+    if pre_computed_layout and pre_computed_layout.get("suggestedFabY"):
+        print(f"  [PRECOMP] 사전 계산값 사용 (contentBottom={pre_computed_layout.get('contentBottom')}, "
+              f"fabY={pre_computed_layout.get('suggestedFabY')}, "
+              f"tabY={pre_computed_layout.get('suggestedTabBarY')}, "
+              f"rootH={pre_computed_layout.get('suggestedRootHeight')})")
 
     # ★ FILL 수정 후 Figma에서 최신 y/height 다시 조회
     #   (_collect_tree는 FILL 수정 전에 실행되므로 캐시된 y/height가 stale)
@@ -1513,7 +1564,7 @@ def _fix_zero_width_text(tree: dict) -> int:
     return fix_count
 
 
-def cmd_post_fix(root_node_id: str):
+def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     """빌드 후 자동 후처리: FILL 사이징, Tab Bar/FAB 배치, 섹션 갭, 텍스트 수정.
 
     Usage:
@@ -1544,7 +1595,7 @@ def cmd_post_fix(root_node_id: str):
 
     # 3. Tab Bar/FAB 배치 + 섹션 갭 조정
     print("\n[3/5] Tab Bar/FAB 배치 + 섹션 갭 조정 중...")
-    layout_result = _fix_layout_and_positions(tree)
+    layout_result = _fix_layout_and_positions(tree, pre_computed_layout=pre_computed_layout)
     print(f"  → content_bottom={layout_result['content_bottom']}, "
           f"fab_y={layout_result['fab_y']}, tab_y={layout_result['tab_y']}, "
           f"root_height={layout_result['root_height']}")
