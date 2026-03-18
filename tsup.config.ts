@@ -21,6 +21,7 @@ export default defineConfig({
     'sharp',
     'bufferutil',
     'utf-8-validate',
+    'yoga-layout',
   ],
   // Do NOT use noExternal — let tsup auto-resolve which deps to bundle
 })
