@@ -203,6 +203,7 @@
             { "name": "Task Chevron 1", "type": "icon", "iconName": "chevron-right", "size": 20, "iconColor": "$token(fg-quaternary)" }
           ]
         },
+        { "name": "Divider 1", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 1, "fill": "$token(border-secondary)", "stroke": null },
         {
           "name": "Task Item 2", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 52,
           "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 14, "paddingBottom": 14 },
@@ -213,6 +214,7 @@
             { "name": "Task Chevron 2", "type": "icon", "iconName": "chevron-right", "size": 20, "iconColor": "$token(fg-quaternary)" }
           ]
         },
+        { "name": "Divider 2", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 1, "fill": "$token(border-secondary)", "stroke": null },
         {
           "name": "Task Item 3", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 52,
           "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 14, "paddingBottom": 14 },
