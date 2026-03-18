@@ -5,6 +5,7 @@ export default defineConfig({
     'main/index': 'src/main/index.ts',
     'preload/index': 'src/preload/index.ts',
     'bridge/index': 'src/bridge/index.ts',
+    'yoga-cli/index': 'src/yoga-cli.ts',
   },
   format: ['cjs'],
   outDir: 'out',

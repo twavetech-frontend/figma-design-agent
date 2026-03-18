@@ -539,22 +539,35 @@ def cmd_build(blueprint_file: str):
     root_name = blueprint.get('name', 'unnamed')
     print(f"Building '{root_name}' with {children_count} top-level children...")
 
-    # ── Step 3.5: Yoga 레이아웃 시뮬레이션 ──
+    # ── Step 3.5: Yoga 레이아웃 시뮬레이션 (서버 불필요, CLI 직접 호출) ──
     sim_result = None
     print("\n[SIM] Yoga 레이아웃 시뮬레이션 중...")
     sim_start = time.time()
     try:
-        sim_content = call_tool("simulate_layout", {"blueprint": blueprint})
-        if isinstance(sim_content, list):
-            for item in sim_content:
-                if isinstance(item, dict) and item.get("type") == "text":
-                    import json as _json
-                    try:
-                        sim_result = _json.loads(item["text"])
-                    except Exception:
-                        pass
-        elif isinstance(sim_content, dict):
-            sim_result = sim_content
+        import subprocess
+        yoga_cli = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "out", "yoga-cli", "index.js")
+        if os.path.exists(yoga_cli):
+            proc = subprocess.run(
+                ["node", yoga_cli],
+                input=json.dumps(blueprint),
+                capture_output=True, text=True, timeout=10
+            )
+            if proc.returncode == 0 and proc.stdout.strip():
+                sim_result = json.loads(proc.stdout)
+            elif proc.stderr:
+                print(f"[SIM] CLI 오류: {proc.stderr.strip()}")
+        else:
+            # CLI 미빌드 시 MCP 폴백
+            sim_content = call_tool("simulate_layout", {"blueprint": blueprint})
+            if isinstance(sim_content, list):
+                for item in sim_content:
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        try:
+                            sim_result = json.loads(item["text"])
+                        except Exception:
+                            pass
+            elif isinstance(sim_content, dict):
+                sim_result = sim_content
 
         if sim_result:
             issues_count = sim_result.get("issues_count", 0)
