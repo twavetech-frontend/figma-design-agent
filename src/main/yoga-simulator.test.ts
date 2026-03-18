@@ -66,9 +66,9 @@ describe('simulateLayout', () => {
     };
     const result = await simulateLayout(bp);
     expect(result.layout.contentBottom).toBe(800);
-    expect(result.layout.suggestedFabY).toBe(824);
-    expect(result.layout.suggestedTabBarY).toBe(884);
-    expect(result.layout.suggestedRootHeight).toBe(957);
+    expect(result.layout.suggestedFabY).toBe(816);      // 800 + 16
+    expect(result.layout.suggestedTabBarY).toBe(876);    // 816 + 44 + 16
+    expect(result.layout.suggestedRootHeight).toBe(949); // 876 + 73
   });
 
   it('HORIZONTAL 캐로셀 레이아웃', async () => {

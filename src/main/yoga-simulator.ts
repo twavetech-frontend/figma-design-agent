@@ -331,10 +331,10 @@ function computeLayoutInfo(tree: YogaTreeNode): SimulationResult['layout'] {
   let suggestedFabY: number | null = null;
   let suggestedTabBarY: number | null = null;
   if (hasFab) {
-    suggestedFabY = contentBottom + 24;
+    suggestedFabY = contentBottom + 16;
     suggestedTabBarY = hasTabBar ? suggestedFabY + 44 + 16 : null;
   } else if (hasTabBar) {
-    suggestedTabBarY = contentBottom + 24;
+    suggestedTabBarY = contentBottom + 16;
   }
 
   const suggestedRootHeight = suggestedTabBarY != null

@@ -1391,7 +1391,7 @@ def _fix_layout_and_positions(tree: dict, pre_computed_layout: dict = None) -> d
     result = {"content_bottom": content_bottom, "fab_y": None, "tab_y": None, "root_height": None}
 
     # FAB 배치
-    fab_y = content_bottom + 24
+    fab_y = content_bottom + 16
     if fab:
         try:
             call_tool("set_layout_positioning", {
