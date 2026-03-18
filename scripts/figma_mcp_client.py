@@ -235,6 +235,16 @@ def validate_blueprint(blueprint: dict) -> list:
             if has_text and pt == 0 and pb == 0:
                 issues.append(f"WARN {path}: CTA/Button '{node_name}' has no vertical padding in autoLayout — add paddingTop/Bottom (e.g. 16) for proper height")
 
+        # R6: 소형 아이콘 imageGen에 style="2d" 없으면 경고
+        image_gen = node.get("imageGen")
+        if image_gen and isinstance(image_gen, dict):
+            ig_hero = image_gen.get("isHero", False)
+            ig_w = image_gen.get("width", 120)
+            ig_h = image_gen.get("height", 120)
+            ig_style = (image_gen.get("style") or "").lower()
+            if not ig_hero and max(ig_w, ig_h) <= 32 and ig_style not in ("2d", "tossface"):
+                issues.append(f"WARN {path}: '{node_name}' imageGen {ig_w}x{ig_h} — style='2d' 누락 (자동 보정됨, 명시 권장)")
+
         # Check children
         for i, child in enumerate(node.get("children", [])):
             child_name = child.get("name", f"child[{i}]")
@@ -733,11 +743,13 @@ def cmd_build(blueprint_file: str):
         except Exception as e:
             print(f"\n⚠️ 루트 설정 실패 (무시): {e}")
 
-    # Step E: post-fix
+    # Step E: post-fix (2회 실행 — 1회차: FILL 수정 + 배치, 2회차: 레이아웃 안정화 후 최종 배치)
     if root_id:
         print("\n🔧 자동 후처리 실행 중...")
         sim_layout = sim_result.get("layout") if sim_result else None
         cmd_post_fix(root_id, pre_computed_layout=sim_layout)
+        print("\n🔧 후처리 2회차 (레이아웃 안정화 후 최종 배치)...")
+        cmd_post_fix(root_id)
     else:
         print("⚠️  rootId를 찾을 수 없어 post-fix를 건너뜁니다.")
 
@@ -927,7 +939,10 @@ def _pre_generate_single(spec: dict, api_key: str, output_dir: str) -> dict:
     node_name = spec["nodeName"]
     prompt = spec["prompt"]
     is_hero = spec.get("isHero", False)
-    is_2d = (spec.get("style") or "").lower() in ("2d", "tossface")
+    explicit_2d = (spec.get("style") or "").lower() in ("2d", "tossface")
+    # 소형 아이콘(≤32px)은 자동으로 2D — style 누락해도 안전
+    size = max(spec.get("width", 120), spec.get("height", 120))
+    is_2d = explicit_2d or (not is_hero and size <= 32)
     style = TOSSFACE_2D_STYLE if is_2d else (spec.get("style") or DEFAULT_3D_STYLE)
 
     # 프롬프트 구성
