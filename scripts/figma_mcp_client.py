@@ -761,6 +761,36 @@ def cmd_build(blueprint_file: str):
     elif not image_specs_raw:
         print("\n(imageGen 스펙 없음 — 이미지 생성 건너뜀)")
 
+    # Step G: NavBar 로고 인스턴스 교체
+    if node_map and "Logo Placeholder" in node_map:
+        print("\n🔲 NavBar 로고 교체 중...")
+        try:
+            placeholder_id = node_map["Logo Placeholder"]
+            navbar_id = node_map.get("NavBar")
+            if navbar_id:
+                # 로고 컴포넌트 인스턴스 생성
+                logo_content = call_tool("create_component_instance", {
+                    "componentKey": "957912b03baf924a48ef83424ed66f22a4a386a8"
+                })
+                logo_result = parse_content(logo_content)
+                logo_id = None
+                if logo_result.get("json"):
+                    logo_id = logo_result["json"].get("id")
+                if logo_id:
+                    # NavBar에 첫 번째 자식으로 삽입
+                    call_tool("insert_child", {
+                        "parentId": navbar_id,
+                        "childId": logo_id,
+                        "index": 0
+                    })
+                    # 기존 placeholder 삭제
+                    call_tool("delete_node", {"nodeId": placeholder_id})
+                    print(f"  ✅ 로고 인스턴스 교체 완료 (placeholder {placeholder_id} → logo {logo_id})")
+                else:
+                    print(f"  ⚠️ 로고 인스턴스 생성 실패")
+        except Exception as e:
+            print(f"  ⚠️ 로고 교체 실패 (무시): {e}")
+
     total_elapsed = time.time() - start
     print(f"\n{'='*50}")
     print(f"전체 완료: {total_elapsed:.1f}s (빌드 {build_elapsed:.1f}s + 후처리 + 이미지)")

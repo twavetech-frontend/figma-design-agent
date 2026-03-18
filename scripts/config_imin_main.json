@@ -1,0 +1,247 @@
+{
+  "rootName": "imin Main Home",
+  "width": 393,
+  "height": 1800,
+  "fill": "$token(bg-primary)",
+  "sections": [
+    "NavBar",
+    "Ribbon",
+    "Hero",
+    "custom",
+    "custom",
+    "custom",
+    "custom",
+    "FAB",
+    "TabBar"
+  ],
+  "variables": {
+    "Ribbon": {
+      "text": "누적 거래 3,191,399건"
+    },
+    "Hero": {
+      "banners": [
+        {
+          "tag": "EVENT",
+          "title": "친구 초대하면\n최대 수익 100%",
+          "imagePrompt": "3D rendered gift box and gold coins floating with confetti, objects on the RIGHT side only, LEFT half must be empty solid color. Rich violet purple gradient background (#6938EF to #7C5CFC). Soft matte finish, rounded clay-like proportions. No text. No shadow."
+        },
+        {
+          "tag": "PROMOTION",
+          "title": "화장품 프로모션\n뷰티 스테이지 오픈",
+          "imagePrompt": "3D rendered cosmetics bottles and beauty products floating, objects on the RIGHT side only, LEFT half must be empty solid color. Soft pink gradient background (#FF6B9D to #C084FC). Soft matte finish, clay-like proportions. No text. No shadow."
+        },
+        {
+          "tag": "NEW",
+          "title": "스테이지 목돈\n계산기 출시",
+          "imagePrompt": "3D rendered calculator and stacked coins with sparkles, objects on the RIGHT side only, LEFT half must be empty solid color. Deep teal gradient background (#0D9488 to #2DD4BF). Soft matte finish, rounded proportions. No text. No shadow."
+        }
+      ]
+    },
+    "FAB": {
+      "label": "마이 월렛",
+      "icon": "wallet-02"
+    },
+    "TabBar": {
+      "activeTab": "홈"
+    }
+  },
+  "customSections": [
+    {
+      "name": "Recommended Stages",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingTop": 24,
+        "paddingBottom": 24,
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "itemSpacing": 16
+      },
+      "children": [
+        {
+          "name": "Section Header",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": { "layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER" },
+          "children": [
+            { "name": "Section Title", "type": "text", "text": "추천! 스테이지", "fontSize": 20, "fontWeight": 700, "fontColor": "$token(fg-primary)" },
+            { "name": "View All", "type": "text", "text": "전체보기", "fontSize": 14, "fontWeight": 500, "fontColor": "$token(fg-tertiary)" }
+          ]
+        },
+        {
+          "name": "Tab Row",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 8 },
+          "stroke": "$token(border-secondary)",
+          "strokeWeight": 1, "strokeTopWeight": 0, "strokeBottomWeight": 1, "strokeLeftWeight": 0, "strokeRightWeight": 0,
+          "children": [
+            {
+              "name": "Tab Active",
+              "type": "frame",
+              "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 4, "paddingBottom": 0, "paddingLeft": 4, "paddingRight": 4, "itemSpacing": 8 },
+              "children": [
+                { "name": "Tab Label Active", "type": "text", "text": "빠른 시작", "fontSize": 14, "fontWeight": 600, "fontColor": "$token(fg-brand-primary)" },
+                { "name": "Underline Bar", "type": "frame", "height": 2, "layoutSizingHorizontal": "FILL", "fill": "$token(bg-brand-solid)" }
+              ]
+            },
+            {
+              "name": "Tab Inactive",
+              "type": "frame",
+              "layoutSizingVertical": "FILL",
+              "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 4, "paddingBottom": 0, "paddingLeft": 4, "paddingRight": 4 },
+              "children": [
+                { "name": "Tab Label Inactive", "type": "text", "text": "많은 혜택", "fontSize": 14, "fontWeight": 500, "fontColor": "$token(fg-tertiary)" }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Stage Card 1",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 16, "paddingBottom": 16, "paddingLeft": 16, "paddingRight": 16, "itemSpacing": 8 },
+          "fill": "$token(bg-secondary)",
+          "cornerRadius": 16,
+          "children": [
+            {
+              "name": "Stage Tag", "type": "frame", "layoutSizingHorizontal": "HUG",
+              "autoLayout": { "layoutMode": "HORIZONTAL", "paddingTop": 4, "paddingBottom": 4, "paddingLeft": 8, "paddingRight": 8 },
+              "fill": "$token(bg-brand-primary)", "cornerRadius": 4,
+              "children": [{ "name": "Tag Text", "type": "text", "text": "포인트", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(fg-brand-primary)" }]
+            },
+            { "name": "Stage Amount", "type": "text", "text": "260만원", "fontSize": 22, "fontWeight": 700, "fontColor": "$token(fg-primary)" },
+            {
+              "name": "Stage Info Row", "type": "frame", "layoutSizingHorizontal": "FILL",
+              "autoLayout": { "layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER" },
+              "children": [
+                { "name": "Stage Details", "type": "text", "text": "연 5.2%  ·  포인트 3,000P", "fontSize": 14, "fontWeight": 500, "fontColor": "$token(fg-secondary)" },
+                { "name": "Bookmark Icon", "type": "icon", "iconName": "bookmark", "size": 20, "iconColor": "$token(fg-quaternary)" }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Stage Card 2",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 16, "paddingBottom": 16, "paddingLeft": 16, "paddingRight": 16, "itemSpacing": 8 },
+          "fill": "$token(bg-secondary)",
+          "cornerRadius": 16,
+          "children": [
+            {
+              "name": "Stage Tag", "type": "frame", "layoutSizingHorizontal": "HUG",
+              "autoLayout": { "layoutMode": "HORIZONTAL", "paddingTop": 4, "paddingBottom": 4, "paddingLeft": 8, "paddingRight": 8 },
+              "fill": "$token(bg-success-primary)", "cornerRadius": 4,
+              "children": [{ "name": "Tag Text", "type": "text", "text": "기프티콘", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(fg-success-primary)" }]
+            },
+            { "name": "Stage Amount", "type": "text", "text": "800만원", "fontSize": 22, "fontWeight": 700, "fontColor": "$token(fg-primary)" },
+            {
+              "name": "Stage Info Row", "type": "frame", "layoutSizingHorizontal": "FILL",
+              "autoLayout": { "layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER" },
+              "children": [
+                { "name": "Stage Details", "type": "text", "text": "연 4.8%  ·  기프티콘 5,000원", "fontSize": 14, "fontWeight": 500, "fontColor": "$token(fg-secondary)" },
+                { "name": "Bookmark Icon", "type": "icon", "iconName": "bookmark", "size": 20, "iconColor": "$token(fg-quaternary)" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Fun Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 24, "paddingBottom": 24, "paddingLeft": 20, "paddingRight": 20, "itemSpacing": 12 },
+      "children": [
+        { "name": "Section Title", "type": "text", "text": "놓칠 수 없는 즐거움", "fontSize": 20, "fontWeight": 700, "fontColor": "$token(fg-primary)" },
+        {
+          "name": "Fun Cards Row",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 12 },
+          "children": [
+            {
+              "name": "Fun Card 1", "type": "frame", "layoutSizingHorizontal": "FILL",
+              "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 16, "paddingBottom": 16, "paddingLeft": 16, "paddingRight": 16, "itemSpacing": 8 },
+              "fill": "$token(bg-secondary)", "cornerRadius": 16,
+              "children": [
+                { "name": "Fun Icon 1", "type": "frame", "width": 32, "height": 32, "cornerRadius": 0, "imageGen": { "prompt": "3D rendered mystery gift box with question mark, purple and gold, vivid glossy style. Chunky compact form. Pure white background. No text. No shadow.", "isHero": false, "width": 32, "height": 32 } },
+                { "name": "Fun Title 1", "type": "text", "text": "랜덤박스", "fontSize": 16, "fontWeight": 700, "fontColor": "$token(fg-primary)" },
+                { "name": "Fun Desc 1", "type": "text", "text": "매일 선물이 쏟아져요", "fontSize": 13, "fontWeight": 400, "fontColor": "$token(fg-tertiary)" }
+              ]
+            },
+            {
+              "name": "Fun Card 2", "type": "frame", "layoutSizingHorizontal": "FILL",
+              "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 16, "paddingBottom": 16, "paddingLeft": 16, "paddingRight": 16, "itemSpacing": 8 },
+              "fill": "$token(bg-secondary)", "cornerRadius": 16,
+              "children": [
+                { "name": "Fun Icon 2", "type": "frame", "width": 32, "height": 32, "cornerRadius": 0, "imageGen": { "prompt": "3D rendered shopping bag with gift ribbon, teal and coral colors, vivid glossy style. Chunky compact form. Pure white background. No text. No shadow.", "isHero": false, "width": 32, "height": 32 } },
+                { "name": "Fun Title 2", "type": "text", "text": "기프트샵", "fontSize": 16, "fontWeight": 700, "fontColor": "$token(fg-primary)" },
+                { "name": "Fun Desc 2", "type": "text", "text": "포인트로 기프티콘 교환", "fontSize": 13, "fontWeight": 400, "fontColor": "$token(fg-tertiary)" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Daily Tasks",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 24, "paddingBottom": 24, "paddingLeft": 20, "paddingRight": 20, "itemSpacing": 0 },
+      "children": [
+        { "name": "Section Title", "type": "text", "text": "매일매일 혜택받기", "fontSize": 20, "fontWeight": 700, "fontColor": "$token(fg-primary)" },
+        {
+          "name": "Task Item 1", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 56,
+          "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 12, "paddingBottom": 12 },
+          "children": [
+            { "name": "Task Icon 1", "type": "frame", "width": 24, "height": 24, "cornerRadius": 0, "imageGen": { "prompt": "2D flat illustration of people helping each other, simple clean lines, Tossface emoji style. Pure white background. No text.", "isHero": false, "width": 24, "height": 24 } },
+            { "name": "Task Text 1", "type": "text", "text": "친구 구조대", "fontSize": 16, "fontWeight": 500, "fontColor": "$token(fg-primary)" },
+            { "name": "Task Chevron 1", "type": "icon", "iconName": "chevron-right", "size": 20, "iconColor": "$token(fg-quaternary)" }
+          ]
+        },
+        { "name": "Task Divider 1", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 1, "fill": "$token(border-secondary)" },
+        {
+          "name": "Task Item 2", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 56,
+          "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 12, "paddingBottom": 12 },
+          "children": [
+            { "name": "Task Icon 2", "type": "frame", "width": 24, "height": 24, "cornerRadius": 0, "imageGen": { "prompt": "2D flat illustration of a calendar with checkmark, simple clean lines, Tossface emoji style. Pure white background. No text.", "isHero": false, "width": 24, "height": 24 } },
+            { "name": "Task Text 2", "type": "text", "text": "출석체크", "fontSize": 16, "fontWeight": 500, "fontColor": "$token(fg-primary)" },
+            { "name": "Task Chevron 2", "type": "icon", "iconName": "chevron-right", "size": 20, "iconColor": "$token(fg-quaternary)" }
+          ]
+        },
+        { "name": "Task Divider 2", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 1, "fill": "$token(border-secondary)" },
+        {
+          "name": "Task Item 3", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 56,
+          "autoLayout": { "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 12, "paddingTop": 12, "paddingBottom": 12 },
+          "children": [
+            { "name": "Task Icon 3", "type": "frame", "width": 24, "height": 24, "cornerRadius": 0, "imageGen": { "prompt": "2D flat illustration of lightning bolt with coin, simple clean lines, Tossface emoji style. Pure white background. No text.", "isHero": false, "width": 24, "height": 24 } },
+            { "name": "Task Text 3", "type": "text", "text": "포인트 충전소", "fontSize": 16, "fontWeight": 500, "fontColor": "$token(fg-primary)" },
+            { "name": "Task Chevron 3", "type": "icon", "iconName": "chevron-right", "size": 20, "iconColor": "$token(fg-quaternary)" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Calculator Banner",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": { "layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER", "paddingTop": 16, "paddingBottom": 16, "paddingLeft": 20, "paddingRight": 20, "itemSpacing": 16 },
+      "fill": "$token(bg-brand-primary)",
+      "children": [
+        { "name": "Banner Icon", "type": "icon", "iconName": "calculator", "size": 24, "iconColor": "$token(fg-brand-primary)" },
+        {
+          "name": "Banner Text Group", "type": "frame",
+          "autoLayout": { "layoutMode": "VERTICAL", "itemSpacing": 2 },
+          "children": [
+            { "name": "Banner Title", "type": "text", "text": "스테이지 목돈 계산기", "fontSize": 16, "fontWeight": 600, "fontColor": "$token(fg-primary)" },
+            { "name": "Banner Subtitle", "type": "text", "text": "나에게 맞는 이익을 계산해 보세요", "fontSize": 13, "fontWeight": 400, "fontColor": "$token(fg-tertiary)" }
+          ]
+        },
+        { "name": "Banner Chevron", "type": "icon", "iconName": "chevron-right", "size": 20, "iconColor": "$token(fg-quaternary)" }
+      ]
+    }
+  ]
+}
