@@ -12,6 +12,7 @@ import type { ToolDefinition } from '../shared/types';
 import { getIcons, getVariants, syncTokensIfNeeded, type VariantEntry } from '../shared/ds-data';
 import { convertPenToFigma, type PenNode } from './pen-to-figma';
 import { getIconSvg, getIconSvgAsync, resolveIconFile } from './untitled-icons';
+import { simulateLayout } from './yoga-simulator';
 
 // Re-export for convenience
 export type { ToolDefinition };
@@ -615,6 +616,28 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     }
     return { results, refMap };
   });
+
+  reg('simulate_layout',
+    'Simulate Blueprint layout using Yoga WASM. Returns detected issues, pre-computed Tab Bar/FAB positions, and auto-fixed Blueprint. Call BEFORE batch_build_screen.',
+    {
+      type: 'object',
+      properties: {
+        blueprint: { type: 'object', description: 'Blueprint JSON (same format as batch_build_screen)' },
+      },
+      required: ['blueprint'],
+    },
+    async (params) => {
+      const result = await simulateLayout(params.blueprint as any);
+      return {
+        issues_count: result.issues.length,
+        issues: result.issues,
+        layout: result.layout,
+        fixedBlueprint: result.fixedBlueprint,
+        elapsed_ms: result.elapsed_ms,
+        node_count: result.nodes.length,
+      };
+    }
+  );
 
   reg('batch_build_screen', `Build a complete Figma screen from a single JSON tree. Creates all nodes recursively in one call.
 
