@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "package": "electron-builder",
     "bridge": "node out/bridge/index.js",
-    "postinstall": "node scripts/patch-hono-mcp.js"
+    "postinstall": "node scripts/patch-hono-mcp.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.63",
@@ -43,6 +45,7 @@
     "react-dom": "^19.0.0",
     "tsup": "^8.5.1",
     "typescript": "^5.8.3",
-    "vite": "^6.3.0"
+    "vite": "^6.3.0",
+    "vitest": "^4.1.0"
   }
 }
