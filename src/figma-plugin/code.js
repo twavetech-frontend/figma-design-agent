@@ -886,6 +886,13 @@ async function setStrokeColor(params) {
     throw new Error("Invalid stroke weight - must be a valid number");
   }
 
+  // strokeWeight=0 이면 stroke 완전 제거
+  if (strokeWeightParsed === 0) {
+    node.strokes = [];
+    if ("strokeWeight" in node) node.strokeWeight = 0;
+    return { id: node.id, name: node.name, strokes: [], strokeWeight: 0 };
+  }
+
   const paintStyle = {
     type: "SOLID",
     color: {
