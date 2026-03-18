@@ -256,6 +256,7 @@ function detectIssues(tree: YogaTreeNode): LayoutIssue[] {
   const issues: LayoutIssue[] = [];
   const ICON_KEYWORDS = /icon|chevron|dot|indicator|vector|arrow/i;
   const SKIP_NAMES = /fab|tab\s*bar/i;
+  const HUG_PRESERVE = /tag|badge|chip|pill|label|indicator|underline|divider/i;
   const reported = new Set<string>();
 
   function walk(node: YogaTreeNode, parentLayoutMode: string | null, parentAlign?: string, isLastChild?: boolean) {
@@ -274,6 +275,8 @@ function detectIssues(tree: YogaTreeNode): LayoutIssue[] {
         && hSizing !== 'FILL'
         && !ICON_KEYWORDS.test(name)
         && !SKIP_NAMES.test(name)
+        && !HUG_PRESERVE.test(name)
+        && hSizing !== 'HUG'  // 명시적 HUG는 의도적이므로 보존
         && (bp.width == null || bp.width > 60)
         && !isSpaceBetweenLastHug
         && !reported.has(node.path)) {
