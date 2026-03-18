@@ -453,8 +453,52 @@ def parse_content(content: List[dict]) -> dict:
     }
 
 
+def _ensure_bridge_server():
+    """Bridge 서버가 안 떠있으면 자동으로 시작한다."""
+    import subprocess
+    try:
+        requests.get("http://127.0.0.1:8769/mcp", timeout=1)
+        return  # 이미 떠있음
+    except Exception:
+        pass
+
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    bridge_js = os.path.join(project_root, "out", "bridge", "index.js")
+    if not os.path.exists(bridge_js):
+        # 빌드 안 돼있으면 빌드 먼저
+        print("[BRIDGE] out/bridge/index.js 없음 — npm run build:main 실행 중...")
+        subprocess.run(["npm", "run", "build:main"], cwd=project_root,
+                       capture_output=True, timeout=30)
+
+    if not os.path.exists(bridge_js):
+        print("[BRIDGE] 빌드 실패 — Bridge 서버를 수동으로 시작해 주세요: npm run bridge")
+        return
+
+    print("[BRIDGE] Bridge 서버 자동 시작 중...")
+    log_file = open("/tmp/bridge-server.log", "w")
+    subprocess.Popen(
+        ["node", bridge_js],
+        stdout=log_file, stderr=log_file,
+        cwd=project_root,
+        start_new_session=True  # 부모 프로세스 종료 시에도 유지
+    )
+
+    # 서버 준비 대기 (최대 5초)
+    for i in range(10):
+        time.sleep(0.5)
+        try:
+            requests.get("http://127.0.0.1:8769/mcp", timeout=1)
+            print(f"[BRIDGE] 서버 준비 완료 ({(i+1)*0.5:.1f}s)")
+            return
+        except Exception:
+            pass
+
+    print("[BRIDGE] 서버 시작 대기 초과 — 로그 확인: cat /tmp/bridge-server.log")
+
+
 def ensure_session():
     """Ensure we have a valid session, init if needed."""
+    _ensure_bridge_server()
     sid = get_session_id()
     if not sid:
         print("No session found, initializing...")
@@ -472,6 +516,7 @@ def ensure_session():
 
 
 def cmd_init():
+    _ensure_bridge_server()
     init_session()
     print("Ready.")
 
