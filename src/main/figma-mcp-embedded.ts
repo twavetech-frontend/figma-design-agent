@@ -620,7 +620,7 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
       }
     }
     return { results, refMap };
-  });
+  }, { timeoutMs: 310_000 }); // 5min: 여러 operation 순차 실행
 
   reg('simulate_layout',
     'Simulate Blueprint layout using Yoga WASM. Returns detected issues, pre-computed Tab Bar/FAB positions, and auto-fixed Blueprint. Call BEFORE batch_build_screen.',

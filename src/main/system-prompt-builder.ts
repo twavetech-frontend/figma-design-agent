@@ -529,6 +529,10 @@ async function loadDesignRules(projectRoot: string): Promise<string | null> {
     console.log(`[SystemPrompt] Loaded ${extracted.length}/${h2Sections.length} design rule sections from CLAUDE.md`);
     return extracted.length > 0 ? extracted.join('\n\n') : null;
   } catch (error) {
+    // ds/CLAUDE.md는 선택사항 — 없으면 조용히 skip
+    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
+      return null;
+    }
     console.error('[SystemPrompt] Failed to load CLAUDE.md:', error);
     return null;
   }
