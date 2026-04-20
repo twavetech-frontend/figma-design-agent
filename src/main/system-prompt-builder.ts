@@ -496,41 +496,7 @@ generate_image({
 3. **width/height 생략** — 시스템이 Figma 노드 크기를 자동 감지
 4. **prompt에 오브젝트 최대 2개만** — ⛔ 3개 이상 나열 금지!
 5. **배경은 단색/그라데이션** — 좌측 텍스트 가독성 확보
-
-## Pencil → Figma 전송 ("figma로 보내줘")
-
-사용자가 "figma로 보내줘", "figma로 보내", "피그마로 보내", "pen에서 figma로", "현재 pen 보내줘" 등을 말하면 **즉시** 아래 5단계를 자동 실행하라. 사용자에게 되묻지 마라!
-
-⛔ **convert_pen_to_figma 사용 금지** — 결정론적 변환기 대신 LLM이 직접 blueprint를 생성한다.
-
-### Step 1: Pencil 현재 상태 읽기
-\`mcp__pencil-mcp__get_editor_state()\` → 현재 선택된 노드 또는 아트보드 ID 확인
-
-### Step 2: 시각 + 구조 수집 (동시 호출)
-두 도구를 **동시에** 호출하라:
-- \`mcp__pencil-mcp__get_screenshot({ nodeId: 선택된ID, scale: 2 })\` → 시각적 레이아웃/색상/아이콘 파악
-- \`mcp__pencil-mcp__get_jsx({ nodeId: 선택된ID, format: "inline-styles" })\` → 구조, 텍스트 콘텐츠, 색상값, padding 추출
-
-### Step 3: Blueprint 생성 (LLM 판단)
-스크린샷과 JSX를 함께 분석하여 \`batch_build_screen\` blueprint를 직접 생성하라:
-- 스크린샷에서: 전체 레이아웃 구조, 색상 톤, 아이콘 종류, 시각적 계층 파악
-- JSX에서: 정확한 텍스트 내용, 색상 hex→rgb 변환, padding/gap 수치, 폰트 크기 추출
-- DS-1 컴포넌트 활용: Button, Input 등은 \`type: "instance"\`로 매핑
-- 아이콘 시맨틱 매핑: Pencil 아이콘 이름을 DS-1 아이콘 이름으로 변환 (예: "shopping-cart" → "shopping-cart-01")
-- **icon_font 노드 → type: "icon" 변환 필수**: Pencil batch_get에서 \`icon_font\` 타입 노드가 보이면 \`{"type": "icon", "name": "<iconFontName>", "size": <크기>}\`로 변환하라. Lucide 아이콘명(예: "house", "trending-up", "scan-line")을 그대로 사용해도 시스템이 자동으로 DS-1 아이콘으로 변환한다. type: "rectangle" placeholder를 만들지 마라.
-
-### Step 4: Figma 빌드
-\`mcp__figma-tools__batch_build_screen({ blueprint })\` → 한 번에 전체 화면 생성
-
-### Step 5: 결과 비교 QA
-빌드 결과 스크린샷(자동 포함)과 Step 2의 원본 Pencil 스크린샷을 비교하여 검증:
-- 레이아웃 구조가 원본과 일치하는가?
-- 텍스트 콘텐츠가 빠짐없이 전달되었는가?
-- 색상과 아이콘이 적절히 매핑되었는가?
-- 누락되거나 잘린 요소가 없는가?
-
-⚠️ **되묻지 마라**: "어떤 디자인을 보낼까요?" 같은 질문 금지. 현재 Pencil에 열린/선택된 것을 그대로 보내라.
-⚠️ **pencil-mcp 도구**: Pencil 앱의 MCP 도구는 \`mcp__pencil-mcp__\` 접두사로 접근 가능.`;
+`;
 
 
 /**
@@ -786,40 +752,8 @@ generate_image({ prompt: "a single cute matte clay gift box, soft purple gradien
 전체 화면 스크린샷으로 QA 체크리스트 검증 후 "완료" 선언.
 
 batch_build_screen은 parentId 없으면 자동으로 이전 프레임을 삭제합니다. parentId 지정 시 기존 프레임에 섹션을 추가합니다.
+`);
 
-## Pencil → Figma 전송 ("figma로 보내줘")
-
-사용자가 "figma로 보내줘", "figma로 보내", "피그마로 보내", "pen에서 figma로", "현재 pen 보내줘" 등을 말하면 **즉시** 아래 5단계를 자동 실행하라. 사용자에게 되묻지 마라!
-
-⛔ **convert_pen_to_figma 사용 금지** — 결정론적 변환기 대신 LLM이 직접 blueprint를 생성한다.
-
-### Step 1: Pencil 현재 상태 읽기
-\`mcp__pencil-mcp__get_editor_state()\` → 현재 선택된 노드 또는 아트보드 ID 확인
-
-### Step 2: 시각 + 구조 수집 (동시 호출)
-두 도구를 **동시에** 호출하라:
-- \`mcp__pencil-mcp__get_screenshot({ nodeId: 선택된ID, scale: 2 })\` → 시각적 레이아웃/색상/아이콘 파악
-- \`mcp__pencil-mcp__get_jsx({ nodeId: 선택된ID, format: "inline-styles" })\` → 구조, 텍스트 콘텐츠, 색상값, padding 추출
-
-### Step 3: Blueprint 생성 (LLM 판단)
-스크린샷과 JSX를 함께 분석하여 \`batch_build_screen\` blueprint를 직접 생성하라:
-- 스크린샷에서: 전체 레이아웃 구조, 색상 톤, 아이콘 종류, 시각적 계층 파악
-- JSX에서: 정확한 텍스트 내용, 색상 hex→rgb 변환, padding/gap 수치, 폰트 크기 추출
-- DS-1 컴포넌트 활용: Button, Input 등은 \`type: "instance"\`로 매핑
-- 아이콘 시맨틱 매핑: Pencil 아이콘 이름을 DS-1 아이콘 이름으로 변환
-
-### Step 4: Figma 빌드
-\`mcp__figma-tools__batch_build_screen({ blueprint })\` → 한 번에 전체 화면 생성
-
-### Step 5: 결과 비교 QA
-빌드 결과 스크린샷(자동 포함)과 Step 2의 원본 Pencil 스크린샷을 비교하여 검증:
-- 레이아웃 구조가 원본과 일치하는가?
-- 텍스트 콘텐츠가 빠짐없이 전달되었는가?
-- 색상과 아이콘이 적절히 매핑되었는가?
-- 누락되거나 잘린 요소가 없는가?
-
-⚠️ **되묻지 마라**: "어떤 디자인을 보낼까요?" 같은 질문 금지. 현재 Pencil에 열린/선택된 것을 그대로 보내라.
-⚠️ **pencil-mcp 도구**: Pencil 앱의 MCP 도구는 \`mcp__pencil-mcp__\` 접두사로 접근 가능.`);
 
   // Design rules from CLAUDE.md (core rules only — not the full 145KB)
   const designRules = await loadDesignRules(projectRoot);

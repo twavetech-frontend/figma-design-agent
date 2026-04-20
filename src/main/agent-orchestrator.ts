@@ -215,7 +215,7 @@ export class AgentOrchestrator extends EventEmitter {
         maxTurns: MAX_TURNS,
         permissionMode: 'bypassPermissions',
         allowDangerouslySkipPermissions: true,
-        allowedTools: ['mcp__figma-tools__*', 'mcp__pencil-mcp__*'],
+        allowedTools: ['mcp__figma-tools__*'],
         disallowedTools: [
           // Block ALL Claude Code built-in tools (this is a design-only agent)
           // These tools don't work in the Electron app context and cause hangs
@@ -230,8 +230,7 @@ export class AgentOrchestrator extends EventEmitter {
           'mcp__figma-tools__create_shape',
           'mcp__figma-tools__create_component_from_node',
           'mcp__figma-tools__create_component_set',
-          // Block deterministic Pencil converter — LLM generates blueprint directly
-          'mcp__figma-tools__convert_pen_to_figma',
+
         ],
         includePartialMessages: true,
         abortController: this.abortController,
@@ -615,8 +614,6 @@ export class AgentOrchestrator extends EventEmitter {
           'create_frame', 'create_text', 'create_rectangle', 'create_shape',
           'create_component_from_node', 'create_component_set',
           'pre_cache_components',
-          // Block deterministic Pencil converter — LLM generates blueprint directly
-          'convert_pen_to_figma',
         ]);
         const anthropicTools: Tool[] = Array.from(this.tools.values())
           .filter((t) => !blockedTools.has(t.name))

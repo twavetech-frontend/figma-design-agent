@@ -1,6 +1,6 @@
 /**
  * Yoga WASM 기반 Blueprint 레이아웃 시뮬레이터.
- * OpenPencil layout.ts의 Figma↔Yoga 매핑 로직을 참고하여 구현.
+ * Figma↔Yoga 매핑 로직 기반 레이아웃 계산.
  */
 
 // --- Types ---

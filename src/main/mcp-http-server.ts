@@ -254,29 +254,6 @@ export class McpHttpServer {
         };
       }
 
-      // convert_pen_to_figma → screenshot + conversion stats
-      if (name === 'convert_pen_to_figma' && obj.screenshot && typeof obj.screenshot === 'object') {
-        const screenshot = obj.screenshot as Record<string, unknown>;
-        if (screenshot.imageData && typeof screenshot.imageData === 'string') {
-          const { screenshot: _s, ...rest } = obj;
-          const stats = obj.conversionStats as Record<string, unknown> || {};
-          const warnings = (obj.conversionWarnings as string[]) || [];
-          return {
-            content: [
-              {
-                type: 'image' as const,
-                data: screenshot.imageData as string,
-                mimeType: 'image/png',
-              },
-              {
-                type: 'text' as const,
-                text: `Pencil → Figma 변환 완료. rootId=${obj.rootId}. 변환: ${stats.totalNodes || '?'}개 노드 (frames=${stats.frames}, texts=${stats.texts}, icons=${stats.icons}, shapes=${stats.shapes}).${warnings.length > 0 ? ` 경고 ${warnings.length}건: ${warnings.slice(0, 3).join('; ')}` : ''}\n${JSON.stringify(rest)}`,
-              },
-            ],
-          };
-        }
-      }
-
       // batch_build_screen → screenshot.imageData nested
       if (name === 'batch_build_screen' && obj.screenshot && typeof obj.screenshot === 'object') {
         const screenshot = obj.screenshot as Record<string, unknown>;

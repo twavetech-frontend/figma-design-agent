@@ -10,7 +10,7 @@ import { z, ZodObject, ZodRawShape } from 'zod';
 import { FigmaWSServer } from './figma-ws-server';
 import type { ToolDefinition } from '../shared/types';
 import { getIcons, getVariants, syncTokensIfNeeded, type VariantEntry } from '../shared/ds-data';
-import { convertPenToFigma, type PenNode } from './pen-to-figma';
+
 import { getIconSvg, getIconSvgAsync, resolveIconFile } from './untitled-icons';
 import { simulateLayout } from './yoga-simulator';
 
@@ -792,123 +792,6 @@ Root frame supports: autoLayout, cornerRadius, fill.`, {
     required: ['keys']
   }, async (params) => cmd('pre_cache_components', params, 600000),
   { timeoutMs: 620_000 }); // 10min WS + 20s margin
-
-  // ============================================================
-  // Pencil → Figma Converter
-  // ============================================================
-
-  reg('convert_pen_to_figma', 'Convert a Pencil (.pen) node tree to Figma. Takes PenNode JSON from Pencil batch_get and creates the design in Figma via batch_build_screen. Accepts single node or array of nodes.', {
-    type: 'object',
-    properties: {
-      penNodes: { description: 'Root PenNode tree from Pencil batch_get. Can be a single node object or an array of nodes.' },
-      screenName: { type: 'string', description: 'Name for the Figma screen frame' },
-      preserveFonts: { type: 'boolean', description: 'Keep original fonts (true) or use Pretendard (false). Default: true' },
-    },
-    required: ['penNodes'],
-  }, async (params) => {
-    // ★ Handle array input: batch_get returns arrays
-    let penRoot: PenNode;
-    const rawNodes = params.penNodes;
-    if (Array.isArray(rawNodes)) {
-      if (rawNodes.length === 0) {
-        return { error: 'penNodes array is empty' };
-      }
-      if (rawNodes.length === 1) {
-        penRoot = rawNodes[0] as PenNode;
-      } else {
-        // Multiple nodes — wrap in a root frame
-        penRoot = {
-          type: 'frame',
-          name: 'Pen Import',
-          layout: 'v',
-          width: 393,
-          height: 852,
-          children: rawNodes as PenNode[],
-        };
-        console.log(`[convert_pen_to_figma] Wrapped ${rawNodes.length} root nodes into container frame`);
-      }
-    } else {
-      penRoot = rawNodes as PenNode;
-    }
-
-    // Validate penRoot has required structure
-    if (!penRoot || typeof penRoot !== 'object') {
-      return { error: 'penNodes must be a PenNode object or array of PenNode objects' };
-    }
-    if (!penRoot.type) {
-      // Try to infer type from children
-      if (penRoot.children) {
-        penRoot.type = 'frame';
-      } else if (penRoot.content) {
-        penRoot.type = 'text';
-      } else {
-        penRoot.type = 'frame';
-      }
-      console.warn(`[convert_pen_to_figma] Root node missing type, inferred as "${penRoot.type}"`);
-    }
-
-    const screenName = params.screenName as string | undefined;
-    const preserveFonts = params.preserveFonts as boolean | undefined;
-
-    // Step 1: Convert PenNode tree → Figma Blueprint
-    let blueprint: Record<string, unknown>;
-    let stats: { totalNodes: number; frames: number; texts: number; icons: number; shapes: number; warnings: number };
-    let warnings: string[];
-    try {
-      const result = convertPenToFigma(penRoot, { preserveFonts });
-      blueprint = result.blueprint;
-      stats = result.stats;
-      warnings = result.warnings;
-    } catch (e) {
-      const errMsg = e instanceof Error ? e.message : String(e);
-      console.error(`[convert_pen_to_figma] Conversion failed:`, errMsg);
-      return { error: `PenNode → Blueprint conversion failed: ${errMsg}`, inputType: penRoot.type, inputKeys: Object.keys(penRoot) };
-    }
-    if (screenName) blueprint.name = screenName;
-
-    console.log(`[convert_pen_to_figma] Converted: ${stats.totalNodes} nodes (${stats.frames} frames, ${stats.texts} texts, ${stats.icons} icons, ${stats.shapes} shapes), ${warnings.length} warnings`);
-
-    // Step 2: Run through the same pipeline as batch_build_screen
-    // (enhanceBlueprint → resolveBlueprint → prefetchImages → Figma build)
-    if (lastBuiltRootId) {
-      try {
-        await cmd('delete_node', { nodeId: lastBuiltRootId });
-        console.log(`[convert_pen_to_figma] Deleted previous build: ${lastBuiltRootId}`);
-      } catch (e) {
-        console.warn(`[convert_pen_to_figma] Failed to delete previous build:`, e);
-      }
-      lastBuiltRootId = null;
-    }
-
-    const enhanced = enhanceBlueprint(blueprint);
-    const resolved = await resolveBlueprint(enhanced);
-    await prefetchImages([resolved]);
-
-    const result = await cmd('batch_build_screen', { blueprint: resolved }, 300000) as Record<string, unknown>;
-
-    if (result?.rootId) {
-      lastBuiltRootId = result.rootId as string;
-      console.log(`[convert_pen_to_figma] Tracking rootId: ${lastBuiltRootId}`);
-
-      // Auto-screenshot
-      try {
-        const screenshot = await cmd('export_node_as_image', {
-          nodeId: result.rootId, format: 'PNG', scale: 1
-        }, 30000) as Record<string, unknown>;
-        if (screenshot?.imageData) {
-          result.screenshot = screenshot;
-        }
-      } catch (e) {
-        console.warn('[convert_pen_to_figma] Auto-screenshot failed:', e);
-      }
-    }
-
-    return {
-      ...result,
-      conversionStats: stats,
-      conversionWarnings: warnings,
-    };
-  });
 
   return tools;
 }

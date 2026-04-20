@@ -11,14 +11,14 @@
 
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join } from 'path';
-import { execFile, spawn, ChildProcess } from 'child_process';
+import { execFile } from 'child_process';
 import { FigmaWSServer } from './figma-ws-server';
 import { buildToolRegistry } from './figma-mcp-embedded';
 import { registerDSLookupTools } from './ds-lookup-tools';
 import { AgentOrchestrator } from './agent-orchestrator';
 import { McpHttpServer } from './mcp-http-server';
 import { ImageGenerator } from './image-generator';
-import { PENCIL_MCP_CONFIG } from './mcp-server-config';
+
 import { getGeminiApiKey, setGeminiApiKey, getAnthropicApiKey, getDirectApiKey, setAnthropicApiKey } from './settings-store';
 import { setProjectRoot, getDesignTokens, getVariants, syncComponentDocs } from '../shared/ds-data';
 import { IPC_CHANNELS } from '../shared/types';
@@ -58,7 +58,6 @@ let figmaWS: FigmaWSServer;
 let orchestrator: AgentOrchestrator | null = null;
 let mcpServer: McpHttpServer;
 let imageGenerator: ImageGenerator;
-let pencilMcpProcess: ChildProcess | null = null;
 
 // Cached Claude Code status
 let claudeCodeStatusCache: ClaudeCodeStatus | null = null;
@@ -94,36 +93,6 @@ async function checkClaudeCodeStatus(): Promise<ClaudeCodeStatus> {
       });
     });
   });
-}
-
-// ============================================================
-// Pencil MCP Server Management
-// ============================================================
-
-function startPencilMcp(): void {
-  try {
-    pencilMcpProcess = spawn(
-      PENCIL_MCP_CONFIG.binary,
-      PENCIL_MCP_CONFIG.args,
-      { stdio: ['pipe', 'pipe', 'pipe'] }
-    );
-    pencilMcpProcess.stdout?.on('data', (d: Buffer) => console.log('[Pencil MCP]', d.toString().trim()));
-    pencilMcpProcess.stderr?.on('data', (d: Buffer) => console.error('[Pencil MCP]', d.toString().trim()));
-    pencilMcpProcess.on('exit', (code) => {
-      console.log(`[Pencil MCP] exited (code=${code})`);
-      pencilMcpProcess = null;
-    });
-    console.log(`[Pencil MCP] Started on port ${PENCIL_MCP_CONFIG.port}`);
-  } catch (e) {
-    console.error('[Pencil MCP] Failed to start:', e);
-  }
-}
-
-function stopPencilMcp(): void {
-  if (pencilMcpProcess) {
-    pencilMcpProcess.kill();
-    pencilMcpProcess = null;
-  }
 }
 
 // ============================================================
@@ -210,9 +179,6 @@ app.whenReady().then(async () => {
 
   console.log(`[Main] Registered ${tools.size} tools`);
 
-  // Start Pencil MCP Server (external binary, HTTP mode)
-  startPencilMcp();
-
   // Start MCP HTTP Server (Hono + Streamable HTTP Transport)
   mcpServer = new McpHttpServer(tools, () => figmaWS.inputMode);
   await mcpServer.start();
@@ -258,7 +224,6 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
-  stopPencilMcp();
   mcpServer?.stop();
   figmaWS?.stop();
   app.quit();
