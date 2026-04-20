@@ -84,6 +84,11 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     type: 'object', properties: {}
   }, async () => cmd('get_local_components'));
 
+  reg('get_local_component_sets', 'Get all local component sets (variants)', {
+    type: 'object',
+    properties: {},
+  }, async () => cmd('get_local_component_sets'));
+
   reg('get_remote_components', 'Get remote/library components', {
     type: 'object', properties: {}
   }, async () => cmd('get_remote_components'));

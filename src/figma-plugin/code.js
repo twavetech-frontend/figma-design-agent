@@ -162,6 +162,8 @@ async function handleCommand(command, params) {
       return await getStyles();
     case "get_local_components":
       return await getLocalComponents();
+    case "get_local_component_sets":
+      return await getLocalComponentSets();
     // case "get_team_components":
     //   return await getTeamComponents();
     case "create_component_instance":
@@ -1176,6 +1178,38 @@ async function getLocalComponents() {
       name: component.name,
       key: "key" in component ? component.key : null,
     })),
+  };
+}
+
+async function getLocalComponentSets() {
+  await figma.loadAllPagesAsync();
+
+  var sets = figma.root.findAllWithCriteria({
+    types: ["COMPONENT_SET"],
+  });
+
+  return {
+    count: sets.length,
+    componentSets: sets.map(function(set) {
+      var children = set.children || [];
+      return {
+        id: set.id,
+        name: set.name,
+        key: "key" in set ? set.key : null,
+        variantProperties: "componentPropertyDefinitions" in set
+          ? set.componentPropertyDefinitions
+          : null,
+        variants: children
+          .filter(function(c) { return c.type === "COMPONENT"; })
+          .map(function(c) {
+            return {
+              id: c.id,
+              name: c.name,
+              key: "key" in c ? c.key : null,
+            };
+          }),
+      };
+    }),
   };
 }
 
