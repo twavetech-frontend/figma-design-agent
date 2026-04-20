@@ -1,6 +1,6 @@
 ---
 name: wireframe-to-figma
-description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS-1 컴포넌트 기반으로 Figma 화면을 자동 생성하는 스킬. Apple HIG 용어 체계를 사용하여 비디자이너도 모바일 UI 패턴을 직관적으로 소통 가능.
+description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS v1 컴포넌트 기반으로 Figma 화면을 자동 생성하는 스킬. Apple HIG 용어 체계를 사용하여 비디자이너도 모바일 UI 패턴을 직관적으로 소통 가능.
 ---
 
 # Wireframe → Figma 자동 생성 스킬
@@ -16,7 +16,7 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
 - 손글씨 텍스트를 인식하여 UI에 반영합니다
 
 **디자이너로서:**
-- DS-1 컴포넌트 인스턴스를 최우선으로 사용합니다
+- DS v1 컴포넌트 인스턴스를 최우선으로 사용합니다
 - Apple HIG 레이아웃 규칙 (Safe Area, 44pt 탭 타겟 등)을 준수합니다
 - Auto Layout First 원칙으로 반응형 레이아웃을 구성합니다
 
@@ -35,11 +35,11 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
    ↓ 사진 촬영 or 스크린샷
    ↓ Claude에 이미지 첨부 + "이거 만들어줘" / "모바일 화면으로"
    ↓ MCP (Talk-to-Figma Plugin)
-   ↓ 비디자이너의 Figma 파일에 DS-1 기반 디자인 생성
+   ↓ 비디자이너의 Figma 파일에 DS v1 기반 디자인 생성
 ```
 
 **전제 조건:**
-- Figma 파일에 `DS-1` 라이브러리가 Added 되어있어야 함
+- Figma 파일에 `DS v1` 라이브러리가 Added 되어있어야 함
 - Figma에서 Talk to Figma MCP 플러그인 실행 → 채널 코드 공유
 - Claude에서 `join_channel(채널코드)` 로 연결
 
@@ -56,11 +56,11 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
 
 ---
 
-## Apple HIG ↔ DS-1 컴포넌트 매핑 (모바일)
+## Apple HIG ↔ DS v1 컴포넌트 매핑 (모바일)
 
 ### §1. Navigation & Structure (네비게이션 & 구조)
 
-| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS-1 매핑 |
+| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS v1 매핑 |
 |----------------|------|----------------------|-----------|
 | **Navigation Bar** | 화면 상단 제목 + 뒤로가기 + 액션 | 상단 바 + ← 화살표 + 제목 | `Header navigation` (compact variant) 또는 Frame 직접 구성 |
 | **Large Title** | 큰 제목 네비게이션 (스크롤 시 축소) | 상단에 큰 글씨 제목 | `Page header` + Text(display-xs/24pt semibold) |
@@ -72,7 +72,7 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
 
 ### §2. Content Views (콘텐츠 뷰)
 
-| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS-1 매핑 |
+| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS v1 매핑 |
 |----------------|------|----------------------|-----------|
 | **List** | 세로 스크롤 목록 (가장 많이 쓰이는 iOS 패턴) | 세로로 반복되는 행 | `Table` + `Table cell` |
 | **Grouped List** | 섹션별로 그룹화된 목록 (설정 화면 등) | 구분선으로 나뉜 행 그룹 | `Table` (섹션별) + `Section header` |
@@ -85,7 +85,7 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
 
 ### §3. Controls (컨트롤)
 
-| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS-1 매핑 |
+| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS v1 매핑 |
 |----------------|------|----------------------|-----------|
 | **Button** | 탭하여 액션 실행 | [■■■] 채워진 사각형 / 밑줄 텍스트 | `Buttons/Button` |
 | **Destructive Button** | 삭제 등 위험 액션 | 빨간 버튼 or "삭제" 텍스트 | `Buttons/Button destructive` |
@@ -101,7 +101,7 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
 
 ### §4. Text Input (텍스트 입력)
 
-| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS-1 매핑 |
+| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS v1 매핑 |
 |----------------|------|----------------------|-----------|
 | **Text Field** | 한 줄 텍스트 입력 | [____] 빈 사각형 + 라벨 | `Input field` |
 | **Secure Field** | 비밀번호 입력 (●●●) | [****] 또는 [●●●●] | `Input field` (password variant) |
@@ -111,7 +111,7 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
 
 ### §5. Selection (선택)
 
-| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS-1 매핑 |
+| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS v1 매핑 |
 |----------------|------|----------------------|-----------|
 | **Checkbox** | 다중 선택 | ☐ / ☑ | `Checkbox` |
 | **Radio Button** | 단일 선택 | ○ / ● | `Radio group` + `Radio group item` |
@@ -119,7 +119,7 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
 
 ### §6. Presentation (프레젠테이션)
 
-| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS-1 매핑 |
+| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS v1 매핑 |
 |----------------|------|----------------------|-----------|
 | **Sheet** | 하단에서 올라오는 모달 | 하단에서 올라온 패널 | `Modal` (또는 Frame 직접 구성) |
 | **Alert** | 중요 알림 다이얼로그 | 중앙 박스 + 버튼 1~2개 | `Alert` |
@@ -130,7 +130,7 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
 
 ### §7. Indicators & Feedback (인디케이터)
 
-| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS-1 매핑 |
+| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS v1 매핑 |
 |----------------|------|----------------------|-----------|
 | **Progress Indicator (Bar)** | 진행 바 | [████░░░░] 형태 | `Progress bar` |
 | **Progress Indicator (Circular)** | 원형 진행 | ◑ 또는 반원 | `Progress circle` |
@@ -141,7 +141,7 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
 
 ### §8. Information Display (정보 표시)
 
-| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS-1 매핑 |
+| Apple HIG 용어 | 설명 | 와이어프레임 시각 패턴 | DS v1 매핑 |
 |----------------|------|----------------------|-----------|
 | **Label** | 텍스트 라벨 | 일반 텍스트 | Text (DS Text Style 바인딩) |
 | **Avatar** | 사용자 프로필 이미지 | ○ 동그라미 (얼굴) | `Avatar` |
@@ -233,14 +233,14 @@ description: 손그림/디지털 와이어프레임 이미지를 입력하면 DS
   └── [Tab Bar] 홈 | 검색 | 설정(활성)
 ```
 
-### Phase 2: HIG 패턴 → DS-1 컴포넌트 선택
+### Phase 2: HIG 패턴 → DS v1 컴포넌트 선택
 
-§1~§8 매핑 테이블을 참조하여 각 HIG 요소에 대응하는 DS-1 컴포넌트를 선택합니다.
+§1~§8 매핑 테이블을 참조하여 각 HIG 요소에 대응하는 DS v1 컴포넌트를 선택합니다.
 
 **매핑 우선순위:**
-1. DS-1에 정확히 대응하는 컴포넌트가 있으면 → Instance 사용
-2. DS-1에 유사 컴포넌트가 있으면 → Variant 조합으로 근사
-3. DS-1에 없으면 → Frame + Text + Rectangle로 직접 구성 (DS 토큰 사용)
+1. DS v1에 정확히 대응하는 컴포넌트가 있으면 → Instance 사용
+2. DS v1에 유사 컴포넌트가 있으면 → Variant 조합으로 근사
+3. DS v1에 없으면 → Frame + Text + Rectangle로 직접 구성 (DS 토큰 사용)
 
 ### Phase 3: Auto Layout 계층 구조 설계
 
@@ -461,7 +461,7 @@ Root (393 × HUG, VERTICAL, padding 0)
 
 데스크톱 화면은 Apple HIG 대신 **웹 UI 표준 용어**를 사용합니다:
 
-| 웹 UI 용어 | DS-1 매핑 |
+| 웹 UI 용어 | DS v1 매핑 |
 |------------|-----------|
 | Header / Top Navigation | `Header navigation` / `Full-width header navigation` |
 | Sidebar / Left Navigation | `Sidebar navigation` |

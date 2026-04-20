@@ -5,7 +5,7 @@
 
 ## 스타일 방향
 - **혼합**: 상단(NavBar/Hero)은 깔끔한 금융 앱 톤, 하단(유틸리티/Daily Tasks)은 3D 아이콘으로 재미 요소
-- 색상: DS-1 토큰 전용, Brand(보라) + Warning(오렌지) + Success(초록) 액센트 혼용
+- 색상: DS v1 토큰 전용, Brand(보라) + Warning(오렌지) + Success(초록) 액센트 혼용
 
 ## 화면 구조 (393×852, iPhone 16)
 

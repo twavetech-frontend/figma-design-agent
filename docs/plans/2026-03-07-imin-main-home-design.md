@@ -51,6 +51,6 @@
 ## 디자인 결정
 - 스테이지 카드: 가로 스크롤
 - 누적 거래 건수: NavBar 아래 리본
-- 색상: DS-1 토큰 100%
+- 색상: DS v1 토큰 100%
 - 폰트: Pretendard, weight 위계 적용
 - 이미지: Gemini 3D soft matte

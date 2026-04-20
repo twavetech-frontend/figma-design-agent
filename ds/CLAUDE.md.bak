@@ -2,7 +2,7 @@
 
 ## Design System Architecture
 
-### Current DS: DS-1
+### Current DS: DS v1
 
 | 파일 | 역할 | 생성 방법 |
 |------|------|-----------|
@@ -39,7 +39,7 @@ DS 라이브러리에서 Text Style/Effect Style을 변경한 후:
 
 ### Text Style 바인딩 체계
 
-DS-1은 Typography **Variables** (fontSize, lineHeight) + **Text Styles** 이중 시스템 사용.
+DS v1은 Typography **Variables** (fontSize, lineHeight) + **Text Styles** 이중 시스템 사용.
 둘 다 적용해야 완전한 DS 연결:
 - `set_bound_variables` → fontSize, lineHeight 변수 바인딩
 - `set_text_style_id` → Text Style 바인딩 (DESIGN_TOKENS.md에서 Style ID 참조)
@@ -192,9 +192,9 @@ INSTANCE_SWAP properties use **component node IDs** (e.g. `"12:3822"`), NOT comp
 - DS에 정확한 색상이 없으면 가장 가까운 토큰으로 대체 (커스텀 hex 값 사용 금지)
 - Primitive 색상(Colors/Blue/500 등)은 라이브러리에 퍼블리시되지 않을 수 있음 → Semantic 토큰(Colors/Background/, Colors/Text/ 등) 또는 Component colors(Component colors/Utility/) 사용
 - **Color token은 반드시 DS 전용** — `DESIGN_TOKENS.md`의 Semantic/Component 토큰만 사용. 다른 앱 색상 팔레트나 hex 값을 참고해 직접 적용하는 행위 금지
-- **Brand color도 DS 전용** — DS-1의 brand 토큰(`Colors/Background/bg-brand-*`, `Colors/Foreground/fg-brand-*`, `Component colors/Utility/Brand/*` 등)을 그대로 사용. 임의 변형이나 외부 브랜드 색상 대입 금지
+- **Brand color도 DS 전용** — DS v1의 brand 토큰(`Colors/Background/bg-brand-*`, `Colors/Foreground/fg-brand-*`, `Component colors/Utility/Brand/*` 등)을 그대로 사용. 임의 변형이나 외부 브랜드 색상 대입 금지
 
-#### DS-1 브랜드 컬러 Quick Reference (Blueprint에서 자주 사용)
+#### DS v1 브랜드 컬러 Quick Reference (Blueprint에서 자주 사용)
 | 용도 | 토큰 | HEX | RGBA (0-1) |
 |------|------|-----|------------|
 | 강조 배경(solid) | bg-brand-solid | #7F56D9 | {r:0.498, g:0.337, b:0.851, a:1} |
@@ -230,7 +230,7 @@ INSTANCE_SWAP properties use **component node IDs** (e.g. `"12:3822"`), NOT comp
 
 ### Julee App Pattern Reference (ds/JULEE_APP_PATTERNS.md)
 - **레이아웃·컴포넌트·인터랙션 패턴만 참고** — 화면 구조, 카드 레이아웃, 탐색 흐름, 제스처 등 UX 패턴 적용 가능
-- **색상 패턴은 완전 무시** — 외부 색상 팔레트, 배경색, 텍스트 색, 브랜드 컬러는 참고하지 않음. 색상은 항상 DS-1 토큰 전용
+- **색상 패턴은 완전 무시** — 외부 색상 팔레트, 배경색, 텍스트 색, 브랜드 컬러는 참고하지 않음. 색상은 항상 DS v1 토큰 전용
 - 참고 가능 항목: 카드 구조, 필터 칩 배치, 정렬 바, FAB 위치, 탭바 구성, 빈 상태 레이아웃, 로딩 패턴, 타이포 계층 구조
 
 ### Mobile Screen Size
@@ -433,7 +433,7 @@ Root (VERTICAL, FIXED 402×874)
 - hex 변환: `#FF6B6B` → `{r: 1.0, g: 0.42, b: 0.42, a: 1.0}` (각 채널 ÷ 255)
 - 반투명: opacity 값을 a에 반영 (예: `#FFFFFF20` → `{r: 1, g: 1, b: 1, a: 0.125}`)
 - **CTA/강조 색상은 반드시 DS brand 컬러 사용**: `{r:0.498, g:0.337, b:0.851, a:1}` (#7F56D9)
-- **임의의 오렌지/파랑/초록 등 CTA 색상 사용 금지** — 위 Colors 섹션의 "DS-1 브랜드 컬러 Quick Reference" 참조
+- **임의의 오렌지/파랑/초록 등 CTA 색상 사용 금지** — 위 Colors 섹션의 "DS v1 브랜드 컬러 Quick Reference" 참조
 
 ### 소요시간 트래킹 (필수)
 - 사용자가 "피그마로 보내줘"를 말한 시점부터 **시작 시각 기록**

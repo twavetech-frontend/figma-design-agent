@@ -17,7 +17,7 @@
 
 **참고**:
 - `convert_pen_to_figma` 사용 금지 (deprecated) — 런타임에서 차단됨
-- DS-1 컴포넌트 활용 + 아이콘 시맨틱 매핑 (Pencil 아이콘 → DS-1 아이콘)
+- DS v1 컴포넌트 활용 + 아이콘 시맨틱 매핑 (Pencil 아이콘 → DS v1 아이콘)
 - `figma-tools` MCP 서버는 Electron 앱의 HTTP MCP (port 8769) — 앱 실행 필요
 
 ---

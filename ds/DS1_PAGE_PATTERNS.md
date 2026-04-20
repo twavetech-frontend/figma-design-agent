@@ -1,4 +1,4 @@
-# DS-1 Page Patterns — Informational Pages 01
+# DS v1 Page Patterns — Informational Pages 01
 
 > **Source**: DS-v7 `2NMKkf5U1AKDCkkUWqelFl` / Page `1686:419020` (❖ Informational pages 01)
 > **총 78 프레임**: 19 페이지 유형 × Light/Dark × Mobile(375)/Desktop(1440)

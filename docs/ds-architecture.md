@@ -1,6 +1,6 @@
 # Design System Architecture
 
-## Current DS: DS-1
+## Current DS: DS v1
 
 | 파일 | 역할 | 생성 방법 |
 |------|------|-----------|
@@ -68,7 +68,7 @@ DS 라이브러리에서 Text Style/Effect Style을 변경한 후:
 
 ## Text Style 바인딩 체계
 
-DS-1은 Typography **Variables** (fontSize, lineHeight) + **Text Styles** 이중 시스템 사용.
+DS v1은 Typography **Variables** (fontSize, lineHeight) + **Text Styles** 이중 시스템 사용.
 둘 다 적용해야 완전한 DS 연결:
 - `set_bound_variables` → fontSize, lineHeight 변수 바인딩
 - `set_text_style_id` → Text Style 바인딩 (DESIGN_TOKENS.md에서 Style ID 참조)

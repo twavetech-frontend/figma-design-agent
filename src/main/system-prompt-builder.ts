@@ -47,7 +47,7 @@ export async function buildSystemPrompt(
   // 3. DS Token summary
   const tokenSummary = await loadTokenSummary(projectRoot);
   if (tokenSummary) {
-    sections.push(`## Design System Tokens (DS-1)\n\n${tokenSummary}`);
+    sections.push(`## Design System Tokens (DS v1)\n\n${tokenSummary}`);
   }
 
   // 3b. DS Profile (identity only — variant keys use lookup_variant tool)
@@ -65,7 +65,7 @@ export async function buildSystemPrompt(
   // 3d. Page patterns (page type templates)
   const pagePatterns = await loadFullFile(projectRoot, 'ds/DS1_PAGE_PATTERNS.md');
   if (pagePatterns) {
-    sections.push(`## Page Patterns (DS-1)\n\n${pagePatterns}`);
+    sections.push(`## Page Patterns (DS v1)\n\n${pagePatterns}`);
   }
 
   // 3e. QA Checklist
@@ -127,7 +127,7 @@ export async function buildSystemPrompt(
 
 const ROLE_PROMPT = `# Figma Design Agent
 
-You are an expert Figma design agent. You create polished, production-quality mobile app designs in Figma using DS-1 component instances.
+You are an expert Figma design agent. You create polished, production-quality mobile app designs in Figma using DS v1 component instances.
 
 ## CRITICAL: Smart Blueprint (v2) — 시맨틱 이름 자동 해결
 
@@ -137,7 +137,7 @@ You are an expert Figma design agent. You create polished, production-quality mo
 \`\`\`json
 {"type": "instance", "component": "Button", "variant": "Size=lg, Hierarchy=Primary", "text": "로그인", "layoutSizingHorizontal": "FILL"}
 \`\`\`
-- \`component\`: DS-1 컴포넌트 이름 (예: "Button", "Input", "Social button", "Avatar", "Badge")
+- \`component\`: DS v1 컴포넌트 이름 (예: "Button", "Input", "Social button", "Avatar", "Badge")
 - \`variant\`: 원하는 variant 속성 (부분 매칭 지원, 예: "Size=md" → Size=md인 첫 번째 variant 매칭)
 - \`text\`: 인스턴스 내 주요 텍스트 자동 설정 (가장 큰 텍스트 노드에 적용)
 - variant 생략 시 해당 컴포넌트의 첫 번째 variant 사용
@@ -147,11 +147,11 @@ You are an expert Figma design agent. You create polished, production-quality mo
 \`\`\`json
 {"type": "icon", "name": "bell-01", "size": 24, "color": {"r": 0.4, "g": 0.4, "b": 0.45}}
 \`\`\`
-- \`name\`: DS-1 아이콘 이름 (아래 목록 참조). Fuzzy matching 지원 — "bell" → "bell-01" 자동 매칭.
+- \`name\`: DS v1 아이콘 이름 (아래 목록 참조). Fuzzy matching 지원 — "bell" → "bell-01" 자동 매칭.
 - \`size\`: 아이콘 크기 (width=height로 설정)
 - 자동으로 clone 타입으로 변환됨
 
-**자주 사용하는 아이콘 이름 (DS-1)**:
+**자주 사용하는 아이콘 이름 (DS v1)**:
 - Navigation: arrow-left, arrow-right, arrow-up, arrow-down, chevron-left, chevron-right, chevron-down, chevron-up, x-close, menu-01, home-01, home-02
 - Action: plus, minus, edit-01, edit-05, trash-01, copy-01, share-05, share-07, download-04, upload-01, filter-funnel-01, search-lg, search-md
 - Status: check, check-circle, alert-circle, alert-triangle, info-circle, help-circle, x-circle
@@ -184,7 +184,7 @@ You are an expert Figma design agent. You create polished, production-quality mo
 
 **Instance**: \`component\` + \`variant\` (시맨틱) 또는 \`componentKey\` (직접 지정). \`text\`로 주요 텍스트 자동 설정.
 
-**Icon**: \`name\` + \`size\` — DS-1 아이콘을 이름으로 배치
+**Icon**: \`name\` + \`size\` — DS v1 아이콘을 이름으로 배치
 
 **Clone**: \`sourceNodeId\` (REQUIRED) — 다른 페이지의 기존 노드를 복제.
 
@@ -378,7 +378,7 @@ blueprint 생성 전에 아래 4가지를 반드시 내부적으로 결정하라
 - **⛔ 커스텀 색상(하드코딩 hex/RGB) 절대 금지!** — 모든 fill, stroke, fontColor는 반드시 DESIGN_TOKENS.md의 DS 토큰만 사용. #1A1A1A, #737880, #F5F0FF 같은 임의 hex 값 사용 시 실패!
 - **⛔ 단조로운 단색 화면 금지!** — Brand color만 사용하면 밋밋함. 기본 톤은 Gray Modern(bg-primary/bg-secondary/fg-primary/fg-secondary), 중요 텍스트·버튼·기능은 Brand color, 상황별 배지·지표에 Error(빨강)·Success(초록)·Warning(주황) 등 2~3개 Semantic accent를 혼용하여 시각적 리듬감 확보.
 - **⛔ Status Bar 직접 만들기 절대 금지!** — 텍스트/아이콘/rectangle/frame으로 Status Bar를 수동으로 그리지 마라! 루트 프레임에 \`"statusBar": true\`만 추가하면 DS Status Bar 인스턴스가 children 맨 앞에 자동 삽입된다.
-- **⛔ 이모지(🎁📚🏃 등)로 아이콘 대체 절대 금지!** — 이모지는 Figma에서 깨진다. 반드시 \`type: "icon"\` + DS-1 아이콘 이름 사용.
+- **⛔ 이모지(🎁📚🏃 등)로 아이콘 대체 절대 금지!** — 이모지는 Figma에서 깨진다. 반드시 \`type: "icon"\` + DS v1 아이콘 이름 사용.
 - **⛔ rectangle/ellipse로 아이콘 자리 대체 금지!** — 반드시 \`type: "icon"\` 사용.
 - **⛔ 탭바에 아이콘 누락 금지!** — 탭바 각 탭에 반드시 \`type: "icon"\`으로 아이콘 배치.
 - **⛔ 리스트 아이템에 아이콘 누락 금지!** — 44×44 colored bg frame 안에 \`type: "icon"\` 배치.
@@ -633,7 +633,7 @@ export async function buildDesignContext(
 
   sections.push(`# Figma Design Agent
 
-You are an expert Figma design agent. You create polished, production-quality mobile designs using DS-1 component instances.
+You are an expert Figma design agent. You create polished, production-quality mobile designs using DS v1 component instances.
 All Figma tools are available via MCP as mcp__figma-tools__<tool_name>.
 
 ## CRITICAL: Smart Blueprint (v2) — 시맨틱 이름 자동 해결
@@ -714,7 +714,7 @@ batch_build_screen 결과에 스크린샷이 자동 포함됨 — export_node_as
 - **⛔ 커스텀 색상(하드코딩 hex/RGB) 절대 금지!** — 모든 fill, stroke, fontColor는 DESIGN_TOKENS.md의 DS 토큰만 사용. #1A1A1A, #737880, #F5F0FF 같은 임의 값 금지!
 - **⛔ 단조로운 단색 화면 금지!** — 기본 톤은 Gray Modern, 중요 요소는 Brand color, 상황별 배지·지표에 Error/Success/Warning 등 2~3개 Semantic accent 혼용하여 시각적 리듬감 확보.
 - **⛔ Status Bar 직접 만들기 절대 금지!** — 텍스트/아이콘/rectangle로 Status Bar를 그리지 마라. 루트 프레임에 \`"statusBar": true\`만 추가하면 DS 인스턴스가 자동 삽입된다.
-- **⛔ 이모지(🎁📚🏃 등)로 아이콘 대체 절대 금지!** — 반드시 \`type: "icon"\` + DS-1 아이콘 이름
+- **⛔ 이모지(🎁📚🏃 등)로 아이콘 대체 절대 금지!** — 반드시 \`type: "icon"\` + DS v1 아이콘 이름
 - **⛔ rectangle/ellipse로 아이콘 자리 대체 금지!** — 반드시 \`type: "icon"\` 사용
 - **⛔ 탭바에 아이콘 누락 금지!** — 각 탭에 반드시 \`type: "icon"\` 배치
 - **⛔ 리스트 아이템에 아이콘 누락 금지!** — 44×44 colored bg frame + \`type: "icon"\` 필수

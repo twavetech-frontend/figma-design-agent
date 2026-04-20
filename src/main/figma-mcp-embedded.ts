@@ -653,7 +653,7 @@ Node types and their properties:
 - ellipse: x, y, width, height, name, fill, stroke, layoutSizingHorizontal, layoutSizingVertical
 - instance: x, y, name, componentKey (REQUIRED — from lookup_variant or pre-loaded keys), width, height, layoutSizingHorizontal, layoutSizingVertical, textOverrides({suffix: text})
 - clone: name, sourceNodeId (REQUIRED), width, height, layoutSizingHorizontal, layoutSizingVertical
-- icon: name (icon name — Lucide or DS-1 names accepted), size (default 24), iconColor({r,g,b,a})
+- icon: name (icon name — Lucide or DS v1 names accepted), size (default 24), iconColor({r,g,b,a})
 - svg_icon: (auto-generated from type:"icon", do not use directly) SVG-based icon from Untitled UI GitHub.
 
 textOverrides (instance only): { "suffix": "new text" } — Sets text on instance children using Suffix Map.
@@ -1173,7 +1173,7 @@ export function resolveIconNodeId(iconName: string): string | null {
     const exact = allNames.find(n => n.toLowerCase() === nameLower);
     if (exact) return icons[exact];
 
-    // 2.5 Lucide → DS-1 name mapping (before fuzzy matching)
+    // 2.5 Lucide → DS v1 name mapping (before fuzzy matching)
     const lucideMapped = LUCIDE_TO_DS1_MAP[nameLower];
     if (lucideMapped) {
       const mappedId = icons[lucideMapped] || icons[lucideMapped.toLowerCase()];
@@ -1241,7 +1241,7 @@ export function resolveIconNodeId(iconName: string): string | null {
 }
 
 /**
- * Resolve icon name to DS-1 icon name (not node ID).
+ * Resolve icon name to DS v1 icon name (not node ID).
  * Reuses the same 7-step fuzzy matching + Lucide mapping from resolveIconNodeId.
  */
 export function resolveIconDs1Name(iconName: string): string | null {
@@ -1296,9 +1296,9 @@ export function resolveIconDs1Name(iconName: string): string | null {
   }
 }
 
-/** Lucide 아이콘명 → DS-1 아이콘명 매핑 (이름이 다른 것만, 퍼지 매칭이 처리하는 이름은 제외) */
+/** Lucide 아이콘명 → DS v1 아이콘명 매핑 (이름이 다른 것만, 퍼지 매칭이 처리하는 이름은 제외) */
 const LUCIDE_TO_DS1_MAP: Record<string, string> = {
-  // 완전 MISS되는 이름 (DS-1에 다른 이름으로 존재)
+  // 완전 MISS되는 이름 (DS v1에 다른 이름으로 존재)
   'house': 'home-01',
   'more-horizontal': 'dots-horizontal',
   'more-vertical': 'dots-vertical',
@@ -1924,7 +1924,7 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
   return root;
 }
 
-/** 이모지 → DS-1 아이콘 매핑 */
+/** 이모지 → DS v1 아이콘 매핑 */
 const EMOJI_TO_ICON_MAP: Record<string, string> = {
   '🏠': 'home-01', '🏡': 'home-01', '🏢': 'home-02',
   '🔍': 'search-lg', '🔎': 'search-lg',

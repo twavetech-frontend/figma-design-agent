@@ -941,7 +941,7 @@ def _pre_generate_single(spec: dict, api_key: str, output_dir: str) -> dict:
     is_hero = spec.get("isHero", False)
     explicit_2d = (spec.get("style") or "").lower() in ("2d", "tossface")
     # 소형 아이콘(≤32px)은 자동으로 2D — style 누락해도 안전
-    size = max(spec.get("width", 120), spec.get("height", 120))
+    size = max(spec.get("width") or 120, spec.get("height") or 120)
     is_2d = explicit_2d or (not is_hero and size <= 32)
     style = TOSSFACE_2D_STYLE if is_2d else (spec.get("style") or DEFAULT_3D_STYLE)
 

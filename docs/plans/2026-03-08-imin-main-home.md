@@ -6,7 +6,7 @@
 
 **Architecture:** Blueprint JSON → batch_build_screen → 후처리(Status Bar, Tab Bar ABSOLUTE, FILL 사이징) → Gemini 이미지 생성(병렬) → 이미지 적용 → DS 변수 바인딩 → QA 2회
 
-**Tech Stack:** Python figma_mcp_client.py, Gemini API (nano-banana-pro-preview), rembg, DS-1 토큰
+**Tech Stack:** Python figma_mcp_client.py, Gemini API (nano-banana-pro-preview), rembg, DS v1 토큰
 
 ---
 

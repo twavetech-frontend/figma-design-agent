@@ -193,7 +193,7 @@
 - DS에 정확한 색상이 없으면 가장 가까운 토큰으로 대체 (커스텀 hex 값 사용 금지)
 - Primitive 색상(Colors/Blue/500 등)은 라이브러리에 퍼블리시되지 않을 수 있음 → Semantic 토큰(Colors/Background/, Colors/Text/ 등) 또는 Component colors(Component colors/Utility/) 사용
 - **Color token은 반드시 DS 전용** — `DESIGN_TOKENS.md`의 Semantic/Component 토큰만 사용. 다른 앱 색상 팔레트나 hex 값을 참고해 직접 적용하는 행위 금지
-- **Brand color도 DS 전용** — DS-1의 brand 토큰(`Colors/Background/bg-brand-*`, `Colors/Foreground/fg-brand-*`, `Component colors/Utility/Brand/*` 등)을 그대로 사용. 임의 변형이나 외부 브랜드 색상 대입 금지
+- **Brand color도 DS 전용** — DS v1의 brand 토큰(`Colors/Background/bg-brand-*`, `Colors/Foreground/fg-brand-*`, `Component colors/Utility/Brand/*` 등)을 그대로 사용. 임의 변형이나 외부 브랜드 색상 대입 금지
 
 ### 브랜드 컬러 — $token() 참조 사용 (RGBA 하드코딩 금지)
 - **블루프린트에서 브랜드 컬러는 반드시 `$token()` 참조** — `"$token(bg-brand-solid)"`, `"$token(fg-brand-primary)"` 등. RGBA 직접 입력 금지

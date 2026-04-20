@@ -15,3 +15,9 @@ ds/.last_sync_sha
 
 # Icon SVG cache
 ds/.icon-cache/
+
+# 세션 임시 파일
+scripts/.mcp_session
+# 디자인 빌드 중간 산출물 (MEMORY 삭제 규칙)
+scripts/blueprint_assembled_*.json
+scripts/config_imin_*.json
