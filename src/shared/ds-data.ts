@@ -358,7 +358,7 @@ export function getComponentDocsSummary(): string | null {
 
 // ─── Component Docs Sync from GitHub Pages ──────────────────────────
 
-const DOCS_BASE = 'https://stresslee.github.io';
+const DOCS_BASE = 'https://twavetech-frontend.github.io';
 const DOCS_PREFIX = '/design-system-docs';
 
 export type DocsSyncProgress = (current: number, total: number, name: string) => void;
@@ -639,7 +639,7 @@ function fetchLatestSha(): Promise<string | null> {
   return new Promise((resolve) => {
     const options: https.RequestOptions = {
       hostname: 'api.github.com',
-      path: '/repos/stresslee/design-system/commits?path=tokens.json&per_page=1',
+      path: '/repos/twavetech-frontend/design-system/commits?path=tokens.json&per_page=1',
       method: 'GET',
       headers: {
         'User-Agent': 'figma-design-agent',
@@ -721,7 +721,7 @@ export function syncTokensFull(): void {
     // Since this is synchronous, we do a best-effort SHA store via execSync curl
     try {
       const result = execSync(
-        'curl -s -H "User-Agent: figma-design-agent" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/stresslee/design-system/commits?path=tokens.json&per_page=1"',
+        'curl -s -H "User-Agent: figma-design-agent" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/twavetech-frontend/design-system/commits?path=tokens.json&per_page=1"',
         { timeout: 10000, encoding: 'utf-8' },
       );
       const commits = JSON.parse(result) as Array<{ sha: string }>;

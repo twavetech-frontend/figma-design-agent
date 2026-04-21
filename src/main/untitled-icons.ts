@@ -4,14 +4,14 @@
  * Fetches icons-data.json index once, then retrieves individual SVG files
  * from the published docs site. Much faster than parsing npm package JS files.
  *
- * Source: https://stresslee.github.io/design-system-docs/icons/
+ * Source: https://twavetech-frontend.github.io/design-system-docs/icons/
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import https from 'https';
 
-const BASE_URL = 'https://stresslee.github.io/design-system-docs';
+const BASE_URL = 'https://twavetech-frontend.github.io/design-system-docs';
 const ICONS_DATA_URL = `${BASE_URL}/icons-data.json`;
 
 let projectRoot: string = join(__dirname, '..', '..');

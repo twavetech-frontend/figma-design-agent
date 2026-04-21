@@ -21,3 +21,9 @@ scripts/.mcp_session
 # 디자인 빌드 중간 산출물 (MEMORY 삭제 규칙)
 scripts/blueprint_assembled_*.json
 scripts/config_imin_*.json
+
+# Claude Code 로컬 세션
+.claude/projects/
+
+# 로컬 빌드 산출물
+artifacts/

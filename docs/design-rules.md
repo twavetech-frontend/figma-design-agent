@@ -52,7 +52,7 @@
     - **아이콘**: `$token(fg-brand-primary)` (브랜드 보라 #6938ef) — 텍스트보다 살짝 강조
     - **절대 금지**: 리본에 `bg-brand-section`, `bg-brand-solid` 등 짙은 배경 + 흰색 텍스트 조합. 이 스타일은 히어로 배너 전용
 13. **Tag/Chip/Badge는 반드시 width: HUG** — 태그, 칩, 배지, 인디케이터 등 라벨 컨테이너는 **예외 없이** `layoutSizingHorizontal: "HUG"` 사용. FILL이 되면 부모 너비 전체로 늘어나 디자인이 깨짐. 히어로 배너 내부 태그(EVENT 등), 이율 태그, 보너스 태그, 탭 필터, 카루셀 인디케이터 모두 해당. Blueprint에서 태그/칩 프레임에 `layoutSizingHorizontal`을 명시하지 않거나 `"FILL"`로 설정하는 것은 금지
-14. **섹션 내 탭 메뉴는 DS Tabs 컴포넌트(Underline) 스타일 사용** — 추천 스테이지 등 섹션 내 필터/탭 전환 UI는 pill/버튼 스타일이 아닌 **Underline 스타일** 적용. DS 참조: `https://stresslee.github.io/design-system-docs/components/tabs`
+14. **섹션 내 탭 메뉴는 DS Tabs 컴포넌트(Underline) 스타일 사용** — 추천 스테이지 등 섹션 내 필터/탭 전환 UI는 pill/버튼 스타일이 아닌 **Underline 스타일** 적용. DS 참조: `https://twavetech-frontend.github.io/design-system-docs/components/tabs`
     - **Tab Row (컨테이너)**: HORIZONTAL auto-layout, `itemSpacing: 8`, 배경 fill 없음(투명), **하단 stroke 1px `$token(border-secondary)` (inside)** — 전체 너비에 걸친 회색 베이스라인 역할. `layoutSizingHorizontal: "FILL"` (부모 너비 채움)
     - **Active 탭**: VERTICAL auto-layout, HUG×HUG, padding `T4/B0/L4/R4`, `itemSpacing: 8`, 배경 투명, cornerRadius 0. 자식: ① 텍스트 `$token(fg-brand-primary)` + fontWeight 600(SemiBold) ② Underline bar (height 2px, `layoutSizingHorizontal: "FILL"`, brand 컬러 fill `$token(bg-brand-solid)`)
     - **Inactive 탭**: VERTICAL auto-layout, HUG×FILL (세로 FILL — Active 탭 높이에 맞춰 베이스라인 정렬), padding `T4/B0/L4/R4`, 배경 투명, cornerRadius 0. 자식: 텍스트 `$token(fg-tertiary)` + fontWeight 500(Medium), 언더라인 없음

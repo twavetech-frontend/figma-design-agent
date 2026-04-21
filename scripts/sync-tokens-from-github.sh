@@ -1,7 +1,7 @@
 #!/bin/bash
 # sync-tokens-from-github.sh
 #
-# GitHub (stresslee/design-system)에서 최신 토큰을 가져와
+# GitHub (twavetech-frontend/design-system)에서 최신 토큰을 가져와
 # ds/DESIGN_TOKENS.md, ds/TOKEN_MAP.json을 재생성합니다.
 #
 # 사용법:
@@ -11,7 +11,7 @@
 
 set -e
 
-REPO_RAW="https://raw.githubusercontent.com/stresslee/design-system/main"
+REPO_RAW="https://raw.githubusercontent.com/twavetech-frontend/design-system/main"
 TMP_DIR="/tmp/ds-sync-$$"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"

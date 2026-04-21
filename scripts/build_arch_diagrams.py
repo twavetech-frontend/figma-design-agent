@@ -191,7 +191,7 @@ def section3():
                 arr(),
                 bx("Git","git push","자동 동기화","tokens.json 파일\ndesign-system 레포에\n자동 커밋/푸시",{"r":0.93,"g":0.93,"b":0.93,"a":1},300),
                 arr(),
-                bx("GH","GitHub Repository","stresslee/design-system","tokens.json (원본 토큰)\nsync-to-agent.js (변환기)\n단일 진실 소스 (SSOT)",{"r":0.92,"g":0.92,"b":0.95,"a":1},350),
+                bx("GH","GitHub Repository","twavetech-frontend/design-system","tokens.json (원본 토큰)\nsync-to-agent.js (변환기)\n단일 진실 소스 (SSOT)",{"r":0.92,"g":0.92,"b":0.95,"a":1},350),
             ]),
             hd("② 로컬 동기화","sync-tokens-from-github.sh — 디자인 생성 요청마다 매번 실행 (필수)"),
             hr("Sync",[
