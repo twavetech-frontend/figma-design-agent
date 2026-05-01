@@ -517,7 +517,7 @@ function setupIPC(tools: Map<string, import('../shared/types').ToolDefinition>):
       const Anthropic = (await import('@anthropic-ai/sdk')).default;
       const client = new Anthropic({ apiKey: key });
       await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-opus-4-7',
         max_tokens: 1,
         messages: [{ role: 'user', content: 'hi' }],
       });

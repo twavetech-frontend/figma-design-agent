@@ -205,7 +205,7 @@ export class AgentOrchestrator extends EventEmitter {
       delete cleanEnv.CLAUDECODE;
 
       const options: Record<string, unknown> = {
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-opus-4-7',
         systemPrompt: {
           type: 'preset',
           preset: 'claude_code',
@@ -217,12 +217,15 @@ export class AgentOrchestrator extends EventEmitter {
         allowDangerouslySkipPermissions: true,
         allowedTools: ['mcp__figma-tools__*'],
         disallowedTools: [
-          // Block ALL Claude Code built-in tools (this is a design-only agent)
-          // These tools don't work in the Electron app context and cause hangs
-          'Edit', 'Write', 'Bash', 'Read', 'Glob', 'Grep', 'Agent',
-          'Skill', 'EnterPlanMode', 'ExitPlanMode', 'AskUserQuestion',
-          'WebSearch', 'WebFetch', 'NotebookEdit', 'EnterWorktree',
+          // Block write/exec tools — design agent must not mutate the repo or run shell
+          'Edit', 'Write', 'Bash', 'NotebookEdit',
+          // Block other built-ins that don't work in the Electron context or are off-task
+          'Agent', 'Skill', 'EnterPlanMode', 'ExitPlanMode', 'AskUserQuestion',
+          'WebSearch', 'WebFetch', 'EnterWorktree',
           'TaskCreate', 'TaskUpdate', 'TaskList', 'TaskGet',
+          // NOTE: Read/Glob/Grep are intentionally ALLOWED — REFERENCE_SYSTEM_PROMPT
+          // requires reading docs/references/**/blueprint.json + sections-*.jsx + screenshot.png
+          // to clone reference structure (the "scratch polished" rule depends on this).
           // Block individual creation tools — MUST use batch_build_screen instead
           'mcp__figma-tools__create_frame',
           'mcp__figma-tools__create_text',
@@ -624,7 +627,7 @@ export class AgentOrchestrator extends EventEmitter {
           }));
 
         const stream = this.directClient.messages.stream({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-opus-4-7',
           max_tokens: 16384,
           system: this.systemPrompt,
           messages: this.conversationHistory,

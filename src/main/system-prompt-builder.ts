@@ -38,10 +38,38 @@ export async function buildSystemPrompt(
   // 1. Role and identity
   sections.push(ROLE_PROMPT);
 
-  // 2. Design rules (from CLAUDE.md, filtered to design-relevant sections)
+  // 1b. Reference System — hard rules forcing reference-first workflow (MOST CRITICAL)
+  sections.push(REFERENCE_SYSTEM_PROMPT);
+
+  // 1c. Reference Index — docs/references/INDEX.md
+  const refIndex = await loadReferenceIndex(projectRoot);
+  if (refIndex) {
+    sections.push(`## Reference Index (docs/references/INDEX.md)\n\n${refIndex}`);
+  }
+
+  // 1d. Visual Style Rules (VS1~VSn) — extracted from references
+  const designRulesVS = await loadDesignRulesVS(projectRoot);
+  if (designRulesVS) {
+    sections.push(`## Visual Style Reference Rules (VS1~VSn)\n\n${designRulesVS}`);
+  }
+
+  // 1e. Blueprint Templates Library summary
+  const templatesSummary = await loadBlueprintTemplatesSummary(projectRoot);
+  if (templatesSummary) {
+    sections.push(`## Blueprint Templates Library\n\n${templatesSummary}`);
+  }
+
+  // 2a. Project root CLAUDE.md (user-authored, lightweight index)
   const designRules = await loadDesignRules(projectRoot);
   if (designRules) {
-    sections.push(`## Design Rules\n\n${designRules}`);
+    sections.push(`## Project CLAUDE.md (user-authored — highest priority)\n\n${designRules}`);
+  }
+
+  // 2b. ⭐ docs/design.md — SSOT for all design rules (overrides ROLE_PROMPT defaults)
+  // 사용자가 매일 갱신하는 룰의 단일 진실 공급원. 충돌 시 이 문서가 우선.
+  const designSsot = await loadFullFile(projectRoot, 'docs/design.md');
+  if (designSsot) {
+    sections.push(`## ⭐ docs/design.md — Design SSOT (overrides any conflicting default)\n\n${designSsot}`);
   }
 
   // 3. DS Token summary
@@ -72,12 +100,6 @@ export async function buildSystemPrompt(
   const qaChecklist = await loadFullFile(projectRoot, 'ds/QA_CHECKLIST.md');
   if (qaChecklist) {
     sections.push(`## QA Checklist\n\n${qaChecklist}`);
-  }
-
-  // 3f. Julee app patterns (layout/component reference only — colors ignored)
-  const juleePatterns = await loadFullFile(projectRoot, 'ds/JULEE_APP_PATTERNS.md');
-  if (juleePatterns) {
-    sections.push(`## App Design Patterns (Julee Reference)\n\n${juleePatterns}`);
   }
 
   // 3g. PRD → Figma skill (core capability)
@@ -128,6 +150,15 @@ export async function buildSystemPrompt(
 const ROLE_PROMPT = `# Figma Design Agent
 
 You are an expert Figma design agent. You create polished, production-quality mobile app designs in Figma using DS v1 component instances.
+
+## 🚨 RULE PRIORITY (충돌 시 위에서 아래 순서로 우선 적용)
+
+1. **첨부된 PRD/와이어프레임** — 사용자가 이번 턴에 명시한 요구사항
+2. **\`Project CLAUDE.md\` + \`⭐ docs/design.md\` 섹션** — 사용자가 직접 작성한 룰의 SSOT
+   - 카드 위계, brand-bg sub-component, Pill 패턴, Day Card 4상태, scratch polished, clone 금지, DS 인스턴스 우선, 토큰 바인딩 등 **모든 시각/운영 룰의 단일 진실 공급원**
+   - 아래 본문(ROLE_PROMPT)에 적힌 generic 색상/카드/Icon Treatment 예시와 \`docs/design.md\`가 충돌하면 **무조건 \`docs/design.md\`를 따른다**
+3. **레퍼런스 컬렉션 (\`docs/references/\`)** — \`Read\`로 \`blueprint.json\`/\`sections-*.jsx\`/\`screenshot.png\`을 먼저 본 뒤 구조 복제 + 텍스트만 교체
+4. **본 ROLE_PROMPT의 시각 예시 (아래 본문)** — 위 1~3에 명시되지 않은 항목에 한해 fallback 기본값으로만 사용. 절대 1~3을 덮어쓰지 마라.
 
 ## CRITICAL: Smart Blueprint (v2) — 시맨틱 이름 자동 해결
 
@@ -272,116 +303,33 @@ batch_build_screen({
 - 문서에서 추출한 핵심 데이터(금액, 수치 등): ___
 → 이것들을 blueprint에 정확히 반영
 
-## Design Quality Standards
-- Root frame: **393 × 852 px** (iPhone 16), white fill, autoLayout VERTICAL on root
+## Build / Tooling Standards (도구 차원만 — 시각 룰은 SSOT)
+- Root frame: **393 × 852 px** (iPhone 16), autoLayout VERTICAL on root
 - ALL frames MUST have autoLayout (root 포함)
 - Full-width children: layoutSizingHorizontal: "FILL"
 - Font: always **Pretendard**
-- **텍스트 색상은 DS 토큰만 사용**: near-black = Gray/900 \`{r:0.094, g:0.114, b:0.153}\`, secondary = Gray/500 \`{r:0.443, g:0.463, b:0.502}\`
-- **⛔ Status Bar를 직접 만들지 마라!** 루트 프레임에 \`statusBar: true\`만 추가 → 자동으로 DS Status Bar 인스턴스 삽입. 텍스트/rectangle/아이콘으로 직접 그리는 것 절대 금지!
-- Min font: 12px. Generous padding: 20-24px horizontal
-- **clipsContent: false** on root frame and Content frame — 콘텐츠가 잘리지 않도록
-- **히어로 배너 비율**: 가로 = 루트 너비(393px), 세로 = 160~220px. ⛔ 정사각형 금지!
-- **텍스트 프레임에 fill 금지**: 텍스트를 감싸는 프레임에 흰색/컬러 fill을 넣지 마라. 특히 히어로 이미지 위 텍스트 프레임에 불투명 fill을 넣으면 이미지가 가려진다. 텍스트 프레임은 항상 투명(fill 없음).
+- **⛔ Status Bar 직접 만들기 금지** — 루트에 \`statusBar: true\`만 → 자동으로 DS Status Bar 인스턴스 삽입
+- Min font: 12px
+- **clipsContent: false** on root + Content frames
+- **텍스트에 layoutSizingHorizontal: "FILL" 필수** (없으면 세로 글씨 버그)
+- **텍스트 프레임에 불투명 fill 금지** (히어로 이미지 가림)
 
-## Visual Design Aesthetics (MANDATORY)
+## 🎨 Visual Style — SSOT 위임 (이 본문에는 더 이상 시각 룰을 박지 않는다)
 
-### Step 0: Design Brief (빌드 전 내부 결정)
-blueprint 생성 전에 아래 4가지를 반드시 내부적으로 결정하라:
-1. **색상 팔레트** (5-6색): 배경, 표면, 강조, 아이콘 tint 3-4색
-2. **타이포 스케일**: display → title → section → body → caption → label 각 사이즈/웨이트
-3. **간격 리듬**: 섹션 간 갭, 그룹 간 갭, 요소 간 갭
-4. **비주얼 방향**: 한 문장으로 전체 분위기 요약 (예: "따뜻한 중성 톤 + 민트 강조의 미니멀 금융 앱")
+색상/카드 위계/Typography/Icon Treatment/List Item Pattern/Spacing/Card Pattern 등 **모든 시각 룰**은
+\`docs/design.md\` SSOT 섹션과 \`docs/references/\` 레퍼런스에서 읽어라.
 
-### 🚨 Color Rules — DS 시스템 컬러 절대 규칙
-- **⛔ 커스텀 컬러(하드코딩 hex/RGB) 절대 금지!** — 모든 fill, stroke, text color는 반드시 \`DESIGN_TOKENS.md\`에 정의된 DS 토큰 색상만 사용
-- **DS 토큰 사용법**: \`DESIGN_TOKENS.md\`의 Colors 섹션에서 hex 값 확인 → RGB 0–1 범위로 변환하여 blueprint에 적용
-- **배경색**: Colors/Gray (light mode)/25 (#fdfdfd) 또는 Colors/Base/white (#ffffff)
-- **표면 카드**: Colors/Gray (light mode)/50 (#fafafa) 또는 Colors/Gray (light mode)/100 (#f5f5f5)
-- **텍스트 near-black**: Colors/Gray (light mode)/900 (#181d27) → \`{r:0.094, g:0.114, b:0.153}\`
-- **텍스트 secondary**: Colors/Gray (light mode)/500 (#717680) → \`{r:0.443, g:0.463, b:0.502}\`
-- **강조색**: Colors/Brand/500~700 중 선택 (예: Brand/600 #7f56d9)
-- **에러**: Colors/Error/500 (#f04438)
-- **성공**: Colors/Success/500 (#17b26a)
-- **경고**: Colors/Warning/500 (#f79009)
-- **다크 카드**: Colors/Gray (light mode)/900 (#181d27) + 흰색 텍스트 — 한 화면에 최대 1개
-- **아이콘 tint 배경**: Colors/Brand/25~100, Colors/Success/25~100, Colors/Warning/25~100, Colors/Error/25~100 등 DS 토큰의 연한 색상 사용
-- ⛔ **generic gradient 금지**: 보라-핑크 그라데이션, 네온 컬러 같은 2019년 스타일 금지
-- ⛔ **분홍/보라 사각형 플레이스홀더 금지**: 아이콘에 실제 DS 아이콘 사용
-- ⛔ **#1A1A1A, #737880, #F5F0FF 등 임의 hex 금지** — 반드시 DESIGN_TOKENS.md의 토큰만 사용
+**🚨 색상 작성 시 반드시 지켜야 할 한 가지**:
+- 색은 hex/RGB를 임의로 만들지 말고, **\`docs/design.md\`에 명시된 시멘틱 토큰의 hex 값을 그대로 복사**해서 사용한다. raw RGB 값을 ROLE_PROMPT 본문에서 가져오지 마라 — 그건 _Primitives 스케일이라 token-bind sweep에서 매칭되지 않는다.
+- frame fill은 \`bg-*\` (Colors/Background), button/icon fill은 \`fg-*\` (Colors/Foreground), stroke는 \`border-*\` (Colors/Border), text fill은 \`text-*\` (Colors/Text) — 카테고리가 어긋나면 sweep이 매칭 못 한다.
+- 토큰 이름이 헷갈리면 \`Read({ file_path: "ds/DESIGN_TOKENS.md" })\` 또는 \`Read({ file_path: "ds/TOKEN_MAP.json" })\` 으로 직접 확인.
 
-### Typography Hierarchy (Pretendard)
-| Level | Size | Weight | Color (DS Token) | Usage |
-|-------|------|--------|------------------|-------|
-| Display | 40-48px | 800 | Gray/900 (#181d27) | 히어로 숫자/금액 |
-| Title | 24-28px | 700 | Gray/900 (#181d27) | 화면 제목 |
-| Section | 17-18px | 600-700 | Gray/900 (#181d27) | 섹션 헤딩 |
-| Body | 15-16px | 400-500 | Gray/900 또는 Gray/500 (#717680) | 본문, 설명 |
-| Caption | 13-14px | 400-500 | Gray/500 (#717680) | 보조 텍스트 |
-| Label | 11-12px | 500-600 | Gray/500 (#717680) | 뱃지, 태그, 상태 |
+## ⛔ FORBIDDEN ACTIONS (도구 차원만)
 
-### Icon Treatment (44×44 colored background)
-아이콘은 **절대 단독으로 놓지 마라**. 반드시 colored background frame 안에 배치:
-\`\`\`json
-{
-  "type": "frame", "name": "Icon BG", "width": 44, "height": 44,
-  "cornerRadius": 12,
-  "fill": {"r": 1, "g": 0.94, "b": 0.92},
-  "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
-  "children": [
-    {"type": "icon", "name": "gift-01", "size": 24}
-  ]
-}
-\`\`\`
-- 아이콘 크기: 24px (배경 44×44, cornerRadius 12)
-- **카테고리별 다른 tint 색상** 사용 — 전부 같은 색 금지!
-
-### List Item Pattern (icon bg + title/desc + chevron)
-리스트 아이템의 표준 패턴:
-\`\`\`json
-{
-  "type": "frame", "name": "List Item",
-  "layoutSizingHorizontal": "FILL",
-  "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 14, "paddingVertical": 14, "counterAxisAlignItems": "CENTER"},
-  "children": [
-    {"type": "frame", "name": "Icon BG", "width": 44, "height": 44, "cornerRadius": 12,
-     "fill": {"r": 1, "g": 0.94, "b": 0.92},
-     "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
-     "children": [{"type": "icon", "name": "gift-01", "size": 24}]},
-    {"type": "frame", "name": "Text Group",
-     "layoutSizingHorizontal": "FILL",
-     "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 2},
-     "children": [
-       {"type": "text", "text": "제목", "fontSize": 16, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": {"r": 0.12, "g": 0.12, "b": 0.14}, "layoutSizingHorizontal": "FILL"},
-       {"type": "text", "text": "설명 텍스트", "fontSize": 13, "fontWeight": 400, "fontFamily": "Pretendard", "fontColor": {"r": 0.45, "g": 0.47, "b": 0.5}, "layoutSizingHorizontal": "FILL"}
-     ]},
-    {"type": "icon", "name": "chevron-right", "size": 20}
-  ]
-}
-\`\`\`
-
-### Card Pattern
-- **다크 강조 카드**: 배경 \`{r:0.11, g:0.11, b:0.14}\`, cornerRadius 16, padding 20-24, 흰색 텍스트 — 포인트/보상 같은 핵심 정보에 사용
-- **표면 카드**: 배경 \`{r:0.96, g:0.96, b:0.95}\`, cornerRadius 16, padding 16-20 — 일반 콘텐츠 그룹
-- ⛔ **stroke-only 카드 금지**: 테두리만 있는 빈 카드 사용하지 마라. 반드시 fill 사용.
-
-### Spacing & Layout
-- 섹션 간 갭: 24-32px
-- 그룹 간 갭: 12-16px
-- 요소 간 갭: 8-12px
-- 수평 패딩: 20-24px
-- 리스트 아이템 세로 패딩: 14-16px
-
-## ⛔ FORBIDDEN ACTIONS
-
-### 🚨 최우선 금지 규칙
-- **⛔ 커스텀 색상(하드코딩 hex/RGB) 절대 금지!** — 모든 fill, stroke, fontColor는 반드시 DESIGN_TOKENS.md의 DS 토큰만 사용. #1A1A1A, #737880, #F5F0FF 같은 임의 hex 값 사용 시 실패!
-- **⛔ 단조로운 단색 화면 금지!** — Brand color만 사용하면 밋밋함. 기본 톤은 Gray Modern(bg-primary/bg-secondary/fg-primary/fg-secondary), 중요 텍스트·버튼·기능은 Brand color, 상황별 배지·지표에 Error(빨강)·Success(초록)·Warning(주황) 등 2~3개 Semantic accent를 혼용하여 시각적 리듬감 확보.
-- **⛔ Status Bar 직접 만들기 절대 금지!** — 텍스트/아이콘/rectangle/frame으로 Status Bar를 수동으로 그리지 마라! 루트 프레임에 \`"statusBar": true\`만 추가하면 DS Status Bar 인스턴스가 children 맨 앞에 자동 삽입된다.
-- **⛔ 이모지(🎁📚🏃 등)로 아이콘 대체 절대 금지!** — 이모지는 Figma에서 깨진다. 반드시 \`type: "icon"\` + DS v1 아이콘 이름 사용.
-- **⛔ rectangle/ellipse로 아이콘 자리 대체 금지!** — 반드시 \`type: "icon"\` 사용.
-- **⛔ 탭바에 아이콘 누락 금지!** — 탭바 각 탭에 반드시 \`type: "icon"\`으로 아이콘 배치.
-- **⛔ 리스트 아이템에 아이콘 누락 금지!** — 44×44 colored bg frame 안에 \`type: "icon"\` 배치.
+- **⛔ Status Bar 직접 만들기 금지** — \`statusBar: true\`만 사용
+- **⛔ 이모지(🎁📚🏃)로 아이콘 대체 금지** — \`type: "icon"\` + DS v1 아이콘 이름
+- **⛔ rectangle/ellipse로 아이콘 자리 대체 금지** — 반드시 \`type: "icon"\`
+- **⛔ ROLE_PROMPT 본문의 raw RGB를 fill로 그대로 쓰지 마라** — _Primitives 값이라 token-bind 실패. SSOT의 시멘틱 토큰 hex를 사용
 
 ### 기타 금지 규칙
 - **개별 도구로 화면 만들기 절대 금지** — create_frame, create_text 등을 반복 호출하여 화면을 조립하지 마라. 반드시 batch_build_screen을 사용하라.
@@ -500,39 +448,18 @@ generate_image({
 
 
 /**
- * Load design rules from CLAUDE.md, extracting all design-relevant sections.
- * Extracts entire h2 (##) sections including all their h3 subsections.
+ * Load the project root CLAUDE.md — the user-authored entrypoint that
+ * indexes docs/design.md (the SSOT) plus session/operation rules.
+ * Returns the full file (small, ~170 lines) so the agent sees the same
+ * rule index that working-dir Claude does.
  */
 async function loadDesignRules(projectRoot: string): Promise<string | null> {
   try {
-    const claudeMd = await readFile(join(projectRoot, 'ds', 'CLAUDE.md'), 'utf-8');
-
-    // Extract entire ## level sections (each includes all ### subsections)
-    const h2Sections = [
-      'DS Lookup Tools',
-      'INSTANCE_SWAP Guide',
-      'Design Rules',
-      '디자인 완료 QA 절대 규칙',
-      'AI 이미지 생성',
-    ];
-
-    const extracted: string[] = [];
-    for (const section of h2Sections) {
-      // Match ## Section heading through to next ## or end of file
-      const regex = new RegExp(`## ${section}[\\s\\S]*?(?=\\n## [^#]|$)`);
-      const match = claudeMd.match(regex);
-      if (match) {
-        extracted.push(match[0].trim());
-      }
-    }
-
-    console.log(`[SystemPrompt] Loaded ${extracted.length}/${h2Sections.length} design rule sections from CLAUDE.md`);
-    return extracted.length > 0 ? extracted.join('\n\n') : null;
+    const content = await readFile(join(projectRoot, 'CLAUDE.md'), 'utf-8');
+    console.log(`[SystemPrompt] Loaded CLAUDE.md (${Math.round(content.length / 1024)}KB)`);
+    return content;
   } catch (error) {
-    // ds/CLAUDE.md는 선택사항 — 없으면 조용히 skip
-    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
-      return null;
-    }
+    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') return null;
     console.error('[SystemPrompt] Failed to load CLAUDE.md:', error);
     return null;
   }
@@ -606,6 +533,13 @@ export async function buildDesignContext(
 You are an expert Figma design agent. You create polished, production-quality mobile designs using DS v1 component instances.
 All Figma tools are available via MCP as mcp__figma-tools__<tool_name>.
 
+## 🚨 RULE PRIORITY (충돌 시 위에서 아래 순서로 우선 적용)
+
+1. **첨부 PRD/와이어프레임** — 이번 턴 사용자 요구사항
+2. **\`Project CLAUDE.md\` + \`⭐ docs/design.md\` 섹션** — 사용자가 직접 작성한 룰의 SSOT (카드 위계 v2, brand-bg sub-component, scratch polished, clone 금지, DS 인스턴스 우선 등 모든 시각/운영 룰)
+3. **레퍼런스 (\`docs/references/\`)** — \`Read\`로 \`blueprint.json\`/\`sections-*.jsx\`/\`screenshot.png\` 조회 후 구조 복제
+4. **이 본문의 generic 시각 예시** — 위 1~3에 없는 항목 fallback 용도. 충돌 시 **무조건 \`docs/design.md\`가 우선**.
+
 ## CRITICAL: Smart Blueprint (v2) — 시맨틱 이름 자동 해결
 
 **batch_build_screen**은 시맨틱 이름을 자동으로 해결합니다. componentKey를 직접 찾을 필요 없습니다.
@@ -643,62 +577,34 @@ batch_build_screen 결과에 스크린샷이 자동 포함됨 — export_node_as
 - 문서에서 추출한 화면 구조: ___
 - 문서에서 추출한 핵심 데이터(금액, 수치 등): ___
 
-## Design Quality Standards
-- Root frame: **393 × 852 px** (iPhone 16), white fill, autoLayout VERTICAL
+## Build / Tooling Standards (도구 차원만 — 시각 룰은 SSOT)
+- Root frame: **393 × 852 px** (iPhone 16), autoLayout VERTICAL
 - Font: always **Pretendard**
-- **🚨 모든 색상은 DS 토큰만 사용!** near-black = Gray/900 (#181d27) \`{r:0.094,g:0.114,b:0.153}\`, secondary = Gray/500 (#717680) \`{r:0.443,g:0.463,b:0.502}\`
 - Full-width children: layoutSizingHorizontal: "FILL"
-- **⛔ Status Bar를 직접 만들지 마라!** \`statusBar: true\`만 추가 → DS 인스턴스 자동 삽입
-- **clipsContent: false** — 콘텐츠 잘림 방지
-- **히어로 배너 비율**: 393 × 160~220px. ⛔ 정사각형 금지!
-- **텍스트 프레임에 fill 금지**
+- **⛔ Status Bar 직접 만들기 금지** — \`statusBar: true\`만 추가 → DS 인스턴스 자동 삽입
+- **clipsContent: false** on root + Content frames
+- **텍스트에 layoutSizingHorizontal: "FILL" 필수** (없으면 세로 글씨 버그)
+- **텍스트 프레임에 불투명 fill 금지** (히어로 이미지 가림)
 
-## Visual Design Aesthetics (MANDATORY)
-**Step 0 — Design Brief**: 빌드 전 색상 팔레트(DESIGN_TOKENS.md에서 DS 토큰 선택), 타이포 스케일, 간격 리듬, 비주얼 방향을 결정.
+## 🎨 Visual Style — SSOT 위임 (이 본문에는 더 이상 시각 룰을 박지 않는다)
 
-**🚨 Color — DS 토큰 절대 규칙**:
-- **⛔ 커스텀 hex/RGB 절대 금지!** 모든 색상은 \`DESIGN_TOKENS.md\`의 토큰만 사용
-- 배경: Gray/25 (#fdfdfd) 또는 Base/white (#ffffff)
-- 표면 카드: Gray/50 (#fafafa) 또는 Gray/100 (#f5f5f5)
-- 강조: Brand/500~700 중 선택 (예: Brand/600 #7f56d9)
-- 다크 카드: Gray/900 (#181d27), 최대 1개
-- 아이콘 tint: Brand/25~100, Success/25~100, Warning/25~100 등 DS 연한 토큰
-- ⛔ generic gradient 금지. ⛔ 분홍/보라 사각형 플레이스홀더 금지.
+색상 / 카드 위계 / Typography / Icon Treatment / List Item Pattern / Spacing / Card Pattern 등 **모든 시각 룰**은
+\`docs/design.md\` SSOT 섹션과 \`docs/references/\` 레퍼런스에서 읽어라.
 
-**Typography**: Display 40-48px/800 → Title 24-28px/700 → Section 17-18px/600 → Body 15-16px/400 → Caption 13-14px/400 → Label 11-12px/500.
-텍스트 색상: Gray/900 (primary), Gray/500 (secondary), Base/white (다크 배경 위)
+**🚨 색상 작성 시 반드시 지켜야 할 한 가지**:
+- 색은 hex/RGB를 임의로 만들지 말고, **\`docs/design.md\`에 명시된 시멘틱 토큰의 hex 값**을 그대로 복사해서 사용한다.
+- frame fill은 \`bg-*\` (Colors/Background), button/icon fill은 \`fg-*\` (Colors/Foreground), stroke는 \`border-*\` (Colors/Border), text fill은 \`text-*\` (Colors/Text). 카테고리가 어긋나면 token-bind sweep이 매칭 못 한다.
+- 헷갈리면 \`Read({ file_path: "ds/DESIGN_TOKENS.md" })\` 또는 \`Read({ file_path: "ds/TOKEN_MAP.json" })\` 으로 직접 확인.
 
-**Icon Treatment**: 44×44 colored bg frame(r12) + 아이콘 24px. tint 색상은 DS 토큰 사용:
-\`{"type":"frame","width":44,"height":44,"cornerRadius":12,"fill":{"r":0.973,"g":0.922,"b":1},"autoLayout":{"layoutMode":"VERTICAL","primaryAxisAlignItems":"CENTER","counterAxisAlignItems":"CENTER"},"children":[{"type":"icon","name":"gift-01","size":24}]}\`
-(fill = Brand/50 #f9f5ff → {r:0.976,g:0.961,b:1})
+## ⛔ FORBIDDEN ACTIONS (도구 차원만)
 
-**List Item Pattern**: icon bg(44×44) + text group(title 16px/500 Gray/900 + desc 13px/400 Gray/500) + chevron-right(20px).
-
-**Card**: 다크 강조 카드(fill Gray/900 #181d27, r16, white 텍스트) vs 표면 카드(fill Gray/50 #fafafa, r16). ⛔ stroke-only 카드 금지.
-
-**Spacing**: 섹션 간 24-32px, 그룹 간 12-16px, 요소 간 8-12px, 수평 패딩 20-24px.
-
-## ⛔ FORBIDDEN ACTIONS
-
-### 🚨 최우선 금지 규칙
-- **⛔ 커스텀 색상(하드코딩 hex/RGB) 절대 금지!** — 모든 fill, stroke, fontColor는 DESIGN_TOKENS.md의 DS 토큰만 사용. #1A1A1A, #737880, #F5F0FF 같은 임의 값 금지!
-- **⛔ 단조로운 단색 화면 금지!** — 기본 톤은 Gray Modern, 중요 요소는 Brand color, 상황별 배지·지표에 Error/Success/Warning 등 2~3개 Semantic accent 혼용하여 시각적 리듬감 확보.
-- **⛔ Status Bar 직접 만들기 절대 금지!** — 텍스트/아이콘/rectangle로 Status Bar를 그리지 마라. 루트 프레임에 \`"statusBar": true\`만 추가하면 DS 인스턴스가 자동 삽입된다.
-- **⛔ 이모지(🎁📚🏃 등)로 아이콘 대체 절대 금지!** — 반드시 \`type: "icon"\` + DS v1 아이콘 이름
-- **⛔ rectangle/ellipse로 아이콘 자리 대체 금지!** — 반드시 \`type: "icon"\` 사용
-- **⛔ 탭바에 아이콘 누락 금지!** — 각 탭에 반드시 \`type: "icon"\` 배치
-- **⛔ 리스트 아이템에 아이콘 누락 금지!** — 44×44 colored bg frame + \`type: "icon"\` 필수
-
-### 기타 금지 규칙
-- 개별 도구(create_frame 등) 반복 호출 금지 → batch_build_screen 사용
-- DS 조회 금지 → batch_ds_lookup 절대 호출하지 마라
-- 텍스트에 layoutSizingHorizontal: "FILL" 누락 금지
-- 이모지/텍스트로 이미지 대체 금지
-- **텍스트 프레임에 불투명 fill 절대 금지**
-- **히어로 배너 정사각형 금지** — 반드시 393 × 160~220px 가로형 직사각형
-- **히어로 배너에 isHero: true 누락 금지**
-- **히어로 이미지 타겟 규칙** — Banner Card 있으면 Banner Card nodeId, 없으면 Hero Section nodeId 전달. 별도 rectangle 컨테이너 생성 금지
-- **히어로 배너 prompt에 오브젝트 3개 이상 나열 금지** — 핵심 1~2개만
+- **⛔ Status Bar 직접 만들기 금지** — \`statusBar: true\`만 사용
+- **⛔ 이모지(🎁📚🏃)로 아이콘 대체 금지** — \`type: "icon"\` + DS v1 아이콘 이름
+- **⛔ rectangle/ellipse로 아이콘 자리 대체 금지** — 반드시 \`type: "icon"\`
+- **⛔ 개별 도구(create_frame 등) 반복 호출 금지** — batch_build_screen 사용
+- **⛔ batch_ds_lookup 호출 금지** — batch_build_screen이 자동 해결
+- **⛔ 히어로 배너에 isHero: true 누락 금지** — \`generate_image\` 호출 시 필수
+- **⛔ 히어로 이미지에 별도 rectangle 컨테이너 만들기 금지** — Banner Card / Hero Section nodeId에 직접 적용
 
 ## 🖼️ 히어로 배너 이미지 규칙 (isHero: true 필수!)
 
@@ -759,10 +665,37 @@ batch_build_screen은 parentId 없으면 자동으로 이전 프레임을 삭제
 `);
 
 
-  // Design rules from CLAUDE.md (core rules only — not the full 145KB)
+  // Reference System — hard rules (MOST CRITICAL, inject before all other context)
+  sections.push(REFERENCE_SYSTEM_PROMPT);
+
+  // Project CLAUDE.md (user-authored entrypoint)
   const designRules = await loadDesignRules(projectRoot);
   if (designRules) {
-    sections.push(`## Design Rules (from DS CLAUDE.md)\n\n${designRules}`);
+    sections.push(`## Project CLAUDE.md (user-authored — highest priority)\n\n${designRules}`);
+  }
+
+  // ⭐ docs/design.md — SSOT for all design rules
+  const designSsot = await loadFullFile(projectRoot, 'docs/design.md');
+  if (designSsot) {
+    sections.push(`## ⭐ docs/design.md — Design SSOT (overrides any conflicting default)\n\n${designSsot}`);
+  }
+
+  // Reference Index — docs/references/INDEX.md
+  const refIndex = await loadReferenceIndex(projectRoot);
+  if (refIndex) {
+    sections.push(`## Reference Index (docs/references/INDEX.md)\n\n${refIndex}`);
+  }
+
+  // Visual Style Rules (VS1~VSn) from design-rules.md
+  const designRulesVS = await loadDesignRulesVS(projectRoot);
+  if (designRulesVS) {
+    sections.push(`## Visual Style Reference Rules (VS1~VSn)\n\n${designRulesVS}`);
+  }
+
+  // Blueprint Templates Library summary
+  const templatesSummary = await loadBlueprintTemplatesSummary(projectRoot);
+  if (templatesSummary) {
+    sections.push(`## Blueprint Templates Library\n\n${templatesSummary}`);
   }
 
   // DS tokens (reduced to 200 lines — essential colors, spacing, radius)
@@ -786,6 +719,156 @@ batch_build_screen은 parentId 없으면 자동으로 이전 프레임을 삭제
 
   return sections.join('\n\n---\n\n');
 }
+
+/**
+ * Load the reference collection index (docs/references/INDEX.md).
+ * This index maps each registered reference to its contributed templates and VS rules.
+ * Agent MUST consult this when starting a new design to pick the closest reference.
+ */
+async function loadReferenceIndex(projectRoot: string): Promise<string | null> {
+  try {
+    const indexPath = join(projectRoot, 'docs', 'references', 'INDEX.md');
+    const content = await readFile(indexPath, 'utf-8');
+    console.log(`[SystemPrompt] Loaded references/INDEX.md (${Math.round(content.length / 1024)}KB)`);
+    return content;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') return null;
+    console.error('[SystemPrompt] Failed to load references/INDEX.md:', error);
+    return null;
+  }
+}
+
+/**
+ * Load only the "시각 스타일 레퍼런스" section of docs/design-rules.md.
+ * This contains VS1~VSn visual rules extracted from references.
+ */
+async function loadDesignRulesVS(projectRoot: string): Promise<string | null> {
+  try {
+    const mdPath = join(projectRoot, 'docs', 'design-rules.md');
+    const content = await readFile(mdPath, 'utf-8');
+    const match = content.match(/## 시각 스타일 레퍼런스[\s\S]*?(?=\n## [^#]|$)/);
+    if (match) {
+      console.log(`[SystemPrompt] Loaded design-rules.md VS section (${Math.round(match[0].length / 1024)}KB)`);
+      return match[0].trim();
+    }
+    return null;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') return null;
+    console.error('[SystemPrompt] Failed to load design-rules.md VS:', error);
+    return null;
+  }
+}
+
+/**
+ * Load a compact summary (name + one-line description) of blueprint templates.
+ * Full template bodies are too large (~1600 lines) — agent reads specific ones on demand via Read tool.
+ */
+async function loadBlueprintTemplatesSummary(projectRoot: string): Promise<string | null> {
+  try {
+    const jsonPath = join(projectRoot, 'scripts', 'blueprint_templates.json');
+    const content = await readFile(jsonPath, 'utf-8');
+    const parsed = JSON.parse(content);
+    const sections = parsed?.sections || {};
+    const lines: string[] = [
+      '블루프린트 섹션 템플릿 라이브러리 — 재사용 가능한 공통 섹션 스펙.',
+      '특정 템플릿의 상세 스펙이 필요하면 `scripts/blueprint_templates.json`을 Read 도구로 직접 조회하여 `_variables`, `_notes`, `template` 내용을 확인할 것.',
+      '',
+    ];
+    for (const [name, spec] of Object.entries(sections) as Array<[string, { _description?: string }]>) {
+      const desc = String(spec?._description || '').split('\n')[0].trim();
+      lines.push(`- **${name}**: ${desc}`);
+    }
+    const summary = lines.join('\n');
+    console.log(`[SystemPrompt] Loaded blueprint_templates.json summary (${Object.keys(sections).length} templates)`);
+    return summary;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') return null;
+    console.error('[SystemPrompt] Failed to load blueprint_templates.json:', error);
+    return null;
+  }
+}
+
+/**
+ * Hard rules for the reference-first workflow — injected early into both system prompts.
+ * This is the most important block: forces Agent to consult actual references before creating.
+ */
+const REFERENCE_SYSTEM_PROMPT = `# ⭐ Reference System (MOST CRITICAL — read before anything else)
+
+이 프로젝트는 검증된 **비주얼 레퍼런스 컬렉션**을 보유하고 있다 (\`docs/references/\`).
+새 디자인은 **추상적으로 창작하지 말고 반드시 레퍼런스를 기준으로 복제·변형**해야 한다.
+
+## 🚨 MUST: 디자인 시작 전 5단계 (건너뛰기 절대 금지)
+
+1. **PRD 분석** — 첨부 문서에서 화면 유형(홈/상세/모달/리스트/...), 브랜드, 섹션 구조, 핵심 데이터를 추출
+2. **레퍼런스 매칭** — 아래 "Reference Index" 섹션(\`docs/references/INDEX.md\` 내용)을 읽고, PRD와 가장 유사한 레퍼런스 1~2개를 선택
+3. **레퍼런스 원본 로드 (필수!)** — \`blueprint.json\`, \`sections-*.jsx\`, \`screenshot*.png\` **모두 Read/View로 조회**. 이 단계를 건너뛰면 100% 완성도 저하
+4. **Blueprint 작성** — **기존 \`blueprint.json\`의 섹션을 구조 그대로 복제 + 텍스트만 교체**. scratch로 새로 쓰지 말 것.
+5. **빌드 후 대조 QA** — 결과 스크린샷과 레퍼런스 스크린샷을 나란히 비교: 섹션 순서 / 카드 구조 / 컬러 톤 / 아이콘 / 레이아웃 일치 확인
+
+## ⭐ MOST CRITICAL: \`blueprint.json\` 복제 재사용 전략
+
+**이 규칙을 지키지 않으면 완성도가 "와이어프레임 수준"으로 떨어진다.** 2026-04-22 사용자 피드백 사례 반복 방지.
+
+**원칙**: Blueprint의 각 섹션에 대해, 기존 레퍼런스의 \`blueprint.json\`에 유사 패턴이 있으면 **반드시 그 섹션을 그대로 복제하고 텍스트만 교체**. 결코 scratch로 새로 쓰지 말 것.
+
+**이유**: 완성도 = padding 밀도 + 타이포 계층 + 아이콘 사이즈 + 컬러 비율 + micro-spacing 등 수백 개 micro-decision의 누적. LLM은 "적절한 기본값"은 알지만 이 프로젝트의 "검증된 디테일"은 레퍼런스에만 있다.
+
+**패턴 → 복제 소스 매핑표** (\`docs/references/imin-home/blueprint.json\` 기준):
+
+| 새 섹션 패턴 | 복제 소스 (children 인덱스) |
+|-------------|------------------------|
+| 상단 NavBar (로고 + 아이콘들) | \`children[0]\` NavBar |
+| 탭 스위처 (Underline 2-tab) | \`children[1]\` Home Tabs |
+| 경고 alert (미납/오류) | \`children[2]\` MissedAlert Wrap |
+| 요약 카드 (pill + 2-col 금액 grid) | \`children[3]\` SummaryCard Wrap |
+| 5-day 스케줄 카드 | \`children[4]\` Schedule Section |
+| 한도/사용률 progress card | \`children[5]\` Limit Section |
+| 추천 큰 CTA 카드 (보라 배경) | \`children[6]\` Recommendation Section |
+| 섹션 헤더 ("XX + 전체보기") | \`children[7]\` Header 참여 중인 스테이지 |
+| 가로 스크롤 카드 리스트 | \`children[8]\` Stage Card Scroll |
+| 온보딩/CTA alert | \`children[9]\` Onboarding Alert Wrap |
+| 연속 출석 + 7일 dots | \`children[10]\` Attendance Wrap |
+| 이벤트 배너 캐로셀 | \`children[11]\` Event Banner Wrap |
+| 포인트 헤더 (타이틀 + 포인트) | \`children[12]\` Lounge Header |
+| 상품 카드 가로 스크롤 | \`children[13]\` Product Scroll |
+| Bottom Nav (5탭) | \`children[15]\` Bottom Nav |
+
+**복제 절차 (LLM이 Blueprint 도출 시)**:
+1. \`Read({ file_path: "docs/references/imin-home/blueprint.json" })\`로 JSON 전체 로드
+2. 패턴에 맞는 섹션을 \`children[N]\`에서 추출
+3. 그 서브트리를 그대로 submit_blueprint의 children 배열에 포함시킴
+4. 내부 텍스트 필드만 PRD 값으로 교체 (다른 필드 - padding, fontSize, colors, autoLayout - 절대 수정 금지)
+
+**완전 신규 패턴 (레퍼런스에 없는 경우)**: 장식 요소(아바타/메달/progress bar/overlay badge)를 풍부하게 넣되, **완성도 저하를 감수하고 레퍼런스 폴더에 새 blueprint.json을 반드시 등록**하여 다음 세션에서 재사용 가능하게 만들어라.
+
+## 🚨 HARD RULES
+
+- **MUST NOT**: \`blueprint.json\` 복제 없이 Blueprint 작성 시작 — 완성도 저하 보장
+- **MUST NOT**: 추상화된 템플릿/VS 규칙만 보고 창작 — 레퍼런스의 시각적 임팩트가 사라짐
+- **MUST NOT**: DS 토큰 이름을 기계적으로 재사용 — DS가 다크 모드인데 레퍼런스가 라이트 모드이면 실제 색상이 정반대. **레퍼런스의 실제 hex 값을 확인 후, DS 토큰과 불일치 시 원본 hex를 raw RGBA로 하드코딩**
+- **MUST NOT**: 레퍼런스가 "거래 현황 탭"이면 다른 화면으로 치환 금지. PRD의 Open Question/제안은 **레퍼런스 원본 유지를 우선** — 임의 용어·구조 변경 금지
+- **MUST NOT**: 레퍼런스의 섹션을 스킵하거나 자신만의 레이아웃으로 창작. 레퍼런스가 13섹션이면 13섹션 전부 구현
+- **MUST**: Blueprint 제출 전 모든 아이콘 이름이 "주요 아이콘" 목록(이 프롬프트 상단) 또는 \`ds/ds-1-icons.json\` whitelist에 있는지 자체 검증. \`flame\`, \`fire\` 등 추측 이름 사용 시 fallback 박스(별 모양)로 대체됨
+- **MUST**: 모든 text 노드에 \`layoutSizingHorizontal: "FILL"\` 또는 \`textAutoResize: "WIDTH_AND_HEIGHT"\` 지정 — 미지정 시 width=0 fallback 발생
+
+## 📋 레퍼런스 선택 가이드 (빠른 매칭)
+
+- 홈 / 메인 / 거래 현황·내 스테이지 → **imin-home** (거래 현황 탭 기본)
+- 홈 / 누적 거래 · 랭킹 · 완료 내역 → **imin-home-cumulative** (누적 거래 탭)
+- 스테이지 목록 / 추천 피드 / 카테고리 필터 → **imin-stage-tab**
+- 스테이지 상세 / 참여자 리스트 / 참여 바텀시트 → **imin-stage-detail**
+- 풀모달 / 내역 모달 / 스케줄 캘린더 모달 → **imin-stage-modal**
+- 완벽 매칭이 없으면 가장 가까운 레퍼런스 1개 선택 후 섹션 단위로 재조합 — 절대 새 스타일 창작 금지
+
+## 💡 레퍼런스 조회 명령 예시
+
+\`\`\`
+Read({ file_path: "docs/references/INDEX.md" })                     # 전체 목록
+Read({ file_path: "docs/references/imin-home/blueprint.json" })      # ⭐ 구조 복제용 (가장 중요)
+Read({ file_path: "docs/references/imin-home/sections-1.jsx" })      # 구현 코드 (세부 스타일)
+Read({ file_path: "docs/references/imin-home/screenshot.png" })      # 비주얼 기준
+\`\`\`
+`;
 
 /**
  * Build a concise tools list for the system prompt

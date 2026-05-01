@@ -18,6 +18,17 @@ import { resolveBlueprint, enhanceBlueprint, prefetchImages } from '../figma-mcp
 import { buildSystemPrompt, type PromptContext } from '../system-prompt-builder';
 import { processAttachmentText } from '../rtf-stripper';
 import { callLLMWithTool } from './llm-caller';
+import {
+  matchReference,
+  extractPRDFeatures,
+  isFallbackRequired,
+  type MatchResult,
+} from '../reference-matcher';
+import {
+  loadReferencePackage,
+  bindReferenceToPRD,
+  type AgentCall,
+} from '../content-binder';
 import type {
   BlueprintResult,
   BlueprintNode,
@@ -145,12 +156,27 @@ export class PipelineOrchestrator extends EventEmitter {
     };
 
     try {
-      // ── Step 1: Blueprint (LLM) ──
-      this.emitStep(1, 'blueprint', 'running', 'LLM으로 디자인 설계도 생성 중...');
+      // ── Step 1: Blueprint (Clone&Bind 우선 → LLM 폴백) ──
+      this.emitStep(1, 'blueprint', 'running', '레퍼런스 매칭 중...');
       const t1 = Date.now();
-      const blueprint = await this.generateBlueprint(userMessage, signal, attachments);
-      stepDurations.blueprint = Date.now() - t1;
-      this.emitStep(1, 'blueprint', 'done', `${stepDurations.blueprint}ms`);
+
+      let blueprint: BlueprintResult;
+      const cloned = await this.tryCloneAndBind(userMessage, attachments, signal);
+      if (cloned) {
+        blueprint = cloned.blueprint;
+        stepDurations.blueprint = Date.now() - t1;
+        this.emitStep(
+          1,
+          'blueprint',
+          'done',
+          `clone&bind: ${cloned.match.referenceId} (conf ${cloned.match.confidence.toFixed(2)}), ${stepDurations.blueprint}ms`,
+        );
+      } else {
+        this.emitStep(1, 'blueprint', 'running', 'LLM으로 디자인 설계도 생성 중... (폴백)');
+        blueprint = await this.generateBlueprint(userMessage, signal, attachments);
+        stepDurations.blueprint = Date.now() - t1;
+        this.emitStep(1, 'blueprint', 'done', `LLM creation, ${stepDurations.blueprint}ms`);
+      }
 
       // ── Step 2: Enhance + Name Resolution (코드) ──
       this.emitStep(2, 'resolve', 'running', '블루프린트 개선 + 시맨틱 이름 해결 중...');
@@ -218,7 +244,123 @@ export class PipelineOrchestrator extends EventEmitter {
   }
 
   // ============================================================
-  // Step 1: Blueprint Generation (LLM)
+  // Step 1a: Clone & Bind (레퍼런스 기반 — 결정적 경로)
+  // ============================================================
+
+  /**
+   * PRD → 레퍼런스 매칭 → blueprint.json 복제 + slot 바인딩.
+   * 성공 시 BlueprintResult 반환, confidence < 0.5 또는 기타 실패 시 null 반환
+   * (호출자가 LLM creation으로 폴백).
+   * 커버리지 게이트 실패는 의도적으로 throw — 레퍼런스 확장/스코프 축소 유도.
+   */
+  private async tryCloneAndBind(
+    userMessage: string,
+    attachments: AttachmentData[] | undefined,
+    signal: AbortSignal | undefined,
+  ): Promise<{ blueprint: BlueprintResult; match: MatchResult } | null> {
+    const prdTextParts: string[] = [];
+    if (userMessage?.trim()) prdTextParts.push(userMessage);
+    if (attachments) {
+      for (const att of attachments) {
+        if (att.textContent) {
+          prdTextParts.push(processAttachmentText(att.textContent, att.name));
+        }
+      }
+    }
+    const prdText = prdTextParts.join('\n\n').trim();
+    if (!prdText) return null;
+
+    const firstDocName = attachments?.find((a) => a.textContent)?.name;
+    const prd = extractPRDFeatures(prdText, firstDocName);
+
+    let match: MatchResult;
+    try {
+      match = await matchReference(prd, this.config.projectRoot);
+    } catch (e) {
+      console.warn('[Pipeline] matchReference failed → fallback to LLM:', e);
+      return null;
+    }
+
+    const top3 = match.allScores
+      .slice(0, 3)
+      .map((s) => `${s.referenceId}=${s.score.toFixed(2)}`)
+      .join(', ');
+    console.log(
+      `[Pipeline] Reference match: ${match.referenceId} conf=${match.confidence.toFixed(2)} (top3: ${top3})`,
+    );
+
+    if (isFallbackRequired(match)) {
+      this.emit('streaming', {
+        step: 'blueprint',
+        text: `[매칭] 최고 confidence ${match.confidence.toFixed(2)} < 0.5 — LLM 창작으로 폴백\n`,
+      });
+      return null;
+    }
+
+    this.emit('streaming', {
+      step: 'blueprint',
+      text:
+        `[매칭] ${match.referenceId} (confidence ${match.confidence.toFixed(2)})\n` +
+        `근거: ${match.reasons.join('; ')}\n`,
+    });
+
+    let pkg;
+    try {
+      pkg = await loadReferencePackage(this.config.projectRoot, match.referenceId);
+    } catch (e) {
+      console.warn(`[Pipeline] loadReferencePackage("${match.referenceId}") failed → fallback:`, e);
+      return null;
+    }
+
+    const agentCall: AgentCall = async ({ systemPrompt, userPrompt }) => {
+      const client = await this.getClient();
+      try {
+        const result = await callLLMWithTool<{ mappings: Record<string, string> }>({
+          client,
+          systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+          toolName: 'submit_slot_mappings',
+          toolDescription:
+            'Submit slot ID → value mappings extracted from the PRD. Only include slots whose values differ from defaults or are explicitly present in the PRD.',
+          toolSchema: {
+            type: 'object',
+            properties: {
+              mappings: {
+                type: 'object',
+                description:
+                  'Object where each key is a slot id (e.g. "header.title") and each value is the string to bind. Omit slots that should keep their default.',
+                additionalProperties: { type: 'string' },
+              },
+            },
+            required: ['mappings'],
+          },
+          signal,
+        });
+        return result?.mappings || {};
+      } catch (err) {
+        console.warn('[Pipeline] slot-binding LLM call failed → using defaults:', err);
+        return {};
+      }
+    };
+
+    const bound = await bindReferenceToPRD(pkg, prdText, agentCall);
+    console.log(
+      `[Pipeline] Clone&Bind: coverage=${(bound.coverage.coverage * 100).toFixed(0)}%, applied=${bound.applied.length}, skipped=${bound.skipped.length}`,
+    );
+
+    return {
+      match,
+      blueprint: {
+        blueprint: bound.finalBlueprint as unknown as BlueprintNode,
+        designSummary:
+          `Cloned from "${match.referenceId}" (conf ${match.confidence.toFixed(2)}); ` +
+          `${bound.applied.length} slots bound, ${bound.skipped.length} defaults kept`,
+      },
+    };
+  }
+
+  // ============================================================
+  // Step 1b: Blueprint Generation (LLM — 폴백 경로)
   // ============================================================
 
   private async generateBlueprint(userMessage: string, signal?: AbortSignal, attachments?: AttachmentData[]): Promise<BlueprintResult> {

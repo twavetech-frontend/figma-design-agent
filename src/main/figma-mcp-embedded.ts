@@ -9,7 +9,7 @@
 import { z, ZodObject, ZodRawShape } from 'zod';
 import { FigmaWSServer } from './figma-ws-server';
 import type { ToolDefinition } from '../shared/types';
-import { getIcons, getVariants, syncTokensIfNeeded, type VariantEntry } from '../shared/ds-data';
+import { getIcons, getVariants, getTokenMap, syncTokensIfNeeded, type VariantEntry } from '../shared/ds-data';
 
 import { getIconSvg, getIconSvgAsync, resolveIconFile } from './untitled-icons';
 import { simulateLayout } from './yoga-simulator';
@@ -644,27 +644,81 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     }
   );
 
-  reg('batch_build_screen', `Build a complete Figma screen from a single JSON tree. Creates all nodes recursively in one call.
+  reg('batch_build_screen', `Build a complete Figma screen from a single JSON tree. Creates all nodes recursively in one call AND auto-binds DS variables when *Var fields are present.
+
+🚨 WIREFRAME FIDELITY — DO NOT EMBELLISH
+
+When the user gives you a wireframe (low-fi sketch with grey blocks/text/no real colors), your job is to translate the **information structure** into a polished DS-tokenized screen — NOT to invent visual hierarchy that wasn't there.
+
+- If the wireframe shows N identical cards in grey → render N identical cards using the SAME fillVar (typically "bg-secondary"). DO NOT pick one to highlight with bg-brand-* "for visual interest". The wireframe author already decided they should be peers. Forced hierarchy is the #1 cause of "your design looks worse than the wireframe".
+- If the wireframe shows a grey filter chip with bold text → that is a "currently-selected" indicator using TEXT WEIGHT, not a brand fill. Render with fillVar "bg-secondary" + textColorVar "text-primary" + fontWeight 700. NOT bg-brand-section + text-brand-primary (that produces purple-on-purple invisible text).
+- If the wireframe shows an outline pill (border + thin text, no fill color) → keep it outlined: fillVar "bg-primary" + strokeVar "border-secondary" + textColorVar "text-tertiary". Do NOT convert to filled brand chip.
+- Brand color budget per screen: usually 1-2 accents max (e.g. FAB + active tab indicator + maybe the active step in a progress bar). If you find yourself adding a 3rd brand-colored element, stop and reconsider — you are over-decorating.
+
+🎨 TOKEN COMBO RULES — contrast safety
+
+The following combos produce unreadable text and are auto-corrected by the enhancer; do not rely on the auto-correct, write the right combo from the start:
+
+- bg-brand-* (solid/section) + textColorVar "text-brand-*"  →  WRONG (purple on purple). Use textColorVar "text-white" or "text-primary_on-brand"
+- bg-secondary / bg-tertiary + textColorVar "text-secondary"  →  too low contrast for body text. Use "text-primary"
+- bg-primary (white) + textColorVar "text-white"  →  invisible. Use "text-primary"
+
+Reference table for active/selected indicators:
+- Selected chip (light grey wireframe)        → fillVar bg-secondary,    textColorVar text-primary, fontWeight 700
+- Selected tab (bottom nav active)            → no fill change,           textColorVar text-brand-primary, fontWeight 700, icon iconColor brand
+- Featured card (only when wireframe shows it via fill change) → fillVar bg-brand-primary or bg-brand-section, textColorVar text-white
+- Selected day in calendar                    → fillVar bg-brand-solid,   textColorVar text-white
+
+⭐ USE *Var FIELDS, NOT RAW HEX, FOR ANY VALUE THAT MAPS TO A DS TOKEN
+
+Every fill/stroke/text-color/cornerRadius/spacing/padding that should be tied to the design system MUST be expressed via a *Var field with the semantic-token name. The build pipeline looks the token up in TOKEN_MAP.json, fills the raw value automatically, AND calls batch_bind_variables right after the build so the resulting Figma node is variable-linked (light/dark mode safe). Raw RGB you write by hand will NOT auto-bind because raw _Primitives are excluded from binding candidates.
+
+Token *Var fields (preferred over raw fill/stroke/fontColor/cornerRadius/itemSpacing/padding):
+- fillVar:         frame/rectangle/ellipse fill          → use bg-* token (e.g. "bg-primary", "bg-secondary", "bg-tertiary", "bg-quaternary", "bg-brand-primary")
+- strokeVar:       frame/rectangle stroke                → use border-* token (e.g. "border-primary", "border-secondary")
+- textColorVar:    text node fontColor                   → use text-* token (e.g. "text-primary", "text-secondary", "text-tertiary", "text-brand-primary", "text-white")
+- cornerRadiusVar: frame/rectangle cornerRadius          → use radius-* token (e.g. "radius-md", "radius-lg")
+- itemSpacingVar:  autoLayout itemSpacing                → use spacing-* token
+- paddingVar:      autoLayout padding (all four sides)   → use spacing-* token
+
+Category rules (CRITICAL — sweep matches strictly by category):
+- frame fill         → bg-*       (Colors/Background/*)
+- icon / button fill → use type:"instance" with the DS Button component (raw fg-* fills should be rare)
+- stroke             → border-*   (Colors/Border/*)
+- text fill          → text-*     (Colors/Text/*)
+- A bg-* token on a text fill (or vice-versa) will not bind. Match category and field.
+
+Token-name resolution accepts (in order): full figmaPath ("Colors/Background/bg-primary"), CSS-var key ("--colors-background-bg-primary"), or leaf name ("bg-primary"). Leaf name is preferred — shortest and unambiguous.
+
+Reference-first workflow (use Read first, do NOT compose from scratch):
+- Before authoring a Blueprint, Read docs/references/imin-home/blueprint.json (or the closest reference under docs/references/) and clone the matching section subtree, replacing only text content. Do NOT invent your own card hierarchy / icon treatment / list-item structure — the references encode hundreds of validated micro-decisions you cannot reproduce from scratch.
 
 Node types and their properties:
-- frame: x, y, width, height, name, fill({r,g,b,a}), stroke({r,g,b,a,weight}), cornerRadius, autoLayout({layoutMode,paddingTop,paddingBottom,paddingLeft,paddingRight,paddingHorizontal,paddingVertical,padding,itemSpacing,primaryAxisAlignItems,counterAxisAlignItems,layoutWrap}), layoutSizingHorizontal(FILL|HUG|FIXED), layoutSizingVertical(FILL|HUG|FIXED), effects([{type,color,offset,radius,spread}]), imageFill({url,scaleMode}), clipsContent, children[]
-- text: x, y, name, text, fontSize, fontWeight(100-900), fontFamily("Pretendard"), fontColor({r,g,b,a}), textAlignHorizontal(LEFT|CENTER|RIGHT), textAutoResize(WIDTH_AND_HEIGHT|HEIGHT|TRUNCATE), lineHeight, letterSpacing, layoutSizingHorizontal, layoutSizingVertical
-- rectangle: x, y, width, height, name, fill, stroke, strokeWeight, cornerRadius, layoutSizingHorizontal, layoutSizingVertical, imageFill
-- ellipse: x, y, width, height, name, fill, stroke, layoutSizingHorizontal, layoutSizingVertical
-- instance: x, y, name, componentKey (REQUIRED — from lookup_variant or pre-loaded keys), width, height, layoutSizingHorizontal, layoutSizingVertical, textOverrides({suffix: text})
+- frame: x, y, width, height, name, fill({r,g,b,a}), fillVar, stroke({r,g,b,a}), strokeVar, strokeWeight, cornerRadius, cornerRadiusVar, autoLayout({layoutMode,paddingTop,paddingBottom,paddingLeft,paddingRight,paddingHorizontal,paddingVertical,padding,itemSpacing,primaryAxisAlignItems,counterAxisAlignItems,layoutWrap}), itemSpacingVar, paddingVar, layoutSizingHorizontal(FILL|HUG|FIXED), layoutSizingVertical(FILL|HUG|FIXED), effects([{type,color,offset,radius,spread}]), imageFill({url,scaleMode}), clipsContent, statusBar (root only — true→DS Status Bar instance auto-injected as first child), children[]
+- text: x, y, name, text, fontSize, fontWeight(100-900), fontFamily("Pretendard"), fontColor({r,g,b,a}), textColorVar, textAlignHorizontal(LEFT|CENTER|RIGHT), textAutoResize(WIDTH_AND_HEIGHT|HEIGHT|TRUNCATE), lineHeight, letterSpacing, layoutSizingHorizontal, layoutSizingVertical
+- rectangle: x, y, width, height, name, fill, fillVar, stroke, strokeVar, strokeWeight, cornerRadius, cornerRadiusVar, layoutSizingHorizontal, layoutSizingVertical, imageFill
+- ellipse: x, y, width, height, name, fill, fillVar, stroke, strokeVar, layoutSizingHorizontal, layoutSizingVertical
+- instance: x, y, name, component (semantic, e.g. "Button") + variant (e.g. "Size=lg, Hierarchy=Primary"), or componentKey (direct), width, height, layoutSizingHorizontal, layoutSizingVertical, text (auto-set on main text), textOverrides({suffix: text})
 - clone: name, sourceNodeId (REQUIRED), width, height, layoutSizingHorizontal, layoutSizingVertical
-- icon: name (icon name — Lucide or DS v1 names accepted), size (default 24), iconColor({r,g,b,a})
-- svg_icon: (auto-generated from type:"icon", do not use directly) SVG-based icon from Untitled UI GitHub.
+- icon: name (icon name — DS v1 or Lucide names accepted), size (default 24), iconColor({r,g,b,a})
 
+Status Bar auto-injection: root frame with statusBar:true → DS Status Bar instance auto-prepended. Do NOT draw status bar manually.
 textOverrides (instance only): { "suffix": "new text" } — Sets text on instance children using Suffix Map.
-imageFill: { url: "https://...", scaleMode?: "FILL"|"FIT" } — Downloads and applies image as fill.
+imageFill: { url: "https://..." | base64, scaleMode?: "FILL"|"FIT" } — Downloads and applies image as fill.
 layoutSizingHorizontal/Vertical: FILL to stretch to parent, HUG to fit content, FIXED for explicit size.
-Colors: { r: 0-1, g: 0-1, b: 0-1, a?: 0-1 }
-Root frame supports: autoLayout, cornerRadius, fill.`, {
+Colors (raw fallback): { r: 0-1, g: 0-1, b: 0-1, a?: 0-1 } — only when there is genuinely no DS token for the value.
+
+Result: returns rootId, screenshot, and (when *Var fields were used) tokenBindCount + tokenBindResult. Inspect tokenBindCount to confirm DS bindings landed.`, {
     type: 'object',
     properties: {
-      blueprint: { type: 'object', description: 'Root node blueprint with children tree. Include name, width, height, fill, and children array.' },
-      parentId: { type: 'string', description: 'Optional parent node ID. When set, builds inside the existing parent (section build) and skips auto-deletion of previous root frame.' }
+      blueprint: {
+        type: 'object',
+        description: 'Root node blueprint with children tree. Use *Var fields (fillVar/strokeVar/textColorVar/cornerRadiusVar/itemSpacingVar/paddingVar) for any value that maps to a DS token — they auto-fill the raw value AND auto-bind the variable post-build. Use raw fill/stroke/etc. only when no DS token applies.'
+      },
+      parentId: {
+        type: 'string',
+        description: 'Optional parent node ID. When set, builds inside the existing parent (section build) and skips auto-deletion of previous root frame.'
+      }
     },
     required: ['blueprint']
   }, async (params) => {
@@ -684,8 +738,20 @@ Root frame supports: autoLayout, cornerRadius, fill.`, {
     lastBuiltRootId = null;
 
     // ★ Step 1: Enhance blueprint (code-level auto-correction)
+    // skipEnhance=true: Clone & Bind 모델에서 검증된 레퍼런스 blueprint를
+    // raw 그대로 빌드하는 경로 (S2.5 star-01 fallback 우회용)
     const blueprint = params.blueprint as Record<string, unknown>;
-    const enhanced = enhanceBlueprint(blueprint);
+    const skipEnhance = params.skipEnhance === true;
+    const enhanced = skipEnhance ? blueprint : enhanceBlueprint(blueprint);
+    if (skipEnhance) {
+      console.log('[batch_build_screen] skipEnhance=true — raw blueprint mode');
+    }
+    // Detach _pendingBindings marker from the tree so it does NOT travel to plugin
+    type PendingBinding = { bpid: string; origName: string; bindings: Record<string, string> };
+    const pendingBindings: PendingBinding[] =
+      ((enhanced as Record<string, unknown>)._pendingBindings as PendingBinding[]) || [];
+    delete (enhanced as Record<string, unknown>)._pendingBindings;
+
     // ★ Step 2: Smart Resolution: resolve semantic names → actual keys
     const resolved = await resolveBlueprint(enhanced);
     const resolvedParams = { ...params, blueprint: resolved };
@@ -701,6 +767,63 @@ Root frame supports: autoLayout, cornerRadius, fill.`, {
       console.log(`[batch_build_screen] Tracking rootId: ${lastBuiltRootId}`);
     }
     console.log(`[batch_build_screen] Build complete:`, JSON.stringify(result).slice(0, 200));
+
+    // ★ Step 2.5: Auto-bind variables for nodes that carried fillVar/strokeVar/etc.
+    //    This is the real "build-time variable binding" — replaces guessing in
+    //    the post-fix sweep when the Blueprint already declared the token by name.
+    if (pendingBindings.length > 0 && result?.rootId) {
+      try {
+        const rootInfo = await cmd('get_node_info', { nodeId: result.rootId }, 30000) as Record<string, unknown>;
+        const idByBpid = new Map<string, string>();
+        const walk = (n: Record<string, unknown> | null | undefined) => {
+          if (!n || typeof n !== 'object') return;
+          const name = typeof n.name === 'string' ? n.name : '';
+          for (const pb of pendingBindings) {
+            if (idByBpid.has(pb.bpid)) continue;
+            // Match by suffix — the bpid is appended to the original name
+            if (name.endsWith(pb.bpid)) {
+              const id = (n.id as string) || '';
+              if (id) idByBpid.set(pb.bpid, id);
+            }
+          }
+          const cs = n.children as Array<Record<string, unknown>> | undefined;
+          if (Array.isArray(cs)) cs.forEach(walk);
+        };
+        walk(rootInfo);
+
+        const bindItems = pendingBindings
+          .map(pb => {
+            const nodeId = idByBpid.get(pb.bpid);
+            return nodeId ? { nodeId, bindings: pb.bindings } : null;
+          })
+          .filter((x): x is { nodeId: string; bindings: Record<string, string> } => x !== null);
+
+        if (bindItems.length > 0) {
+          const bindRes = await cmd('batch_bind_variables', { items: bindItems }, 60000) as Record<string, unknown>;
+          console.log(`[batch_build_screen] Auto-bound ${bindItems.length}/${pendingBindings.length} token vars:`, JSON.stringify(bindRes).slice(0, 200));
+          (result as Record<string, unknown>).tokenBindCount = bindItems.length;
+          (result as Record<string, unknown>).tokenBindResult = bindRes;
+        } else {
+          console.warn(`[batch_build_screen] Could not match any of ${pendingBindings.length} pending bindings to built nodes`);
+          (result as Record<string, unknown>).tokenBindCount = 0;
+        }
+
+        // Restore original names (best-effort — failures don't block the build)
+        await Promise.allSettled(
+          pendingBindings.map(async pb => {
+            const nodeId = idByBpid.get(pb.bpid);
+            if (!nodeId) return;
+            try {
+              await cmd('rename_node', { nodeId, name: pb.origName || 'Node' }, 5000);
+            } catch (e) {
+              console.warn(`[batch_build_screen] rename_node failed for ${pb.bpid}:`, e);
+            }
+          })
+        );
+      } catch (e) {
+        console.warn('[batch_build_screen] Auto-token-binding step failed:', e);
+      }
+    }
 
     // ★ Auto-screenshot: capture immediately after build
     if (result?.rootId) {
@@ -1364,7 +1487,224 @@ const TAB_ICON_MAP: Record<string, string> = {
 export function enhanceBlueprint(root: Record<string, unknown>): Record<string, unknown> {
   let tintColorIdx = 0;
   // 통계 카운터
-  const stats = { font: 0, color: 0, sizing: 0, icon: 0, structure: 0, fontSize: 0, alignment: 0 };
+  const stats = { font: 0, color: 0, sizing: 0, icon: 0, structure: 0, fontSize: 0, alignment: 0, tokenBind: 0 };
+
+  // ── Token-field resolution (build-time variable binding) ─────────────
+  // Recognizes optional fillVar/strokeVar/textColorVar/cornerRadiusVar/itemSpacingVar/paddingVar/effectVar
+  // fields, looks them up in TOKEN_MAP.json, fills the corresponding raw value
+  // (hex or number) into the node, and accumulates _pendingBindings so the
+  // batch_build_screen handler can call batch_bind_variables right after the build.
+  const tokenMap = getTokenMap();
+  const tokenByPath: Record<string, { value: string; type: string; cssKey: string }> = {};
+  const tokenByLeaf: Record<string, { value: string; type: string; cssKey: string; figmaPath: string }> = {};
+  for (const [cssKey, entry] of Object.entries(tokenMap)) {
+    if (!entry || !entry.figmaPath) continue;
+    const fp = entry.figmaPath;
+    tokenByPath[fp] = { value: entry.value, type: entry.type, cssKey };
+    const leaf = fp.split('/').pop() || fp;
+    if (!tokenByLeaf[leaf]) {
+      tokenByLeaf[leaf] = { value: entry.value, type: entry.type, cssKey, figmaPath: fp };
+    }
+  }
+
+  function resolveTokenName(name: string): { value: string; type: string; figmaPath: string } | null {
+    if (!name || typeof name !== 'string') return null;
+    const trimmed = name.trim();
+    // Direct figmaPath match (e.g. "Colors/Background/bg-primary")
+    if (tokenByPath[trimmed]) {
+      const t = tokenByPath[trimmed];
+      return { value: t.value, type: t.type, figmaPath: trimmed };
+    }
+    // CSS-var-like key (e.g. "--colors-background-bg-primary")
+    if (tokenMap[trimmed]) {
+      const t = tokenMap[trimmed];
+      return { value: t.value, type: t.type, figmaPath: t.figmaPath };
+    }
+    // Leaf name (e.g. "bg-primary", "text-secondary", "border-primary")
+    if (tokenByLeaf[trimmed]) {
+      const t = tokenByLeaf[trimmed];
+      return { value: t.value, type: t.type, figmaPath: t.figmaPath };
+    }
+    // Substring path match (last resort, e.g. "Background/bg-primary")
+    for (const fp of Object.keys(tokenByPath)) {
+      if (fp.endsWith('/' + trimmed) || fp.endsWith('.' + trimmed)) {
+        const t = tokenByPath[fp];
+        return { value: t.value, type: t.type, figmaPath: fp };
+      }
+    }
+    return null;
+  }
+
+  function hexToRgba01(hex: string): { r: number; g: number; b: number; a: number } | null {
+    return normalizeColor(hex) as { r: number; g: number; b: number; a: number } | null;
+  }
+
+  // Variable name to use in batch_bind_variables = leaf segment of figmaPath.
+  // Plugin code (setBoundVariables / batchBindVariables) supports partial-match
+  // (endsWith "/" + name), so the leaf is enough.
+  function variableNameFromFigmaPath(figmaPath: string): string {
+    return figmaPath.split('/').pop() || figmaPath;
+  }
+
+  type PendingBinding = { bpid: string; origName: string; bindings: Record<string, string> };
+  const pendingBindings: PendingBinding[] = [];
+  let bpidCounter = 0;
+
+  // Returns the leaf bg-token name (e.g. "bg-brand-solid") if the node has a
+  // brand-tier fillVar. Used to detect contrast-failing combinations on child text.
+  function brandBgLeaf(node: Record<string, unknown>): string | null {
+    const v = node.fillVar;
+    if (typeof v !== 'string') return null;
+    const trimmed = v.trim();
+    if (/^bg-brand/i.test(trimmed) || /Background\/bg-brand/i.test(trimmed)) return trimmed;
+    return null;
+  }
+
+  // CONTRAST AUTO-FIX:
+  // If a text node carries text-brand-* but its ancestor has a bg-brand-* fill,
+  // the result is purple-on-purple (invisible). Force textColorVar to "text-white".
+  // Also catches the same-node case (frame with both fillVar bg-brand and
+  // textColorVar text-brand — rare but possible).
+  function fixContrastOnNode(n: Record<string, unknown>, ancestorBrandBg: string | null): void {
+    const myFillIsBrand = brandBgLeaf(n);
+    const effectiveBrandBg = myFillIsBrand || ancestorBrandBg;
+    if (effectiveBrandBg && typeof n.textColorVar === 'string') {
+      const tc = (n.textColorVar as string).trim();
+      if (/^text-brand/i.test(tc) || /Text\/text-brand/i.test(tc)) {
+        console.warn(`[enforce] contrast fix: textColorVar "${tc}" on bg "${effectiveBrandBg}" → text-white`);
+        n.textColorVar = 'text-white';
+        stats.color++;
+      }
+    }
+  }
+
+  function processTokenFields(n: Record<string, unknown>): void {
+    const bindings: Record<string, string> = {};
+
+    // fillVar → fill (frame/rectangle/ellipse) OR fills/0 binding
+    if (typeof n.fillVar === 'string') {
+      const tok = resolveTokenName(n.fillVar as string);
+      if (tok && tok.type === 'COLOR') {
+        const rgba = hexToRgba01(tok.value);
+        if (rgba) {
+          n.fill = rgba;
+          bindings['fills/0'] = variableNameFromFigmaPath(tok.figmaPath);
+          stats.tokenBind++;
+        }
+      } else {
+        console.warn(`[enforce] fillVar "${n.fillVar}" not resolvable in TOKEN_MAP — keep raw fill if any`);
+      }
+      delete n.fillVar;
+    }
+
+    // strokeVar → stroke
+    if (typeof n.strokeVar === 'string') {
+      const tok = resolveTokenName(n.strokeVar as string);
+      if (tok && tok.type === 'COLOR') {
+        const rgba = hexToRgba01(tok.value);
+        if (rgba) {
+          n.stroke = rgba;
+          bindings['strokes/0'] = variableNameFromFigmaPath(tok.figmaPath);
+          stats.tokenBind++;
+        }
+      } else {
+        console.warn(`[enforce] strokeVar "${n.strokeVar}" not resolvable in TOKEN_MAP`);
+      }
+      delete n.strokeVar;
+    }
+
+    // textColorVar → fontColor (text nodes — internally stored as fills/0)
+    if (typeof n.textColorVar === 'string') {
+      const tok = resolveTokenName(n.textColorVar as string);
+      if (tok && tok.type === 'COLOR') {
+        const rgba = hexToRgba01(tok.value);
+        if (rgba) {
+          n.fontColor = rgba;
+          bindings['fills/0'] = variableNameFromFigmaPath(tok.figmaPath);
+          stats.tokenBind++;
+        }
+      } else {
+        console.warn(`[enforce] textColorVar "${n.textColorVar}" not resolvable in TOKEN_MAP`);
+      }
+      delete n.textColorVar;
+    }
+
+    // cornerRadiusVar → cornerRadius
+    if (typeof n.cornerRadiusVar === 'string') {
+      const tok = resolveTokenName(n.cornerRadiusVar as string);
+      if (tok && tok.type === 'NUMBER') {
+        const num = parseFloat(tok.value);
+        if (Number.isFinite(num)) {
+          n.cornerRadius = num;
+          bindings['cornerRadius'] = variableNameFromFigmaPath(tok.figmaPath);
+          stats.tokenBind++;
+        }
+      } else {
+        console.warn(`[enforce] cornerRadiusVar "${n.cornerRadiusVar}" not resolvable in TOKEN_MAP`);
+      }
+      delete n.cornerRadiusVar;
+    }
+
+    // itemSpacingVar → autoLayout.itemSpacing
+    if (typeof n.itemSpacingVar === 'string') {
+      const tok = resolveTokenName(n.itemSpacingVar as string);
+      if (tok && tok.type === 'NUMBER') {
+        const num = parseFloat(tok.value);
+        if (Number.isFinite(num)) {
+          const al = (n.autoLayout as Record<string, unknown> | undefined) || {};
+          al.itemSpacing = num;
+          n.autoLayout = al;
+          bindings['itemSpacing'] = variableNameFromFigmaPath(tok.figmaPath);
+          stats.tokenBind++;
+        }
+      } else {
+        console.warn(`[enforce] itemSpacingVar "${n.itemSpacingVar}" not resolvable in TOKEN_MAP`);
+      }
+      delete n.itemSpacingVar;
+    }
+
+    // paddingVar → all four paddings (paddingTop/Bottom/Left/Right) bound to the same variable
+    if (typeof n.paddingVar === 'string') {
+      const tok = resolveTokenName(n.paddingVar as string);
+      if (tok && tok.type === 'NUMBER') {
+        const num = parseFloat(tok.value);
+        if (Number.isFinite(num)) {
+          const al = (n.autoLayout as Record<string, unknown> | undefined) || {};
+          al.paddingTop = num;
+          al.paddingBottom = num;
+          al.paddingLeft = num;
+          al.paddingRight = num;
+          n.autoLayout = al;
+          const varName = variableNameFromFigmaPath(tok.figmaPath);
+          bindings['paddingTop'] = varName;
+          bindings['paddingBottom'] = varName;
+          bindings['paddingLeft'] = varName;
+          bindings['paddingRight'] = varName;
+          stats.tokenBind += 4;
+        }
+      } else {
+        console.warn(`[enforce] paddingVar "${n.paddingVar}" not resolvable in TOKEN_MAP`);
+      }
+      delete n.paddingVar;
+    }
+
+    if (Object.keys(bindings).length > 0) {
+      const bpid = `__bp${bpidCounter++}`;
+      const rawName = typeof n.name === 'string' ? n.name.trim() : '';
+      // Synthesize a natural fallback when the node has no name (e.g. text nodes).
+      // text → use the text content; otherwise use a capitalized type.
+      const fallbackName = (() => {
+        if (n.type === 'text' && typeof n.text === 'string' && (n.text as string).trim()) {
+          return (n.text as string).trim().slice(0, 40);
+        }
+        const t = typeof n.type === 'string' ? n.type : 'node';
+        return t[0].toUpperCase() + t.slice(1);
+      })();
+      const origName = rawName || fallbackName;
+      n.name = `${origName} ${bpid}`;
+      pendingBindings.push({ bpid, origName, bindings });
+    }
+  }
 
   // ── Step 0: 루트 프레임에 statusBar: true 자동 주입 ──
   if (isMobileRootFrame(root) && !root.statusBar) {
@@ -1447,6 +1787,38 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
 
   function enhance(node: Record<string, unknown>, _parent?: Record<string, unknown>, isRootChild?: boolean): Record<string, unknown> {
     const n = { ...node };
+
+    // ── 0a. Contrast auto-fix — detect text-brand-* on ancestor bg-brand-* before
+    //        we consume textColorVar and force text-white. Looks at parent's _ancestorBrandBg
+    //        which was propagated down from the bg-brand carrier. ──
+    const inheritedBrandBg = (_parent as Record<string, unknown> | undefined)?._ancestorBrandBg as string | null | undefined;
+    fixContrastOnNode(n, inheritedBrandBg || null);
+    // Determine effective ancestor brand bg for this node's children.
+    const myBrandBg = brandBgLeaf(n);
+    const childBrandBg = myBrandBg || inheritedBrandBg || null;
+    if (childBrandBg) (n as Record<string, unknown>)._ancestorBrandBg = childBrandBg;
+
+    // ── 0b. FAB auto-detection — round 48-72sq frame named *FAB* / containing a
+    //        single icon child should float ABSOLUTE bottom-right. The blueprint
+    //        author can still override layoutPositioning explicitly. ──
+    {
+      const lname = (typeof n.name === 'string' ? n.name : '').toLowerCase();
+      const w = typeof n.width === 'number' ? n.width as number : 0;
+      const h = typeof n.height === 'number' ? n.height as number : 0;
+      const looksFab = (lname === 'fab' || lname.includes('fab') || lname.includes('floating'));
+      const isCircle =
+        w >= 40 && w <= 80 && Math.abs(w - h) <= 2 &&
+        (n.cornerRadius === 9999 || n.cornerRadiusVar === 'radius-full' || n.cornerRadiusVar === 'full');
+      if ((looksFab || isCircle) && !n.layoutPositioning) {
+        n.layoutPositioning = 'ABSOLUTE';
+        console.log(`[enforce] FAB auto-ABSOLUTE: ${lname || 'circular'}`);
+        stats.structure++;
+      }
+    }
+
+    // ── 0. Token-field resolution (must run BEFORE any other transformation
+    //      so that downstream steps see the resolved fill/stroke/etc.) ──
+    processTokenFields(n);
 
     // ── 1. Tab Bar detection & fix (기존 + 규칙 G 확장) ──
     if (isTabBar(n)) {
@@ -1793,6 +2165,9 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
     return n;
   }
 
+  // 루트 자체에도 토큰 필드 처리 (루트 fill을 시멘틱 토큰으로 받기 위해)
+  processTokenFields(root);
+
   // 루트 자식들은 isRootChild=true로 호출
   if (Array.isArray(root.children)) {
     root.children = (root.children as Record<string, unknown>[]).map(child =>
@@ -1802,8 +2177,13 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
   // 루트 자신에 대해서도 색상 정규화 적용
   normalizeNodeColors(root);
 
+  // pendingBindings 마커를 root에 부착 — batch_build_screen 핸들러가 빌드 후 처리
+  if (pendingBindings.length > 0) {
+    (root as Record<string, unknown>)._pendingBindings = pendingBindings;
+  }
+
   const totalCorrections = Object.values(stats).reduce((a, b) => a + b, 0);
-  console.log(`[enforce] Blueprint enforcement complete: ${JSON.stringify(stats)} (${totalCorrections} total corrections, ${tintColorIdx} icons processed)`);
+  console.log(`[enforce] Blueprint enforcement complete: ${JSON.stringify(stats)} (${totalCorrections} total corrections, ${tintColorIdx} icons processed, ${pendingBindings.length} token bindings queued)`);
   return root;
 }
 
@@ -1873,6 +2253,9 @@ function isEmojiOnlyText(n: Record<string, unknown>): boolean {
   if (n.type !== 'text' || !n.text) return false;
   const text = (n.text as string).trim();
   if (text.length === 0 || text.length > 10) return false;
+  // 숫자/알파벳/한글 등 일반 문자가 있으면 절대 emoji-only 아님 (S2.5 fix)
+  // \p{Emoji} 프로퍼티가 0-9, #, * 등을 keycap 후보로 포함하는 문제 회피
+  if (/[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ]/.test(text)) return false;
   // Remove emoji, variation selectors, ZWJ, etc. If nothing remains, it's emoji-only
   const stripped = text.replace(/[\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D\u20E3\u{E0061}-\u{E007A}\u{E007F}]/gu, '').trim();
   return stripped.length === 0;

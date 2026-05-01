@@ -21,7 +21,7 @@ export interface CallLLMOptions<T> {
   toolSchema: Record<string, unknown>;
   /** 도구 설명 */
   toolDescription: string;
-  /** 모델 (기본: claude-sonnet-4-20250514) */
+  /** 모델 (기본: claude-opus-4-7) */
   model?: string;
   /** 최대 토큰 (기본: 16384) */
   maxTokens?: number;
@@ -43,7 +43,7 @@ export async function callLLMWithTool<T>(options: CallLLMOptions<T>): Promise<T>
     toolName,
     toolSchema,
     toolDescription,
-    model = 'claude-sonnet-4-20250514',
+    model = 'claude-opus-4-7',
     maxTokens = 16384,
     onStreamText,
     signal,

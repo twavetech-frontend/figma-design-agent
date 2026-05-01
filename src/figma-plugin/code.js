@@ -421,13 +421,21 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
   }
   if ("strokes" in node) {
     try {
-      info.strokes = node.strokes;
-      info.strokeWeight = node.strokeWeight;
-      if ("strokeAlign" in node) info.strokeAlign = node.strokeAlign;
-      if ("strokeTopWeight" in node) info.strokeTopWeight = node.strokeTopWeight;
-      if ("strokeBottomWeight" in node) info.strokeBottomWeight = node.strokeBottomWeight;
-      if ("strokeLeftWeight" in node) info.strokeLeftWeight = node.strokeLeftWeight;
-      if ("strokeRightWeight" in node) info.strokeRightWeight = node.strokeRightWeight;
+      var strokes = node.strokes;
+      if (strokes !== figma.mixed && Array.isArray(strokes)) {
+        info.strokes = strokes.map(function(s) {
+          var stroke = { type: s.type, visible: s.visible };
+          if (s.color) stroke.color = { r: s.color.r, g: s.color.g, b: s.color.b };
+          if (s.opacity !== undefined) stroke.opacity = s.opacity;
+          return stroke;
+        });
+      }
+      if (node.strokeWeight !== figma.mixed) info.strokeWeight = node.strokeWeight;
+      if ("strokeAlign" in node && node.strokeAlign !== figma.mixed) info.strokeAlign = node.strokeAlign;
+      if ("strokeTopWeight" in node && node.strokeTopWeight !== figma.mixed) info.strokeTopWeight = node.strokeTopWeight;
+      if ("strokeBottomWeight" in node && node.strokeBottomWeight !== figma.mixed) info.strokeBottomWeight = node.strokeBottomWeight;
+      if ("strokeLeftWeight" in node && node.strokeLeftWeight !== figma.mixed) info.strokeLeftWeight = node.strokeLeftWeight;
+      if ("strokeRightWeight" in node && node.strokeRightWeight !== figma.mixed) info.strokeRightWeight = node.strokeRightWeight;
     } catch (e) { /* mixed strokes */ }
   }
 
@@ -498,11 +506,25 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
     }
   }
 
-  // Effects
-  if ("effects" in node && Array.isArray(node.effects)) {
-    info.effects = node.effects;
+  // Effects (sanitize — Figma effect objects may contain Symbol props or
+  // figma.mixed in nested fields; copy only known plain props)
+  if ("effects" in node) {
+    try {
+      var effects = node.effects;
+      if (effects !== figma.mixed && Array.isArray(effects)) {
+        info.effects = effects.map(function(ef) {
+          var e = { type: ef.type, visible: ef.visible };
+          if (ef.color) e.color = { r: ef.color.r, g: ef.color.g, b: ef.color.b, a: ef.color.a };
+          if (ef.offset) e.offset = { x: ef.offset.x, y: ef.offset.y };
+          if (ef.radius !== undefined) e.radius = ef.radius;
+          if (ef.spread !== undefined) e.spread = ef.spread;
+          if (ef.blendMode) e.blendMode = ef.blendMode;
+          return e;
+        });
+      }
+    } catch (e) { /* mixed effects */ }
   }
-  if (node.effectStyleId) info.effectStyleId = node.effectStyleId;
+  if (node.effectStyleId && node.effectStyleId !== figma.mixed) info.effectStyleId = node.effectStyleId;
 
   // Opacity & blend
   if ("opacity" in node) info.opacity = node.opacity;
@@ -6027,6 +6049,13 @@ async function batchBuildScreen(params) {
         var iconW = spec.width || 24;
         var iconH = spec.height || 24;
         node.resize(iconW, iconH);
+        // Icon wrappers must NEVER carry a background fill — the visible color
+        // is on the inner VECTOR's stroke/fill (handled by colorizeVectors).
+        // createNodeFromSvg sometimes leaves the SVG container with a default
+        // fill, which then gets matched to bg-* tokens (bg-secondary_hover
+        // etc.) and produces "why is there a bg fill on my icon?!" bug.
+        // User policy 2026-05-01: icons are vectors only, no wrapper bg.
+        try { if ("fills" in node) node.fills = []; } catch (_) {}
         // Apply icon color by changing all vector children's fills/strokes
         if (spec.iconColor) {
           var color = { r: spec.iconColor.r || 0, g: spec.iconColor.g || 0, b: spec.iconColor.b || 0 };
@@ -6104,6 +6133,16 @@ async function batchBuildScreen(params) {
       }
     } else {
       figma.currentPage.appendChild(node);
+    }
+
+    // ★ Honor explicit layoutPositioning from blueprint (e.g. Tab Bar / FAB ABSOLUTE)
+    //   This MUST run AFTER appendChild so the parent's auto-layout context is set.
+    //   Without this, blueprint authors and the enhancer cannot float nodes out of
+    //   normal flow — Tab Bar / FAB always end up stacked in the column.
+    if (spec.layoutPositioning === "ABSOLUTE" || spec.layoutPositioning === "AUTO") {
+      try { node.layoutPositioning = spec.layoutPositioning; } catch (e) {
+        console.warn("[batch_build] layoutPositioning failed:", e && e.message);
+      }
     }
 
     // Apply deferred layoutSizing AFTER appendChild
