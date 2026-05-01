@@ -1962,10 +1962,11 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
         print(f"  → skip (Status Bar 자식 없음 또는 NavBar fill 미지정)")
 
     # 9. Semantic Token Binding Sweep
+    token_counts = {}
     if not _SKIP_TOKEN_BIND:
         print("\n[9/9] Semantic Token Binding Sweep 중...")
         try:
-            _bind_semantic_tokens(root_node_id)
+            token_counts = _bind_semantic_tokens(root_node_id) or {}
         except Exception as exc:
             print(f"  → ⚠️ token-bind sweep crashed: {exc} → 빌드 계속")
     else:
@@ -1981,6 +1982,15 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     print(f"  Peek 위반 경고: {peek_warns}건")
     print(f"  Status Bar bg 매칭: {'OK' if sb_matched else 'skip'}")
     print(f"  루트 높이: {layout_result['root_height']}")
+    if token_counts.get("skipped"):
+        print(f"  Token 바인딩: skip")
+    elif token_counts:
+        print(
+            f"  Token 바인딩: colors={token_counts.get('colors', 0)} "
+            f"numbers={token_counts.get('numbers', 0)} "
+            f"text={token_counts.get('textstyles', 0)} "
+            f"effects={token_counts.get('effects', 0)}"
+        )
     print(f"{'='*50}\n")
 
 
@@ -2330,8 +2340,8 @@ def _apply_template_vars(node: dict, vars_dict: dict, section_name: str) -> dict
 
 def main():
     global _SKIP_TOKEN_BIND
-    if "--skip-token-bind" in sys.argv:
-        _SKIP_TOKEN_BIND = True
+    _SKIP_TOKEN_BIND = "--skip-token-bind" in sys.argv
+    if _SKIP_TOKEN_BIND:
         sys.argv.remove("--skip-token-bind")
 
     if len(sys.argv) < 2:
@@ -2397,7 +2407,7 @@ def main():
 
 
 # ============================================================
-# Semantic Token Binding Sweep (post-fix step 6)
+# Semantic Token Binding Sweep (post-fix step 9)
 # ============================================================
 
 _SEMANTIC_PREFIXES = ("fg-", "bg-", "border-", "text-")
@@ -3008,6 +3018,10 @@ def _bind_semantic_tokens(root_node_id):
     try:
         results = call_tool("get_node_info", {"nodeId": root_node_id})
         tree = parse_content(results).get("json") or {}
+        if not tree or "_error" in tree:
+            err = tree.get("_error", "empty response") if isinstance(tree, dict) else "no tree"
+            print(f"[token-bind] get_node_info returned error: {err} → skip")
+            return {"skipped": True}
     except Exception as exc:
         print(f"[token-bind] get_node_info failed: {exc} → skip")
         return {"skipped": True}

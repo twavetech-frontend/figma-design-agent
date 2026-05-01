@@ -34,6 +34,9 @@ class TestBindSemanticTokensSmoke(unittest.TestCase):
         self.assertNotIn("skipped", counts)
         # Numbers count should pick up paddingTop=8 (matches --spacing-2-8px)
         self.assertGreaterEqual(counts.get("numbers", 0), 1)
+        report_path = "/tmp/unmapped-tokens-1_1.json"
+        self.assertTrue(os.path.exists(report_path),
+                        f"unmapped report not written at {report_path}")
 
 
 if __name__ == "__main__":
