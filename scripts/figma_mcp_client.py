@@ -2609,5 +2609,61 @@ def _match_textstyle(text_props, typography_list):
     return best_name
 
 
+_SHADOW_OFFSET_TOL = 1   # ±px
+_SHADOW_RADIUS_TOL = 2   # ±px
+_SHADOW_SPREAD_TOL = 1   # ±px
+_SHADOW_ALPHA_TOL = 0.1
+
+
+def _match_shadow(effect, shadow_list):
+    """Match a Figma effect (DROP_SHADOW) to a BOXSHADOW token."""
+    if not isinstance(effect, dict):
+        return None
+    if effect.get("type") not in ("DROP_SHADOW", "INNER_SHADOW"):
+        return None
+    e_color = effect.get("color") or {}
+    er = int(round(e_color.get("r", 0) * 255))
+    eg = int(round(e_color.get("g", 0) * 255))
+    eb = int(round(e_color.get("b", 0) * 255))
+    ea = e_color.get("a", 1)
+    e_off = effect.get("offset") or {}
+    eox = e_off.get("x", 0)
+    eoy = e_off.get("y", 0)
+    erad = effect.get("radius", 0)
+    espread = effect.get("spread", 0)
+
+    best_dist = float("inf")
+    best_name = None
+    for sh in shadow_list:
+        sh_color = sh.get("color")
+        s_rgba = _hex_to_rgba_ints(sh_color) if isinstance(sh_color, str) else None
+        if s_rgba is None:
+            continue
+        sr, sg, sb, _ = s_rgba
+        sa = sh.get("alpha", 1)
+        if abs(sr - er) + abs(sg - eg) + abs(sb - eb) > _COLOR_THRESHOLD:
+            continue
+        if abs(sa - ea) > _SHADOW_ALPHA_TOL:
+            continue
+        if abs(sh.get("offsetX", 0) - eox) > _SHADOW_OFFSET_TOL:
+            continue
+        if abs(sh.get("offsetY", 0) - eoy) > _SHADOW_OFFSET_TOL:
+            continue
+        if abs(sh.get("radius", 0) - erad) > _SHADOW_RADIUS_TOL:
+            continue
+        if abs(sh.get("spread", 0) - espread) > _SHADOW_SPREAD_TOL:
+            continue
+        dist = (
+            abs(sh.get("offsetX", 0) - eox)
+            + abs(sh.get("offsetY", 0) - eoy)
+            + abs(sh.get("radius", 0) - erad)
+            + abs(sh.get("spread", 0) - espread)
+        )
+        if dist < best_dist:
+            best_dist = dist
+            best_name = sh["name"]
+    return best_name
+
+
 if __name__ == "__main__":
     main()

@@ -191,5 +191,57 @@ class TestMatchTextstyle(unittest.TestCase):
         )
 
 
+class TestMatchShadow(unittest.TestCase):
+    def setUp(self):
+        token_map = load_fixture()
+        token_map["--shadow-md"] = {
+            "figmaPath": "Shadows/md",
+            "value": {
+                "color": "#0a0d12",
+                "alpha": 0.08,
+                "offsetX": 0, "offsetY": 4,
+                "radius": 6, "spread": -2
+            },
+            "type": "BOXSHADOW"
+        }
+        self.idx = fmc._load_token_index(token_map)
+
+    def test_exact_shadow_match(self):
+        effect = {
+            "type": "DROP_SHADOW",
+            "color": {"r": 0.039, "g": 0.051, "b": 0.071, "a": 0.08},
+            "offset": {"x": 0, "y": 4},
+            "radius": 6, "spread": -2,
+        }
+        self.assertEqual(
+            fmc._match_shadow(effect, self.idx["shadow_list"]),
+            "--shadow-md",
+        )
+
+    def test_near_shadow_within_tolerance(self):
+        effect = {
+            "type": "DROP_SHADOW",
+            "color": {"r": 0.039, "g": 0.051, "b": 0.071, "a": 0.08},
+            "offset": {"x": 0, "y": 5},  # off by 1
+            "radius": 7,                   # off by 1
+            "spread": -2,
+        }
+        self.assertEqual(
+            fmc._match_shadow(effect, self.idx["shadow_list"]),
+            "--shadow-md",
+        )
+
+    def test_color_mismatch_rejects(self):
+        effect = {
+            "type": "DROP_SHADOW",
+            "color": {"r": 1.0, "g": 0, "b": 0, "a": 0.08},  # red shadow
+            "offset": {"x": 0, "y": 4},
+            "radius": 6, "spread": -2,
+        }
+        self.assertIsNone(
+            fmc._match_shadow(effect, self.idx["shadow_list"])
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
