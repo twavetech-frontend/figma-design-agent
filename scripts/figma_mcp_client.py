@@ -2531,5 +2531,34 @@ def _match_color(rgba_tuple, color_index):
     return best_token
 
 
+_NUMBER_THRESHOLD = 2  # ±px
+
+
+def _match_number(value, number_index):
+    """Return best NUMBER token within ±_NUMBER_THRESHOLD of value, or None.
+    value=0 is treated as 'no semantic meaning' and skipped."""
+    if value == 0 or value is None:
+        return None
+    if value in number_index:
+        return number_index[value][0][0]
+    best_dist = _NUMBER_THRESHOLD + 1
+    best_token = None
+    best_is_semantic = False
+    for cand_value, bucket in number_index.items():
+        dist = abs(cand_value - value)
+        if dist > _NUMBER_THRESHOLD:
+            continue
+        cand_name, cand_semantic = bucket[0]
+        better = (
+            dist < best_dist
+            or (dist == best_dist and cand_semantic and not best_is_semantic)
+        )
+        if better:
+            best_dist = dist
+            best_token = cand_name
+            best_is_semantic = cand_semantic
+    return best_token
+
+
 if __name__ == "__main__":
     main()

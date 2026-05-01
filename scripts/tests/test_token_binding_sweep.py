@@ -83,5 +83,24 @@ class TestMatchColor(unittest.TestCase):
         self.assertIsNone(result)
 
 
+class TestMatchNumber(unittest.TestCase):
+    def setUp(self):
+        self.idx = fmc._load_token_index(load_fixture())
+
+    def test_exact_match(self):
+        self.assertEqual(fmc._match_number(8, self.idx["number_index"]), "--spacing-2-8px")
+
+    def test_within_threshold(self):
+        # 9 is within ±2 of 8 (closest: 8 over 12)
+        self.assertEqual(fmc._match_number(9, self.idx["number_index"]), "--spacing-2-8px")
+
+    def test_outside_threshold(self):
+        # 5 is 3 away from 8, outside ±2
+        self.assertIsNone(fmc._match_number(5, self.idx["number_index"]))
+
+    def test_zero_returns_none(self):
+        self.assertIsNone(fmc._match_number(0, self.idx["number_index"]))
+
+
 if __name__ == "__main__":
     unittest.main()
