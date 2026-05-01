@@ -423,5 +423,50 @@ class TestCollectBindings(unittest.TestCase):
         self.assertEqual(q["unmapped"]["typography"][0]["reason"], "mixed_or_missing")
 
 
+class TestApplyBindings(unittest.TestCase):
+    def setUp(self):
+        self.calls = []
+
+        def fake_call_tool(name, args, msg_id=1):
+            self.calls.append((name, args))
+            return [{"text": "{\"success\": true}"}]
+        self._orig = fmc.call_tool
+        fmc.call_tool = fake_call_tool
+
+    def tearDown(self):
+        fmc.call_tool = self._orig
+
+    def test_color_bindings_chunked_to_100(self):
+        queues = {
+            "color_bindings": [
+                {"nodeId": f"1:{i}", "field": "fills", "index": 0,
+                 "token_name": "--colors-text-textPrimary"}
+                for i in range(150)
+            ],
+            "number_bindings": [], "textstyle_bindings": [],
+            "effect_bindings": [],
+            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
+        }
+        fmc._apply_bindings(queues)
+        # 150 colors → 2 batch_bind_variables calls (100 + 50)
+        bind_calls = [c for c in self.calls if c[0] == "batch_bind_variables"]
+        self.assertEqual(len(bind_calls), 2)
+        self.assertEqual(len(bind_calls[0][1]["bindings"]), 100)
+        self.assertEqual(len(bind_calls[1][1]["bindings"]), 50)
+
+    def test_textstyle_calls_batch(self):
+        queues = {
+            "color_bindings": [], "number_bindings": [],
+            "textstyle_bindings": [
+                {"nodeId": "1:1", "token_name": "--display2xl-semibold"}
+            ],
+            "effect_bindings": [],
+            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
+        }
+        fmc._apply_bindings(queues)
+        ts_calls = [c for c in self.calls if c[0] == "batch_set_text_style_id"]
+        self.assertEqual(len(ts_calls), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

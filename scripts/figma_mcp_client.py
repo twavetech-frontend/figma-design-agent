@@ -2865,5 +2865,57 @@ def _collect_bindings(nodes, indexes):
     return out
 
 
+_BIND_CHUNK = 100
+
+
+def _apply_bindings(queues):
+    """Issue MCP calls for collected bindings. Returns counts.
+
+    `batch_bind_variables` payload shape (per existing tool):
+        bindings: [{nodeId, property, variableName}, ...]
+    Note: 'property' is the Figma node prop ('fills', 'paddingTop', etc.).
+    Color bindings need to encode the fills index → property uses 'fills.0'.
+    """
+    counts = {"colors": 0, "numbers": 0, "textstyles": 0, "effects": 0}
+
+    color_payloads = [
+        {"nodeId": b["nodeId"],
+         "property": f"{b['field']}.{b['index']}",
+         "variableName": b["token_name"]}
+        for b in queues["color_bindings"]
+    ]
+    number_payloads = [
+        {"nodeId": b["nodeId"], "property": b["field"],
+         "variableName": b["token_name"]}
+        for b in queues["number_bindings"]
+    ]
+    bindings = color_payloads + number_payloads
+    for i in range(0, len(bindings), _BIND_CHUNK):
+        chunk = bindings[i:i + _BIND_CHUNK]
+        if not chunk:
+            continue
+        call_tool("batch_bind_variables", {"bindings": chunk}, msg_id=10000 + i)
+    counts["colors"] = len(color_payloads)
+    counts["numbers"] = len(number_payloads)
+
+    if queues["textstyle_bindings"]:
+        ts_payload = [
+            {"nodeId": b["nodeId"], "textStyleName": b["token_name"]}
+            for b in queues["textstyle_bindings"]
+        ]
+        call_tool("batch_set_text_style_id", {"items": ts_payload}, msg_id=20000)
+        counts["textstyles"] = len(ts_payload)
+
+    for b in queues["effect_bindings"]:
+        call_tool(
+            "set_effect_style_id",
+            {"nodeId": b["nodeId"], "effectStyleName": b["token_name"]},
+            msg_id=30000,
+        )
+        counts["effects"] += 1
+
+    return counts
+
+
 if __name__ == "__main__":
     main()
