@@ -668,7 +668,10 @@ def cmd_build(blueprint_file: str):
 
     # Step C: 빌드 실행 (이미지 생성과 동시)
     start = time.time()
-    content = call_tool("batch_build_screen", {"blueprint": blueprint})
+    # Clone & Bind 파이프라인: sanitizer가 이미 blueprint를 안전화했으므로
+    # TS 레이어의 enhanceBlueprint(자동 enforce)를 스킵 — star-01 fallback 우회 (S2.5)
+    skip_enhance = os.environ.get("FIGMA_MCP_SKIP_ENHANCE", "1") != "0"
+    content = call_tool("batch_build_screen", {"blueprint": blueprint, "skipEnhance": skip_enhance})
     result = parse_content(content)
     build_elapsed = time.time() - start
 
@@ -782,7 +785,7 @@ def cmd_build(blueprint_file: str):
             if navbar_id:
                 # 로고 컴포넌트 인스턴스 생성
                 logo_content = call_tool("create_component_instance", {
-                    "componentKey": "957912b03baf924a48ef83424ed66f22a4a386a8"
+                    "componentKey": "81efeddd245e95f31a2724aa370ee54d3caf93d0"
                 })
                 logo_result = parse_content(logo_content)
                 logo_id = None
@@ -1177,17 +1180,23 @@ def _fix_fill_sizing(tree: dict) -> int:
     - SPACE_BETWEEN 부모의 마지막 자식이 HUG이면 보존 (우측 정렬 유틸리티)
     """
     SKIP_KEYWORDS = ("icon", "chevron", "dot", "Tag", "Badge", "Indicator",
-                     "Nav Right", "Vector", "Icon", "Chevron", "Dot")
+                     "Nav Right", "Vector", "Icon", "Chevron", "Dot",
+                     # Slider 컴포넌트 (규칙 #24): Fill/Thumb은 progress 비율 × track_width로
+                     # 계산된 FIXED width여야 함. FILL 강제되면 Thumb이 Track 끝으로 밀려
+                     # progress 표시 불가. "slider"로 시작하는 모든 이름 skip (Slider Fill/
+                     # Slider Thumb/Slider Track/Slider Bar 등).
+                     "slider")
     # 단어 경계 매칭용 정규식 — substring 매칭("tag" ⊂ "stage") 버그 방지
     _SKIP_RE = re.compile(
         r'\b(?:' + '|'.join(re.escape(kw.lower()) for kw in SKIP_KEYWORDS) + r')\b'
     )
     # FAB/Tab Bar는 ABSOLUTE로 배치되므로 FILL 변환하면 안 됨
-    ABSOLUTE_NAME_KEYWORDS = ("fab", "tab bar", "tabbar")
+    ABSOLUTE_NAME_KEYWORDS = ("fab", "tab bar", "tabbar", "bottom nav", "bottomnav")
     fix_count = 0
 
     def _walk(node: dict, parent_layout_mode: str = "",
-              parent_align: str = "", is_last_child: bool = False):
+              parent_align: str = "", parent_name: str = "",
+              is_last_child: bool = False):
         nonlocal fix_count
         node_type = (node.get("type") or "").upper()
         node_name = node.get("name") or ""
@@ -1218,6 +1227,14 @@ def _fix_fill_sizing(tree: dict) -> int:
             # HORIZONTAL 부모 안의 Banner Card (캐로셀)
             if parent_layout_mode == "HORIZONTAL" and "banner" in name_lower:
                 skip = True
+            # 가로 스크롤 섹션 카드 보호 (VS32): 부모 이름에 "scroll"/"carousel" 포함 +
+            # 자식이 FIXED 명시된 경우만 skip — 일반 HORIZONTAL 섹션(Summary Grid,
+            # Onboarding Alert 등)에는 영향 없음
+            parent_lower = (parent_name or "").lower()
+            if (parent_layout_mode == "HORIZONTAL"
+                    and sizing_h == "FIXED"
+                    and ("scroll" in parent_lower or "carousel" in parent_lower)):
+                skip = True
             # FAB / Tab Bar → ABSOLUTE 대상이므로 FILL 금지
             if any(kw in name_lower for kw in ABSOLUTE_NAME_KEYWORDS):
                 skip = True
@@ -1243,9 +1260,10 @@ def _fix_fill_sizing(tree: dict) -> int:
         # 자식 노드 재귀
         current_layout = node.get("layoutMode", "")
         current_align = node.get("primaryAxisAlignItems", "")
+        current_name = node.get("name") or ""
         children = node.get("_children_full", [])
         for i, child in enumerate(children):
-            _walk(child, current_layout, current_align,
+            _walk(child, current_layout, current_align, current_name,
                   is_last_child=(i == len(children) - 1))
 
     _walk(tree)
@@ -1253,7 +1271,7 @@ def _fix_fill_sizing(tree: dict) -> int:
     # ★ 안전장치: 루트부터 재귀적으로 FRAME 자식을 FILL 강제 (FAB/Tab Bar 제외)
     # _walk에서 데이터 누락이나 조건 스킵으로 빠져나갈 수 있으므로,
     # VERTICAL 부모의 모든 FRAME 자식을 재귀적으로 검증/수정
-    ABSOLUTE_NAME_KEYWORDS_LOWER = ("fab", "tab bar", "tabbar")
+    ABSOLUTE_NAME_KEYWORDS_LOWER = ("fab", "tab bar", "tabbar", "bottom nav", "bottomnav")
 
     def _force_fill_recursive(parent_node: dict, depth: int = 0, max_depth: int = 4):
         """VERTICAL 부모의 FRAME 자식을 재귀적으로 FILL 강제."""
@@ -1311,7 +1329,7 @@ def _fix_layout_and_positions(tree: dict, pre_computed_layout: dict = None) -> d
 
     for child in children:
         name = (child.get("name") or "").lower()
-        if "tab bar" in name or "tabbar" in name:
+        if "tab bar" in name or "tabbar" in name or "bottom nav" in name or "bottomnav" in name:
             tab_bar = child
         elif "fab" in name:
             fab = child
@@ -1442,7 +1460,7 @@ def _fix_layout_and_positions(tree: dict, pre_computed_layout: dict = None) -> d
             for c in doc.get("children", []):
                 c_name = (c.get("name") or "").lower()
                 c_lp = c.get("layoutPositioning", "AUTO")
-                if c_lp == "ABSOLUTE" or "fab" in c_name or "tab bar" in c_name or "tab_bar" in c_name:
+                if c_lp == "ABSOLUTE" or "fab" in c_name or "tab bar" in c_name or "tab_bar" in c_name or "bottom nav" in c_name or "bottomnav" in c_name:
                     continue
                 c_bb = c.get("absoluteBoundingBox", {})
                 c_bottom = (c_bb.get("y", 0) - root_y) + c_bb.get("height", 0)
@@ -1567,29 +1585,54 @@ def _fix_layout_and_positions(tree: dict, pre_computed_layout: dict = None) -> d
 
 
 def _fix_tab_bar_items(tree: dict) -> int:
-    """Tab Bar 내부 아이템을 FILL로 통일하고, Tab Row에 individual stroke 적용."""
+    """Tab Bar / Bottom Nav 내부 아이템을 FILL로 통일하고 label 텍스트를 CENTER 정렬.
+
+    감지 키워드: "tab bar", "tabbar", "bottom nav", "bottomnav"
+    처리:
+      1. Tab item FRAME → layoutSizingHorizontal: FILL (폭 균등 분배)
+      2. Tab item 내부 TEXT (label) → textAlignHorizontal: CENTER (아이콘 하단 중앙 정렬)
+         ※ FILL 텍스트는 alignment가 LEFT면 왼쪽으로 밀려나 아이콘과 어긋남 (CLAUDE.md 규칙 7)
+    """
+    NAV_KEYWORDS = ("tab bar", "tabbar", "bottom nav", "bottomnav")
     fix_count = 0
     children = tree.get("_children_full", [])
 
     for child in children:
         name_lower = (child.get("name") or "").lower()
 
-        # Tab Bar item FILL 통일
-        if "tab bar" in name_lower or "tabbar" in name_lower:
+        if any(kw in name_lower for kw in NAV_KEYWORDS):
             tab_items = child.get("_children_full", [])
             for item in tab_items:
                 item_type = (item.get("type") or "").upper()
                 item_sizing = item.get("layoutSizingHorizontal", "")
+                item_id = item.get("id")
                 if item_type == "FRAME" and item_sizing != "FILL":
                     try:
                         call_tool("set_layout_sizing", {
-                            "nodeId": item.get("id"),
+                            "nodeId": item_id,
                             "horizontal": "FILL"
                         })
                         fix_count += 1
-                        print(f"  Tab item FILL: {item.get('name')} ({item.get('id')})")
+                        print(f"  Tab item FILL: {item.get('name')} ({item_id})")
                     except Exception as e:
                         print(f"  Tab item FILL 실패: {item.get('name')}: {e}")
+
+                # Tab item 내부 TEXT(label)를 CENTER 정렬로 강제
+                for sub in item.get("_children_full", []):
+                    sub_type = (sub.get("type") or "").upper()
+                    sub_id = sub.get("id")
+                    if sub_type == "TEXT" and sub_id:
+                        align = sub.get("textAlignHorizontal")
+                        if align != "CENTER":
+                            try:
+                                call_tool("set_text_align", {
+                                    "nodeId": sub_id,
+                                    "textAlignHorizontal": "CENTER"
+                                })
+                                fix_count += 1
+                                print(f"  Tab label CENTER: {sub.get('name')} ({sub_id}) [{align} → CENTER]")
+                            except Exception as e:
+                                print(f"  Tab label CENTER 실패: {sub.get('name')}: {e}")
 
         # Tab Row (underline tab) — individual stroke bottom only
         _apply_individual_strokes(child)
@@ -1679,8 +1722,179 @@ def _fix_zero_width_text(tree: dict) -> int:
     return fix_count
 
 
+def _fix_stroke_alignment(tree: dict) -> int:
+    """strokeAlign INSIDE 강제 — OUTSIDE/CENTER 전면 금지.
+
+    배경: OUTSIDE/CENTER stroke는 부모 프레임이 clipsContent=True이면 잘려보인다.
+    실전 사례(2026-04-22): Schedule Today Card(strokeAlign=OUTSIDE, 2px)가
+    Day Card Row(clipsContent=True)에 의해 상단 stroke가 잘림.
+
+    정책: stroke가 있는 모든 노드를 강제로 strokeAlign=INSIDE로 재설정.
+      - strokeAlign 정보를 plugin이 리턴 안 할 수 있어 "무조건 INSIDE로 set"이 안전
+      - 이미 INSIDE인 노드에 재설정해도 무해 (idempotent)
+      - 시각적 크기(bbox) 변동 없음, 부모 clip과 무관하게 항상 렌더
+    """
+    fix_count = 0
+
+    # Frame-like 타입만 대상 — Vector/path 노드의 CENTER stroke는 path 렌더 기본값이라 건드리면 안 됨
+    FRAME_TYPES = {"FRAME", "RECTANGLE", "COMPONENT", "COMPONENT_SET", "INSTANCE"}
+
+    def _walk(node: dict):
+        nonlocal fix_count
+        node_id = node.get("id")
+        node_name = node.get("name", "")
+        node_type = (node.get("type") or "").upper()
+        strokes = node.get("strokes") or []
+        stroke_weight = node.get("strokeWeight") or 0
+        stroke_align = node.get("strokeAlign")  # plugin이 미제공 시 None
+
+        # stroke가 visible=True이고 weight>0인 노드만 대상
+        visible_strokes = [s for s in strokes if s.get("visible", True)]
+        has_stroke = bool(visible_strokes) and stroke_weight > 0
+
+        # Frame-like이면서, 이미 INSIDE로 확인되지 않은 노드만 대상
+        is_frame_like = node_type in FRAME_TYPES
+        if has_stroke and is_frame_like and stroke_align != "INSIDE" and node_id:
+            try:
+                first = visible_strokes[0]
+                color = first.get("color", {})
+                r = color.get("r", 0)
+                g = color.get("g", 0)
+                b = color.get("b", 0)
+                a = first.get("opacity", color.get("a", 1))
+                call_tool("set_stroke_color", {
+                    "nodeId": node_id,
+                    "r": r, "g": g, "b": b, "a": a,
+                    "strokeWeight": stroke_weight,
+                    "strokeAlign": "INSIDE",
+                })
+                fix_count += 1
+                align_note = f"{stroke_align or 'unknown'} → INSIDE"
+                print(f"  stroke INSIDE 강제: {node_name} ({node_id}) [{stroke_weight}px, {align_note}]")
+            except Exception as e:
+                print(f"  stroke 수정 실패: {node_name} ({node_id}): {e}")
+
+        for child in node.get("_children_full", []):
+            _walk(child)
+
+    _walk(tree)
+    return fix_count
+
+
+def _check_horizontal_scroll_peek(tree: dict) -> int:
+    """가로 스크롤 섹션의 카드 너비가 뷰포트 40% 이하인지 검증 (VS32).
+
+    가로 스크롤 섹션 감지 기준 (모두 충족):
+      1. HORIZONTAL autoLayout + clipsContent:true
+      2. 자식 총 너비(카드 합 + gap) > 부모 width  → 실제로 스크롤 의도됐음
+      3. 자식이 2개 이상
+    위 조건을 만족하는 섹션에서 최대 카드 width > 165px이면 경고.
+
+    예외:
+      - 히어로 배너 캐로셀 (name에 "banner" / "carousel" / "hero" 포함)
+      - Bottom Nav, Tab Bar, Day Row 등 고정 배치 (자식 총 너비가 부모 이하면 스크롤 아님)
+    """
+    VIEWPORT_W = 393
+    MAX_CARD_W = 165   # 40% threshold
+    warn_count = 0
+
+    def _walk(node: dict):
+        nonlocal warn_count
+        node_type = (node.get("type") or "").upper()
+        node_name = (node.get("name") or "").lower()
+        layout_mode = node.get("layoutMode")
+        clips = node.get("clipsContent", False)
+        parent_w = node.get("width") or 0
+        item_spacing = node.get("itemSpacing") or 0
+        padding_l = node.get("paddingLeft") or 0
+        padding_r = node.get("paddingRight") or 0
+
+        is_banner = "banner" in node_name or "carousel" in node_name or "hero" in node_name
+        # 가로 스크롤 섹션은 이름에 "scroll" 포함 강제 (Stage Card Scroll, Product Scroll 등)
+        # → MissedAlert, Summary Grid, Days Row, Bottom Nav 등 오탐 제거
+        is_scroll_section = "scroll" in node_name
+
+        if (node_type in ("FRAME", "COMPONENT", "INSTANCE")
+                and layout_mode == "HORIZONTAL"
+                and clips
+                and is_scroll_section
+                and not is_banner
+                and parent_w > 0):
+            children = node.get("_children_full", [])
+            frame_children = [c for c in children
+                              if (c.get("type") or "").upper() in ("FRAME", "COMPONENT", "INSTANCE", "RECTANGLE")
+                              and (c.get("width") or 0) > 0]
+            if len(frame_children) >= 2:
+                widths = [c.get("width") for c in frame_children]
+                # 가로 스크롤 섹션 조건:
+                #   (1) 모든 자식이 FIXED 너비 (FILL이면 grid 분할이지 스크롤 아님)
+                #   (2) 자식 총 너비 > 부모 width (실제 스크롤 필요)
+                all_fixed = all(
+                    c.get("layoutSizingHorizontal") == "FIXED"
+                    for c in frame_children
+                )
+                total_content_w = sum(widths) + item_spacing * (len(widths) - 1) + padding_l + padding_r
+                is_scrollable = all_fixed and total_content_w > parent_w + 8
+
+                if is_scrollable:
+                    max_w = max(widths)
+                    if max_w > MAX_CARD_W:
+                        pct = int(max_w / VIEWPORT_W * 100)
+                        print(f"  ⚠️ peek 위반: '{node.get('name')}' 카드 최대 width {round(max_w)}px ({pct}% > 40%) — 3번째 카드 peek 불가")
+                        print(f"     권장: 카드 width ≤ {MAX_CARD_W}px (뷰포트 40%) — VS32 참조")
+                        warn_count += 1
+
+        for child in node.get("_children_full", []):
+            _walk(child)
+
+    _walk(tree)
+    return warn_count
+
+
+def _match_status_bar_bg_to_nav(tree: dict) -> bool:
+    """Status Bar(children[0])의 fill을 NavBar(children[1])의 fill과 일치시킴.
+    CLAUDE.md 규칙 #25 — 상단 시스템 UI와 앱 헤더의 시각적 연결.
+
+    반환: True면 매칭 적용됨, False면 skip (대상 없음 or fill 미지정).
+    """
+    children = tree.get("_children_full", [])
+    if len(children) < 2:
+        return False
+    sb = children[0]
+    nav = children[1]
+    sb_name = (sb.get("name") or "").lower()
+    if "status" not in sb_name:
+        return False
+    # NavBar의 첫 SOLID fill 추출
+    nav_fills = nav.get("fills") or []
+    solid = None
+    for f in nav_fills:
+        if isinstance(f, dict) and f.get("type") == "SOLID":
+            solid = f
+            break
+    if not solid:
+        return False
+    color = solid.get("color") or {}
+    r = color.get("r")
+    g = color.get("g")
+    b = color.get("b")
+    if r is None or g is None or b is None:
+        return False
+    opacity = solid.get("opacity", 1)
+    try:
+        call_tool("set_fill_color", {
+            "nodeId": sb.get("id"),
+            "r": r, "g": g, "b": b, "a": opacity,
+        })
+        print(f"  Status Bar bg → NavBar fill: rgba({r:.3f},{g:.3f},{b:.3f},{opacity:.2f})")
+        return True
+    except Exception as e:
+        print(f"  ⚠️ Status Bar bg 매칭 실패: {e}")
+        return False
+
+
 def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
-    """빌드 후 자동 후처리: FILL 사이징, Tab Bar/FAB 배치, 섹션 갭, 텍스트 수정.
+    """빌드 후 자동 후처리: FILL 사이징, Tab Bar/FAB 배치, 섹션 갭, 텍스트 수정, stroke 정렬.
 
     Usage:
         python3 scripts/figma_mcp_client.py post-fix <rootNodeId>
@@ -1721,9 +1935,28 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     print(f"  → {tab_fixes}건 수정")
 
     # 5. Zero-width 텍스트 수정
-    print("\n[5/5] Zero-width 텍스트 수정 중...")
+    print("\n[5/6] Zero-width 텍스트 수정 중...")
     text_fixes = _fix_zero_width_text(tree)
     print(f"  → {text_fixes}건 수정")
+
+    # 6. Stroke 정렬 강제 (OUTSIDE → INSIDE) — clipsContent 부모에 잘리는 현상 방지
+    print("\n[6/7] Stroke INSIDE 정렬 강제 중...")
+    stroke_fixes = _fix_stroke_alignment(tree)
+    print(f"  → {stroke_fixes}건 수정")
+
+    # 7. 가로 스크롤 peek 검증 (VS32) — 카드 width > 165px이면 경고
+    print("\n[7/8] 가로 스크롤 Peek 검증 중...")
+    peek_warns = _check_horizontal_scroll_peek(tree)
+    if peek_warns == 0:
+        print(f"  → 모든 가로 스크롤 섹션이 peek 패턴 준수")
+    else:
+        print(f"  → ⚠️ {peek_warns}개 섹션에서 peek 패턴 위반 (카드가 너무 큼 — Blueprint 수정 필요)")
+
+    # 8. Status Bar bg 매칭 (CLAUDE.md 규칙 #25)
+    print("\n[8/8] Status Bar bg를 NavBar fill과 매칭 중...")
+    sb_matched = _match_status_bar_bg_to_nav(tree)
+    if not sb_matched:
+        print(f"  → skip (Status Bar 자식 없음 또는 NavBar fill 미지정)")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
@@ -1731,6 +1964,9 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     print(f"  FILL 수정: {fill_fixes}건")
     print(f"  Tab Bar/Stroke 수정: {tab_fixes}건")
     print(f"  텍스트 수정: {text_fixes}건")
+    print(f"  Stroke INSIDE 수정: {stroke_fixes}건")
+    print(f"  Peek 위반 경고: {peek_warns}건")
+    print(f"  Status Bar bg 매칭: {'OK' if sb_matched else 'skip'}")
     print(f"  루트 높이: {layout_result['root_height']}")
     print(f"{'='*50}\n")
 
@@ -2140,6 +2376,122 @@ def main():
         print(f"Unknown command: {cmd}")
         print(__doc__)
         sys.exit(1)
+
+
+# ============================================================
+# Semantic Token Binding Sweep (post-fix step 6)
+# ============================================================
+
+_SEMANTIC_PREFIXES = ("fg-", "bg-", "border-", "text-")
+_SEMANTIC_PATH_PARTS = ("/Fg/", "/Bg/", "/Border/", "/Text/")
+
+
+def _is_semantic_token(name, figma_path):
+    """Heuristic: token is semantic if name contains fg-/bg-/border-/text- after
+    the type prefix, or if figmaPath has those segments."""
+    lower_name = name.lower()
+    for p in _SEMANTIC_PREFIXES:
+        if p in lower_name:
+            return True
+    for p in _SEMANTIC_PATH_PARTS:
+        if p in figma_path:
+            return True
+    return False
+
+
+def _hex_to_rgba_ints(hex_str):
+    """'#181d27' or '#181d27ff' -> (24, 29, 39, 1.0). None if not parseable."""
+    if not isinstance(hex_str, str) or not hex_str.startswith("#"):
+        return None
+    h = hex_str[1:]
+    try:
+        if len(h) == 6:
+            r = int(h[0:2], 16); g = int(h[2:4], 16); b = int(h[4:6], 16); a = 1.0
+        elif len(h) == 8:
+            r = int(h[0:2], 16); g = int(h[2:4], 16); b = int(h[4:6], 16)
+            a = round(int(h[6:8], 16) / 255.0, 3)
+        else:
+            return None
+        return (r, g, b, a)
+    except ValueError:
+        return None
+
+
+def _resolve_typography_value(value, token_map):
+    """TYPOGRAPHY value uses {Font family.x} / {fontSize.N} reference syntax.
+    Return a dict where references are replaced by their resolved primitive
+    value if found in token_map; otherwise keep the original reference string
+    so we can debug later."""
+    resolved = {}
+    for k, v in value.items():
+        if isinstance(v, str) and v.startswith("{") and v.endswith("}"):
+            ref = v[1:-1]  # 'Font family.font-family-display' or 'fontSize.10'
+            # Convert reference path 'fontSize.10' -> figmaPath 'fontSize/10'
+            ref_path = ref.replace(".", "/")
+            found = None
+            for tkn in token_map.values():
+                if tkn.get("figmaPath") == ref_path:
+                    found = tkn.get("value")
+                    break
+            resolved[k] = found if found is not None else v
+        else:
+            resolved[k] = v
+    return resolved
+
+
+def _load_token_index(token_map):
+    """Build reverse indexes from TOKEN_MAP.json contents.
+
+    Returns:
+        {
+          "color_index":  {(r,g,b,a): [(token_name, is_semantic)]},
+          "number_index": {value: [(token_name, is_semantic)]},
+          "typography_list": [{name, fontFamily, fontWeight, fontSize,
+                               lineHeight, letterSpacing}],
+          "shadow_list":     [{name, color, offsetX, offsetY, radius, spread}]
+        }
+    Each color_index / number_index list is sorted with semantic tokens first.
+    """
+    color_index = {}
+    number_index = {}
+    typography_list = []
+    shadow_list = []
+
+    for name, entry in token_map.items():
+        ttype = entry.get("type")
+        figma_path = entry.get("figmaPath", "")
+        is_semantic = _is_semantic_token(name, figma_path)
+        value = entry.get("value")
+
+        if ttype == "COLOR":
+            rgba = _hex_to_rgba_ints(value)
+            if rgba is None:
+                continue
+            color_index.setdefault(rgba, []).append((name, is_semantic))
+        elif ttype == "NUMBER":
+            if isinstance(value, (int, float)):
+                number_index.setdefault(value, []).append((name, is_semantic))
+        elif ttype == "TYPOGRAPHY" and isinstance(value, dict):
+            resolved = _resolve_typography_value(value, token_map)
+            typography_list.append({"name": name, **resolved})
+        elif ttype == "BOXSHADOW" and isinstance(value, dict):
+            shadow_list.append({"name": name, **value})
+
+    # Sort each bucket: semantic first, then alphabetical
+    def _sort_bucket(bucket):
+        return sorted(bucket, key=lambda t: (not t[1], t[0]))
+
+    for k in list(color_index.keys()):
+        color_index[k] = _sort_bucket(color_index[k])
+    for k in list(number_index.keys()):
+        number_index[k] = _sort_bucket(number_index[k])
+
+    return {
+        "color_index": color_index,
+        "number_index": number_index,
+        "typography_list": typography_list,
+        "shadow_list": shadow_list,
+    }
 
 
 if __name__ == "__main__":
