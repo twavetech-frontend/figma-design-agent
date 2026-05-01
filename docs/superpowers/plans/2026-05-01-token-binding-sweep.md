@@ -1243,7 +1243,7 @@ Append:
 _BIND_CHUNK = 100
 
 
-def _apply_bindings(queues: dict) -> dict:
+def _apply_bindings(queues: dict, indexes: dict) -> dict:
     """Issue MCP calls for collected bindings. Returns counts.
 
     `batch_bind_variables` payload shape (per existing tool):
@@ -1454,7 +1454,7 @@ def _bind_semantic_tokens(root_node_id: str) -> dict:
 
     nodes = _flatten_node_tree(tree)
     queues = _collect_bindings(nodes, indexes)
-    counts = _apply_bindings(queues)
+    counts = _apply_bindings(queues, indexes)
     report_path = f"/tmp/unmapped-tokens-{root_node_id.replace(':', '_')}.json"
     summary = _report_unmapped(queues["unmapped"], output_path=report_path)
     print(

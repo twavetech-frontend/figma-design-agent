@@ -753,7 +753,7 @@ def cmd_build(blueprint_file: str):
     if root_id:
         print("\n🔧 자동 후처리 실행 중...")
         sim_layout = sim_result.get("layout") if sim_result else None
-        cmd_post_fix(root_id, pre_computed_layout=sim_layout)
+        cmd_post_fix(root_id, pre_computed_layout=sim_layout, run_token_bind=False)
         print("\n🔧 후처리 2회차 (레이아웃 안정화 후 최종 배치)...")
         cmd_post_fix(root_id)
     else:
@@ -1896,11 +1896,18 @@ def _match_status_bar_bg_to_nav(tree: dict) -> bool:
         return False
 
 
-def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
-    """빌드 후 자동 후처리: FILL 사이징, Tab Bar/FAB 배치, 섹션 갭, 텍스트 수정, stroke 정렬.
+def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None, run_token_bind: bool = True):
+    """빌드 후 자동 후처리: FILL 사이징, Tab Bar/FAB 배치, 섹션 갭, 텍스트 수정, stroke 정렬, semantic token binding.
 
     Usage:
         python3 scripts/figma_mcp_client.py post-fix <rootNodeId>
+        python3 scripts/figma_mcp_client.py post-fix <rootNodeId> --skip-token-bind   # step 9 비활성화
+
+    Args:
+        root_node_id: 후처리 대상 root frame의 Figma node ID.
+        pre_computed_layout: 사전 계산된 layout 정보 (선택).
+        run_token_bind: False면 step 9 (semantic token sweep) 건너뜀. cmd_build의
+            1차 post-fix 호출에서 사용 — 2차 호출이 어차피 다시 sweep함.
     """
     ensure_session()
 
@@ -1963,14 +1970,16 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
 
     # 9. Semantic Token Binding Sweep
     token_counts = {}
-    if not _SKIP_TOKEN_BIND:
+    if _SKIP_TOKEN_BIND:
+        print("\n[9/9] Semantic Token Binding Sweep — skip (--skip-token-bind 플래그)")
+    elif not run_token_bind:
+        print("\n[9/9] Semantic Token Binding Sweep — skip (1차 post-fix, 2차에서 실행 예정)")
+    else:
         print("\n[9/9] Semantic Token Binding Sweep 중...")
         try:
             token_counts = _bind_semantic_tokens(root_node_id) or {}
         except Exception as exc:
             print(f"  → ⚠️ token-bind sweep crashed: {exc} → 빌드 계속")
-    else:
-        print("\n[9/9] Semantic Token Binding Sweep — skip (--skip-token-bind 플래그)")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
