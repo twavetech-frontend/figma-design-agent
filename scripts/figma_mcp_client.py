@@ -2701,5 +2701,167 @@ def _flatten_node_tree(node):
     return out
 
 
+_NUMBER_FIELDS = (
+    "paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
+    "itemSpacing",
+    "cornerRadius",
+    "topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius",
+    "strokeWeight",
+    "strokeTopWeight", "strokeRightWeight",
+    "strokeBottomWeight", "strokeLeftWeight",
+)
+
+
+def _figma_color_to_rgba_ints(c):
+    """{r:0..1, g:0..1, b:0..1, a:0..1} -> (r,g,b,a) with ints + alpha float."""
+    if not isinstance(c, dict):
+        return None
+    try:
+        r = int(round(c.get("r", 0) * 255))
+        g = int(round(c.get("g", 0) * 255))
+        b = int(round(c.get("b", 0) * 255))
+        a = round(c.get("a", 1.0), 3)
+        return (r, g, b, a)
+    except (TypeError, ValueError):
+        return None
+
+
+def _collect_bindings(nodes, indexes):
+    """Walk flattened nodes and produce binding queues + unmapped report.
+
+    Returns:
+        {
+          "color_bindings":     [{nodeId, field: "fills"|"strokes", index, token_name}],
+          "number_bindings":    [{nodeId, field, token_name}],
+          "textstyle_bindings": [{nodeId, token_name}],
+          "effect_bindings":    [{nodeId, index, token_name}],
+          "unmapped": {colors:[], numbers:[], typography:[], shadows:[]}
+        }
+    """
+    out = {
+        "color_bindings": [],
+        "number_bindings": [],
+        "textstyle_bindings": [],
+        "effect_bindings": [],
+        "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
+    }
+    color_idx = indexes["color_index"]
+    number_idx = indexes["number_index"]
+    typo_list = indexes["typography_list"]
+    shadow_list = indexes["shadow_list"]
+
+    for n in nodes:
+        if not isinstance(n, dict):
+            continue
+        nid = n.get("id")
+        if not nid:
+            continue
+
+        # fills
+        for i, fill in enumerate(n.get("fills") or []):
+            if not isinstance(fill, dict):
+                continue
+            if fill.get("type") != "SOLID":
+                continue
+            rgba = _figma_color_to_rgba_ints(fill.get("color"))
+            if rgba is None:
+                continue
+            tok = _match_color(rgba, color_idx)
+            if tok:
+                out["color_bindings"].append(
+                    {"nodeId": nid, "field": "fills", "index": i, "token_name": tok}
+                )
+            else:
+                out["unmapped"]["colors"].append(
+                    {"nodeId": nid, "field": "fills", "index": i, "rgba": rgba}
+                )
+
+        # strokes
+        for i, stroke in enumerate(n.get("strokes") or []):
+            if not isinstance(stroke, dict):
+                continue
+            if stroke.get("type") != "SOLID":
+                continue
+            rgba = _figma_color_to_rgba_ints(stroke.get("color"))
+            if rgba is None:
+                continue
+            tok = _match_color(rgba, color_idx)
+            if tok:
+                out["color_bindings"].append(
+                    {"nodeId": nid, "field": "strokes", "index": i, "token_name": tok}
+                )
+            else:
+                out["unmapped"]["colors"].append(
+                    {"nodeId": nid, "field": "strokes", "index": i, "rgba": rgba}
+                )
+
+        # numbers
+        for f in _NUMBER_FIELDS:
+            if f not in n:
+                continue
+            v = n[f]
+            if not isinstance(v, (int, float)) or v == 0:
+                continue
+            tok = _match_number(v, number_idx)
+            if tok:
+                out["number_bindings"].append(
+                    {"nodeId": nid, "field": f, "token_name": tok}
+                )
+            else:
+                out["unmapped"]["numbers"].append(
+                    {"nodeId": nid, "field": f, "value": v}
+                )
+
+        # typography (TEXT nodes only)
+        if n.get("type") == "TEXT":
+            # mixed style detection: 'fontSize' missing or marked mixed
+            if n.get("hasMixedStyle") or n.get("fontSize") is None:
+                out["unmapped"]["typography"].append(
+                    {"nodeId": nid, "reason": "mixed_or_missing"}
+                )
+            else:
+                text_props = {
+                    "fontFamily": n.get("fontFamily") or (n.get("fontName") or {}).get("family"),
+                    "fontWeight": (
+                        n.get("fontWeight")
+                        or (n.get("fontName") or {}).get("style")
+                    ),
+                    "fontSize": n.get("fontSize"),
+                    "lineHeight": (n.get("lineHeight") or {}).get("value")
+                                  if isinstance(n.get("lineHeight"), dict)
+                                  else n.get("lineHeight"),
+                    "letterSpacing": (n.get("letterSpacing") or {}).get("value")
+                                     if isinstance(n.get("letterSpacing"), dict)
+                                     else n.get("letterSpacing"),
+                }
+                tok = _match_textstyle(text_props, typo_list)
+                if tok:
+                    out["textstyle_bindings"].append(
+                        {"nodeId": nid, "token_name": tok}
+                    )
+                else:
+                    out["unmapped"]["typography"].append(
+                        {"nodeId": nid, "props": text_props}
+                    )
+
+        # effects
+        for i, eff in enumerate(n.get("effects") or []):
+            if not isinstance(eff, dict):
+                continue
+            if eff.get("type") not in ("DROP_SHADOW", "INNER_SHADOW"):
+                continue
+            tok = _match_shadow(eff, shadow_list)
+            if tok:
+                out["effect_bindings"].append(
+                    {"nodeId": nid, "index": i, "token_name": tok}
+                )
+            else:
+                out["unmapped"]["shadows"].append(
+                    {"nodeId": nid, "index": i, "effect": eff}
+                )
+
+    return out
+
+
 if __name__ == "__main__":
     main()

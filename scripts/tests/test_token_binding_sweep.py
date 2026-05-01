@@ -300,5 +300,51 @@ class TestWalkNodeTree(unittest.TestCase):
         self.assertNotIn("children", flat[0])
 
 
+class TestCollectBindings(unittest.TestCase):
+    def setUp(self):
+        self.idx = fmc._load_token_index(load_fixture())
+
+    def test_collect_color_fill(self):
+        nodes = [{
+            "id": "1:1", "type": "FRAME",
+            "fills": [{"type": "SOLID", "color": {"r": 24/255, "g": 29/255, "b": 39/255, "a": 1}}],
+        }]
+        q = fmc._collect_bindings(nodes, self.idx)
+        self.assertEqual(len(q["color_bindings"]), 1)
+        b = q["color_bindings"][0]
+        self.assertEqual(b["nodeId"], "1:1")
+        self.assertEqual(b["field"], "fills")
+        self.assertEqual(b["index"], 0)
+        self.assertEqual(b["token_name"], "--colors-text-textPrimary")
+
+    def test_collect_padding_and_radius(self):
+        nodes = [{
+            "id": "1:1", "type": "FRAME",
+            "paddingTop": 8, "paddingLeft": 12, "paddingBottom": 0,  # 0 skipped
+            "itemSpacing": 8,
+            "cornerRadius": 12,
+        }]
+        q = fmc._collect_bindings(nodes, self.idx)
+        fields = sorted(b["field"] for b in q["number_bindings"])
+        self.assertEqual(fields, ["cornerRadius", "itemSpacing", "paddingLeft", "paddingTop"])
+
+    def test_skip_image_fill(self):
+        nodes = [{
+            "id": "1:1", "type": "FRAME",
+            "fills": [{"type": "IMAGE", "imageHash": "abc"}],
+        }]
+        q = fmc._collect_bindings(nodes, self.idx)
+        self.assertEqual(q["color_bindings"], [])
+
+    def test_unmapped_color_recorded(self):
+        nodes = [{
+            "id": "1:1", "type": "FRAME",
+            "fills": [{"type": "SOLID", "color": {"r": 0.1, "g": 0.5, "b": 0.9, "a": 1}}],
+        }]
+        q = fmc._collect_bindings(nodes, self.idx)
+        self.assertEqual(q["color_bindings"], [])
+        self.assertEqual(len(q["unmapped"]["colors"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()
