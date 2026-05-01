@@ -2681,23 +2681,23 @@ def _match_shadow(effect, shadow_list):
 
 
 def _flatten_node_tree(node):
-    """DFS flatten a recursive node-info dict into a list of node dicts.
-    Each returned node retains its original keys (without 'children').
+    """DFS pre-order flatten a recursive node-info dict into a list of node
+    dicts. Each returned node retains its original keys (without 'children').
     Resilient to missing 'children' or non-list 'children'."""
     if not isinstance(node, dict):
         return []
     out = []
     stack = [node]
     while stack:
-        cur = stack.pop(0)  # BFS-ish but order matches DFS-pre when reversed
+        cur = stack.pop()
         if not isinstance(cur, dict):
             continue
         copy = {k: v for k, v in cur.items() if k != "children"}
         out.append(copy)
         children = cur.get("children")
         if isinstance(children, list):
-            # prepend children so siblings come right after parent
-            stack = list(children) + stack
+            for child in reversed(children):
+                stack.append(child)
     return out
 
 

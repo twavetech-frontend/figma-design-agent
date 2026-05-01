@@ -280,6 +280,25 @@ class TestWalkNodeTree(unittest.TestCase):
         flat = fmc._flatten_node_tree(tree)
         self.assertEqual([n["id"] for n in flat], ["1:1"])
 
+    def test_empty_children_list(self):
+        tree = {"id": "1:1", "type": "FRAME", "children": []}
+        flat = fmc._flatten_node_tree(tree)
+        self.assertEqual([n["id"] for n in flat], ["1:1"])
+
+    def test_deep_nesting_three_levels(self):
+        tree = {"id": "1:1", "type": "FRAME", "children": [
+            {"id": "1:2", "type": "FRAME", "children": [
+                {"id": "1:3", "type": "FRAME", "children": [
+                    {"id": "1:4", "type": "TEXT"}]}]}]}
+        flat = fmc._flatten_node_tree(tree)
+        self.assertEqual([n["id"] for n in flat], ["1:1", "1:2", "1:3", "1:4"])
+
+    def test_non_list_children_treated_as_leaf(self):
+        tree = {"id": "1:1", "type": "FRAME", "children": "malformed"}
+        flat = fmc._flatten_node_tree(tree)
+        self.assertEqual([n["id"] for n in flat], ["1:1"])
+        self.assertNotIn("children", flat[0])
+
 
 if __name__ == "__main__":
     unittest.main()
