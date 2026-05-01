@@ -178,6 +178,32 @@ class TestMatchTextstyle(unittest.TestCase):
             fmc._match_textstyle(None, self.idx["typography_list"])
         )
 
+    def test_fontweight_case_insensitive_match(self):
+        text_props = {
+            "fontFamily": "Pretendard",
+            "fontWeight": "SemiBold",  # capital B — Figma returns this casing
+            "fontSize": 72,
+            "lineHeight": 90,
+            "letterSpacing": 0,
+        }
+        self.assertEqual(
+            fmc._match_textstyle(text_props, self.idx["typography_list"]),
+            "--display2xl-semibold",
+        )
+
+    def test_fontfamily_case_insensitive_match(self):
+        text_props = {
+            "fontFamily": "PRETENDARD",  # uppercase
+            "fontWeight": "Semibold",
+            "fontSize": 72,
+            "lineHeight": 90,
+            "letterSpacing": 0,
+        }
+        self.assertEqual(
+            fmc._match_textstyle(text_props, self.idx["typography_list"]),
+            "--display2xl-semibold",
+        )
+
     def test_lineheight_outside_tolerance_rejects(self):
         # lineHeight 94 against candidate ts_lh=90 → diff 4 > tol 2.7 → reject
         text_props = {

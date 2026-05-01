@@ -2632,9 +2632,15 @@ def _match_textstyle(text_props, typography_list):
     best_dist = float("inf")
     best_name = None
     for ts in typography_list:
-        if ts.get("fontFamily") != pf:
+        ts_family = ts.get("fontFamily")
+        if ts_family is None or pf is None:
             continue
-        if ts.get("fontWeight") != pw:
+        if str(ts_family).lower() != str(pf).lower():
+            continue
+        ts_weight = ts.get("fontWeight")
+        if ts_weight is None or pw is None:
+            continue
+        if str(ts_weight).lower() != str(pw).lower():
             continue
         ts_size = ts.get("fontSize")
         if not isinstance(ts_size, (int, float)):
