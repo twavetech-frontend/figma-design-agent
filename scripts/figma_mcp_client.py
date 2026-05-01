@@ -2475,7 +2475,22 @@ def _load_token_index(token_map):
             resolved = _resolve_typography_value(value, token_map)
             typography_list.append({"name": name, **resolved})
         elif ttype == "BOXSHADOW" and isinstance(value, dict):
-            shadow_list.append({"name": name, **value})
+            # Normalize field names — upstream sync may use either {x,y,blur}
+            # (current sync-to-agent.js output) or {offsetX,offsetY,radius}.
+            # Alpha is encoded in the last 2 chars of an 8-char hex color.
+            color_hex = value.get("color")
+            rgba_ints = _hex_to_rgba_ints(color_hex) if isinstance(color_hex, str) else None
+            extracted_alpha = rgba_ints[3] if rgba_ints is not None else value.get("alpha", 1)
+            shadow_list.append({
+                "name": name,
+                "color":   color_hex,
+                "alpha":   extracted_alpha,
+                "offsetX": value.get("offsetX", value.get("x", 0)),
+                "offsetY": value.get("offsetY", value.get("y", 0)),
+                "radius":  value.get("radius",  value.get("blur", 0)),
+                "spread":  value.get("spread", 0),
+            })
+        # else: list-shaped multi-layer BOXSHADOW values are not yet handled (future)
 
     # Sort each bucket: semantic first, then alphabetical
     def _sort_bucket(bucket):

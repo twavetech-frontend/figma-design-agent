@@ -194,13 +194,14 @@ class TestMatchTextstyle(unittest.TestCase):
 class TestMatchShadow(unittest.TestCase):
     def setUp(self):
         token_map = load_fixture()
+        # Real-shape BOXSHADOW: 8-char hex color (last 2 = alpha 0x14 ≈ 0.078),
+        # x/y/blur instead of offsetX/offsetY/radius.
         token_map["--shadow-md"] = {
-            "figmaPath": "Shadows/md",
+            "figmaPath": "Shadows/shadow-md",
             "value": {
-                "color": "#0a0d12",
-                "alpha": 0.08,
-                "offsetX": 0, "offsetY": 4,
-                "radius": 6, "spread": -2
+                "color": "#0a0d1214",
+                "type": "dropShadow",
+                "x": 0, "y": 4, "blur": 6, "spread": -2
             },
             "type": "BOXSHADOW"
         }
@@ -241,6 +242,23 @@ class TestMatchShadow(unittest.TestCase):
         self.assertIsNone(
             fmc._match_shadow(effect, self.idx["shadow_list"])
         )
+
+    def test_multilayer_token_skipped_at_load(self):
+        token_map = load_fixture()
+        token_map["--shadow-multilayer"] = {
+            "figmaPath": "Shadows/shadow-lg",
+            "value": [
+                {"color": "#0a0d1214", "type": "dropShadow", "x": 0, "y": 12, "blur": 16, "spread": -4},
+                {"color": "#0a0d1208", "type": "dropShadow", "x": 0, "y": 4, "blur": 6, "spread": -2},
+            ],
+            "type": "BOXSHADOW"
+        }
+        idx = fmc._load_token_index(token_map)
+        names = [s["name"] for s in idx["shadow_list"]]
+        self.assertNotIn("--shadow-multilayer", names)
+
+    def test_none_effect_returns_none(self):
+        self.assertIsNone(fmc._match_shadow(None, self.idx["shadow_list"]))
 
 
 if __name__ == "__main__":
