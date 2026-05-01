@@ -453,6 +453,7 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
       if (node.lineHeight !== figma.mixed) info.lineHeight = node.lineHeight;
       if (node.letterSpacing !== figma.mixed) info.letterSpacing = node.letterSpacing;
       if (node.textAutoResize) info.textAutoResize = node.textAutoResize;
+      if (node.textStyleId !== figma.mixed && node.textStyleId) info.textStyleId = node.textStyleId;
     } catch (e) { /* mixed text props */ }
   }
 
@@ -501,6 +502,7 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
   if ("effects" in node && Array.isArray(node.effects)) {
     info.effects = node.effects;
   }
+  if (node.effectStyleId) info.effectStyleId = node.effectStyleId;
 
   // Opacity & blend
   if ("opacity" in node) info.opacity = node.opacity;

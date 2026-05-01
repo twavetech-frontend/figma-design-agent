@@ -567,6 +567,30 @@ class TestApplyBindings(unittest.TestCase):
         result = fmc._apply_bindings(queues, self.indexes)
         self.assertEqual(result, {"colors": 1, "numbers": 1, "textstyles": 1, "effects": 1})
 
+    def test_textstyle_logs_failures(self):
+        """If plugin reports failed textstyle binds, the count reflects succeeded only."""
+        # Override fake_call_tool to return a failed response
+        def fake_call_tool(name, args, msg_id=1):
+            self.calls.append((name, args))
+            if name == "batch_set_text_style_id":
+                return [{"text": '{"total": 2, "succeeded": 1, "failed": 1, '
+                                  '"results": [{"nodeId":"1:1","name":"T","styleName":"X"}], '
+                                  '"errors": [{"nodeId":"1:2","error":"Style not found"}]}'}]
+            return [{"text": "{\"success\": true}"}]
+        fmc.call_tool = fake_call_tool
+        queues = {
+            "color_bindings": [], "number_bindings": [],
+            "textstyle_bindings": [
+                {"nodeId": "1:1", "token_name": "--display2xl-semibold"},
+                {"nodeId": "1:2", "token_name": "--display2xl-semibold"},
+            ],
+            "effect_bindings": [],
+            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
+        }
+        counts = fmc._apply_bindings(queues, self.indexes)
+        # Should reflect actual succeeded count (1), not the input count (2)
+        self.assertEqual(counts["textstyles"], 1)
+
 
 import tempfile
 

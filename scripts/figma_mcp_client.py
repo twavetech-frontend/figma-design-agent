@@ -2955,16 +2955,32 @@ def _apply_bindings(queues, indexes):
             {"nodeId": b["nodeId"], "textStyleName": _to_path(b["token_name"])}
             for b in queues["textstyle_bindings"]
         ]
-        call_tool("batch_set_text_style_id", {"items": ts_items}, msg_id=20000)
-        counts["textstyles"] = len(ts_items)
+        ts_resp = call_tool("batch_set_text_style_id", {"items": ts_items}, msg_id=20000)
+        try:
+            from json import loads as _json_loads
+            parsed = parse_content(ts_resp).get("json") or {}
+            if parsed.get("failed", 0) > 0:
+                err_summary = parsed.get("errors", [])[:3]
+                print(f"[token-bind] textstyle: {parsed.get('succeeded',0)}/{parsed.get('total',len(ts_items))} succeeded, "
+                      f"{parsed.get('failed',0)} failed → first errors: {err_summary}")
+            counts["textstyles"] = parsed.get("succeeded", len(ts_items))
+        except Exception:
+            counts["textstyles"] = len(ts_items)
 
     for idx, b in enumerate(queues["effect_bindings"]):
-        call_tool(
+        eff_resp = call_tool(
             "set_effect_style_id",
             {"nodeId": b["nodeId"], "effectStyleName": _to_path(b["token_name"])},
             msg_id=30000 + idx,
         )
-        counts["effects"] += 1
+        try:
+            parsed = parse_content(eff_resp).get("json") or {}
+            if isinstance(parsed, dict) and parsed.get("_error"):
+                print(f"[token-bind] effect[{b['nodeId']}] error: {parsed['_error']}")
+            else:
+                counts["effects"] += 1
+        except Exception:
+            counts["effects"] += 1
 
     return counts
 
