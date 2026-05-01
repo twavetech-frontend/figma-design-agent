@@ -2935,5 +2935,41 @@ def _apply_bindings(queues, indexes):
     return counts
 
 
+def _report_unmapped(unmapped, output_path):
+    """Write detailed unmapped report to JSON, return one-line summary.
+
+    Report format (JSON pretty-printed for human inspection):
+        {colors: [...], numbers: [...], typography: [...], shadows: [...]}
+    Tuples are converted to lists so json.dump works.
+    """
+    def _normalize(v):
+        if isinstance(v, tuple):
+            return list(v)
+        if isinstance(v, dict):
+            return {k: _normalize(x) for k, x in v.items()}
+        if isinstance(v, list):
+            return [_normalize(x) for x in v]
+        return v
+
+    serializable = _normalize(unmapped)
+    try:
+        with open(output_path, "w") as f:
+            json.dump(serializable, f, indent=2, ensure_ascii=False)
+    except OSError as exc:
+        print(f"WARNING: could not write unmapped report → {output_path}: {exc}")
+
+    parts = []
+    counts = {
+        "color":      len(unmapped.get("colors") or []),
+        "number":     len(unmapped.get("numbers") or []),
+        "typography": len(unmapped.get("typography") or []),
+        "shadow":     len(unmapped.get("shadows") or []),
+    }
+    for label, n in counts.items():
+        if n:
+            parts.append(f"{n} {label}" + ("s" if n != 1 else ""))
+    return ", ".join(parts) if parts else "0"
+
+
 if __name__ == "__main__":
     main()

@@ -542,5 +542,26 @@ class TestApplyBindings(unittest.TestCase):
         self.assertEqual(result, {"colors": 1, "numbers": 1, "textstyles": 1, "effects": 1})
 
 
+import tempfile
+
+
+class TestReportUnmapped(unittest.TestCase):
+    def test_writes_json_and_returns_summary(self):
+        unmapped = {
+            "colors": [{"nodeId": "1:1", "field": "fills", "index": 0, "rgba": (10,20,30,1.0)}],
+            "numbers": [{"nodeId": "1:2", "field": "paddingTop", "value": 7}],
+            "typography": [],
+            "shadows": [],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "report.json")
+            summary = fmc._report_unmapped(unmapped, output_path=path)
+            self.assertEqual(summary, "1 color, 1 number")
+            self.assertTrue(os.path.exists(path))
+            with open(path) as f:
+                data = json.load(f)
+            self.assertEqual(len(data["colors"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()
