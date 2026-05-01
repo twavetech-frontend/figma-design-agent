@@ -2236,7 +2236,7 @@
   },
   "--colors-text-textPrimary": {
     "figmaPath": "Colors/Text/text-primary",
-    "value": "#ececed",
+    "value": "#f0f0f1",
     "type": "COLOR"
   },
   "--colors-text-textTertiary": {
@@ -2271,7 +2271,7 @@
   },
   "--colors-text-textDisabled": {
     "figmaPath": "Colors/Text/text-disabled",
-    "value": "#61656c",
+    "value": "#373a41",
     "type": "COLOR"
   },
   "--colors-text-textSecondaryHover": {
@@ -2286,22 +2286,22 @@
   },
   "--colors-text-textBrandSecondary": {
     "figmaPath": "Colors/Text/text-brand-secondary",
-    "value": "#7700ff",
+    "value": "#6a00e0",
     "type": "COLOR"
   },
   "--colors-text-textPlaceholder": {
     "figmaPath": "Colors/Text/text-placeholder",
-    "value": "#61656c",
+    "value": "#373a41",
     "type": "COLOR"
   },
   "--colors-text-textPlaceholderSubtle": {
     "figmaPath": "Colors/Text/text-placeholder_subtle",
-    "value": "#373a41",
+    "value": "#22262f",
     "type": "COLOR"
   },
   "--colors-text-textBrandTertiary": {
     "figmaPath": "Colors/Text/text-brand-tertiary",
-    "value": "#e6d4ff",
+    "value": "#5200b0",
     "type": "COLOR"
   },
   "--colors-text-textQuaternary": {
@@ -2311,7 +2311,7 @@
   },
   "--colors-text-textBrandPrimary": {
     "figmaPath": "Colors/Text/text-brand-primary",
-    "value": "#9b55ff",
+    "value": "#7700ff",
     "type": "COLOR"
   },
   "--colors-text-textPrimaryOnBrand": {
@@ -2336,7 +2336,7 @@
   },
   "--colors-text-textBrandTertiaryAlt": {
     "figmaPath": "Colors/Text/text-brand-tertiary_alt",
-    "value": "#f9fafb",
+    "value": "#6a00e0",
     "type": "COLOR"
   },
   "--colors-text-textErrorPrimaryHover": {
@@ -2401,7 +2401,7 @@
   },
   "--colors-background-bgPrimary": {
     "figmaPath": "Colors/Background/bg-primary",
-    "value": "#0c0e12",
+    "value": "#000000",
     "type": "COLOR"
   },
   "--colors-background-bgTertiary": {
@@ -2411,22 +2411,22 @@
   },
   "--colors-background-bgBrandPrimary": {
     "figmaPath": "Colors/Background/bg-brand-primary",
-    "value": "#7700ff",
+    "value": "#340078",
     "type": "COLOR"
   },
   "--colors-background-bgErrorSecondary": {
     "figmaPath": "Colors/Background/bg-error-secondary",
-    "value": "#d92d20",
+    "value": "#912018",
     "type": "COLOR"
   },
   "--colors-background-bgWarningPrimary": {
     "figmaPath": "Colors/Background/bg-warning-primary",
-    "value": "#4e1d09",
+    "value": "#7a2e0e",
     "type": "COLOR"
   },
   "--colors-background-bgWarningSecondary": {
     "figmaPath": "Colors/Background/bg-warning-secondary",
-    "value": "#dc6803",
+    "value": "#93370d",
     "type": "COLOR"
   },
   "--colors-background-bgSuccessPrimary": {
@@ -2466,12 +2466,12 @@
   },
   "--colors-background-bgSecondaryHover": {
     "figmaPath": "Colors/Background/bg-secondary_hover",
-    "value": "#373a41",
+    "value": "#18191b",
     "type": "COLOR"
   },
   "--colors-background-bgPrimaryHover": {
     "figmaPath": "Colors/Background/bg-primary_hover",
-    "value": "#22262f",
+    "value": "#18191b",
     "type": "COLOR"
   },
   "--colors-background-bgDisabled": {
@@ -2491,7 +2491,7 @@
   },
   "--colors-background-bgErrorPrimary": {
     "figmaPath": "Colors/Background/bg-error-primary",
-    "value": "#220905",
+    "value": "#7a271a",
     "type": "COLOR"
   },
   "--colors-background-bgBrandSecondary": {
@@ -2501,7 +2501,7 @@
   },
   "--colors-background-bgSecondary": {
     "figmaPath": "Colors/Background/bg-secondary",
-    "value": "#22262f",
+    "value": "#0c0e12",
     "type": "COLOR"
   },
   "--colors-background-bgDisabledSubtle": {
@@ -2511,22 +2511,22 @@
   },
   "--colors-background-bgQuaternary": {
     "figmaPath": "Colors/Background/bg-quaternary",
-    "value": "#18191b",
+    "value": "#22262f",
     "type": "COLOR"
   },
   "--colors-background-bgPrimaryAlt": {
     "figmaPath": "Colors/Background/bg-primary_alt",
-    "value": "#18191b",
+    "value": "#0c0e12",
     "type": "COLOR"
   },
   "--colors-background-bgBrandPrimaryAlt": {
     "figmaPath": "Colors/Background/bg-brand-primary_alt",
-    "value": "#22262f",
+    "value": "#0c0e12",
     "type": "COLOR"
   },
   "--colors-background-bgSecondaryAlt": {
     "figmaPath": "Colors/Background/bg-secondary_alt",
-    "value": "#22262f",
+    "value": "#18191b",
     "type": "COLOR"
   },
   "--colors-background-bgOverlay": {
@@ -2541,12 +2541,12 @@
   },
   "--colors-background-bgBrandSection": {
     "figmaPath": "Colors/Background/bg-brand-section",
-    "value": "#22262f",
+    "value": "#0c0e12",
     "type": "COLOR"
   },
   "--colors-background-bgBrandSectionSubtle": {
     "figmaPath": "Colors/Background/bg-brand-section_subtle",
-    "value": "#0c0e12",
+    "value": "#000000",
     "type": "COLOR"
   },
   "--colors-background-bgPrimarySolid": {
@@ -2561,7 +2561,7 @@
   },
   "--colors-background-bgQuaternaryHover": {
     "figmaPath": "Colors/Background/bg-quaternary-hover",
-    "value": "#22262f",
+    "value": "#373a41",
     "type": "COLOR"
   },
   "--colors-background-bgTertiaryHover": {
@@ -2571,7 +2571,7 @@
   },
   "--colors-background-bgErrorSecondaryHover": {
     "figmaPath": "Colors/Background/bg-error-secondary-hover",
-    "value": "#f04438",
+    "value": "#b42318",
     "type": "COLOR"
   },
   "--colors-background-bgBrandSecondaryHover": {
@@ -5610,7 +5610,7 @@
     "figmaPath": "Focus rings/focus-ring",
     "value": [
       {
-        "color": "#f3f4f6",
+        "color": "#ffffff",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5640,7 +5640,7 @@
         "spread": 0
       },
       {
-        "color": "#f3f4f6",
+        "color": "#ffffff",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5662,7 +5662,7 @@
     "figmaPath": "Focus rings/focus-ring-shadow-xs-skeuomorphic",
     "value": [
       {
-        "color": "#f3f4f6",
+        "color": "#ffffff",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5700,7 +5700,7 @@
         "spread": 0
       },
       {
-        "color": "#f3f4f6",
+        "color": "#ffffff",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5722,7 +5722,7 @@
     "figmaPath": "Focus rings/focus-ring-error",
     "value": [
       {
-        "color": "#f3f4f6",
+        "color": "#ffffff",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5752,7 +5752,7 @@
         "spread": 0
       },
       {
-        "color": "#f3f4f6",
+        "color": "#ffffff",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5774,7 +5774,7 @@
     "figmaPath": "Focus rings/focus-ring-error-shadow-xs-skeuomorphic",
     "value": [
       {
-        "color": "#f3f4f6",
+        "color": "#ffffff",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -7514,7 +7514,7 @@
   },
   "--componentColors-components-sliders-sliderHandleBorder": {
     "figmaPath": "Component colors/Components/Sliders/slider-handle-border",
-    "value": "#0c0e12",
+    "value": "#000000",
     "type": "COLOR"
   },
   "--componentColors-components-sliders-sliderHandleBg": {
