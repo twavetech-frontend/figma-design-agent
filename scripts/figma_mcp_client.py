@@ -35,6 +35,9 @@ MCP_URL = "http://localhost:8769/mcp"
 SESSION_FILE = os.path.join(os.path.dirname(__file__), ".mcp_session")
 TOKEN_MAP_FILE = os.path.join(os.path.dirname(__file__), "..", "ds", "TOKEN_MAP.json")
 
+# CLI flag: set to True via --skip-token-bind to disable post-fix step 9
+_SKIP_TOKEN_BIND = False
+
 # Cached token map (loaded once per process)
 _token_map: Optional[Dict[str, dict]] = None
 
@@ -1907,7 +1910,7 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     start = time.time()
 
     # 1. 노드 트리 수집
-    print("\n[1/5] 노드 트리 수집 중...")
+    print("\n[1/9] 노드 트리 수집 중...")
     tree = _collect_tree(root_node_id)
     children_count = len(tree.get("_children_full", []))
     print(f"  루트 '{tree.get('name', '?')}' — 직계 자식 {children_count}개")
@@ -1918,34 +1921,34 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
         return
 
     # 2. FILL 사이징 수정 (FAB/Tab Bar 제외, SPACE_BETWEEN HUG 보존)
-    print("\n[2/5] FILL 사이징 검증/수정 중...")
+    print("\n[2/9] FILL 사이징 검증/수정 중...")
     fill_fixes = _fix_fill_sizing(tree)
     print(f"  → {fill_fixes}건 수정")
 
     # 3. Tab Bar/FAB 배치 + 섹션 갭 조정
-    print("\n[3/5] Tab Bar/FAB 배치 + 섹션 갭 조정 중...")
+    print("\n[3/9] Tab Bar/FAB 배치 + 섹션 갭 조정 중...")
     layout_result = _fix_layout_and_positions(tree, pre_computed_layout=pre_computed_layout)
     print(f"  → content_bottom={layout_result['content_bottom']}, "
           f"fab_y={layout_result['fab_y']}, tab_y={layout_result['tab_y']}, "
           f"root_height={layout_result['root_height']}")
 
     # 4. Tab Bar item FILL + individual stroke
-    print("\n[4/5] Tab Bar item FILL + individual stroke 수정 중...")
+    print("\n[4/9] Tab Bar item FILL + individual stroke 수정 중...")
     tab_fixes = _fix_tab_bar_items(tree)
     print(f"  → {tab_fixes}건 수정")
 
     # 5. Zero-width 텍스트 수정
-    print("\n[5/6] Zero-width 텍스트 수정 중...")
+    print("\n[5/9] Zero-width 텍스트 수정 중...")
     text_fixes = _fix_zero_width_text(tree)
     print(f"  → {text_fixes}건 수정")
 
     # 6. Stroke 정렬 강제 (OUTSIDE → INSIDE) — clipsContent 부모에 잘리는 현상 방지
-    print("\n[6/7] Stroke INSIDE 정렬 강제 중...")
+    print("\n[6/9] Stroke INSIDE 정렬 강제 중...")
     stroke_fixes = _fix_stroke_alignment(tree)
     print(f"  → {stroke_fixes}건 수정")
 
     # 7. 가로 스크롤 peek 검증 (VS32) — 카드 width > 165px이면 경고
-    print("\n[7/8] 가로 스크롤 Peek 검증 중...")
+    print("\n[7/9] 가로 스크롤 Peek 검증 중...")
     peek_warns = _check_horizontal_scroll_peek(tree)
     if peek_warns == 0:
         print(f"  → 모든 가로 스크롤 섹션이 peek 패턴 준수")
@@ -1953,10 +1956,20 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
         print(f"  → ⚠️ {peek_warns}개 섹션에서 peek 패턴 위반 (카드가 너무 큼 — Blueprint 수정 필요)")
 
     # 8. Status Bar bg 매칭 (CLAUDE.md 규칙 #25)
-    print("\n[8/8] Status Bar bg를 NavBar fill과 매칭 중...")
+    print("\n[8/9] Status Bar bg를 NavBar fill과 매칭 중...")
     sb_matched = _match_status_bar_bg_to_nav(tree)
     if not sb_matched:
         print(f"  → skip (Status Bar 자식 없음 또는 NavBar fill 미지정)")
+
+    # 9. Semantic Token Binding Sweep
+    if not _SKIP_TOKEN_BIND:
+        print("\n[9/9] Semantic Token Binding Sweep 중...")
+        try:
+            _bind_semantic_tokens(root_node_id)
+        except Exception as exc:
+            print(f"  → ⚠️ token-bind sweep crashed: {exc} → 빌드 계속")
+    else:
+        print("\n[9/9] Semantic Token Binding Sweep — skip (--skip-token-bind 플래그)")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
@@ -2316,6 +2329,11 @@ def _apply_template_vars(node: dict, vars_dict: dict, section_name: str) -> dict
 
 
 def main():
+    global _SKIP_TOKEN_BIND
+    if "--skip-token-bind" in sys.argv:
+        _SKIP_TOKEN_BIND = True
+        sys.argv.remove("--skip-token-bind")
+
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(1)
@@ -2971,6 +2989,42 @@ def _report_unmapped(unmapped, output_path):
             plural = _LABEL_PLURAL.get(label, label + "s")
             parts.append(f"{n} {plural if n != 1 else label}")
     return ", ".join(parts) if parts else "0"
+
+
+def _bind_semantic_tokens(root_node_id):
+    """Post-fix step 9: walk the rendered tree and bind raw values to
+    semantic tokens. Returns counts dict for logging."""
+    print(f"[token-bind] starting sweep on root={root_node_id}")
+    try:
+        token_map = load_token_map()
+        if not token_map:
+            print("[token-bind] TOKEN_MAP empty → skip")
+            return {"skipped": True}
+        indexes = _load_token_index(token_map)
+    except Exception as exc:
+        print(f"[token-bind] failed to load token index: {exc} → skip")
+        return {"skipped": True}
+
+    try:
+        results = call_tool("get_node_info", {"nodeId": root_node_id})
+        tree = parse_content(results).get("json") or {}
+    except Exception as exc:
+        print(f"[token-bind] get_node_info failed: {exc} → skip")
+        return {"skipped": True}
+
+    nodes = _flatten_node_tree(tree)
+    queues = _collect_bindings(nodes, indexes)
+    counts = _apply_bindings(queues, indexes)
+    safe_root = root_node_id.replace(":", "_").replace("/", "_")
+    report_path = f"/tmp/unmapped-tokens-{safe_root}.json"
+    summary = _report_unmapped(queues["unmapped"], output_path=report_path)
+    print(
+        f"[token-bind] mapped colors={counts.get('colors', 0)} "
+        f"numbers={counts.get('numbers', 0)} text={counts.get('textstyles', 0)} "
+        f"effects={counts.get('effects', 0)} | unmapped: {summary} "
+        f"(detail: {report_path})"
+    )
+    return counts
 
 
 if __name__ == "__main__":
