@@ -2436,6 +2436,24 @@ def _is_semantic_token(name, figma_path):
     return False
 
 
+def _classify_number_token(figma_path, name):
+    """Categorize a NUMBER token by its figmaPath/name. Returns
+    'spacing', 'radius', or None to exclude from the index.
+
+    - 'Spacing/' or 'spacing-' → spacing (padding, itemSpacing, strokeWeight)
+    - 'radius-' → radius (cornerRadius)
+    - 'Font size/', 'Line height/' → None (handled via TYPOGRAPHY tokens)
+    - 'width-', 'container-', 'paragraph-', 'diabled_opacity' → None (out of scope)
+    """
+    if figma_path.startswith("Spacing/") or figma_path.startswith("spacing-"):
+        return "spacing"
+    if figma_path.startswith("radius-"):
+        return "radius"
+    if figma_path.startswith("Font size/") or figma_path.startswith("Line height/"):
+        return None
+    return None  # everything else excluded
+
+
 def _hex_to_rgba_ints(hex_str):
     """'#181d27' or '#181d27ff' -> (24, 29, 39, 1.0). None if not parseable."""
     if not isinstance(hex_str, str) or not hex_str.startswith("#"):
@@ -2481,17 +2499,20 @@ def _load_token_index(token_map):
 
     Returns:
         {
-          "color_index":  {(r,g,b,a): [(token_name, is_semantic)]},
-          "number_index": {value: [(token_name, is_semantic)]},
+          "color_index":   {(r,g,b,a): [(token_name, is_semantic)]},
+          "number_indexes": {"spacing": {value: [(token_name, is_semantic)]},
+                             "radius":  {value: [(token_name, is_semantic)]}},
           "typography_list": [{name, fontFamily, fontWeight, fontSize,
                                lineHeight, letterSpacing}],
           "shadow_list":     [{name, color, offsetX, offsetY, radius, spread}],
           "name_to_path":    {token_name: figmaPath}  — for dispatch to plugin
         }
-    Each color_index / number_index list is sorted with semantic tokens first.
+    Each color_index / number_indexes[cat] list is sorted with semantic tokens first.
     """
     color_index = {}
-    number_index = {}
+    # Split NUMBER tokens by category to prevent cross-field mismatches
+    # (e.g., paddingTop=10 matching Font size/text-xxs=10).
+    number_indexes = {"spacing": {}, "radius": {}}
     typography_list = []
     shadow_list = []
     name_to_path = {}
@@ -2513,7 +2534,9 @@ def _load_token_index(token_map):
             color_index.setdefault(rgba, []).append((name, is_semantic))
         elif ttype == "NUMBER":
             if isinstance(value, (int, float)):
-                number_index.setdefault(value, []).append((name, is_semantic))
+                category = _classify_number_token(figma_path, name)
+                if category is not None:
+                    number_indexes[category].setdefault(value, []).append((name, is_semantic))
         elif ttype == "TYPOGRAPHY" and isinstance(value, dict):
             resolved = _resolve_typography_value(value, token_map)
             typography_list.append({"name": name, **resolved})
@@ -2541,12 +2564,13 @@ def _load_token_index(token_map):
 
     for k in list(color_index.keys()):
         color_index[k] = _sort_bucket(color_index[k])
-    for k in list(number_index.keys()):
-        number_index[k] = _sort_bucket(number_index[k])
+    for cat_idx in number_indexes.values():
+        for k in list(cat_idx.keys()):
+            cat_idx[k] = _sort_bucket(cat_idx[k])
 
     return {
         "color_index": color_index,
-        "number_index": number_index,
+        "number_indexes": number_indexes,
         "typography_list": typography_list,
         "shadow_list": shadow_list,
         "name_to_path": name_to_path,
@@ -2774,6 +2798,18 @@ _NUMBER_FIELDS = (
     "strokeBottomWeight", "strokeLeftWeight",
 )
 
+_NUMBER_FIELD_CATEGORIES = {
+    "paddingTop": "spacing", "paddingRight": "spacing",
+    "paddingBottom": "spacing", "paddingLeft": "spacing",
+    "itemSpacing": "spacing",
+    "cornerRadius": "radius",
+    "topLeftRadius": "radius", "topRightRadius": "radius",
+    "bottomLeftRadius": "radius", "bottomRightRadius": "radius",
+    "strokeWeight": "spacing",
+    "strokeTopWeight": "spacing", "strokeRightWeight": "spacing",
+    "strokeBottomWeight": "spacing", "strokeLeftWeight": "spacing",
+}
+
 
 def _collect_bindings(nodes, indexes):
     """Walk flattened nodes and produce binding queues + unmapped report.
@@ -2795,7 +2831,7 @@ def _collect_bindings(nodes, indexes):
         "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
     }
     color_idx = indexes["color_index"]
-    number_idx = indexes["number_index"]
+    number_indexes = indexes["number_indexes"]
     typo_list = indexes["typography_list"]
     shadow_list = indexes["shadow_list"]
 
@@ -2844,21 +2880,25 @@ def _collect_bindings(nodes, indexes):
                     {"nodeId": nid, "field": "strokes", "index": i, "rgba": rgba}
                 )
 
-        # numbers
+        # numbers (category-aware)
         for f in _NUMBER_FIELDS:
             if f not in n:
                 continue
             v = n[f]
             if not isinstance(v, (int, float)) or v == 0:
                 continue
-            tok = _match_number(v, number_idx)
+            category = _NUMBER_FIELD_CATEGORIES.get(f)
+            if category is None:
+                continue  # field has no semantic category (shouldn't happen with current _NUMBER_FIELDS)
+            cat_index = number_indexes.get(category, {})
+            tok = _match_number(v, cat_index)
             if tok:
                 out["number_bindings"].append(
                     {"nodeId": nid, "field": f, "token_name": tok}
                 )
             else:
                 out["unmapped"]["numbers"].append(
-                    {"nodeId": nid, "field": f, "value": v}
+                    {"nodeId": nid, "field": f, "value": v, "category": category}
                 )
 
         # typography (TEXT nodes only)

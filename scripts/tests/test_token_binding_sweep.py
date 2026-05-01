@@ -35,8 +35,8 @@ class TestLoadTokenIndex(unittest.TestCase):
 
     def test_number_index_groups_value(self):
         idx = fmc._load_token_index(load_fixture())
-        self.assertIn(8, idx["number_index"])
-        self.assertIn(("--spacing-2-8px", False), idx["number_index"][8])
+        self.assertIn(8, idx["number_indexes"]["spacing"])
+        self.assertIn(("--spacing-2-8px", False), idx["number_indexes"]["spacing"][8])
 
     def test_typography_list_resolves_references(self):
         idx = fmc._load_token_index(load_fixture())
@@ -88,25 +88,25 @@ class TestMatchNumber(unittest.TestCase):
         self.idx = fmc._load_token_index(load_fixture())
 
     def test_exact_match(self):
-        self.assertEqual(fmc._match_number(8, self.idx["number_index"]), "--spacing-2-8px")
+        self.assertEqual(fmc._match_number(8, self.idx["number_indexes"]["spacing"]), "--spacing-2-8px")
 
     def test_within_threshold(self):
         # 9 is within ±2 of 8 (closest: 8 over 12)
-        self.assertEqual(fmc._match_number(9, self.idx["number_index"]), "--spacing-2-8px")
+        self.assertEqual(fmc._match_number(9, self.idx["number_indexes"]["spacing"]), "--spacing-2-8px")
 
     def test_outside_threshold(self):
         # 5 is 3 away from 8, outside ±2
-        self.assertIsNone(fmc._match_number(5, self.idx["number_index"]))
+        self.assertIsNone(fmc._match_number(5, self.idx["number_indexes"]["spacing"]))
 
     def test_zero_returns_none(self):
-        self.assertIsNone(fmc._match_number(0, self.idx["number_index"]))
+        self.assertIsNone(fmc._match_number(0, self.idx["number_indexes"]["spacing"]))
 
     def test_none_returns_none(self):
-        self.assertIsNone(fmc._match_number(None, self.idx["number_index"]))
+        self.assertIsNone(fmc._match_number(None, self.idx["number_indexes"]["spacing"]))
 
     def test_at_threshold_boundary_matches(self):
         # dist == 2 should still match (strict `>` comparison)
-        self.assertEqual(fmc._match_number(6, self.idx["number_index"]), "--spacing-2-8px")
+        self.assertEqual(fmc._match_number(6, self.idx["number_indexes"]["spacing"]), "--spacing-2-8px")
 
 
 class TestMatchTextstyle(unittest.TestCase):
@@ -448,6 +448,20 @@ class TestCollectBindings(unittest.TestCase):
         self.assertEqual(len(q["unmapped"]["typography"]), 1)
         self.assertEqual(q["unmapped"]["typography"][0]["reason"], "mixed_or_missing")
 
+    def test_padding_does_not_match_fontsize_token(self):
+        # Fixture: --fontSize-2 (Font size/2) has value 16. Padding=16 must NOT
+        # bind to it because fontSize is a typography concern, not spacing.
+        nodes = [{
+            "id": "1:1", "type": "FRAME",
+            "paddingTop": 16,
+        }]
+        q = fmc._collect_bindings(nodes, self.idx)
+        if q["number_bindings"]:
+            # If matched, must be a spacing/radius token, NOT --fontSize-*
+            for b in q["number_bindings"]:
+                self.assertFalse(b["token_name"].startswith("--fontSize"),
+                                 f"paddingTop incorrectly matched fontSize token: {b}")
+
 
 class TestApplyBindings(unittest.TestCase):
     def setUp(self):
@@ -460,7 +474,7 @@ class TestApplyBindings(unittest.TestCase):
         fmc.call_tool = fake_call_tool
         # Build minimal indexes containing name_to_path
         self.indexes = {
-            "color_index": {}, "number_index": {},
+            "color_index": {}, "number_indexes": {"spacing": {}, "radius": {}},
             "typography_list": [], "shadow_list": [],
             "name_to_path": {
                 "--colors-text-textPrimary": "Colors/Text/text-primary",
