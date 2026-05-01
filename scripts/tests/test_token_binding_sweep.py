@@ -432,6 +432,17 @@ class TestApplyBindings(unittest.TestCase):
             return [{"text": "{\"success\": true}"}]
         self._orig = fmc.call_tool
         fmc.call_tool = fake_call_tool
+        # Build minimal indexes containing name_to_path
+        self.indexes = {
+            "color_index": {}, "number_index": {},
+            "typography_list": [], "shadow_list": [],
+            "name_to_path": {
+                "--colors-text-textPrimary": "Colors/Text/text-primary",
+                "--spacing-2-8px": "Spacing/2 (8px)",
+                "--display2xl-semibold": "Display 2xl/Semibold",
+                "--shadow-md": "Shadows/shadow-md",
+            },
+        }
 
     def tearDown(self):
         fmc.call_tool = self._orig
@@ -447,14 +458,43 @@ class TestApplyBindings(unittest.TestCase):
             "effect_bindings": [],
             "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
         }
-        fmc._apply_bindings(queues)
-        # 150 colors → 2 batch_bind_variables calls (100 + 50)
+        fmc._apply_bindings(queues, self.indexes)
         bind_calls = [c for c in self.calls if c[0] == "batch_bind_variables"]
         self.assertEqual(len(bind_calls), 2)
-        self.assertEqual(len(bind_calls[0][1]["bindings"]), 100)
-        self.assertEqual(len(bind_calls[1][1]["bindings"]), 50)
+        self.assertEqual(len(bind_calls[0][1]["items"]), 100)
+        self.assertEqual(len(bind_calls[1][1]["items"]), 50)
 
-    def test_textstyle_calls_batch(self):
+    def test_color_payload_uses_slash_notation_and_figma_path(self):
+        queues = {
+            "color_bindings": [
+                {"nodeId": "1:1", "field": "fills", "index": 0,
+                 "token_name": "--colors-text-textPrimary"},
+            ],
+            "number_bindings": [], "textstyle_bindings": [],
+            "effect_bindings": [],
+            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
+        }
+        fmc._apply_bindings(queues, self.indexes)
+        items = self.calls[0][1]["items"]
+        self.assertEqual(items[0]["nodeId"], "1:1")
+        self.assertIn("fills/0", items[0]["bindings"])
+        self.assertEqual(items[0]["bindings"]["fills/0"], "Colors/Text/text-primary")
+
+    def test_number_payload_plain_field_name(self):
+        queues = {
+            "color_bindings": [],
+            "number_bindings": [
+                {"nodeId": "1:1", "field": "paddingTop",
+                 "token_name": "--spacing-2-8px"}
+            ],
+            "textstyle_bindings": [], "effect_bindings": [],
+            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
+        }
+        fmc._apply_bindings(queues, self.indexes)
+        items = self.calls[0][1]["items"]
+        self.assertEqual(items[0]["bindings"], {"paddingTop": "Spacing/2 (8px)"})
+
+    def test_textstyle_uses_textStyleName_with_figma_path(self):
         queues = {
             "color_bindings": [], "number_bindings": [],
             "textstyle_bindings": [
@@ -463,9 +503,43 @@ class TestApplyBindings(unittest.TestCase):
             "effect_bindings": [],
             "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
         }
-        fmc._apply_bindings(queues)
+        fmc._apply_bindings(queues, self.indexes)
         ts_calls = [c for c in self.calls if c[0] == "batch_set_text_style_id"]
         self.assertEqual(len(ts_calls), 1)
+        item = ts_calls[0][1]["items"][0]
+        self.assertEqual(item["nodeId"], "1:1")
+        self.assertEqual(item["textStyleName"], "Display 2xl/Semibold")
+
+    def test_effect_uses_effectStyleName_with_unique_msg_id(self):
+        queues = {
+            "color_bindings": [], "number_bindings": [],
+            "textstyle_bindings": [],
+            "effect_bindings": [
+                {"nodeId": "1:E", "index": 0, "token_name": "--shadow-md"},
+                {"nodeId": "1:F", "index": 0, "token_name": "--shadow-md"},
+            ],
+            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
+        }
+        fmc._apply_bindings(queues, self.indexes)
+        eff_calls = [c for c in self.calls if c[0] == "set_effect_style_id"]
+        self.assertEqual(len(eff_calls), 2)
+        self.assertEqual(eff_calls[0][1]["effectStyleName"], "Shadows/shadow-md")
+        self.assertEqual(eff_calls[1][1]["effectStyleName"], "Shadows/shadow-md")
+
+    def test_returns_counts(self):
+        queues = {
+            "color_bindings": [{"nodeId": "1:1", "field": "fills", "index": 0,
+                                "token_name": "--colors-text-textPrimary"}],
+            "number_bindings": [{"nodeId": "1:1", "field": "paddingTop",
+                                 "token_name": "--spacing-2-8px"}],
+            "textstyle_bindings": [{"nodeId": "1:T",
+                                    "token_name": "--display2xl-semibold"}],
+            "effect_bindings": [{"nodeId": "1:E", "index": 0,
+                                 "token_name": "--shadow-md"}],
+            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
+        }
+        result = fmc._apply_bindings(queues, self.indexes)
+        self.assertEqual(result, {"colors": 1, "numbers": 1, "textstyles": 1, "effects": 1})
 
 
 if __name__ == "__main__":

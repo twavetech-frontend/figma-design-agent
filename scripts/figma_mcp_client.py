@@ -2448,7 +2448,8 @@ def _load_token_index(token_map):
           "number_index": {value: [(token_name, is_semantic)]},
           "typography_list": [{name, fontFamily, fontWeight, fontSize,
                                lineHeight, letterSpacing}],
-          "shadow_list":     [{name, color, offsetX, offsetY, radius, spread}]
+          "shadow_list":     [{name, color, offsetX, offsetY, radius, spread}],
+          "name_to_path":    {token_name: figmaPath}  — for dispatch to plugin
         }
     Each color_index / number_index list is sorted with semantic tokens first.
     """
@@ -2456,12 +2457,17 @@ def _load_token_index(token_map):
     number_index = {}
     typography_list = []
     shadow_list = []
+    name_to_path = {}
 
     for name, entry in token_map.items():
         ttype = entry.get("type")
         figma_path = entry.get("figmaPath", "")
         is_semantic = _is_semantic_token(name, figma_path)
         value = entry.get("value")
+
+        # Build name → figmaPath map for ALL token types
+        if figma_path:
+            name_to_path[name] = figma_path
 
         if ttype == "COLOR":
             rgba = _hex_to_rgba_ints(value)
@@ -2506,6 +2512,7 @@ def _load_token_index(token_map):
         "number_index": number_index,
         "typography_list": typography_list,
         "shadow_list": shadow_list,
+        "name_to_path": name_to_path,
     }
 
 
@@ -2868,49 +2875,60 @@ def _collect_bindings(nodes, indexes):
 _BIND_CHUNK = 100
 
 
-def _apply_bindings(queues):
-    """Issue MCP calls for collected bindings. Returns counts.
+def _apply_bindings(queues, indexes):
+    """Issue MCP calls for collected bindings using plugin-correct payloads.
 
-    `batch_bind_variables` payload shape (per existing tool):
-        bindings: [{nodeId, property, variableName}, ...]
-    Note: 'property' is the Figma node prop ('fills', 'paddingTop', etc.).
-    Color bindings need to encode the fills index → property uses 'fills.0'.
+    Plugin expects:
+      batch_bind_variables: {items: [{nodeId, bindings: {fieldKey: varName}}]}
+        - paint fields: 'fills/0', 'strokes/0' (slash + index)
+        - number fields: 'paddingTop' etc. (plain name)
+      batch_set_text_style_id: {items: [{nodeId, textStyleName: ...}]}
+        (Plugin patched to accept textStyleName as alias for textStyleId.)
+      set_effect_style_id: {nodeId, effectStyleName: ...}
+
+    Token names (e.g. --colors-text-textPrimary) are translated to figmaPaths
+    (e.g. Colors/Text/text-primary) via indexes['name_to_path'] before send.
     """
     counts = {"colors": 0, "numbers": 0, "textstyles": 0, "effects": 0}
+    name_to_path = indexes.get("name_to_path", {})
 
-    color_payloads = [
-        {"nodeId": b["nodeId"],
-         "property": f"{b['field']}.{b['index']}",
-         "variableName": b["token_name"]}
-        for b in queues["color_bindings"]
-    ]
-    number_payloads = [
-        {"nodeId": b["nodeId"], "property": b["field"],
-         "variableName": b["token_name"]}
-        for b in queues["number_bindings"]
-    ]
-    bindings = color_payloads + number_payloads
-    for i in range(0, len(bindings), _BIND_CHUNK):
-        chunk = bindings[i:i + _BIND_CHUNK]
-        if not chunk:
-            continue
-        call_tool("batch_bind_variables", {"bindings": chunk}, msg_id=10000 + i)
-    counts["colors"] = len(color_payloads)
-    counts["numbers"] = len(number_payloads)
+    def _to_path(token_name):
+        return name_to_path.get(token_name, token_name)
+
+    # Build items list — one item per (nodeId, binding). Same node may
+    # appear in multiple items; plugin handles them independently.
+    items = []
+    for b in queues["color_bindings"]:
+        field_key = f"{b['field']}/{b['index']}"  # plugin uses slash for paints
+        items.append({
+            "nodeId": b["nodeId"],
+            "bindings": {field_key: _to_path(b["token_name"])},
+        })
+        counts["colors"] += 1
+    for b in queues["number_bindings"]:
+        items.append({
+            "nodeId": b["nodeId"],
+            "bindings": {b["field"]: _to_path(b["token_name"])},
+        })
+        counts["numbers"] += 1
+
+    for i in range(0, len(items), _BIND_CHUNK):
+        chunk = items[i:i + _BIND_CHUNK]
+        call_tool("batch_bind_variables", {"items": chunk}, msg_id=10000 + i)
 
     if queues["textstyle_bindings"]:
-        ts_payload = [
-            {"nodeId": b["nodeId"], "textStyleName": b["token_name"]}
+        ts_items = [
+            {"nodeId": b["nodeId"], "textStyleName": _to_path(b["token_name"])}
             for b in queues["textstyle_bindings"]
         ]
-        call_tool("batch_set_text_style_id", {"items": ts_payload}, msg_id=20000)
-        counts["textstyles"] = len(ts_payload)
+        call_tool("batch_set_text_style_id", {"items": ts_items}, msg_id=20000)
+        counts["textstyles"] = len(ts_items)
 
-    for b in queues["effect_bindings"]:
+    for idx, b in enumerate(queues["effect_bindings"]):
         call_tool(
             "set_effect_style_id",
-            {"nodeId": b["nodeId"], "effectStyleName": b["token_name"]},
-            msg_id=30000,
+            {"nodeId": b["nodeId"], "effectStyleName": _to_path(b["token_name"])},
+            msg_id=30000 + idx,
         )
         counts["effects"] += 1
 

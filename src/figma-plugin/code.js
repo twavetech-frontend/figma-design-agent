@@ -403,6 +403,7 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
 
   // Layout positioning (AUTO or ABSOLUTE)
   if ("layoutPositioning" in node) info.layoutPositioning = node.layoutPositioning;
+  if ("clipsContent" in node) info.clipsContent = node.clipsContent;
 
   // Fills & strokes
   if ("fills" in node) {
@@ -422,6 +423,11 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
     try {
       info.strokes = node.strokes;
       info.strokeWeight = node.strokeWeight;
+      if ("strokeAlign" in node) info.strokeAlign = node.strokeAlign;
+      if ("strokeTopWeight" in node) info.strokeTopWeight = node.strokeTopWeight;
+      if ("strokeBottomWeight" in node) info.strokeBottomWeight = node.strokeBottomWeight;
+      if ("strokeLeftWeight" in node) info.strokeLeftWeight = node.strokeLeftWeight;
+      if ("strokeRightWeight" in node) info.strokeRightWeight = node.strokeRightWeight;
     } catch (e) { /* mixed strokes */ }
   }
 
@@ -912,6 +918,14 @@ async function setStrokeColor(params) {
     node.strokeWeight = strokeWeightParsed;
   }
 
+  // Stroke alignment (INSIDE / OUTSIDE / CENTER) — clipsContent 부모에 잘리는 버그 방지
+  if (params.strokeAlign !== undefined && "strokeAlign" in node) {
+    var alignVal = String(params.strokeAlign).toUpperCase();
+    if (alignVal === "INSIDE" || alignVal === "OUTSIDE" || alignVal === "CENTER") {
+      node.strokeAlign = alignVal;
+    }
+  }
+
   // Individual stroke weights (bottom-only border 등)
   // 개별 stroke weight 설정 시 strokeWeight가 figma.mixed(Symbol)로 변환됨
   var hasIndividual = params.strokeTopWeight !== undefined || params.strokeBottomWeight !== undefined || params.strokeLeftWeight !== undefined || params.strokeRightWeight !== undefined;
@@ -931,6 +945,7 @@ async function setStrokeColor(params) {
     name: node.name,
     strokes: node.strokes,
     strokeWeight: safeStrokeWeight,
+    strokeAlign: "strokeAlign" in node ? node.strokeAlign : undefined,
     strokeTopWeight: "strokeTopWeight" in node && typeof node.strokeTopWeight === "number" ? node.strokeTopWeight : undefined,
     strokeBottomWeight: "strokeBottomWeight" in node && typeof node.strokeBottomWeight === "number" ? node.strokeBottomWeight : undefined,
     strokeLeftWeight: "strokeLeftWeight" in node && typeof node.strokeLeftWeight === "number" ? node.strokeLeftWeight : undefined,
@@ -5412,6 +5427,30 @@ async function batchSetTextStyleId(params) {
     throw new Error("Missing or empty items array parameter");
   }
 
+  // [NEW] Resolve textStyleName → textStyleId where needed (alias for callers
+  // that send a Figma style name instead of an internal style ID).
+  var needsNameLookup = false;
+  for (var ni = 0; ni < items.length; ni++) {
+    if (!items[ni].textStyleId && items[ni].textStyleName) {
+      needsNameLookup = true;
+      break;
+    }
+  }
+  if (needsNameLookup) {
+    var allLocalStyles = await figma.getLocalTextStylesAsync();
+    var nameToId = {};
+    for (var sj = 0; sj < allLocalStyles.length; sj++) {
+      nameToId[allLocalStyles[sj].name] = allLocalStyles[sj].id;
+    }
+    for (var nj = 0; nj < items.length; nj++) {
+      if (!items[nj].textStyleId && items[nj].textStyleName) {
+        var resolved = nameToId[items[nj].textStyleName];
+        if (resolved) items[nj].textStyleId = resolved;
+      }
+    }
+  }
+  // [/NEW] — rest of function below is unchanged
+
   // Phase 0: Collect unique style IDs and import/load each ONCE
   var uniqueStyleIds = {};
   for (var ui = 0; ui < items.length; ui++) {
@@ -5807,26 +5846,32 @@ async function batchBuildScreen(params) {
         var weight = spec.fontWeight || 400;
         styleName = getFontStyle(weight);
       }
+      // Pre-load font before assigning fontName (prevents race condition that causes empty text nodes)
+      var finalFont = { family: family, style: styleName };
       try {
-        node.fontName = { family, style: styleName };
-        if (spec.fontSize) node.fontSize = parseInt(spec.fontSize);
+        await figma.loadFontAsync(finalFont);
       } catch (e) {
-        // Try alternative style name (SemiBold vs Semi Bold, etc.)
         var altStyle = FONT_STYLE_ALTS[styleName];
-        var fontSet = false;
+        var altLoaded = false;
         if (altStyle) {
           try {
-            node.fontName = { family, style: altStyle };
-            if (spec.fontSize) node.fontSize = parseInt(spec.fontSize);
-            fontSet = true;
+            finalFont = { family: family, style: altStyle };
+            await figma.loadFontAsync(finalFont);
+            altLoaded = true;
           } catch (e2) { /* alt also failed */ }
         }
-        if (!fontSet) {
+        if (!altLoaded) {
           try {
-            node.fontName = { family: "Inter", style: "Regular" };
-            if (spec.fontSize) node.fontSize = parseInt(spec.fontSize);
-          } catch (e3) { /* ignore */ }
+            finalFont = { family: "Inter", style: "Regular" };
+            await figma.loadFontAsync(finalFont);
+          } catch (e3) { /* ignore — font set below may throw */ }
         }
+      }
+      try {
+        node.fontName = finalFont;
+        if (spec.fontSize) node.fontSize = parseInt(spec.fontSize);
+      } catch (e) {
+        console.warn("[batch_build] fontName set failed for '" + (spec.name || "text") + "': " + e.message);
       }
 
       // Convert <br> to soft line break (U+2028) for Figma text
@@ -5851,16 +5896,26 @@ async function batchBuildScreen(params) {
       // Text auto resize — default to WIDTH_AND_HEIGHT so text doesn't wrap vertically
       node.textAutoResize = spec.textAutoResize || "WIDTH_AND_HEIGHT";
 
-      // Line height
+      // Line height — accept number (PIXELS), {value, unit} object, or {unit:"AUTO"}
       if (spec.lineHeight !== undefined) {
         if (typeof spec.lineHeight === "number") {
           node.lineHeight = { value: spec.lineHeight, unit: "PIXELS" };
+        } else if (spec.lineHeight && typeof spec.lineHeight === "object") {
+          if (spec.lineHeight.unit === "AUTO") {
+            node.lineHeight = { unit: "AUTO" };
+          } else if (spec.lineHeight.value !== undefined) {
+            node.lineHeight = { value: spec.lineHeight.value, unit: spec.lineHeight.unit || "PIXELS" };
+          }
         }
       }
 
-      // Letter spacing
+      // Letter spacing — accept number (PIXELS) or {value, unit} object
       if (spec.letterSpacing !== undefined) {
-        node.letterSpacing = { value: spec.letterSpacing, unit: "PIXELS" };
+        if (typeof spec.letterSpacing === "number") {
+          node.letterSpacing = { value: spec.letterSpacing, unit: "PIXELS" };
+        } else if (spec.letterSpacing && typeof spec.letterSpacing === "object" && spec.letterSpacing.value !== undefined) {
+          node.letterSpacing = { value: spec.letterSpacing.value, unit: spec.letterSpacing.unit || "PIXELS" };
+        }
       }
 
       // Layout sizing — DEFERRED until after appendChild
@@ -6179,7 +6234,8 @@ async function batchBuildScreen(params) {
         try { await page.loadAsync(); } catch (e) { /* ignore load error */ }
         var found = page.findOne(function(n) {
           var nm = (n.name || "").toLowerCase();
-          return (nm === "status bar" || nm === "statusbar" || nm === "status_bar") &&
+          // substring 매칭 — "Status bar - iPhone" 등 suffix 있는 이름도 매칭 (2026-04-23)
+          return (nm.indexOf("status bar") >= 0 || nm.indexOf("statusbar") >= 0 || nm.indexOf("status_bar") >= 0) &&
             (n.type === "COMPONENT" || n.type === "INSTANCE" || n.type === "FRAME");
         });
         if (found) {
