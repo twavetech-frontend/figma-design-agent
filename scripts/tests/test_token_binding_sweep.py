@@ -109,5 +109,70 @@ class TestMatchNumber(unittest.TestCase):
         self.assertEqual(fmc._match_number(6, self.idx["number_index"]), "--spacing-2-8px")
 
 
+class TestMatchTextstyle(unittest.TestCase):
+    def setUp(self):
+        # Build a richer fixture so fontSize.10 (=72) resolves
+        self.token_map = load_fixture()
+        # Add Font family / weight / lineHeight / letterSpacing primitives
+        self.token_map["--fontFamily-fontFamilyDisplay"] = {
+            "figmaPath": "Font family/font-family-display",
+            "value": "Pretendard", "type": "TEXT"
+        }
+        self.token_map["--fontWeight-semibold"] = {
+            "figmaPath": "Font weight/semibold", "value": "Semibold", "type": "TEXT"
+        }
+        self.token_map["--lineHeight-display2xl"] = {
+            "figmaPath": "Line height/display-2xl", "value": 90, "type": "NUMBER"
+        }
+        self.token_map["--letterSpacing-0"] = {
+            "figmaPath": "letterSpacing/0", "value": 0, "type": "NUMBER"
+        }
+        self.idx = fmc._load_token_index(self.token_map)
+
+    def test_exact_typography_match(self):
+        text_props = {
+            "fontFamily": "Pretendard",
+            "fontWeight": "Semibold",
+            "fontSize": 72,
+            "lineHeight": 90,
+            "letterSpacing": 0,
+        }
+        self.assertEqual(
+            fmc._match_textstyle(text_props, self.idx["typography_list"]),
+            "--display2xl-semibold",
+        )
+
+    def test_near_size_within_threshold(self):
+        text_props = {
+            "fontFamily": "Pretendard", "fontWeight": "Semibold",
+            "fontSize": 73,  # ±1 OK
+            "lineHeight": 90, "letterSpacing": 0,
+        }
+        self.assertEqual(
+            fmc._match_textstyle(text_props, self.idx["typography_list"]),
+            "--display2xl-semibold",
+        )
+
+    def test_family_mismatch_rejects(self):
+        text_props = {
+            "fontFamily": "Roboto",  # different family
+            "fontWeight": "Semibold", "fontSize": 72,
+            "lineHeight": 90, "letterSpacing": 0,
+        }
+        self.assertIsNone(
+            fmc._match_textstyle(text_props, self.idx["typography_list"])
+        )
+
+    def test_weight_mismatch_rejects(self):
+        text_props = {
+            "fontFamily": "Pretendard",
+            "fontWeight": "Bold",  # different weight
+            "fontSize": 72, "lineHeight": 90, "letterSpacing": 0,
+        }
+        self.assertIsNone(
+            fmc._match_textstyle(text_props, self.idx["typography_list"])
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

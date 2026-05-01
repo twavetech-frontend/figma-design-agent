@@ -2560,5 +2560,52 @@ def _match_number(value, number_index):
     return best_token
 
 
+_FONT_SIZE_THRESHOLD = 1     # ±px
+_LINE_HEIGHT_PCT = 0.03      # ±3%
+_LETTER_SPACING_PCT = 0.03   # ±3% relative to fontSize, fallback ±0.1
+
+
+def _match_textstyle(text_props, typography_list):
+    """Find a TYPOGRAPHY token whose family/weight match exactly and whose
+    size/lineHeight/letterSpacing are within tolerance. Returns the token name
+    (caller maps name → text style id elsewhere)."""
+    pf = text_props.get("fontFamily")
+    pw = text_props.get("fontWeight")
+    ps = text_props.get("fontSize")
+    plh = text_props.get("lineHeight")
+    pls = text_props.get("letterSpacing")
+    if pf is None or pw is None or ps is None:
+        return None
+
+    best_dist = float("inf")
+    best_name = None
+    for ts in typography_list:
+        if ts.get("fontFamily") != pf:
+            continue
+        if ts.get("fontWeight") != pw:
+            continue
+        ts_size = ts.get("fontSize")
+        if not isinstance(ts_size, (int, float)):
+            continue
+        if abs(ts_size - ps) > _FONT_SIZE_THRESHOLD:
+            continue
+        ts_lh = ts.get("lineHeight")
+        if isinstance(ts_lh, (int, float)) and isinstance(plh, (int, float)):
+            tol = max(ts_lh * _LINE_HEIGHT_PCT, 1.0)
+            if abs(ts_lh - plh) > tol:
+                continue
+        ts_ls = ts.get("letterSpacing")
+        if isinstance(ts_ls, (int, float)) and isinstance(pls, (int, float)):
+            tol = max(abs(ts_size) * _LETTER_SPACING_PCT, 0.1)
+            if abs(ts_ls - pls) > tol:
+                continue
+        # distance: sum of normalized deltas
+        dist = abs(ts_size - ps)
+        if dist < best_dist:
+            best_dist = dist
+            best_name = ts["name"]
+    return best_name
+
+
 if __name__ == "__main__":
     main()
