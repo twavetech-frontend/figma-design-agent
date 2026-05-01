@@ -2383,7 +2383,7 @@ def main():
 # ============================================================
 
 _SEMANTIC_PREFIXES = ("fg-", "bg-", "border-", "text-")
-_SEMANTIC_PATH_PARTS = ("/Fg/", "/Bg/", "/Border/", "/Text/")
+_SEMANTIC_PATH_PARTS = ("/Fg/", "/Bg/", "/Border/", "/Text/", "/Background/", "/Foreground/")
 
 
 def _is_semantic_token(name, figma_path):

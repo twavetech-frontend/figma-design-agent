@@ -29,6 +29,11 @@
     "value": 16,
     "type": "NUMBER"
   },
+  "--fontSize-10": {
+    "figmaPath": "fontSize/10",
+    "value": 72,
+    "type": "NUMBER"
+  },
   "--display2xl-semibold": {
     "figmaPath": "Display 2xl/Semibold",
     "value": {

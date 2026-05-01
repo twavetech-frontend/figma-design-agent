@@ -43,9 +43,10 @@ class TestLoadTokenIndex(unittest.TestCase):
         self.assertEqual(len(idx["typography_list"]), 1)
         ts = idx["typography_list"][0]
         self.assertEqual(ts["name"], "--display2xl-semibold")
-        # fontSize.10 → 72 (from sample_token_map)... but our fixture only has fontSize.2.
-        # When resolution fails the value stays as raw reference string — test that we keep it.
-        self.assertTrue("fontSize" in ts)
+        # Resolution succeeds when fixture has the referenced token (fontSize/10 → 72)
+        self.assertEqual(ts["fontSize"], 72)
+        # Unresolved reference is preserved as raw string
+        self.assertEqual(ts["fontFamily"], "{Font family.font-family-display}")
 
 
 if __name__ == "__main__":
