@@ -562,6 +562,27 @@ class TestReportUnmapped(unittest.TestCase):
                 data = json.load(f)
             self.assertEqual(len(data["colors"]), 1)
 
+    def test_summary_pluralization_for_all_categories(self):
+        unmapped = {
+            "colors": [{"nodeId": "1:1"}],                            # 1 → singular
+            "numbers": [{"nodeId": "1:2"}, {"nodeId": "1:3"}],        # 2 → plural
+            "typography": [{"nodeId": "1:4"}, {"nodeId": "1:5"}],     # 2 → must be "typographies"
+            "shadows": [{"nodeId": "1:6"}],                           # 1 → singular
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "report.json")
+            summary = fmc._report_unmapped(unmapped, output_path=path)
+        self.assertEqual(summary, "1 color, 2 numbers, 2 typographies, 1 shadow")
+
+    def test_empty_unmapped_returns_zero_string(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "report.json")
+            summary = fmc._report_unmapped(
+                {"colors": [], "numbers": [], "typography": [], "shadows": []},
+                output_path=path,
+            )
+        self.assertEqual(summary, "0")
+
 
 if __name__ == "__main__":
     unittest.main()

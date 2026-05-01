@@ -2958,6 +2958,7 @@ def _report_unmapped(unmapped, output_path):
     except OSError as exc:
         print(f"WARNING: could not write unmapped report → {output_path}: {exc}")
 
+    _LABEL_PLURAL = {"typography": "typographies"}
     parts = []
     counts = {
         "color":      len(unmapped.get("colors") or []),
@@ -2967,7 +2968,8 @@ def _report_unmapped(unmapped, output_path):
     }
     for label, n in counts.items():
         if n:
-            parts.append(f"{n} {label}" + ("s" if n != 1 else ""))
+            plural = _LABEL_PLURAL.get(label, label + "s")
+            parts.append(f"{n} {plural if n != 1 else label}")
     return ", ".join(parts) if parts else "0"
 
 
