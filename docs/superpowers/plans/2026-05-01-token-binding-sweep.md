@@ -1660,8 +1660,23 @@ Expected: token-bind 출력이 없어야 함.
 
 ---
 
-## Risk / Open Items
+## Risk / Open Items (작업 완료 후 갱신, 2026-05-01 e2e 검증 결과 반영)
 
-1. **`get_node_info`가 recursive 트리를 반환하는가** — 일부 MCP 구현은 직접 자식만 반환할 수 있다. 만약 recursive 미반환이면 Task 6에서 BFS로 자식 차례차례 호출하는 fallback 필요. 첫 빌드 후 출력 확인 시 `nodes` 길이가 1이면 이 케이스 → spec에 명시된 대로 별도 PR로 BFS 확장.
-2. **`batch_bind_variables`의 `property` 표기법** — `'fills.0'` 형태가 plugin이 받는 형식인지 확인 필요. 만약 plugin이 다른 표기를 요구하면 Task 8 `_apply_bindings` 페이로드 수정. (현재 plugin code는 `src/figma-plugin/code.js`에 있음)
-3. **TYPOGRAPHY 토큰의 fontWeight 값이 'Semibold' 같은 표시명인지 numeric인지** — fixture 기준으로는 표시명. 실제 Figma 노드는 `fontName.style="Semibold"` 또는 `fontWeight=600`일 수 있어 Task 4 매처가 양쪽 다 지원하도록 향후 확장 필요.
+### 해결됨
+1. ~~`get_node_info`가 recursive 트리를 반환하는가~~ — 빌드 1회 시 root 1개 + 직계 자식 ~10개 + 손자/증손까지 반환됨을 확인. BFS fallback 불필요.
+2. ~~`batch_bind_variables`의 `property` 표기법~~ — Task 8 review에서 plugin contract와 불일치 발견 → `items` + `bindings: {fields/0: figmaPath}` slash 표기로 수정 후 e2e에서 fills/strokes 13/18, numbers 81/82 매칭 확인.
+3. ~~`fontWeight` 값 형식~~ — Figma는 `"SemiBold"` (대문자 B)를 반환. e2e에서 발견 후 `_match_textstyle`을 case-insensitive로 fix 적용 (commit `e28b9ce`). typography 매칭률 23% → 46%.
+
+### 알려진 갭 — 향후 작업
+4. **TextStyle 실제 적용 미확인** — sweep 콘솔이 `text=6` 카운트하지만 e2e 검증 결과 실제 Figma 노드의 `textStyleId`가 갱신되지 않은 것으로 관찰됨. 가능한 원인:
+   - `batchSetTextStyleId` plugin patch가 캐시 등으로 반영 안 됨 (Close/Run 재로드 누락 가능성)
+   - `figma.getLocalTextStylesAsync().name` 매칭 시 trailing space 등 미세 차이
+   - plugin response의 `errors` 배열에 silent failure가 있는데 우리 클라이언트가 무시
+   - **다음 단계**: `_apply_bindings`에 plugin response 로깅 추가, 또는 `setStyleId` per-node 호출 + per-call 응답 점검.
+5. **Multi-layer BOXSHADOW 미지원** — `ds/TOKEN_MAP.json` 21개 BOXSHADOW 토큰 중 15개가 list-shaped (multi-layer). 현재 6개만 인덱스에 포함. Task 5 e2e에서 effects 0/1로 확인됨.
+6. **DS에 brand purple `#7f56d9` / gold `#ffd700` 미등록** — 디자인 시안에 사용되는 color지만 토큰화되지 않음. 코드 결함 아니라 DS 추가 필요.
+7. **`cmd_build`의 redundant double sweep** — `cmd_post_fix`가 layout 안정화 위해 2회 호출되어 sweep도 2회 실행 (~1.4초씩). 첫 호출에서 step 9 skip 옵션을 추가하면 ~0.7초 절약 가능.
+8. **NUMBER 인덱스 카테고리 혼합** — `_match_number`가 spacing/fontSize/lineHeight 토큰을 카테고리 구분 없이 검색. 우연한 짝퉁 매칭 위험 (예: paddingTop=10이 Font size/text-xxs에 매칭). 화면별 패턴은 적지만 category-aware 매칭 권장.
+9. **테스트 fixture 키 형식과 production 차이** — fixture는 `--colors-text-textPrimary` (CSS-var 형식), `load_token_map()`은 figmaPath-keyed (`Colors/Text/text-primary`). 둘 다 통과하지만 통합 경로 테스트 1건 추가 권장.
+10. **`--skip-token-bind` 플래그 docstring 미문서화** — 기능 작동하지만 모듈 docstring에 사용법 없음.
+11. **`_apply_bindings` plan 시그니처 불일치** — plan은 `(queues)`로 명시하나 실제는 `(queues, indexes)`. plan 문서 갱신 권장.
