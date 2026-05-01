@@ -49,5 +49,29 @@ class TestLoadTokenIndex(unittest.TestCase):
         self.assertEqual(ts["fontFamily"], "{Font family.font-family-display}")
 
 
+class TestMatchColor(unittest.TestCase):
+    def setUp(self):
+        self.idx = fmc._load_token_index(load_fixture())
+
+    def test_exact_match_picks_semantic(self):
+        # #181d27 maps to text-textPrimary AND grayLightMode-900; semantic wins
+        result = fmc._match_color((24, 29, 39, 1.0), self.idx["color_index"])
+        self.assertEqual(result, "--colors-text-textPrimary")
+
+    def test_near_match_within_threshold(self):
+        # Off by 5 in each channel = ΔRGB 15... outside 12 → None
+        result = fmc._match_color((29, 34, 44, 1.0), self.idx["color_index"])
+        self.assertIsNone(result)
+
+    def test_near_match_inside_threshold(self):
+        # Off by 3+3+3 = ΔRGB 9 → matches
+        result = fmc._match_color((27, 32, 42, 1.0), self.idx["color_index"])
+        self.assertEqual(result, "--colors-text-textPrimary")
+
+    def test_returns_none_when_no_candidates(self):
+        result = fmc._match_color((250, 250, 250, 1.0), self.idx["color_index"])
+        self.assertIsNone(result)
+
+
 if __name__ == "__main__":
     unittest.main()

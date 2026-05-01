@@ -2494,5 +2494,42 @@ def _load_token_index(token_map):
     }
 
 
+_COLOR_THRESHOLD = 12  # ΔRGB sum, RGB 0-255
+
+
+def _match_color(rgba_tuple, color_index):
+    """Return the best-matching token name for an (r,g,b,a) tuple, or None.
+
+    Strategy:
+        1. Exact (r,g,b,a) hit → first token in pre-sorted bucket (semantic first).
+        2. Otherwise scan all entries with same alpha (±0.05), find lowest
+           ΔRGB that is ≤ _COLOR_THRESHOLD. Tie-break by semantic-first sort.
+    """
+    if rgba_tuple in color_index:
+        return color_index[rgba_tuple][0][0]
+
+    r, g, b, a = rgba_tuple
+    best_dist = _COLOR_THRESHOLD + 1
+    best_token = None
+    best_is_semantic = False
+    for (cr, cg, cb, ca), bucket in color_index.items():
+        if abs(ca - a) > 0.05:
+            continue
+        dist = abs(cr - r) + abs(cg - g) + abs(cb - b)
+        if dist > _COLOR_THRESHOLD:
+            continue
+        cand_name, cand_semantic = bucket[0]
+        # Prefer: smaller distance > semantic > alphabetical (already in bucket order)
+        better = (
+            dist < best_dist
+            or (dist == best_dist and cand_semantic and not best_is_semantic)
+        )
+        if better:
+            best_dist = dist
+            best_token = cand_name
+            best_is_semantic = cand_semantic
+    return best_token
+
+
 if __name__ == "__main__":
     main()
