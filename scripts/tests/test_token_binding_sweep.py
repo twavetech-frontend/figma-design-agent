@@ -58,9 +58,19 @@ class TestMatchColor(unittest.TestCase):
         result = fmc._match_color((24, 29, 39, 1.0), self.idx["color_index"])
         self.assertEqual(result, "--colors-text-textPrimary")
 
-    def test_near_match_within_threshold(self):
-        # Off by 5 in each channel = ΔRGB 15... outside 12 → None
+    def test_near_match_outside_threshold(self):
+        # Off by 5 in each channel = ΔRGB 15, outside threshold of 12 → None
         result = fmc._match_color((29, 34, 44, 1.0), self.idx["color_index"])
+        self.assertIsNone(result)
+
+    def test_near_match_at_threshold_boundary(self):
+        # ΔRGB exactly 12 (12+0+0) → still matches per `dist > _COLOR_THRESHOLD`
+        result = fmc._match_color((36, 29, 39, 1.0), self.idx["color_index"])
+        self.assertEqual(result, "--colors-text-textPrimary")
+
+    def test_alpha_mismatch_rejects_match(self):
+        # Same RGB as text-textPrimary but very different alpha → no match
+        result = fmc._match_color((24, 29, 39, 0.5), self.idx["color_index"])
         self.assertIsNone(result)
 
     def test_near_match_inside_threshold(self):
