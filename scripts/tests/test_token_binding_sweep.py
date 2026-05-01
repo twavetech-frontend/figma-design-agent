@@ -269,7 +269,9 @@ class TestMatchShadow(unittest.TestCase):
             fmc._match_shadow(effect, self.idx["shadow_list"])
         )
 
-    def test_multilayer_token_skipped_at_load(self):
+    def test_multilayer_token_indexed_per_layer(self):
+        """Multi-layer BOXSHADOW tokens are indexed once per layer, all sharing
+        the token name. A Figma single-effect can match any individual layer."""
         token_map = load_fixture()
         token_map["--shadow-multilayer"] = {
             "figmaPath": "Shadows/shadow-lg",
@@ -280,8 +282,33 @@ class TestMatchShadow(unittest.TestCase):
             "type": "BOXSHADOW"
         }
         idx = fmc._load_token_index(token_map)
-        names = [s["name"] for s in idx["shadow_list"]]
-        self.assertNotIn("--shadow-multilayer", names)
+        multilayer_entries = [s for s in idx["shadow_list"] if s["name"] == "--shadow-multilayer"]
+        self.assertEqual(len(multilayer_entries), 2)
+        # Each layer carries the layer-specific values
+        offsets = sorted(s["offsetY"] for s in multilayer_entries)
+        self.assertEqual(offsets, [4, 12])
+
+    def test_match_shadow_picks_layer_of_multilayer_token(self):
+        """A Figma DROP_SHADOW with offset y=4 should match the second layer of
+        --shadow-multilayer (which has y=4)."""
+        token_map = load_fixture()
+        token_map["--shadow-multilayer"] = {
+            "figmaPath": "Shadows/shadow-lg",
+            "value": [
+                {"color": "#0a0d1214", "type": "dropShadow", "x": 0, "y": 12, "blur": 16, "spread": -4},
+                {"color": "#0a0d1208", "type": "dropShadow", "x": 0, "y": 4, "blur": 6, "spread": -2},
+            ],
+            "type": "BOXSHADOW"
+        }
+        idx = fmc._load_token_index(token_map)
+        effect = {
+            "type": "DROP_SHADOW",
+            "color": {"r": 0.039, "g": 0.051, "b": 0.071, "a": 0x08/255},
+            "offset": {"x": 0, "y": 4},
+            "radius": 6, "spread": -2,
+        }
+        name = fmc._match_shadow(effect, idx["shadow_list"])
+        self.assertEqual(name, "--shadow-multilayer")
 
     def test_none_effect_returns_none(self):
         self.assertIsNone(fmc._match_shadow(None, self.idx["shadow_list"]))
