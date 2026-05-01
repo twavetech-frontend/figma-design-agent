@@ -101,6 +101,13 @@ class TestMatchNumber(unittest.TestCase):
     def test_zero_returns_none(self):
         self.assertIsNone(fmc._match_number(0, self.idx["number_index"]))
 
+    def test_none_returns_none(self):
+        self.assertIsNone(fmc._match_number(None, self.idx["number_index"]))
+
+    def test_at_threshold_boundary_matches(self):
+        # dist == 2 should still match (strict `>` comparison)
+        self.assertEqual(fmc._match_number(6, self.idx["number_index"]), "--spacing-2-8px")
+
 
 if __name__ == "__main__":
     unittest.main()
