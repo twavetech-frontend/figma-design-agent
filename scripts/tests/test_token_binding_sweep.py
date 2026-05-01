@@ -302,7 +302,31 @@ class TestWalkNodeTree(unittest.TestCase):
 
 class TestCollectBindings(unittest.TestCase):
     def setUp(self):
-        self.idx = fmc._load_token_index(load_fixture())
+        # Extend fixture so typography + shadow paths can match
+        token_map = load_fixture()
+        token_map["--fontFamily-fontFamilyDisplay"] = {
+            "figmaPath": "Font family/font-family-display",
+            "value": "Pretendard", "type": "TEXT"
+        }
+        token_map["--fontWeight-semibold"] = {
+            "figmaPath": "Font weight/semibold", "value": "Semibold", "type": "TEXT"
+        }
+        token_map["--lineHeight-display2xl"] = {
+            "figmaPath": "Line height/display-2xl", "value": 90, "type": "NUMBER"
+        }
+        token_map["--letterSpacing-0"] = {
+            "figmaPath": "letterSpacing/0", "value": 0, "type": "NUMBER"
+        }
+        token_map["--shadow-md"] = {
+            "figmaPath": "Shadows/shadow-md",
+            "value": {
+                "color": "#0a0d1214",
+                "type": "dropShadow",
+                "x": 0, "y": 4, "blur": 6, "spread": -2
+            },
+            "type": "BOXSHADOW"
+        }
+        self.idx = fmc._load_token_index(token_map)
 
     def test_collect_color_fill(self):
         nodes = [{
@@ -344,6 +368,59 @@ class TestCollectBindings(unittest.TestCase):
         q = fmc._collect_bindings(nodes, self.idx)
         self.assertEqual(q["color_bindings"], [])
         self.assertEqual(len(q["unmapped"]["colors"]), 1)
+
+    def test_collect_stroke(self):
+        nodes = [{
+            "id": "1:1", "type": "FRAME",
+            "strokes": [{"type": "SOLID", "color": {"r": 24/255, "g": 29/255, "b": 39/255, "a": 1}}],
+        }]
+        q = fmc._collect_bindings(nodes, self.idx)
+        self.assertEqual(len(q["color_bindings"]), 1)
+        b = q["color_bindings"][0]
+        self.assertEqual(b["field"], "strokes")
+        self.assertEqual(b["index"], 0)
+        self.assertEqual(b["token_name"], "--colors-text-textPrimary")
+
+    def test_collect_typography_happy_path(self):
+        nodes = [{
+            "id": "1:T", "type": "TEXT",
+            "fontFamily": "Pretendard",
+            "fontWeight": "Semibold",
+            "fontSize": 72,
+            "lineHeight": 90,
+            "letterSpacing": 0,
+        }]
+        q = fmc._collect_bindings(nodes, self.idx)
+        self.assertEqual(len(q["textstyle_bindings"]), 1)
+        self.assertEqual(q["textstyle_bindings"][0]["nodeId"], "1:T")
+        self.assertEqual(q["textstyle_bindings"][0]["token_name"], "--display2xl-semibold")
+
+    def test_collect_effect_happy_path(self):
+        nodes = [{
+            "id": "1:E", "type": "FRAME",
+            "effects": [{
+                "type": "DROP_SHADOW",
+                "color": {"r": 0.039, "g": 0.051, "b": 0.071, "a": 0.078},
+                "offset": {"x": 0, "y": 4},
+                "radius": 6, "spread": -2,
+            }],
+        }]
+        q = fmc._collect_bindings(nodes, self.idx)
+        self.assertEqual(len(q["effect_bindings"]), 1)
+        self.assertEqual(q["effect_bindings"][0]["nodeId"], "1:E")
+        self.assertEqual(q["effect_bindings"][0]["index"], 0)
+        self.assertEqual(q["effect_bindings"][0]["token_name"], "--shadow-md")
+
+    def test_collect_mixed_style_text_unmapped(self):
+        nodes = [{
+            "id": "1:M", "type": "TEXT",
+            "hasMixedStyle": True,
+            "fontFamily": "Pretendard", "fontWeight": "Semibold",
+        }]
+        q = fmc._collect_bindings(nodes, self.idx)
+        self.assertEqual(q["textstyle_bindings"], [])
+        self.assertEqual(len(q["unmapped"]["typography"]), 1)
+        self.assertEqual(q["unmapped"]["typography"][0]["reason"], "mixed_or_missing")
 
 
 if __name__ == "__main__":

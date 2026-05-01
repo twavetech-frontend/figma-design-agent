@@ -2630,17 +2630,30 @@ _SHADOW_SPREAD_TOL = 1   # ±px
 _SHADOW_ALPHA_TOL = 0.1
 
 
+def _figma_color_to_rgba_ints(c):
+    """{r:0..1, g:0..1, b:0..1, a:0..1} -> (r,g,b,a) with ints + alpha float."""
+    if not isinstance(c, dict):
+        return None
+    try:
+        r = int(round(c.get("r", 0) * 255))
+        g = int(round(c.get("g", 0) * 255))
+        b = int(round(c.get("b", 0) * 255))
+        a = round(c.get("a", 1.0), 3)
+        return (r, g, b, a)
+    except (TypeError, ValueError):
+        return None
+
+
 def _match_shadow(effect, shadow_list):
     """Match a Figma effect (DROP_SHADOW) to a BOXSHADOW token."""
     if not isinstance(effect, dict):
         return None
     if effect.get("type") not in ("DROP_SHADOW", "INNER_SHADOW"):
         return None
-    e_color = effect.get("color") or {}
-    er = int(round(e_color.get("r", 0) * 255))
-    eg = int(round(e_color.get("g", 0) * 255))
-    eb = int(round(e_color.get("b", 0) * 255))
-    ea = e_color.get("a", 1)
+    e_rgba = _figma_color_to_rgba_ints(effect.get("color"))
+    if e_rgba is None:
+        return None
+    er, eg, eb, ea = e_rgba
     e_off = effect.get("offset") or {}
     eox = e_off.get("x", 0)
     eoy = e_off.get("y", 0)
@@ -2710,20 +2723,6 @@ _NUMBER_FIELDS = (
     "strokeTopWeight", "strokeRightWeight",
     "strokeBottomWeight", "strokeLeftWeight",
 )
-
-
-def _figma_color_to_rgba_ints(c):
-    """{r:0..1, g:0..1, b:0..1, a:0..1} -> (r,g,b,a) with ints + alpha float."""
-    if not isinstance(c, dict):
-        return None
-    try:
-        r = int(round(c.get("r", 0) * 255))
-        g = int(round(c.get("g", 0) * 255))
-        b = int(round(c.get("b", 0) * 255))
-        a = round(c.get("a", 1.0), 3)
-        return (r, g, b, a)
-    except (TypeError, ValueError):
-        return None
 
 
 def _collect_bindings(nodes, indexes):
@@ -2820,6 +2819,9 @@ def _collect_bindings(nodes, indexes):
                     {"nodeId": nid, "reason": "mixed_or_missing"}
                 )
             else:
+                # Note: Figma may return fontWeight as int (e.g. 600) or as a display string
+                # ("Semibold"). _match_textstyle currently expects string; int→string mapping is a
+                # known open item (see plan Risk #3). The fontName.style fallback covers most cases.
                 text_props = {
                     "fontFamily": n.get("fontFamily") or (n.get("fontName") or {}).get("family"),
                     "fontWeight": (
