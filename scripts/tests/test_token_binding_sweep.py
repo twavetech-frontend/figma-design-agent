@@ -261,5 +261,25 @@ class TestMatchShadow(unittest.TestCase):
         self.assertIsNone(fmc._match_shadow(None, self.idx["shadow_list"]))
 
 
+class TestWalkNodeTree(unittest.TestCase):
+    def test_flatten_recursive_tree(self):
+        tree = {
+            "id": "1:1", "type": "FRAME",
+            "children": [
+                {"id": "1:2", "type": "TEXT"},
+                {"id": "1:3", "type": "FRAME",
+                 "children": [{"id": "1:4", "type": "TEXT"}]},
+            ],
+        }
+        flat = fmc._flatten_node_tree(tree)
+        ids = [n["id"] for n in flat]
+        self.assertEqual(ids, ["1:1", "1:2", "1:3", "1:4"])
+
+    def test_no_children_handles_gracefully(self):
+        tree = {"id": "1:1", "type": "RECTANGLE"}
+        flat = fmc._flatten_node_tree(tree)
+        self.assertEqual([n["id"] for n in flat], ["1:1"])
+
+
 if __name__ == "__main__":
     unittest.main()
