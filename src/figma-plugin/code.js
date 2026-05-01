@@ -3789,7 +3789,19 @@ async function setEffects(params) {
 
 // Set Effect Style ID Tool
 async function setEffectStyleId(params) {
-  const { nodeId, effectStyleId } = params || {};
+  var { nodeId, effectStyleId, effectStyleName } = params || {};
+
+  // [NEW] Resolve by name if id not supplied
+  if (!effectStyleId && effectStyleName) {
+    var allEffectStyles = await figma.getLocalEffectStylesAsync();
+    for (var i = 0; i < allEffectStyles.length; i++) {
+      if (allEffectStyles[i].name === effectStyleName) {
+        effectStyleId = allEffectStyles[i].id;
+        break;
+      }
+    }
+  }
+  // [/NEW]
 
   if (!nodeId) {
     throw new Error("Missing nodeId parameter");
