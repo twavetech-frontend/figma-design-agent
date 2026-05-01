@@ -2569,6 +2569,8 @@ def _match_textstyle(text_props, typography_list):
     """Find a TYPOGRAPHY token whose family/weight match exactly and whose
     size/lineHeight/letterSpacing are within tolerance. Returns the token name
     (caller maps name → text style id elsewhere)."""
+    if not isinstance(text_props, dict):
+        return None
     pf = text_props.get("fontFamily")
     pw = text_props.get("fontWeight")
     ps = text_props.get("fontSize")

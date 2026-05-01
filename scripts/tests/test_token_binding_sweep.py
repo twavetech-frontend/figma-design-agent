@@ -173,6 +173,23 @@ class TestMatchTextstyle(unittest.TestCase):
             fmc._match_textstyle(text_props, self.idx["typography_list"])
         )
 
+    def test_none_text_props_returns_none(self):
+        self.assertIsNone(
+            fmc._match_textstyle(None, self.idx["typography_list"])
+        )
+
+    def test_lineheight_outside_tolerance_rejects(self):
+        # lineHeight 94 against candidate ts_lh=90 → diff 4 > tol 2.7 → reject
+        text_props = {
+            "fontFamily": "Pretendard", "fontWeight": "Semibold",
+            "fontSize": 72,
+            "lineHeight": 94,
+            "letterSpacing": 0,
+        }
+        self.assertIsNone(
+            fmc._match_textstyle(text_props, self.idx["typography_list"])
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
