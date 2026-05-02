@@ -6,7 +6,7 @@
 - `spec.json` — 검증된 ScreenSpec 템플릿 (placeholder 데이터)
 - `README.md` — 시나리오 설명 + 데이터 슬롯 + critique 점수 기준
 
-## 📋 등록된 5개 Skill (2026-05-03 기준)
+## 📋 등록된 6개 Skill (2026-05-03 기준)
 
 | Skill | 시나리오 | 화면 크기 | 검증 점수 | 적합한 PRD 패턴 |
 |---|---|---|---|---|
@@ -15,6 +15,7 @@
 | [`imin-home-empty`](imin-home-empty/) | 0건 empty state 홈 (full home 구조, 모든 데이터 0) | 390×1612 | 97/100 | 가입했지만 미참여 유저, 빈 상태 안내 + 추천 hero + 빈 카드 placeholder |
 | [`imin-stage-detail-modal`](imin-stage-detail-modal/) | 스테이지 상세 모달 | 390×1310 | 97/100 | 카드 탭 → 상세 진입, 단일 스테이지 진행 현황 |
 | [`imin-schedule-modal`](imin-schedule-modal/) | 거래 스케줄 모달 (close 모달, empty state 포함) | 390×1880 | 99/100 | 거래 일정 상세, 캘린더 + 일별 거래 |
+| [`imin-notification-center`](imin-notification-center/) | 알림 센터 (4-tab + kind별 시맨틱 카드) | 390×866 | **100/100** | 알림 inbox, 거래·이벤트·시스템 분류, 미확인/확인 mixed |
 
 ## 🎯 사용 흐름
 

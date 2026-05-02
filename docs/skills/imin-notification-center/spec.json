@@ -1,0 +1,38 @@
+{
+  "spec": {
+    "width": 390,
+    "statusBar": true,
+    "sections": [
+      {
+        "type": "modalHeader",
+        "title": "알림",
+        "showClose": true
+      },
+      {
+        "type": "underlineTab",
+        "tabs": [
+          { "id": "all", "label": "전체" },
+          { "id": "transaction", "label": "거래" },
+          { "id": "event", "label": "이벤트" },
+          { "id": "system", "label": "시스템" }
+        ],
+        "activeId": "all"
+      },
+      {
+        "type": "notificationList",
+        "items": [
+          { "kind": "transaction", "title": "참여한 스테이지가 시작됐어요", "body": "마이월렛 10만원 첫 납부일이 다가오고 있어요. 잔액을 미리 확인해보세요.", "time": "방금 전", "unread": true },
+          { "kind": "event", "title": "5월 출석 이벤트 진행 중", "body": "5일 연속 출석하고 5,000P 받기. 오늘이 D-3입니다.", "time": "30분 전", "unread": true },
+          { "kind": "transaction", "title": "스테이지 납입 완료", "body": "10만원이 마이월렛에서 자동 납부되었습니다.", "time": "2시간 전", "unread": true },
+          { "kind": "system", "title": "약관이 업데이트됐어요", "body": "5월 1일부터 적용되는 개인정보 처리방침을 확인해주세요.", "time": "어제", "unread": false },
+          { "kind": "event", "title": "친구 추천 보너스 지급", "body": "친구가 가입을 완료해서 3,000P가 적립되었어요.", "time": "3일 전", "unread": false },
+          { "kind": "system", "title": "비밀번호 변경 알림", "body": "iPhone 15에서 비밀번호가 변경되었습니다. 본인이 아니라면 즉시 확인하세요.", "time": "2주 전", "unread": false }
+        ]
+      },
+      {
+        "type": "spacer",
+        "height": 24
+      }
+    ]
+  }
+}

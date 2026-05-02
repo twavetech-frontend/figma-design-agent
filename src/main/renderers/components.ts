@@ -19,7 +19,7 @@ import type {
   AlertBannerSection, RecommendHeroSection, StageCardScrollSection,
   CreditUsageCardSection,
   AttendanceWeekSection, EventBannerCarouselSection, ProductHotDealSection,
-  ParagraphSection,
+  ParagraphSection, NotificationListSection,
 } from './types';
 
 const j = (x: unknown) => JSON.stringify(x);
@@ -2013,6 +2013,85 @@ for (const p of s.products) {
 `);
 }
 
+// ─── Notification List — 알림 카드 (kind별 시맨틱 색상 + unread dot) ─
+function renderNotificationList(s: NotificationListSection): string {
+  return wrap(`
+const s = ${j(s)};
+const list = cAL("VERTICAL", { name: "Notification List" });
+list.fills = [];
+list.itemSpacing = 0;
+wrapper.appendChild(list);
+list.layoutSizingHorizontal = "FILL"; list.layoutSizingVertical = "HUG";
+
+const KIND_PALETTE = {
+  transaction: { bgVar: v.bgBrandSection, fgVar: v.textBrandPrimary, iconKey: "wallet" },
+  event:       { bgVar: v.bgWarningSecondary, fgVar: v.textWarningPrimary, iconKey: "gift" },
+  system:      { bgVar: v.bgTertiary, fgVar: v.textTertiary, iconKey: "bell" },
+};
+
+s.items.forEach((it, idx) => {
+  const card = cAL("HORIZONTAL", { itemSpacing: 12 });
+  card.fills = [solid(v.bgPrimary)];
+  card.paddingLeft = 20; card.paddingRight = 20; card.paddingTop = 16; card.paddingBottom = 16;
+  card.counterAxisAlignItems = "MIN";
+  if (idx > 0) {
+    card.strokes = [solid(v.borderSecondary)];
+    card.strokeTopWeight = 1; card.strokeBottomWeight = 0;
+    card.strokeLeftWeight = 0; card.strokeRightWeight = 0;
+    card.strokeAlign = "INSIDE";
+  }
+  list.appendChild(card);
+  card.layoutSizingHorizontal = "FILL"; card.layoutSizingVertical = "HUG";
+
+  const palette = KIND_PALETTE[it.kind] || KIND_PALETTE.system;
+
+  // Left: icon container (40sq circle with semantic bg)
+  const iconWrap = cAL("HORIZONTAL");
+  iconWrap.fills = [solid(palette.bgVar)];
+  iconWrap.cornerRadius = 9999;
+  iconWrap.primaryAxisAlignItems = "CENTER"; iconWrap.counterAxisAlignItems = "CENTER";
+  card.appendChild(iconWrap);
+  iconWrap.resize(40, 40);
+  iconWrap.layoutSizingHorizontal = "FIXED"; iconWrap.layoutSizingVertical = "FIXED";
+  if (ic[palette.iconKey]) {
+    const icInst = ic[palette.iconKey].createInstance(); icInst.resize(20, 20);
+    tintIcon(icInst, palette.fgVar);
+    iconWrap.appendChild(icInst);
+  }
+
+  // Middle: title + body + time
+  const tcol = cAL("VERTICAL", { itemSpacing: 4 });
+  tcol.fills = [];
+  card.appendChild(tcol);
+  tcol.layoutSizingHorizontal = "FILL"; tcol.layoutSizingVertical = "HUG";
+  const titleNode = txt(it.title, {
+    weight: it.unread ? "Bold" : "Medium",
+    size: 14,
+    colorVar: it.unread ? v.textPrimary : v.textSecondary,
+  });
+  tcol.appendChild(titleNode);
+  const bodyNode = txt(it.body, { weight: "Regular", size: 13, colorVar: v.textSecondary });
+  tcol.appendChild(bodyNode);
+  bodyNode.layoutSizingHorizontal = "FILL";
+  const timeNode = txt(it.time, { weight: "Regular", size: 12, colorVar: v.textTertiary });
+  tcol.appendChild(timeNode);
+
+  // Right: unread dot (only when unread=true)
+  const right = cAL("HORIZONTAL");
+  right.fills = []; right.primaryAxisAlignItems = "CENTER"; right.counterAxisAlignItems = "MIN";
+  right.paddingTop = 4;
+  card.appendChild(right);
+  right.layoutSizingHorizontal = "HUG"; right.layoutSizingVertical = "HUG";
+  if (it.unread) {
+    const dot = figma.createEllipse();
+    dot.resize(8, 8);
+    dot.fills = [solid(v.bgBrandSection)];
+    right.appendChild(dot);
+  }
+});
+`);
+}
+
 // ─── Paragraph — single body-text line (empty state, footnote, hint, etc.) ─
 function renderParagraph(s: ParagraphSection): string {
   return wrap(`
@@ -2038,6 +2117,7 @@ if (s.underline) { try { node.textDecoration = "UNDERLINE"; } catch (e) {} }
 export function renderSection(s: SectionSpec): string {
   switch (s.type) {
     case 'paragraph': return renderParagraph(s);
+    case 'notificationList': return renderNotificationList(s);
     case 'appHeader': return renderAppHeader(s);
     case 'modalHeader': return renderModalHeader(s);
     case 'backHeader': return renderBackHeader(s);

@@ -263,6 +263,19 @@ export interface EventBannerCarouselSection {
   activeIndex?: number;
 }
 
+export type NotificationKind = 'transaction' | 'event' | 'system';
+
+export interface NotificationListSection {
+  type: 'notificationList';
+  items: Array<{
+    kind: NotificationKind;
+    title: string;
+    body: string;
+    time: string;
+    unread?: boolean;
+  }>;
+}
+
 export interface ParagraphSection {
   type: 'paragraph';
   text: string;
@@ -313,7 +326,8 @@ export type SectionSpec =
   | AttendanceWeekSection
   | EventBannerCarouselSection
   | ProductHotDealSection
-  | ParagraphSection;
+  | ParagraphSection
+  | NotificationListSection;
 
 export type OverlaySpec = TabBarSection | FabSection;
 
