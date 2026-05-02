@@ -1341,6 +1341,122 @@ return await __crit(root);
   }, { timeoutMs: 70_000 });
 
 
+  // ============================================================
+  // scan_unstamped_screens — detect screens built by bypassing our gate
+  // ============================================================
+  reg('scan_unstamped_screens', `Scan the figma file for ROOT-level screens (≥360px wide frames on the GUI page) that LACK our build provenance stamp. Any frame here was created by an agent bypassing build_from_spec / batch_build_screen — typically via the figma-official use_figma plugin, route around our hard gate.
+
+Returns:
+  - unstamped: [{ nodeId, name, x, y, width, height }]   // suspicious frames
+  - stamped:   [{ nodeId, name, builtAt, discoverySource, builder }]
+  - totalRoots: number
+
+Action options (caller's responsibility):
+  - mark_unstamped_screens(nodeIds)  — rename frames with "⚠️ RULE 1 우회" prefix
+  - delete_unstamped_screens(nodeIds) — destructive cleanup (require user confirm)
+
+Run this proactively at the start of any design session — if scan finds
+unstamped frames, the agent must explain to the user before doing anything
+else.`, {
+    type: 'object',
+    properties: {
+      minWidth: { type: 'number', description: 'Minimum width to count as a screen (default 360)' },
+    },
+  }, async (params) => {
+    if (!figmaWS.isConnected) throw new Error('Figma plugin is not connected.');
+    const minWidth = (typeof params.minWidth === 'number' ? params.minWidth : 360);
+    const code = `
+const guiPage = figma.root.children.find(p => p.name === "GUI") || figma.currentPage;
+await figma.setCurrentPageAsync(guiPage);
+const unstamped = []; const stamped = [];
+for (const n of guiPage.children) {
+  if (n.type !== "FRAME" || n.width < ${minWidth}) continue;
+  // Skip the wireframe description templates and known infrastructure
+  if (/디스크립션|description|AGENT_LIBRARY|Cover/i.test(n.name || "")) continue;
+  let stamp = null;
+  try { stamp = n.getSharedPluginData("fda_renderer", "screenMeta"); } catch (e) {}
+  if (stamp && stamp.length > 0) {
+    try {
+      const meta = JSON.parse(stamp);
+      stamped.push({ nodeId: n.id, name: n.name, builtAt: meta.builtAt, discoverySource: meta.discoverySource, builder: meta.builder });
+    } catch (e) {
+      stamped.push({ nodeId: n.id, name: n.name, raw: stamp.slice(0, 100) });
+    }
+  } else {
+    unstamped.push({ nodeId: n.id, name: n.name, x: n.x, y: n.y, width: n.width, height: n.height });
+  }
+}
+return { unstamped, stamped, totalRoots: unstamped.length + stamped.length };
+`;
+    return await cmd('execute_js', { code }, 30000);
+  }, { timeoutMs: 40_000 });
+
+  // ============================================================
+  // mark_unstamped_screens — rename bypass frames so user/agent see them
+  // ============================================================
+  reg('mark_unstamped_screens', `Rename one or more frames with the "⚠️ RULE 1 우회" prefix so the user and the next agent turn can see they were built by bypassing the gate. Non-destructive.`, {
+    type: 'object',
+    properties: {
+      nodeIds: { type: 'array', items: { type: 'string' }, description: 'Node IDs from scan_unstamped_screens.unstamped' },
+    },
+    required: ['nodeIds'],
+  }, async (params) => {
+    if (!figmaWS.isConnected) throw new Error('Figma plugin is not connected.');
+    const ids = (params.nodeIds as string[]) || [];
+    const code = `
+const ids = ${JSON.stringify(ids)};
+const renamed = [];
+for (const id of ids) {
+  try {
+    const n = await figma.getNodeByIdAsync(id);
+    if (n && "name" in n) {
+      const original = n.name;
+      if (!/^⚠️ RULE 1 우회/.test(original)) {
+        n.name = "⚠️ RULE 1 우회 — " + original;
+      }
+      renamed.push({ nodeId: id, oldName: original, newName: n.name });
+    }
+  } catch (e) {}
+}
+return { renamed };
+`;
+    return await cmd('execute_js', { code }, 30000);
+  }, { timeoutMs: 40_000 });
+
+  // ============================================================
+  // delete_unstamped_screens — destructive cleanup of bypass frames
+  // ============================================================
+  reg('delete_unstamped_screens', `DELETE one or more frames identified by scan_unstamped_screens.unstamped. Destructive — require user confirmation in the chat before calling.`, {
+    type: 'object',
+    properties: {
+      nodeIds: { type: 'array', items: { type: 'string' } },
+      confirmed: { type: 'boolean', description: 'User explicitly confirmed deletion' },
+    },
+    required: ['nodeIds', 'confirmed'],
+  }, async (params) => {
+    if (!figmaWS.isConnected) throw new Error('Figma plugin is not connected.');
+    if (!params.confirmed) {
+      throw new Error('delete_unstamped_screens REJECTED: confirmed=true required (destructive).');
+    }
+    const ids = (params.nodeIds as string[]) || [];
+    const code = `
+const ids = ${JSON.stringify(ids)};
+const deleted = [];
+for (const id of ids) {
+  try {
+    const n = await figma.getNodeByIdAsync(id);
+    if (n && "remove" in n) {
+      const name = ("name" in n) ? n.name : "(no-name)";
+      n.remove();
+      deleted.push({ nodeId: id, name });
+    }
+  } catch (e) {}
+}
+return { deleted };
+`;
+    return await cmd('execute_js', { code }, 30000);
+  }, { timeoutMs: 40_000 });
+
   reg('batch_bind_variables', 'Bind variables to multiple nodes at once', {
     type: 'object',
     properties: {

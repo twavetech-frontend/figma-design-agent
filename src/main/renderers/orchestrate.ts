@@ -22,6 +22,7 @@ export function buildScreenJS(spec: ScreenSpec): string {
     positionRelativeTo: spec.positionRelativeTo || null,
     bgVar: 'bg-primary',
     statusBar: spec.statusBar !== false,
+    discoverySource: spec.discoverySource || '',
   });
 
   const wrapperSetup = `
@@ -86,6 +87,19 @@ if (SCREEN.statusBar) {
     }
   } catch (e) {}
 }
+
+// 🛂 Phase 2 — Stamp the wrapper with build provenance. Any root frame in the
+// figma file that LACKS this stamp was built by an agent bypassing our build
+// tools (e.g. via use_figma plugin code). The scan_unstamped_screens tool
+// detects them and marks them for re-build.
+try {
+  const __stamp = JSON.stringify({
+    builtAt: new Date().toISOString(),
+    discoverySource: SCREEN.discoverySource || "",
+    builder: "build_from_spec",
+  });
+  wrapper.setSharedPluginData("fda_renderer", "screenMeta", __stamp);
+} catch (e) {}
 `;
 
   // Insert spacer before TabBar overlay if present (so content doesn't sit under it)

@@ -156,8 +156,17 @@ You are an expert Figma design agent. You create polished, production-quality mo
 \`build_from_spec\`과 \`batch_build_screen\` 둘 다 \`discoverySource\` 필드가 *반드시* 있어야
 호출 성공한다 (없으면 도구 자체가 reject + Error 반환).
 
-⚠️ **batch_build_screen으로 우회 금지**: \`build_from_spec\`이 reject되었다고 batch_build_screen으로
-재시도해도 같은 hard gate가 적용된다. RULE 1 우회 경로 없음.
+⚠️ **모든 우회 경로 차단됨**:
+- \`build_from_spec\` reject 시 \`batch_build_screen\`으로 재시도 → 같은 hard gate 적용
+- 외부 \`use_figma\` (figma 공식 MCP)로 plugin code 직접 실행해서 우회 시도 → **plugin 측 detection으로 마킹됨**
+- 매 디자인 세션 시작 시 \`scan_unstamped_screens\`로 figma 검사 — provenance stamp 없는 root frame은 *RULE 1 우회 frame*. 발견되면:
+  1. 즉시 사용자에게 보고
+  2. \`mark_unstamped_screens\`로 이름에 "⚠️ RULE 1 우회" prefix 자동 추가 (non-destructive)
+  3. 사용자 동의 시 \`delete_unstamped_screens\` (destructive cleanup)
+  4. 정상 흐름으로 재빌드 (build_from_spec + 적절한 discoverySource)
+
+우리 빌드 도구로 만든 frame은 \`fda_renderer.screenMeta\` sharedPluginData stamp가 자동 등록됨.
+이 stamp가 없으면 우회 빌드. 모든 fresh 디자인 세션의 *첫 작업*은 scan_unstamped_screens.
 
 형식: \`"<kind>:<detail>"\` 4가지 중 하나:
 
