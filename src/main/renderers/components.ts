@@ -19,6 +19,7 @@ import type {
   AlertBannerSection, RecommendHeroSection, StageCardScrollSection,
   CreditUsageCardSection,
   AttendanceWeekSection, EventBannerCarouselSection, ProductHotDealSection,
+  ParagraphSection,
 } from './types';
 
 const j = (x: unknown) => JSON.stringify(x);
@@ -76,7 +77,7 @@ for (const ck of rightIcons) {
 function renderModalHeader(s: ModalHeaderSection): string {
   return wrap(`
 const s = ${j(s)};
-const { component: mhComp } = await ensureComponent("modalHeader_v2", async (parent) => {
+const { component: mhComp } = await ensureComponent("modalHeader_v3", async (parent) => {
   parent.layoutMode = "HORIZONTAL";
   parent.primaryAxisSizingMode = "FIXED";
   parent.counterAxisSizingMode = "AUTO";
@@ -84,10 +85,18 @@ const { component: mhComp } = await ensureComponent("modalHeader_v2", async (par
   parent.paddingLeft = 20; parent.paddingRight = 20;
   parent.paddingTop = 16; parent.paddingBottom = 16;
   parent.counterAxisAlignItems = "CENTER";
-  parent.primaryAxisAlignItems = "SPACE_BETWEEN";
+  parent.itemSpacing = 8;
   parent.fills = [];
+  // Left container holds title — fills the row so close is pushed to the right
+  // even when title is hidden / empty.
+  const titleWrap = cAL("HORIZONTAL");
+  titleWrap.fills = [];
+  titleWrap.primaryAxisAlignItems = "MIN"; titleWrap.counterAxisAlignItems = "CENTER";
+  parent.appendChild(titleWrap);
+  titleWrap.layoutSizingHorizontal = "FILL"; titleWrap.layoutSizingVertical = "HUG";
   const titleNode = txt("Title", { weight: "Bold", size: 18, colorVar: v.textPrimary });
-  parent.appendChild(titleNode);
+  titleWrap.appendChild(titleNode);
+
   const closeBtn = cAL("HORIZONTAL");
   closeBtn.fills = [];
   closeBtn.paddingLeft = 4; closeBtn.paddingRight = 4; closeBtn.paddingTop = 4; closeBtn.paddingBottom = 4;
@@ -842,25 +851,28 @@ if (s.filterLabel) {
 function renderStatsStrip3Col(s: StatsStrip3ColSection): string {
   return wrap(`
 const s = ${j(s)};
-const { component } = await ensureComponent("statsStrip3Col_v2", async (parent) => {
+const { component } = await ensureComponent("statsStrip3Col_v3", async (parent) => {
   parent.layoutMode = "HORIZONTAL";
   parent.primaryAxisSizingMode = "FIXED";
   parent.counterAxisSizingMode = "AUTO";
   parent.resize(393, 60);
-  parent.primaryAxisAlignItems = "SPACE_BETWEEN";
-  parent.counterAxisAlignItems = "MIN";
+  parent.primaryAxisAlignItems = "MIN";
+  parent.counterAxisAlignItems = "CENTER";
   parent.paddingLeft = 20; parent.paddingRight = 20;
   parent.paddingTop = 14; parent.paddingBottom = 14;
+  parent.itemSpacing = 0;
   parent.fills = [solid(v.bgSecondary)];
   const labels = [];
   const values = [];
   for (let i = 0; i < 3; i++) {
     const col = cAL("VERTICAL", { itemSpacing: 4 });
-    col.fills = []; col.counterAxisAlignItems = "MIN";
+    col.fills = [];
+    col.primaryAxisAlignItems = "CENTER";
+    col.counterAxisAlignItems = "CENTER";
     parent.appendChild(col);
     col.layoutSizingHorizontal = "FILL"; col.layoutSizingVertical = "HUG";
-    const labelNode = txt("Label " + (i + 1), { weight: "Medium", size: 12, colorVar: v.textTertiary });
-    const valueNode = txt("Value " + (i + 1), { weight: "Bold", size: 14, colorVar: v.textPrimary });
+    const labelNode = txt("Label " + (i + 1), { weight: "Medium", size: 12, colorVar: v.textTertiary, align: "CENTER" });
+    const valueNode = txt("Value " + (i + 1), { weight: "Bold", size: 14, colorVar: v.textPrimary, align: "CENTER" });
     col.appendChild(labelNode);
     col.appendChild(valueNode);
     labels.push(labelNode); values.push(valueNode);
@@ -2001,8 +2013,31 @@ for (const p of s.products) {
 `);
 }
 
+// ─── Paragraph — single body-text line (empty state, footnote, hint, etc.) ─
+function renderParagraph(s: ParagraphSection): string {
+  return wrap(`
+const s = ${j(s)};
+const w = cAL("HORIZONTAL");
+w.fills = [];
+w.paddingLeft = 20; w.paddingRight = 20; w.paddingTop = 4; w.paddingBottom = 4;
+w.primaryAxisAlignItems = s.align === "center" ? "CENTER" : (s.align === "right" ? "MAX" : "MIN");
+w.counterAxisAlignItems = "CENTER";
+wrapper.appendChild(w);
+w.layoutSizingHorizontal = "FILL"; w.layoutSizingVertical = "HUG";
+
+const toneMap = { primary: v.textPrimary, secondary: v.textSecondary, tertiary: v.textTertiary, brandPrimary: v.textBrandPrimary, errorPrimary: v.textErrorPrimary };
+const colorVar = toneMap[s.tone || "secondary"];
+const weight = s.weight === "bold" ? "Bold" : (s.weight === "medium" ? "Medium" : "Regular");
+const align = s.align === "center" ? "CENTER" : (s.align === "right" ? "RIGHT" : "LEFT");
+const node = txt(s.text, { weight, size: s.size || 13, colorVar, align });
+w.appendChild(node);
+if (s.underline) { try { node.textDecoration = "UNDERLINE"; } catch (e) {} }
+`);
+}
+
 export function renderSection(s: SectionSpec): string {
   switch (s.type) {
+    case 'paragraph': return renderParagraph(s);
     case 'appHeader': return renderAppHeader(s);
     case 'modalHeader': return renderModalHeader(s);
     case 'backHeader': return renderBackHeader(s);

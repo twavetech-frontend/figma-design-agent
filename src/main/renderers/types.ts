@@ -263,6 +263,16 @@ export interface EventBannerCarouselSection {
   activeIndex?: number;
 }
 
+export interface ParagraphSection {
+  type: 'paragraph';
+  text: string;
+  align?: 'left' | 'center' | 'right';
+  weight?: 'regular' | 'medium' | 'bold';
+  size?: 11 | 12 | 13 | 14 | 16;
+  tone?: 'primary' | 'secondary' | 'tertiary' | 'brandPrimary' | 'errorPrimary';
+  underline?: boolean;
+}
+
 export type ProductBadgeKind = 'hotdeal' | 'best' | 'new';
 
 export interface ProductHotDealSection {
@@ -302,7 +312,8 @@ export type SectionSpec =
   | CreditUsageCardSection
   | AttendanceWeekSection
   | EventBannerCarouselSection
-  | ProductHotDealSection;
+  | ProductHotDealSection
+  | ParagraphSection;
 
 export type OverlaySpec = TabBarSection | FabSection;
 

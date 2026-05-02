@@ -37,7 +37,33 @@ guiPage.appendChild(wrapper);
 
 if (SCREEN.positionRelativeTo) {
   const ref = await figma.getNodeByIdAsync(SCREEN.positionRelativeTo);
-  if (ref) { wrapper.x = ref.x + ref.width + 100; wrapper.y = ref.y; }
+  if (ref) {
+    let placeX = ref.x + ref.width + 100;
+    // Detect description / spec / annotation frame adjacent to the right of
+    // ref and place wrapper past it — otherwise the new design hides under
+    // the description and the user can not see it.
+    try {
+      const parent = ref.parent;
+      if (parent && "children" in parent && Array.isArray(parent.children)) {
+        const refRight = ref.x + ref.width;
+        for (const sib of parent.children) {
+          if (sib.id === ref.id || !("x" in sib) || !("width" in sib)) continue;
+          // sibling that starts within 200px to the right of ref AND vertically
+          // overlaps it is treated as an adjacent description block
+          const sibX = sib.x;
+          const sibY = sib.y;
+          const sibH = ("height" in sib) ? sib.height : 0;
+          const verticalOverlap = sibY < ref.y + ref.height && sibY + sibH > ref.y;
+          if (verticalOverlap && sibX >= refRight - 50 && sibX <= refRight + 250) {
+            const sibRight = sibX + sib.width;
+            if (sibRight + 100 > placeX) placeX = sibRight + 100;
+          }
+        }
+      }
+    } catch (e) {}
+    wrapper.x = placeX;
+    wrapper.y = ref.y;
+  }
   else {
     const vp = figma.viewport.center;
     wrapper.x = Math.round(vp.x - SCREEN.width / 2);

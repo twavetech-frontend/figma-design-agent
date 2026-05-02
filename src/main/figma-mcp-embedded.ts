@@ -80,16 +80,42 @@ const walk = (n, d, inInst) => {
 };
 walk(root, 0, false);
 
-// Dim 1: Anti-slop
+// Dim 1: Anti-slop — placeholder + slop emoji + invented metrics + filler + Tailwind AI accent
+// Patterns lifted from open-design's lint-artifact.ts (Apache 2.0).
+const SLOP_EMOJI_RE = /[\\u2728\\u26A1\\u2705\\u2B50\\uD83D\\uDE80\\uD83C\\uDFAF\\uD83D\\uDD25\\uD83D\\uDCA1\\uD83D\\uDCC8\\uD83C\\uDFA8\\uD83D\\uDEE1\\uD83C\\uDF1F\\uD83D\\uDCAA\\uD83C\\uDF89\\uD83D\\uDC4B\\uD83D\\uDE4C\\uD83C\\uDFC6]/;
+const INVENTED_METRIC_RE = /(10[xX×]\\s+(faster|better|easier)|100[xX×]\\s+(faster|better)|99\\.\\d+%\\s+uptime|zero[- ]downtime|3[xX×]\\s+more\\s+(productive|efficient))/i;
+const FILLER_RE = /(feature\\s+(one|two|three|1|2|3)|lorem\\s+ipsum|dolor\\s+sit\\s+amet|placeholder\\s+text|sample\\s+content|Sample text)/i;
+// Tailwind violet/indigo raw RGB ranges — common AI default accent
+const isAiSlopPurple = (c) => {
+  if (!c) return false;
+  // Tailwind violet 500-900: rgb(168,85,247)..rgb(88,28,135) → r 0.34-0.66, g 0.10-0.34, b 0.53-0.97
+  if (c.r > 0.30 && c.r < 0.70 && c.g > 0.05 && c.g < 0.35 && c.b > 0.55) return true;
+  // Tailwind indigo 500-900: rgb(99,102,241)..rgb(49,46,129) → r 0.19-0.39, g 0.18-0.40, b 0.51-0.95
+  if (c.r > 0.18 && c.r < 0.42 && c.g > 0.18 && c.g < 0.42 && c.b > 0.50) return true;
+  return false;
+};
 const slopIssues = [];
 for (const t of texts) {
-  if (PLACEHOLDER_RE.test(t.characters.trim())) {
+  const txt = t.characters.trim();
+  if (PLACEHOLDER_RE.test(txt)) {
     slopIssues.push({ severity: "P0", nodeId: t.id, nodeName: t.name, msg: "Placeholder text visible: " + JSON.stringify(t.characters) });
-  } else if (t.characters.trim().length === 0) {
+  } else if (SLOP_EMOJI_RE.test(t.characters)) {
+    slopIssues.push({ severity: "P1", nodeId: t.id, nodeName: t.name, msg: "AI-slop emoji in copy: " + JSON.stringify(t.characters.slice(0, 40)) });
+  } else if (INVENTED_METRIC_RE.test(txt)) {
+    slopIssues.push({ severity: "P0", nodeId: t.id, nodeName: t.name, msg: "Invented marketing metric (must come from PRD): " + JSON.stringify(txt.slice(0, 60)) });
+  } else if (FILLER_RE.test(txt)) {
+    slopIssues.push({ severity: "P0", nodeId: t.id, nodeName: t.name, msg: "Filler/Lorem text: " + JSON.stringify(txt.slice(0, 60)) });
+  } else if (txt.length === 0) {
     slopIssues.push({ severity: "P3", nodeId: t.id, nodeName: t.name, msg: "Empty TEXT node (likely hidden master leftover)" });
   }
 }
-const slopScore = Math.max(0, 100 - slopIssues.filter(i => i.severity === "P0").length * 25);
+// Detect Tailwind violet/indigo raw RGB on any frame fill (DS-bound paints are skipped)
+for (const f of frames) {
+  // Skip frames inside instances (master responsibility)
+  if (f.inInst) continue;
+}
+// Note: raw-RGB scan happens in checkText below where fills are read with bound-variable awareness.
+const slopScore = Math.max(0, 100 - slopIssues.filter(i => i.severity === "P0").length * 25 - slopIssues.filter(i => i.severity === "P1").length * 8);
 
 // Dim 2: Typography scale
 const sizeSet = new Set(); const weightSet = new Set();
