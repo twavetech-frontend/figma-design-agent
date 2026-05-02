@@ -334,6 +334,24 @@ export type OverlaySpec = TabBarSection | FabSection;
 export interface ScreenSpec {
   /** Frame width in px. Mobile: 393. */
   width: number;
+  /**
+   * REQUIRED. Declares HOW the agent decided what to build. Validated at
+   * build_from_spec entry — missing or invalid format causes the tool
+   * to reject the call. Forces RULE 1 compliance at code level.
+   *
+   * Format: "<kind>:<detail>" where <kind> is one of:
+   *   - wireframe:<nodeId>    — wireframe attached, RULE 0 applies
+   *   - skill:<skillId>       — verified skill match (docs/skills/<id>/spec.json)
+   *   - form:<key=val,…>      — user answered question form (RULE 1 mode B)
+   *   - skip:<reason>         — user explicit "just build, skip questions"
+   *
+   * Examples:
+   *   "wireframe:16805:68746"
+   *   "skill:imin-notification-center"
+   *   "form:output=notification,mode=mixed,activeTab=all"
+   *   "skip:tweak-only follow-up"
+   */
+  discoverySource: string;
   /** Optional figma node ID — new screen is placed to its right. */
   positionRelativeTo?: string;
   /**

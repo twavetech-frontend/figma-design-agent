@@ -6,26 +6,54 @@
     "sections": [
       {
         "type": "appHeader",
-        "rightIcons": ["bell", "message"],
+        "rightIcons": [
+          "bell",
+          "message"
+        ],
         "logoText": "imin"
       },
       {
         "type": "underlineTab",
         "tabs": [
-          { "id": "now", "label": "거래 현황" },
-          { "id": "cumulative", "label": "누적 거래" }
+          {
+            "id": "now",
+            "label": "거래 현황"
+          },
+          {
+            "id": "cumulative",
+            "label": "누적 거래"
+          }
         ],
         "activeId": "now"
       },
       {
         "type": "summaryCardLinkRows",
         "title": "진행중인 0건의 스테이지 내역",
-        "titleIcons": ["checkCircle", "sparkle"],
+        "titleIcons": [
+          "checkCircle",
+          "sparkle"
+        ],
         "rows": [
-          { "label": "모은 금액", "value": "+0원", "valueTone": "positive" },
-          { "label": "빌린 금액", "value": "-0원", "valueTone": "negative" },
-          { "label": "프로필에 추가 정보를 입력하면", "value": "'인증사용자'", "valueTone": "neutral" },
-          { "label": "선납 건이 1건 이상 있으면", "value": "'클린사용자'", "valueTone": "neutral" }
+          {
+            "label": "모은 금액",
+            "value": "+0원",
+            "valueTone": "positive"
+          },
+          {
+            "label": "빌린 금액",
+            "value": "-0원",
+            "valueTone": "negative"
+          },
+          {
+            "label": "프로필에 추가 정보를 입력하면",
+            "value": "'인증사용자'",
+            "valueTone": "neutral"
+          },
+          {
+            "label": "선납 건이 1건 이상 있으면",
+            "value": "'클린사용자'",
+            "valueTone": "neutral"
+          }
         ]
       },
       {
@@ -34,13 +62,34 @@
         "rewardText": "매일매일 출첵하면 특별한 혜택이!",
         "ctaText": "출석",
         "days": [
-          { "label": "월", "state": "future" },
-          { "label": "화", "state": "future" },
-          { "label": "수", "state": "future" },
-          { "label": "목", "state": "future" },
-          { "label": "금", "state": "future" },
-          { "label": "토", "state": "future" },
-          { "label": "일", "state": "future" }
+          {
+            "label": "월",
+            "state": "future"
+          },
+          {
+            "label": "화",
+            "state": "future"
+          },
+          {
+            "label": "수",
+            "state": "future"
+          },
+          {
+            "label": "목",
+            "state": "future"
+          },
+          {
+            "label": "금",
+            "state": "future"
+          },
+          {
+            "label": "토",
+            "state": "future"
+          },
+          {
+            "label": "일",
+            "state": "future"
+          }
         ]
       },
       {
@@ -54,10 +103,21 @@
         "amount": "1,300",
         "unit": "만원",
         "subText": "월 10만원 × 13개월 모으기",
-        "slider": { "label": "몇 번째로 받을래요?", "valueText": "1 / 13회차", "current": 1, "max": 13 },
+        "slider": {
+          "label": "몇 번째로 받을래요?",
+          "valueText": "1 / 13회차",
+          "current": 1,
+          "max": 13
+        },
         "steppers": [
-          { "label": "월 납입", "value": "10" },
-          { "label": "기간 (개월)", "value": "13" }
+          {
+            "label": "월 납입",
+            "value": "10"
+          },
+          {
+            "label": "기간 (개월)",
+            "value": "13"
+          }
         ],
         "ctaText": "추천 전체 보기(13개)",
         "toggleText": "얼마까지 모을 수 있는 지 확인해보세요."
@@ -65,16 +125,34 @@
       {
         "type": "segmentedTab",
         "tabs": [
-          { "id": "joined", "label": "참여 중인 스테이지" },
-          { "id": "wishlist", "label": "찜한 스테이지" }
+          {
+            "id": "joined",
+            "label": "참여 중인 스테이지"
+          },
+          {
+            "id": "wishlist",
+            "label": "찜한 스테이지"
+          }
         ],
         "activeId": "joined"
       },
       {
         "type": "stageCardScroll",
         "cards": [
-          { "status": "inProgress", "statusLabel": "참여 중인 스테이지가 없어요", "rate": "이율 -", "amount": "-원", "description": "추천 스테이지에서 시작해보세요" },
-          { "status": "scheduled", "statusLabel": "찜한 스테이지가 없어요", "rate": "이율 -", "amount": "-원", "description": "관심 스테이지를 찜해보세요" }
+          {
+            "status": "inProgress",
+            "statusLabel": "참여 중인 스테이지가 없어요",
+            "rate": "이율 -",
+            "amount": "-원",
+            "description": "추천 스테이지에서 시작해보세요"
+          },
+          {
+            "status": "scheduled",
+            "statusLabel": "찜한 스테이지가 없어요",
+            "rate": "이율 -",
+            "amount": "-원",
+            "description": "관심 스테이지를 찜해보세요"
+          }
         ]
       },
       {
@@ -83,14 +161,32 @@
         "pointBalance": "312,490원(100p)",
         "trailing": "전체보기 ›",
         "products": [
-          { "name": "추천 상품 영역", "price": "준비 중", "imageHue": "purple" },
-          { "name": "추천 상품 영역", "price": "준비 중", "imageHue": "amber" },
-          { "name": "추천 상품 영역", "price": "준비 중", "imageHue": "green" }
+          {
+            "name": "추천 상품 영역",
+            "price": "준비 중",
+            "imageHue": "purple"
+          },
+          {
+            "name": "추천 상품 영역",
+            "price": "준비 중",
+            "imageHue": "amber"
+          },
+          {
+            "name": "추천 상품 영역",
+            "price": "준비 중",
+            "imageHue": "green"
+          }
         ]
       },
       {
         "type": "footerLegal",
-        "legalLinks": ["이용약관", "개인정보처리방침", "스테이지이용약관", "쇼핑이용약관", "서비스운영정책"],
+        "legalLinks": [
+          "이용약관",
+          "개인정보처리방침",
+          "스테이지이용약관",
+          "쇼핑이용약관",
+          "서비스운영정책"
+        ],
         "companyName": "(주)티웨이브 역삼지점",
         "bizNumber": "291-85-01499",
         "ceo": "서재준",
@@ -103,11 +199,31 @@
       {
         "type": "tabBar",
         "tabs": [
-          { "id": "home", "label": "홈", "iconKey": "home" },
-          { "id": "lounge", "label": "라운지", "iconKey": "shoppingBag" },
-          { "id": "stage", "label": "스테이지", "iconKey": "award" },
-          { "id": "community", "label": "커뮤니티", "iconKey": "users" },
-          { "id": "all", "label": "전체", "iconKey": "menu" }
+          {
+            "id": "home",
+            "label": "홈",
+            "iconKey": "home"
+          },
+          {
+            "id": "lounge",
+            "label": "라운지",
+            "iconKey": "shoppingBag"
+          },
+          {
+            "id": "stage",
+            "label": "스테이지",
+            "iconKey": "award"
+          },
+          {
+            "id": "community",
+            "label": "커뮤니티",
+            "iconKey": "users"
+          },
+          {
+            "id": "all",
+            "label": "전체",
+            "iconKey": "menu"
+          }
         ],
         "activeId": "home"
       },
@@ -115,6 +231,7 @@
         "type": "fab",
         "iconKey": "wallet"
       }
-    ]
+    ],
+    "discoverySource": "skill:imin-home-empty"
   }
 }

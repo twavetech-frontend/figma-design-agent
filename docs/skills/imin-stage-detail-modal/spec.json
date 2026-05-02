@@ -12,12 +12,30 @@
       {
         "type": "summaryCardLinkRows",
         "title": "13개월 · 5번째 수령 스테이지",
-        "titleIcons": ["check"],
+        "titleIcons": [
+          "check"
+        ],
         "rows": [
-          { "label": "월 납입 금액", "value": "105,120원", "valueTone": "neutral" },
-          { "label": "약정 이율", "value": "3.2%", "valueTone": "positive" },
-          { "label": "예상 수령액", "value": "1,366,560원", "valueTone": "positive" },
-          { "label": "수령 시점", "value": "2026년 9월", "valueTone": "neutral" }
+          {
+            "label": "월 납입 금액",
+            "value": "105,120원",
+            "valueTone": "neutral"
+          },
+          {
+            "label": "약정 이율",
+            "value": "3.2%",
+            "valueTone": "positive"
+          },
+          {
+            "label": "예상 수령액",
+            "value": "1,366,560원",
+            "valueTone": "positive"
+          },
+          {
+            "label": "수령 시점",
+            "value": "2026년 9월",
+            "valueTone": "neutral"
+          }
         ]
       },
       {
@@ -33,12 +51,33 @@
         "title": "납입 일정",
         "filterLabel": "전체 13회차 ›",
         "months": [
-          { "short": "1월", "day": "18" },
-          { "short": "2월", "day": "18" },
-          { "short": "3월", "day": "18" },
-          { "short": "4월", "day": "18", "active": true, "activeLabel": "이번달", "badge": true },
-          { "short": "5월", "day": "18" },
-          { "short": "6월", "day": "18" }
+          {
+            "short": "1월",
+            "day": "18"
+          },
+          {
+            "short": "2월",
+            "day": "18"
+          },
+          {
+            "short": "3월",
+            "day": "18"
+          },
+          {
+            "short": "4월",
+            "day": "18",
+            "active": true,
+            "activeLabel": "이번달",
+            "badge": true
+          },
+          {
+            "short": "5월",
+            "day": "18"
+          },
+          {
+            "short": "6월",
+            "day": "18"
+          }
         ]
       },
       {
@@ -49,10 +88,38 @@
       {
         "type": "transactionTimeline",
         "items": [
-          { "dayLabel": "18일", "dayState": "D-3", "rowState": "soon", "title": "납입 예정 (4/13회차)", "amount": "105,120원", "rightAction": "선납 하기" },
-          { "dayLabel": "18일", "dayState": "완료", "rowState": "completed", "title": "납입 완료 (3/13회차)", "amount": "105,120원", "rightAction": "납입 완료" },
-          { "dayLabel": "18일", "dayState": "완료", "rowState": "completed", "title": "납입 완료 (2/13회차)", "amount": "105,120원", "rightAction": "납입 완료" },
-          { "dayLabel": "18일", "dayState": "완료", "rowState": "completed", "title": "납입 완료 (1/13회차)", "amount": "105,120원", "rightAction": "납입 완료" }
+          {
+            "dayLabel": "18일",
+            "dayState": "D-3",
+            "rowState": "soon",
+            "title": "납입 예정 (4/13회차)",
+            "amount": "105,120원",
+            "rightAction": "선납 하기"
+          },
+          {
+            "dayLabel": "18일",
+            "dayState": "완료",
+            "rowState": "completed",
+            "title": "납입 완료 (3/13회차)",
+            "amount": "105,120원",
+            "rightAction": "납입 완료"
+          },
+          {
+            "dayLabel": "18일",
+            "dayState": "완료",
+            "rowState": "completed",
+            "title": "납입 완료 (2/13회차)",
+            "amount": "105,120원",
+            "rightAction": "납입 완료"
+          },
+          {
+            "dayLabel": "18일",
+            "dayState": "완료",
+            "rowState": "completed",
+            "title": "납입 완료 (1/13회차)",
+            "amount": "105,120원",
+            "rightAction": "납입 완료"
+          }
         ]
       },
       {
@@ -66,15 +133,28 @@
       {
         "type": "statsStrip3Col",
         "cols": [
-          { "label": "납입 진행률", "value": "23%", "valueTone": "positive" },
-          { "label": "남은 회차", "value": "10회", "valueTone": "neutral" },
-          { "label": "총 납입액", "value": "315,360원", "valueTone": "neutral" }
+          {
+            "label": "납입 진행률",
+            "value": "23%",
+            "valueTone": "positive"
+          },
+          {
+            "label": "남은 회차",
+            "value": "10회",
+            "valueTone": "neutral"
+          },
+          {
+            "label": "총 납입액",
+            "value": "315,360원",
+            "valueTone": "neutral"
+          }
         ]
       },
       {
         "type": "spacer",
         "height": 24
       }
-    ]
+    ],
+    "discoverySource": "skill:imin-stage-detail-modal"
   }
 }

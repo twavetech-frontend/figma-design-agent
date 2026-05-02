@@ -1092,6 +1092,7 @@ If the user mentions a PRD or attaches a markdown file, you MUST Read it before 
 
 {
   width: 393,                                  // mobile root width
+  discoverySource: "<kind>:<detail>",          // ★ REQUIRED — see below
   positionRelativeTo?: "<figma node ID>",     // optional — placed to the right of the wireframe
   // bgVar: IGNORED — wrapper bg is always bg-primary by absolute project rule.
   //   Card hierarchy (bg-secondary/bg-tertiary/bg-quaternary) is handled inside sections.
@@ -1099,6 +1100,19 @@ If the user mentions a PRD or attaches a markdown file, you MUST Read it before 
   sections: SectionSpec[],                     // normal-flow children, top-to-bottom
   overlays?: OverlaySpec[]                     // ABSOLUTE bottom overlays (TabBar + FAB)
 }
+
+🚨 spec.discoverySource is REQUIRED (HARD GATE — call rejected if missing/invalid)
+  - "wireframe:<nodeId>"      Wireframe attached → RULE 0 (wireframe is ground truth)
+  - "skill:<skillId>"         Matched a verified skill in docs/skills/<id>/spec.json
+  - "form:<key=val,...>"      User answered the RULE 1 mode-B 7-item question form
+  - "skip:<reason>"           User explicitly said "just build, skip questions"
+
+If wireframe is NOT attached and PRD is text-only, FIRST emit AskUserQuestion with
+the 7-item discovery form (output / mode / activeTab / data / scale / emphasis /
+constraints) and WAIT for the answer. Then call build_from_spec with
+discoverySource: "form:output=<...>,mode=<...>,activeTab=<...>".
+
+This validation is enforced in code; build_from_spec throws if the field is missing.
 
 🚨 ABSOLUTE COLOR RULE
 - Screen wrapper background = bg-primary (always, no exceptions)
@@ -1177,6 +1191,48 @@ The renderer encodes all polished visual details (padding, dividers, shadows, gr
     if (!spec || typeof spec !== 'object') {
       throw new Error('build_from_spec: spec is required.');
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // RULE 1 enforcement — discoverySource validation (HARD GATE)
+    //
+    // Without this gate, the agent skips the question form on text-only
+    // PRDs and goes straight to build_from_spec — exactly the regression
+    // the user reported (2026-05-03). Validation here forces the agent
+    // to declare HOW it decided what to build:
+    //   - wireframe:<nodeId>    (RULE 0 — wireframe is ground truth)
+    //   - skill:<skillId>       (verified skill match from docs/skills/)
+    //   - form:<key=val,…>      (RULE 1 mode B — user answered form)
+    //   - skip:<reason>         (user explicit "just build")
+    //
+    // Reject is a thrown Error with an actionable message so the agent
+    // self-corrects on the next turn.
+    // ═══════════════════════════════════════════════════════════════════
+    const discoverySource = spec.discoverySource;
+    if (typeof discoverySource !== 'string' || discoverySource.length === 0) {
+      throw new Error([
+        'build_from_spec REJECTED: spec.discoverySource is required.',
+        '',
+        'You must declare how you decided what to build. One of:',
+        '  - "wireframe:<nodeId>"    (wireframe attached → RULE 0)',
+        '  - "skill:<skillId>"       (matched docs/skills/<id>/spec.json)',
+        '  - "form:<key=val,...>"    (RULE 1 mode B — user answered form)',
+        '  - "skip:<reason>"         (user said "just build, skip questions")',
+        '',
+        'If a wireframe is NOT attached and the PRD is text-only, you MUST',
+        'first emit AskUserQuestion with the 7-item discovery form (RULE 1',
+        'mode B) and wait for the user response. Only THEN call build_from_spec',
+        'with discoverySource: "form:<key=val,...>".',
+      ].join('\n'));
+    }
+    const validPrefix = /^(wireframe|skill|form|skip):/.test(discoverySource);
+    if (!validPrefix) {
+      throw new Error([
+        'build_from_spec REJECTED: spec.discoverySource has invalid format.',
+        `  Got: ${JSON.stringify(discoverySource).slice(0, 100)}`,
+        '  Expected prefix: "wireframe:", "skill:", "form:", or "skip:"',
+      ].join('\n'));
+    }
+
     const code = buildScreenJS(spec as unknown as ScreenSpec);
     const result = await cmd('execute_js', { code }, 300000) as Record<string, unknown>;
     if (result && typeof result === 'object' && result.wrapperId) {

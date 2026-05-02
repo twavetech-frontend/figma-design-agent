@@ -6,7 +6,10 @@
     "sections": [
       {
         "type": "appHeader",
-        "rightIcons": ["bell", "message"],
+        "rightIcons": [
+          "bell",
+          "message"
+        ],
         "logoText": "imin"
       },
       {
@@ -28,10 +31,21 @@
         "amount": "1,030",
         "unit": "만원",
         "subText": "월 80만원 × 13개월",
-        "slider": { "label": "몇 번째로 받을래요?", "valueText": "1 / 13회차", "current": 1, "max": 13 },
+        "slider": {
+          "label": "몇 번째로 받을래요?",
+          "valueText": "1 / 13회차",
+          "current": 1,
+          "max": 13
+        },
         "steppers": [
-          { "label": "월 납입", "value": "80" },
-          { "label": "기간 (개월)", "value": "13" }
+          {
+            "label": "월 납입",
+            "value": "80"
+          },
+          {
+            "label": "기간 (개월)",
+            "value": "13"
+          }
         ],
         "ctaText": "첫 스테이지 참여하기",
         "toggleText": "어떻게 계산되나요?"
@@ -43,9 +57,21 @@
       {
         "type": "statsStrip3Col",
         "cols": [
-          { "label": "이번 달 거래액", "value": "62억원", "valueTone": "positive" },
-          { "label": "이번 달 참여자", "value": "12,408명", "valueTone": "neutral" },
-          { "label": "평균 수익률", "value": "7.2%", "valueTone": "positive" }
+          {
+            "label": "이번 달 거래액",
+            "value": "62억원",
+            "valueTone": "positive"
+          },
+          {
+            "label": "이번 달 참여자",
+            "value": "12,408명",
+            "valueTone": "neutral"
+          },
+          {
+            "label": "평균 수익률",
+            "value": "7.2%",
+            "valueTone": "positive"
+          }
         ]
       },
       {
@@ -62,21 +88,52 @@
         "rewardText": "오늘 출석 시 100P 적립",
         "ctaText": "출석",
         "days": [
-          { "label": "오늘", "state": "today" },
-          { "label": "화", "state": "future" },
-          { "label": "수", "state": "future" },
-          { "label": "목", "state": "future" },
-          { "label": "금", "state": "future" },
-          { "label": "토", "state": "future" },
-          { "label": "일", "state": "future" }
+          {
+            "label": "오늘",
+            "state": "today"
+          },
+          {
+            "label": "화",
+            "state": "future"
+          },
+          {
+            "label": "수",
+            "state": "future"
+          },
+          {
+            "label": "목",
+            "state": "future"
+          },
+          {
+            "label": "금",
+            "state": "future"
+          },
+          {
+            "label": "토",
+            "state": "future"
+          },
+          {
+            "label": "일",
+            "state": "future"
+          }
         ]
       },
       {
         "type": "eventBannerCarousel",
         "activeIndex": 0,
         "banners": [
-          { "badge": "신규 혜택", "title": "첫 스테이지 참여 시 5만 포인트", "description": "조건 설정 후 14일 내 참여 시 자동 적립", "tone": "brand" },
-          { "badge": "이벤트", "title": "친구 초대하고 1만 포인트 받기", "description": "친구가 첫 스테이지 참여 시", "tone": "brand" }
+          {
+            "badge": "신규 혜택",
+            "title": "첫 스테이지 참여 시 5만 포인트",
+            "description": "조건 설정 후 14일 내 참여 시 자동 적립",
+            "tone": "brand"
+          },
+          {
+            "badge": "이벤트",
+            "title": "친구 초대하고 1만 포인트 받기",
+            "description": "친구가 첫 스테이지 참여 시",
+            "tone": "brand"
+          }
         ]
       },
       {
@@ -85,14 +142,37 @@
         "pointBalance": "0P",
         "trailing": "전체보기 ›",
         "products": [
-          { "badge": "new", "name": "신규 회원 전용 쿠폰", "price": "10,000원", "imageHue": "purple" },
-          { "badge": "hotdeal", "name": "캠핑 감성 티셔츠", "discount": "42%", "price": "19,800원", "imageHue": "amber" },
-          { "badge": "best", "name": "프리미엄 원두 500g", "discount": "28%", "price": "14,900원", "imageHue": "green" }
+          {
+            "badge": "new",
+            "name": "신규 회원 전용 쿠폰",
+            "price": "10,000원",
+            "imageHue": "purple"
+          },
+          {
+            "badge": "hotdeal",
+            "name": "캠핑 감성 티셔츠",
+            "discount": "42%",
+            "price": "19,800원",
+            "imageHue": "amber"
+          },
+          {
+            "badge": "best",
+            "name": "프리미엄 원두 500g",
+            "discount": "28%",
+            "price": "14,900원",
+            "imageHue": "green"
+          }
         ]
       },
       {
         "type": "footerLegal",
-        "legalLinks": ["이용약관", "개인정보처리방침", "스테이지이용약관", "쇼핑이용약관", "서비스운영정책"],
+        "legalLinks": [
+          "이용약관",
+          "개인정보처리방침",
+          "스테이지이용약관",
+          "쇼핑이용약관",
+          "서비스운영정책"
+        ],
         "companyName": "(주)티웨이브 역삼지점",
         "bizNumber": "291-85-01499",
         "ceo": "서재준",
@@ -105,11 +185,31 @@
       {
         "type": "tabBar",
         "tabs": [
-          { "id": "home", "label": "홈", "iconKey": "home" },
-          { "id": "lounge", "label": "라운지", "iconKey": "shoppingBag" },
-          { "id": "stage", "label": "스테이지", "iconKey": "award" },
-          { "id": "community", "label": "커뮤니티", "iconKey": "users" },
-          { "id": "all", "label": "전체", "iconKey": "menu" }
+          {
+            "id": "home",
+            "label": "홈",
+            "iconKey": "home"
+          },
+          {
+            "id": "lounge",
+            "label": "라운지",
+            "iconKey": "shoppingBag"
+          },
+          {
+            "id": "stage",
+            "label": "스테이지",
+            "iconKey": "award"
+          },
+          {
+            "id": "community",
+            "label": "커뮤니티",
+            "iconKey": "users"
+          },
+          {
+            "id": "all",
+            "label": "전체",
+            "iconKey": "menu"
+          }
         ],
         "activeId": "home"
       },
@@ -117,6 +217,7 @@
         "type": "fab",
         "iconKey": "wallet"
       }
-    ]
+    ],
+    "discoverySource": "skill:imin-home-newbie"
   }
 }

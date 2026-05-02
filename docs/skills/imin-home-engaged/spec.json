@@ -7,14 +7,23 @@
     "sections": [
       {
         "type": "appHeader",
-        "rightIcons": ["bell", "message"],
+        "rightIcons": [
+          "bell",
+          "message"
+        ],
         "logoText": "imin"
       },
       {
         "type": "underlineTab",
         "tabs": [
-          { "id": "now", "label": "거래 현황" },
-          { "id": "cumulative", "label": "누적 거래" }
+          {
+            "id": "now",
+            "label": "거래 현황"
+          },
+          {
+            "id": "cumulative",
+            "label": "누적 거래"
+          }
         ],
         "activeId": "now"
       },
@@ -29,10 +38,20 @@
       {
         "type": "summaryCardLinkRows",
         "title": "3건 진행 중 내 스테이지",
-        "titleIcons": ["chevronRight"],
+        "titleIcons": [
+          "chevronRight"
+        ],
         "rows": [
-          { "label": "↓ 모은 금액", "value": "14,420,320원", "valueTone": "positive" },
-          { "label": "↑ 빌린 금액", "value": "-5,240,020원", "valueTone": "negative" }
+          {
+            "label": "↓ 모은 금액",
+            "value": "14,420,320원",
+            "valueTone": "positive"
+          },
+          {
+            "label": "↑ 빌린 금액",
+            "value": "-5,240,020원",
+            "valueTone": "negative"
+          }
         ]
       },
       {
@@ -40,11 +59,29 @@
         "title": "이번 달 납입·지급",
         "filterLabel": "전체보기 ›",
         "months": [
-          { "short": "토", "day": "18", "badge": true },
-          { "short": "일", "day": "19" },
-          { "short": "월", "day": "20", "active": true, "activeLabel": "오늘" },
-          { "short": "화", "day": "21" },
-          { "short": "수", "day": "22" }
+          {
+            "short": "토",
+            "day": "18",
+            "badge": true
+          },
+          {
+            "short": "일",
+            "day": "19"
+          },
+          {
+            "short": "월",
+            "day": "20",
+            "active": true,
+            "activeLabel": "오늘"
+          },
+          {
+            "short": "화",
+            "day": "21"
+          },
+          {
+            "short": "수",
+            "day": "22"
+          }
         ]
       },
       {
@@ -54,7 +91,11 @@
         "usageUnit": "만원",
         "rightInfo": "6.9% 사용 / 총 5,200만원",
         "progressPercent": 7,
-        "cta": { "iconKey": "checkCircle", "text": "신용점수를 연동하면 한도가 늘어나요", "tone": "info" }
+        "cta": {
+          "iconKey": "checkCircle",
+          "text": "신용점수를 연동하면 한도가 늘어나요",
+          "tone": "info"
+        }
       },
       {
         "type": "sectionHeader",
@@ -67,10 +108,21 @@
         "amount": "126",
         "unit": "만원",
         "subText": "월 10만원 × 13개월",
-        "slider": { "label": "몇 번째로 받을래요?", "valueText": "3 / 13회차", "current": 3, "max": 13 },
+        "slider": {
+          "label": "몇 번째로 받을래요?",
+          "valueText": "3 / 13회차",
+          "current": 3,
+          "max": 13
+        },
         "steppers": [
-          { "label": "월 납입", "value": "10" },
-          { "label": "기간 (개월)", "value": "13" }
+          {
+            "label": "월 납입",
+            "value": "10"
+          },
+          {
+            "label": "기간 (개월)",
+            "value": "13"
+          }
         ],
         "ctaText": "맞는 스테이지 찾기",
         "toggleText": "어떻게 계산되나요?"
@@ -83,9 +135,28 @@
       {
         "type": "stageCardScroll",
         "cards": [
-          { "status": "inProgress", "statusLabel": "진행 중", "rate": "이율 3.2%", "amount": "300만원", "description": "13개월 · 5번째 수령", "favorited": true },
-          { "status": "scheduled", "statusLabel": "지급 예정", "rate": "이율 2.8%", "amount": "500만원", "description": "12개월 · 8번째 수령" },
-          { "status": "overdue", "statusLabel": "미납", "rate": "이율 4.1%", "amount": "200만원", "description": "10개월 · 3번째 수령" }
+          {
+            "status": "inProgress",
+            "statusLabel": "진행 중",
+            "rate": "이율 3.2%",
+            "amount": "300만원",
+            "description": "13개월 · 5번째 수령",
+            "favorited": true
+          },
+          {
+            "status": "scheduled",
+            "statusLabel": "지급 예정",
+            "rate": "이율 2.8%",
+            "amount": "500만원",
+            "description": "12개월 · 8번째 수령"
+          },
+          {
+            "status": "overdue",
+            "statusLabel": "미납",
+            "rate": "이율 4.1%",
+            "amount": "200만원",
+            "description": "10개월 · 3번째 수령"
+          }
         ]
       },
       {
@@ -102,22 +173,58 @@
         "rewardText": "오늘 출석 시 100P 적립",
         "ctaText": "출석",
         "days": [
-          { "label": "월", "state": "completed" },
-          { "label": "화", "state": "completed" },
-          { "label": "수", "state": "completed" },
-          { "label": "오늘", "state": "today" },
-          { "label": "금", "state": "future" },
-          { "label": "토", "state": "future" },
-          { "label": "일", "state": "future" }
+          {
+            "label": "월",
+            "state": "completed"
+          },
+          {
+            "label": "화",
+            "state": "completed"
+          },
+          {
+            "label": "수",
+            "state": "completed"
+          },
+          {
+            "label": "오늘",
+            "state": "today"
+          },
+          {
+            "label": "금",
+            "state": "future"
+          },
+          {
+            "label": "토",
+            "state": "future"
+          },
+          {
+            "label": "일",
+            "state": "future"
+          }
         ]
       },
       {
         "type": "eventBannerCarousel",
         "activeIndex": 0,
         "banners": [
-          { "badge": "이벤트", "title": "친구 초대하고 1만 포인트 받기", "description": "친구가 첫 스테이지 참여 시", "tone": "brand" },
-          { "badge": "공지", "title": "5월 정기 점검 안내", "description": "5월 8일 02:00~04:00 서비스 제한", "tone": "neutral" },
-          { "badge": "이벤트", "title": "4월 출석왕 발표", "description": "이번 달 30일 출석시 5만P", "tone": "brand" }
+          {
+            "badge": "이벤트",
+            "title": "친구 초대하고 1만 포인트 받기",
+            "description": "친구가 첫 스테이지 참여 시",
+            "tone": "brand"
+          },
+          {
+            "badge": "공지",
+            "title": "5월 정기 점검 안내",
+            "description": "5월 8일 02:00~04:00 서비스 제한",
+            "tone": "neutral"
+          },
+          {
+            "badge": "이벤트",
+            "title": "4월 출석왕 발표",
+            "description": "이번 달 30일 출석시 5만P",
+            "tone": "brand"
+          }
         ]
       },
       {
@@ -126,9 +233,27 @@
         "pointBalance": "8,420P",
         "trailing": "전체보기 ›",
         "products": [
-          { "badge": "hotdeal", "name": "캠핑 감성 티셔츠", "discount": "42%", "price": "19,800원", "imageHue": "amber" },
-          { "badge": "best", "name": "프리미엄 원두 500g", "discount": "28%", "price": "14,900원", "imageHue": "green" },
-          { "badge": "new", "name": "무선 이어버드", "discount": "35%", "price": "29,800원", "imageHue": "blue" }
+          {
+            "badge": "hotdeal",
+            "name": "캠핑 감성 티셔츠",
+            "discount": "42%",
+            "price": "19,800원",
+            "imageHue": "amber"
+          },
+          {
+            "badge": "best",
+            "name": "프리미엄 원두 500g",
+            "discount": "28%",
+            "price": "14,900원",
+            "imageHue": "green"
+          },
+          {
+            "badge": "new",
+            "name": "무선 이어버드",
+            "discount": "35%",
+            "price": "29,800원",
+            "imageHue": "blue"
+          }
         ]
       },
       {
@@ -138,14 +263,32 @@
       {
         "type": "statsStrip3Col",
         "cols": [
-          { "label": "누적 수령액", "value": "14,420,320원", "valueTone": "positive" },
-          { "label": "누적 납입액", "value": "5,240,020원", "valueTone": "neutral" },
-          { "label": "평균 수익", "value": "7.2%", "valueTone": "positive" }
+          {
+            "label": "누적 수령액",
+            "value": "14,420,320원",
+            "valueTone": "positive"
+          },
+          {
+            "label": "누적 납입액",
+            "value": "5,240,020원",
+            "valueTone": "neutral"
+          },
+          {
+            "label": "평균 수익",
+            "value": "7.2%",
+            "valueTone": "positive"
+          }
         ]
       },
       {
         "type": "footerLegal",
-        "legalLinks": ["이용약관", "개인정보처리방침", "스테이지이용약관", "쇼핑이용약관", "서비스운영정책"],
+        "legalLinks": [
+          "이용약관",
+          "개인정보처리방침",
+          "스테이지이용약관",
+          "쇼핑이용약관",
+          "서비스운영정책"
+        ],
         "companyName": "(주)티웨이브 역삼지점",
         "bizNumber": "291-85-01499",
         "ceo": "서재준",
@@ -158,11 +301,31 @@
       {
         "type": "tabBar",
         "tabs": [
-          { "id": "home", "label": "홈", "iconKey": "home" },
-          { "id": "lounge", "label": "라운지", "iconKey": "shoppingBag" },
-          { "id": "stage", "label": "스테이지", "iconKey": "award" },
-          { "id": "community", "label": "커뮤니티", "iconKey": "users" },
-          { "id": "all", "label": "전체", "iconKey": "menu" }
+          {
+            "id": "home",
+            "label": "홈",
+            "iconKey": "home"
+          },
+          {
+            "id": "lounge",
+            "label": "라운지",
+            "iconKey": "shoppingBag"
+          },
+          {
+            "id": "stage",
+            "label": "스테이지",
+            "iconKey": "award"
+          },
+          {
+            "id": "community",
+            "label": "커뮤니티",
+            "iconKey": "users"
+          },
+          {
+            "id": "all",
+            "label": "전체",
+            "iconKey": "menu"
+          }
         ],
         "activeId": "home"
       },
@@ -170,6 +333,7 @@
         "type": "fab",
         "iconKey": "wallet"
       }
-    ]
+    ],
+    "discoverySource": "skill:imin-home-engaged"
   }
 }
