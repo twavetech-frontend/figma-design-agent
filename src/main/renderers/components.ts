@@ -502,25 +502,28 @@ if (s.add) {
   add.appendChild(txt(s.add.label, { weight: "Medium", size: 11, colorVar: v.textTertiary, align: "CENTER" }));
 }
 
-for (const m of s.makers) {
-  const col = cAL("VERTICAL", { itemSpacing: 6 });
-  col.fills = []; col.primaryAxisAlignItems = "CENTER"; col.counterAxisAlignItems = "CENTER";
-  col.clipsContent = false;
-  row.appendChild(col);
-  col.layoutSizingHorizontal = "HUG"; col.layoutSizingVertical = "HUG";
+// Master: avatar circle + initial + optional crown overlay + name + level
+const { component: avComp } = await ensureComponent("avatarMaker", async (parent) => {
+  parent.layoutMode = "VERTICAL";
+  parent.primaryAxisSizingMode = "AUTO";
+  parent.counterAxisSizingMode = "AUTO";
+  parent.itemSpacing = 6;
+  parent.fills = [];
+  parent.primaryAxisAlignItems = "CENTER";
+  parent.counterAxisAlignItems = "CENTER";
+  parent.clipsContent = false;
 
   const box = figma.createFrame();
   box.name = "Avatar Box"; box.fills = []; box.resize(52, 52); box.clipsContent = false;
-  col.appendChild(box);
+  parent.appendChild(box);
 
-  const hue = HUE[m.colorHue] || HUE.purple;
   const circle = figma.createEllipse();
   circle.resize(52, 52); circle.x = 0; circle.y = 0;
   circle.fills = [{
     type: "GRADIENT_LINEAR",
     gradientStops: [
-      { position: 0, color: { r: hue.c1.r, g: hue.c1.g, b: hue.c1.b, a: 1 } },
-      { position: 1, color: { r: hue.c2.r, g: hue.c2.g, b: hue.c2.b, a: 1 } },
+      { position: 0, color: { r: HUE.purple.c1.r, g: HUE.purple.c1.g, b: HUE.purple.c1.b, a: 1 } },
+      { position: 1, color: { r: HUE.purple.c2.r, g: HUE.purple.c2.g, b: HUE.purple.c2.b, a: 1 } },
     ],
     gradientTransform: [[0.707, 0.707, 0], [-0.707, 0.707, 0.5]],
   }];
@@ -530,42 +533,92 @@ for (const m of s.makers) {
   }];
   box.appendChild(circle);
 
-  const ini = figma.createText();
-  try { ini.fontName = { family: FONT.family, style: "Bold" }; }
-  catch (e) { ini.fontName = { family: NS_FALLBACK, style: "Bold" }; }
-  ini.characters = initialOf(m.name);
-  ini.fontSize = 22;
-  ini.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-  ini.textAutoResize = "WIDTH_AND_HEIGHT";
-  box.appendChild(ini);
-  ini.x = (52 - ini.width) / 2;
-  ini.y = (52 - ini.height) / 2;
+  const initialNode = figma.createText();
+  try { initialNode.fontName = { family: FONT.family, style: "Bold" }; }
+  catch (e) { initialNode.fontName = { family: NS_FALLBACK, style: "Bold" }; }
+  initialNode.characters = "?";
+  initialNode.fontSize = 22;
+  initialNode.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+  initialNode.textAutoResize = "WIDTH_AND_HEIGHT";
+  box.appendChild(initialNode);
+  initialNode.x = (52 - initialNode.width) / 2;
+  initialNode.y = (52 - initialNode.height) / 2;
 
-  if (m.crown) {
-    const ring = figma.createEllipse();
-    ring.resize(20, 20); ring.x = 35; ring.y = 35;
-    ring.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-    box.appendChild(ring);
-    const dot = figma.createEllipse();
-    dot.resize(16, 16); dot.x = 37; dot.y = 37;
-    dot.fills = [solid(v.bgBrandSection)];
-    box.appendChild(dot);
-    if (ic.star) {
-      const si = ic.star.createInstance(); si.resize(10, 10);
-      si.x = 40; si.y = 40;
-      const setFill = (n) => {
-        if (n.fills && Array.isArray(n.fills) && n.fills.length > 0) {
-          try { n.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }]; } catch (e) {}
-        }
-        if ("children" in n && Array.isArray(n.children)) for (const c of n.children) setFill(c);
-      };
-      setFill(si);
-      box.appendChild(si);
-    }
+  // Crown overlay (3 layers) — toggle as a unit via showCrown BOOLEAN
+  const crownGroup = figma.createFrame();
+  crownGroup.name = "Crown"; crownGroup.fills = []; crownGroup.resize(16, 16);
+  crownGroup.x = 36; crownGroup.y = 36; crownGroup.clipsContent = false;
+  box.appendChild(crownGroup);
+  const ring = figma.createEllipse();
+  ring.resize(20, 20); ring.x = -2; ring.y = -2;
+  ring.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+  crownGroup.appendChild(ring);
+  const dot = figma.createEllipse();
+  dot.resize(16, 16); dot.x = 0; dot.y = 0;
+  dot.fills = [solid(v.bgBrandSection)];
+  crownGroup.appendChild(dot);
+  if (ic.star) {
+    const si = ic.star.createInstance(); si.resize(10, 10);
+    si.x = 3; si.y = 3;
+    const setFill = (n) => {
+      if (n.fills && Array.isArray(n.fills) && n.fills.length > 0) {
+        try { n.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }]; } catch (e) {}
+      }
+      if ("children" in n && Array.isArray(n.children)) for (const c of n.children) setFill(c);
+    };
+    setFill(si);
+    crownGroup.appendChild(si);
   }
 
-  col.appendChild(txt(m.name, { weight: m.crown ? "Bold" : "Medium", size: 10, colorVar: m.crown ? v.textPrimary : v.textSecondary, align: "CENTER" }));
-  col.appendChild(txt("(" + m.level + ")", { weight: "Regular", size: 9, colorVar: v.textTertiary, align: "CENTER" }));
+  const nameNode = txt("Name", { weight: "Medium", size: 10, colorVar: v.textSecondary, align: "CENTER" });
+  parent.appendChild(nameNode);
+  const levelNode = txt("(0)", { weight: "Regular", size: 9, colorVar: v.textTertiary, align: "CENTER" });
+  parent.appendChild(levelNode);
+
+  return {
+    properties: [
+      { name: "initial", type: "TEXT", default: "?", bindNodeToCharacters: initialNode },
+      { name: "name", type: "TEXT", default: "Name", bindNodeToCharacters: nameNode },
+      { name: "level", type: "TEXT", default: "(0)", bindNodeToCharacters: levelNode },
+      { name: "showCrown", type: "BOOLEAN", default: false, bindNodeToVisible: crownGroup },
+    ],
+  };
+});
+
+for (const m of s.makers) {
+  const inst = avComp.createInstance();
+  row.appendChild(inst);
+  inst.layoutSizingHorizontal = "HUG"; inst.layoutSizingVertical = "HUG";
+  await setComponentProperties(inst, {
+    initial: initialOf(m.name),
+    name: m.name,
+    level: "(" + m.level + ")",
+    showCrown: !!m.crown,
+  });
+  // Per-instance overrides: gradient hue + name color/weight
+  try {
+    const hue = HUE[m.colorHue] || HUE.purple;
+    // children: [box, name, level]; box.children: [circle, initial, crown]
+    const box = inst.children[0];
+    const circle = box && box.children && box.children[0];
+    if (circle) {
+      circle.fills = [{
+        type: "GRADIENT_LINEAR",
+        gradientStops: [
+          { position: 0, color: { r: hue.c1.r, g: hue.c1.g, b: hue.c1.b, a: 1 } },
+          { position: 1, color: { r: hue.c2.r, g: hue.c2.g, b: hue.c2.b, a: 1 } },
+        ],
+        gradientTransform: [[0.707, 0.707, 0], [-0.707, 0.707, 0.5]],
+      }];
+    }
+    if (m.crown) {
+      const nameNode = inst.children[1];
+      if (nameNode) {
+        nameNode.fills = [solid(v.textPrimary)];
+        try { nameNode.fontName = { family: nameNode.fontName.family, style: "Bold" }; } catch (e) {}
+      }
+    }
+  } catch (e) {}
 }
 `);
 }
@@ -691,35 +744,72 @@ strip.primaryAxisAlignItems = "SPACE_BETWEEN"; strip.counterAxisAlignItems = "CE
 stripRow.appendChild(strip);
 strip.layoutSizingHorizontal = "FILL"; strip.layoutSizingVertical = "HUG";
 
-for (const m of s.months) {
-  const col = cAL("VERTICAL", { itemSpacing: 4 });
-  col.fills = []; col.primaryAxisAlignItems = "CENTER"; col.counterAxisAlignItems = "CENTER";
-  strip.appendChild(col);
-  col.layoutSizingHorizontal = "FILL"; col.layoutSizingVertical = "HUG";
-  col.appendChild(txt(m.short, { weight: "Medium", size: 10, colorVar: v.textTertiary, align: "CENTER" }));
+// Month cell master — short + day (with active variant) + badge + activeLabel
+const { component: mcComp } = await ensureComponent("monthCell", async (parent) => {
+  parent.layoutMode = "VERTICAL";
+  parent.primaryAxisSizingMode = "AUTO";
+  parent.counterAxisSizingMode = "AUTO";
+  parent.itemSpacing = 4;
+  parent.fills = [];
+  parent.primaryAxisAlignItems = "CENTER";
+  parent.counterAxisAlignItems = "CENTER";
 
-  if (m.active) {
-    const dot = cAL("HORIZONTAL");
-    dot.fills = [solid(v.bgBrandSection)];
-    dot.cornerRadius = 9999;
-    dot.primaryAxisAlignItems = "CENTER"; dot.counterAxisAlignItems = "CENTER";
-    dot.paddingLeft = 0; dot.paddingRight = 0; dot.paddingTop = 0; dot.paddingBottom = 0;
-    col.appendChild(dot);
-    dot.resize(28, 28);
-    dot.layoutSizingHorizontal = "FIXED"; dot.layoutSizingVertical = "FIXED";
-    dot.appendChild(txt(m.day, { weight: "Bold", size: 14, colorVar: v.textWhite, align: "CENTER" }));
-  } else {
-    col.appendChild(txt(m.day, { weight: "Medium", size: 14, colorVar: v.textPrimary, align: "CENTER" }));
-    if (m.badge) {
-      const b = figma.createEllipse();
-      b.resize(4, 4);
-      b.fills = [solid(v.bgBrandSection)];
-      col.appendChild(b);
-    }
-  }
-  if (m.activeLabel) {
-    col.appendChild(txt(m.activeLabel, { weight: "Medium", size: 11, colorVar: v.textBrandPrimary, align: "CENTER" }));
-  }
+  const shortNode = txt("Mon", { weight: "Medium", size: 10, colorVar: v.textTertiary, align: "CENTER" });
+  parent.appendChild(shortNode);
+
+  // active dot wrapper (visible when active)
+  const dot = cAL("HORIZONTAL");
+  dot.fills = [solid(v.bgBrandSection)];
+  dot.cornerRadius = 9999;
+  dot.primaryAxisAlignItems = "CENTER"; dot.counterAxisAlignItems = "CENTER";
+  parent.appendChild(dot);
+  dot.resize(28, 28);
+  dot.layoutSizingHorizontal = "FIXED"; dot.layoutSizingVertical = "FIXED";
+  const dayActiveNode = txt("0", { weight: "Bold", size: 14, colorVar: v.textWhite, align: "CENTER" });
+  dot.appendChild(dayActiveNode);
+
+  // inactive day text (visible when not active)
+  const dayNode = txt("0", { weight: "Medium", size: 14, colorVar: v.textPrimary, align: "CENTER" });
+  parent.appendChild(dayNode);
+
+  // badge (small dot under inactive day)
+  const badge = figma.createEllipse();
+  badge.resize(4, 4);
+  badge.fills = [solid(v.bgBrandSection)];
+  parent.appendChild(badge);
+
+  // active label ("이번달")
+  const activeLabel = txt("Label", { weight: "Medium", size: 11, colorVar: v.textBrandPrimary, align: "CENTER" });
+  parent.appendChild(activeLabel);
+
+  return {
+    properties: [
+      { name: "short", type: "TEXT", default: "Mon", bindNodeToCharacters: shortNode },
+      { name: "day", type: "TEXT", default: "0", bindNodeToCharacters: dayNode },
+      { name: "dayActive", type: "TEXT", default: "0", bindNodeToCharacters: dayActiveNode },
+      { name: "activeLabel", type: "TEXT", default: "Label", bindNodeToCharacters: activeLabel },
+      { name: "isActive", type: "BOOLEAN", default: false, bindNodeToVisible: dot },
+      { name: "isInactive", type: "BOOLEAN", default: true, bindNodeToVisible: dayNode },
+      { name: "showBadge", type: "BOOLEAN", default: false, bindNodeToVisible: badge },
+      { name: "showActiveLabel", type: "BOOLEAN", default: false, bindNodeToVisible: activeLabel },
+    ],
+  };
+});
+
+for (const m of s.months) {
+  const inst = mcComp.createInstance();
+  strip.appendChild(inst);
+  inst.layoutSizingHorizontal = "FILL"; inst.layoutSizingVertical = "HUG";
+  await setComponentProperties(inst, {
+    short: m.short,
+    day: m.day,
+    dayActive: m.day,
+    activeLabel: m.activeLabel || "",
+    isActive: !!m.active,
+    isInactive: !m.active,
+    showBadge: !m.active && !!m.badge,
+    showActiveLabel: !!m.activeLabel,
+  });
 }
 
 // Right chevron, sibling to strip inside stripRow
