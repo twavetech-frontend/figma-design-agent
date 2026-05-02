@@ -38,6 +38,178 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     return figmaWS.sendCommand(command, params, timeoutMs);
   }
 
+  // ============================================================
+  // Shared critique body — used by `critique_design` (explicit) AND
+  // by `build_from_spec` (auto-trigger after every build). Must be a
+  // self-contained `(async (root) => {...})` JS expression so the same
+  // body can be invoked from either call site without a separate plugin
+  // round-trip.
+  //
+  // Mental model: every screen the agent ships to a non-designer user is
+  // automatically self-graded across 5 dimensions. Result is attached to
+  // the build response so the agent reports a score + actionable issues
+  // instead of asking the user to evaluate.
+  // ============================================================
+  const critiqueScreenJsBody = `(async (root) => {
+const texts = []; const frames = []; let depth = 0;
+const PLACEHOLDER_RE = /^(Title|Trailing|Label|Mon|Heading|Lorem ipsum|placeholder|Sample text|0)$/i;
+// inInst flag: nodes inside a component instance are the master's responsibility.
+// Skip them for spacing/grid checks (otherwise Status Bar 1.5px paddings, DS atom
+// strokes, etc. flood the report). TEXT nodes are still collected (placeholder
+// leaks must be caught regardless of master/instance origin).
+const walk = (n, d, inInst) => {
+  if (d > depth) depth = d;
+  if (n.type === "TEXT") {
+    let fontSize = 0, fontWeight = "Regular";
+    try { fontSize = typeof n.fontSize === "number" ? n.fontSize : 0; } catch (e) {}
+    try { fontWeight = (n.fontName && n.fontName.style) || "Regular"; } catch (e) {}
+    texts.push({ id: n.id, name: n.name, characters: n.characters || "", fontSize, fontWeight, inInst });
+  } else if (n.type === "FRAME" || n.type === "COMPONENT" || n.type === "INSTANCE") {
+    // An INSTANCE node itself is master-owned — mark its frame as inInst so spacing
+    // check skips it. Children are also inInst via childInInst below.
+    const ownInInst = inInst || (n.type === "INSTANCE");
+    frames.push({
+      id: n.id, name: n.name, depth: d, inInst: ownInInst,
+      pl: n.paddingLeft || 0, pr: n.paddingRight || 0,
+      pt: n.paddingTop || 0, pb: n.paddingBottom || 0,
+      gap: n.itemSpacing || 0,
+    });
+  }
+  const childInInst = inInst || (n.type === "INSTANCE");
+  if ("children" in n && Array.isArray(n.children)) for (const c of n.children) walk(c, d + 1, childInInst);
+};
+walk(root, 0, false);
+
+// Dim 1: Anti-slop
+const slopIssues = [];
+for (const t of texts) {
+  if (PLACEHOLDER_RE.test(t.characters.trim())) {
+    slopIssues.push({ severity: "P0", nodeId: t.id, nodeName: t.name, msg: "Placeholder text visible: " + JSON.stringify(t.characters) });
+  } else if (t.characters.trim().length === 0) {
+    slopIssues.push({ severity: "P3", nodeId: t.id, nodeName: t.name, msg: "Empty TEXT node (likely hidden master leftover)" });
+  }
+}
+const slopScore = Math.max(0, 100 - slopIssues.filter(i => i.severity === "P0").length * 25);
+
+// Dim 2: Typography scale
+const sizeSet = new Set(); const weightSet = new Set();
+for (const t of texts) { if (t.fontSize > 0) sizeSet.add(t.fontSize); if (t.fontWeight) weightSet.add(t.fontWeight); }
+const uniqueSizes = [...sizeSet].sort((a, b) => a - b);
+const uniqueWeights = [...weightSet];
+const typoIssues = [];
+if (uniqueSizes.length > 10) typoIssues.push({ severity: "P1", msg: "Type scale chaos: " + uniqueSizes.length + " unique font sizes (>10). Sizes: " + uniqueSizes.join(", ") });
+else if (uniqueSizes.length > 8) typoIssues.push({ severity: "P2", msg: "Type scale dense: " + uniqueSizes.length + " unique font sizes." });
+if (uniqueWeights.length > 5) typoIssues.push({ severity: "P2", msg: "Weight chaos: " + uniqueWeights.length + " font weights" });
+const typoScore = Math.max(0, 100 - typoIssues.filter(i => i.severity === "P1").length * 20 - typoIssues.filter(i => i.severity === "P2").length * 8);
+
+// Dim 3: Spacing 2-grid (even numbers; 4-grid was too strict for design intent
+// like 14px-padding cards). Only for screen-level frames — INSTANCE descendants
+// are the master's responsibility and get skipped.
+// P2 = odd value (1, 3, 5, 7…). P3 = sub-pixel (e.g. 1.5px from cloned DS).
+const gridViolations = [];
+const subPixel = [];
+const screenFrames = frames.filter(f => !f.inInst);
+for (const f of screenFrames) {
+  for (const [k, val] of [["pl", f.pl], ["pr", f.pr], ["pt", f.pt], ["pb", f.pb], ["gap", f.gap]]) {
+    if (val <= 0) continue;
+    if (val !== Math.floor(val)) subPixel.push({ nodeName: f.name, prop: k, value: val });
+    else if (val % 2 !== 0) gridViolations.push({ nodeName: f.name, prop: k, value: val });
+  }
+}
+const oddCount = gridViolations.length;
+const spacingIssues = [];
+if (oddCount > 0) spacingIssues.push({ severity: "P2", msg: "Off-grid spacing: " + oddCount + " paddings/gaps with odd pixel values (use even numbers)", samples: gridViolations.slice(0, 5) });
+if (subPixel.length > 0) spacingIssues.push({ severity: "P3", msg: "Sub-pixel spacing: " + subPixel.length + " paddings/gaps below 1px (often from cloned DS atoms)", samples: subPixel.slice(0, 3) });
+const spacingScore = Math.max(0, 100 - oddCount * 8);
+
+// Dim 4: Contrast — alpha-aware composition + DS semantic awareness
+const lum = (c) => {
+  const f = (x) => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+  return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+};
+const ratio = (fg, bg) => { const L1 = lum(fg), L2 = lum(bg); return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05); };
+const blend = (base, paint) => {
+  if (!paint || paint.type !== "SOLID") return base;
+  const a = (typeof paint.opacity === "number" ? paint.opacity : 1) * (paint.visible === false ? 0 : 1);
+  if (a <= 0) return base; if (a >= 1) return paint.color;
+  return { r: paint.color.r * a + base.r * (1 - a), g: paint.color.g * a + base.g * (1 - a), b: paint.color.b * a + base.b * (1 - a) };
+};
+const composeFills = (fills, base) => {
+  if (!Array.isArray(fills)) return base;
+  let out = base; for (const f of fills) if (f && f.visible !== false) out = blend(out, f);
+  return out;
+};
+const intentLowContrast = async (n) => {
+  try {
+    const bv = n.boundVariables;
+    if (!bv || !bv.fills) return false;
+    const arr = Array.isArray(bv.fills) ? bv.fills : [bv.fills];
+    for (const ref of arr) {
+      const ids = Array.isArray(ref) ? ref : [ref];
+      for (const r of ids) {
+        const id = r && r.id;
+        if (!id) continue;
+        const v = await figma.variables.getVariableByIdAsync(id);
+        if (!v) continue;
+        const name = (v.name || "").toLowerCase();
+        if (/(text|fg|color)[\\\\/-]?(secondary|tertiary|quaternary|disabled|placeholder|caption|hint|muted|inverse-disabled|brand-tertiary|on-disabled)/.test(name)) return true;
+        if (/(secondary|tertiary|quaternary|disabled|placeholder|caption|hint|muted)$/.test(name)) return true;
+      }
+    }
+  } catch (e) {}
+  return false;
+};
+const contrastIssues = []; const contrastInfos = [];
+const checkText = async (n, parentBg) => {
+  if (n.type === "TEXT") {
+    let fgPaint = null;
+    try { if (Array.isArray(n.fills) && n.fills[0]?.type === "SOLID") fgPaint = n.fills[0]; } catch (e) {}
+    if (fgPaint && parentBg) {
+      const fg = blend(parentBg, fgPaint);
+      const r = ratio(fg, parentBg);
+      if (r > 0 && r < 4.5) {
+        const intent = await intentLowContrast(n);
+        if (intent) contrastInfos.push({ severity: "P3", nodeId: n.id, nodeName: n.name, ratio: Math.round(r * 100) / 100, intent: "DS semantic low-contrast (intentional)" });
+        else if (r < 3.0) contrastIssues.push({ severity: "P1", nodeId: n.id, nodeName: n.name, ratio: Math.round(r * 100) / 100 });
+        else contrastIssues.push({ severity: "P2", nodeId: n.id, nodeName: n.name, ratio: Math.round(r * 100) / 100 });
+      }
+    }
+  }
+  let bgHere = parentBg;
+  try {
+    if ((n.type === "FRAME" || n.type === "INSTANCE" || n.type === "COMPONENT") && Array.isArray(n.fills)) {
+      bgHere = composeFills(n.fills, parentBg);
+    }
+  } catch (e) {}
+  if ("children" in n && Array.isArray(n.children)) for (const c of n.children) await checkText(c, bgHere);
+};
+await checkText(root, { r: 1, g: 1, b: 1 });
+const contrastScore = Math.max(0, 100 - contrastIssues.filter(i => i.severity === "P1").length * 10 - contrastIssues.filter(i => i.severity === "P2").length * 2);
+
+// Dim 5: Hierarchy
+const heads = texts.filter(t => /Bold|Semi/.test(t.fontWeight) && t.fontSize >= 14);
+const headSizes = [...new Set(heads.map(h => h.fontSize))].sort((a, b) => b - a);
+const hierIssues = [];
+if (heads.length >= 4 && headSizes.length === 1) {
+  hierIssues.push({ severity: "P1", msg: "Flat hierarchy: " + heads.length + " bold headings all same size (" + headSizes[0] + "px). Use 2-3 size tiers." });
+}
+const hierScore = Math.max(0, 100 - hierIssues.filter(i => i.severity === "P1").length * 25);
+
+// Aggregate (anti-slop weighted 2x, hierarchy 1.5x)
+const overall = Math.round((slopScore * 2 + typoScore + spacingScore + contrastScore + hierScore * 1.5) / 6.5);
+return {
+  score: overall,
+  dimensions: {
+    antiSlop:   { score: slopScore,    issues: slopIssues.slice(0, 30) },
+    typography: { score: typoScore,    issues: typoIssues, uniqueSizes, uniqueWeights },
+    spacing:    { score: spacingScore, issues: spacingIssues, oddCount },
+    contrast:   { score: contrastScore, issues: contrastIssues.slice(0, 20), infos: contrastInfos.slice(0, 20) },
+    hierarchy:  { score: hierScore,    issues: hierIssues, headingSizes: headSizes, headingCount: heads.length },
+  },
+  stats: { textCount: texts.length, frameCount: frames.length, depth },
+};
+})`;
+
 
   // ============================================================
   // Document Tools
@@ -988,9 +1160,71 @@ The renderer encodes all polished visual details (padding, dividers, shadows, gr
         }, 30000) as Record<string, unknown>;
         if (screenshot?.imageData) (result as Record<string, unknown>).screenshot = screenshot;
       } catch (e) { console.warn('[build_from_spec] screenshot failed:', e); }
+      // Auto-critique: every build runs the 5-dim self-critique. Result is
+      // attached as `critique` so the agent can report it to the (non-designer)
+      // user without an extra tool call.
+      try {
+        const wrapperId = result.wrapperId as string;
+        const critiqueCode = `
+const root = await figma.getNodeByIdAsync(${JSON.stringify(wrapperId)});
+if (!root) return null;
+return await (async () => {
+  const __crit = ${critiqueScreenJsBody};
+  return await __crit(root);
+})();
+`;
+        const critique = await cmd('execute_js', { code: critiqueCode }, 60000);
+        if (critique && typeof critique === 'object') {
+          (result as Record<string, unknown>).critique = critique;
+        }
+      } catch (e) { console.warn('[build_from_spec] auto-critique failed:', e); }
     }
     return result;
   }, { timeoutMs: 310_000 });
+
+  // ============================================================
+  // critique_design — deterministic 5-dim self-critique
+  // ============================================================
+  reg('critique_design', `Run a deterministic 5-dimensional critique on a built screen frame.
+
+Input: { rootId: "<wrapper node id>" }
+Output: {
+  score: 0..100,
+  dimensions: {
+    antiSlop:     { score, issues: [...] },   // placeholder text (Title/Trailing/Label/Mon/Lorem/0/Heading) detection
+    typography:   { score, issues, uniqueSizes, uniqueWeights },
+    spacing:      { score, issues, gridViolations: [{nodeName, prop, value}] },
+    contrast:     { score, issues: [{nodeName, ratio, fg, bg}] },
+    hierarchy:    { score, issues, sectionTitles: [{name, size, weight}] },
+  },
+  stats: { textCount, frameCount, depth }
+}
+
+Run AFTER build_from_spec to catch:
+- Unbound TEXT properties leaving placeholder text ("Trailing", "Label", "0")
+- Type-scale chaos (>8 unique font sizes)
+- Off-grid spacing (paddings/gaps not multiples of 4)
+- Low-contrast text (ratio < 4.5)
+- Flat hierarchy (sections all same heading size)
+
+Score: 100 = clean. Issues classified as P0 (placeholder visible), P1 (token scale violation), P2 (style hint).`, {
+    type: 'object',
+    properties: {
+      rootId: { type: 'string', description: 'Wrapper node id (e.g. from build_from_spec result.wrapperId)' },
+    },
+    required: ['rootId'],
+  }, async (params) => {
+    if (!figmaWS.isConnected) throw new Error('Figma plugin is not connected.');
+    const rootId = params.rootId as string;
+    const code = `
+const root = await figma.getNodeByIdAsync(${JSON.stringify(rootId)});
+if (!root) return { error: "node not found", rootId: ${JSON.stringify(rootId)} };
+const __crit = ${critiqueScreenJsBody};
+return await __crit(root);
+`;
+    return await cmd('execute_js', { code }, 60000);
+  }, { timeoutMs: 70_000 });
+
 
   reg('batch_bind_variables', 'Bind variables to multiple nodes at once', {
     type: 'object',

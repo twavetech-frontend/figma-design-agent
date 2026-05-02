@@ -47,7 +47,7 @@ if (logoComp && logoComp.type === "COMPONENT") {
   const aspectW = Math.round((logoComp.width / logoComp.height) * targetH);
   logoNode.resize(aspectW, targetH);
 } else {
-  logoNode = txt(s.logoText || "imin", { weight: "Bold", size: 22, colorVar: v.textPrimary });
+  logoNode = txt(s.logoText || "imin", { weight: "Bold", size: 20, colorVar: v.textPrimary });
 }
 nav.appendChild(logoNode);
 
@@ -76,7 +76,7 @@ for (const ck of rightIcons) {
 function renderModalHeader(s: ModalHeaderSection): string {
   return wrap(`
 const s = ${j(s)};
-const { component: mhComp } = await ensureComponent("modalHeader", async (parent) => {
+const { component: mhComp } = await ensureComponent("modalHeader_v2", async (parent) => {
   parent.layoutMode = "HORIZONTAL";
   parent.primaryAxisSizingMode = "FIXED";
   parent.counterAxisSizingMode = "AUTO";
@@ -86,7 +86,7 @@ const { component: mhComp } = await ensureComponent("modalHeader", async (parent
   parent.counterAxisAlignItems = "CENTER";
   parent.primaryAxisAlignItems = "SPACE_BETWEEN";
   parent.fills = [];
-  const titleNode = txt("Title", { weight: "Bold", size: 17, colorVar: v.textPrimary });
+  const titleNode = txt("Title", { weight: "Bold", size: 18, colorVar: v.textPrimary });
   parent.appendChild(titleNode);
   const closeBtn = cAL("HORIZONTAL");
   closeBtn.fills = [];
@@ -122,7 +122,7 @@ await setComponentProperties(inst, {
 function renderBackHeader(s: BackHeaderSection): string {
   return wrap(`
 const s = ${j(s)};
-const { component: bhComp } = await ensureComponent("backHeader", async (parent) => {
+const { component: bhComp } = await ensureComponent("backHeader_v2", async (parent) => {
   parent.layoutMode = "HORIZONTAL";
   parent.primaryAxisSizingMode = "FIXED";
   parent.counterAxisSizingMode = "AUTO";
@@ -143,7 +143,7 @@ const { component: bhComp } = await ensureComponent("backHeader", async (parent)
     tintIcon(ci, v.textPrimary);
     backBtn.appendChild(ci);
   }
-  const titleNode = txt("Title", { weight: "Bold", size: 17, colorVar: v.textPrimary });
+  const titleNode = txt("Title", { weight: "Bold", size: 18, colorVar: v.textPrimary });
   parent.appendChild(titleNode);
   return {
     properties: [
@@ -180,7 +180,7 @@ const { component: chipComp } = await ensureComponent("filterChip", async (paren
   parent.fills = [solid(v.bgSecondary)];
   parent.cornerRadius = 9999;
   parent.paddingLeft = 14; parent.paddingRight = 14;
-  parent.paddingTop = 7; parent.paddingBottom = 7;
+  parent.paddingTop = 8; parent.paddingBottom = 8;
   parent.primaryAxisAlignItems = "CENTER"; parent.counterAxisAlignItems = "CENTER";
   const labelNode = txt("Chip", { weight: "Bold", size: 14, colorVar: v.textPrimary });
   parent.appendChild(labelNode);
@@ -341,7 +341,7 @@ const { component } = await ensureComponent("sectionHeader_v3", async (parent) =
   parent.paddingLeft = 20; parent.paddingRight = 20;
   parent.paddingTop = 16; parent.paddingBottom = 8;
   parent.fills = [];
-  const titleNode = txt("Title", { weight: "Bold", size: 15, colorVar: v.textPrimary });
+  const titleNode = txt("Title", { weight: "Bold", size: 16, colorVar: v.textPrimary });
   parent.appendChild(titleNode);
   const trailingNode = txt("Trailing", { weight: "Medium", size: 13, colorVar: v.textTertiary });
   parent.appendChild(trailingNode);
@@ -506,7 +506,7 @@ if (s.add) {
 }
 
 // Master: avatar circle + initial + optional crown overlay + name + level
-const { component: avComp } = await ensureComponent("avatarMaker", async (parent) => {
+const { component: avComp } = await ensureComponent("avatarMaker_v2", async (parent) => {
   parent.layoutMode = "VERTICAL";
   parent.primaryAxisSizingMode = "AUTO";
   parent.counterAxisSizingMode = "AUTO";
@@ -575,7 +575,7 @@ const { component: avComp } = await ensureComponent("avatarMaker", async (parent
 
   const nameNode = txt("Name", { weight: "Medium", size: 10, colorVar: v.textSecondary, align: "CENTER" });
   parent.appendChild(nameNode);
-  const levelNode = txt("(0)", { weight: "Regular", size: 9, colorVar: v.textTertiary, align: "CENTER" });
+  const levelNode = txt("(0)", { weight: "Regular", size: 10, colorVar: v.textTertiary, align: "CENTER" });
   parent.appendChild(levelNode);
 
   return {
@@ -668,7 +668,7 @@ if (s.titleIcons && s.titleIcons.length) {
 }
 
 // Row component — registered, label/value as TEXT props
-const { component: rowComp } = await ensureComponent("summaryCardLinkRow", async (parent) => {
+const { component: rowComp } = await ensureComponent("summaryCardLinkRow_v2", async (parent) => {
   parent.layoutMode = "HORIZONTAL";
   parent.primaryAxisSizingMode = "FIXED";
   parent.counterAxisSizingMode = "AUTO";
@@ -678,7 +678,7 @@ const { component: rowComp } = await ensureComponent("summaryCardLinkRow", async
   parent.paddingTop = 4; parent.paddingBottom = 4;
   parent.fills = [];
   const labelNode = txt("Label", { weight: "Medium", size: 14, colorVar: v.textSecondary });
-  const valueNode = txt("Value", { weight: "Bold", size: 15, colorVar: v.textPrimary });
+  const valueNode = txt("Value", { weight: "Bold", size: 14, colorVar: v.textPrimary });
   parent.appendChild(labelNode);
   parent.appendChild(valueNode);
   return {
@@ -842,7 +842,7 @@ if (s.filterLabel) {
 function renderStatsStrip3Col(s: StatsStrip3ColSection): string {
   return wrap(`
 const s = ${j(s)};
-const { component } = await ensureComponent("statsStrip3Col", async (parent) => {
+const { component } = await ensureComponent("statsStrip3Col_v2", async (parent) => {
   parent.layoutMode = "HORIZONTAL";
   parent.primaryAxisSizingMode = "FIXED";
   parent.counterAxisSizingMode = "AUTO";
@@ -860,7 +860,7 @@ const { component } = await ensureComponent("statsStrip3Col", async (parent) => 
     parent.appendChild(col);
     col.layoutSizingHorizontal = "FILL"; col.layoutSizingVertical = "HUG";
     const labelNode = txt("Label " + (i + 1), { weight: "Medium", size: 12, colorVar: v.textTertiary });
-    const valueNode = txt("Value " + (i + 1), { weight: "Bold", size: 15, colorVar: v.textPrimary });
+    const valueNode = txt("Value " + (i + 1), { weight: "Bold", size: 14, colorVar: v.textPrimary });
     col.appendChild(labelNode);
     col.appendChild(valueNode);
     labels.push(labelNode); values.push(valueNode);
@@ -904,7 +904,7 @@ wrapper.appendChild(list);
 list.layoutSizingHorizontal = "FILL"; list.layoutSizingVertical = "HUG";
 
 // Row component — single master; rowState drives BOOLEAN visibility + per-instance color overrides
-const { component: txnRowComp } = await ensureComponent("transactionTimelineRow", async (parent) => {
+const { component: txnRowComp } = await ensureComponent("transactionTimelineRow_v2", async (parent) => {
   parent.layoutMode = "HORIZONTAL";
   parent.primaryAxisSizingMode = "FIXED";
   parent.counterAxisSizingMode = "AUTO";
@@ -940,7 +940,7 @@ const { component: txnRowComp } = await ensureComponent("transactionTimelineRow"
   parent.appendChild(body);
   body.layoutSizingHorizontal = "FILL"; body.layoutSizingVertical = "HUG";
   const titleNode = txt("Title", { weight: "Bold", size: 14, colorVar: v.textPrimary });
-  const amountNode = txt("0원", { weight: "Bold", size: 15, colorVar: v.textPrimary });
+  const amountNode = txt("0원", { weight: "Bold", size: 14, colorVar: v.textPrimary });
   body.appendChild(titleNode);
   body.appendChild(amountNode);
   const trackWrap = cAL("HORIZONTAL");
@@ -1107,7 +1107,7 @@ for (const item of s.items) {
     tl.appendChild(cell);
     cell.resize(20, 22);
     cell.layoutSizingHorizontal = "FILL"; cell.layoutSizingVertical = "FIXED";
-    cell.appendChild(txt(String(i), { weight: "Bold", size: 9, colorVar: isActive ? v.textWhite : v.textBrandTertiary, align: "CENTER" }));
+    cell.appendChild(txt(String(i), { weight: "Bold", size: 10, colorVar: isActive ? v.textWhite : v.textBrandTertiary, align: "CENTER" }));
   }
   sp(card, 6);
 
@@ -1129,7 +1129,7 @@ for (const item of s.items) {
 
   const r1 = cAL("HORIZONTAL");
   r1.fills = []; r1.primaryAxisAlignItems = "SPACE_BETWEEN"; r1.counterAxisAlignItems = "CENTER";
-  r1.paddingTop = 3; r1.paddingBottom = 3;
+  r1.paddingTop = 4; r1.paddingBottom = 4;
   card.appendChild(r1);
   r1.layoutSizingHorizontal = "FILL"; r1.layoutSizingVertical = "HUG";
   const lbl = cAL("HORIZONTAL", { itemSpacing: 4 });
@@ -1142,7 +1142,7 @@ for (const item of s.items) {
 
   const r2 = cAL("HORIZONTAL");
   r2.fills = []; r2.primaryAxisAlignItems = "SPACE_BETWEEN"; r2.counterAxisAlignItems = "CENTER";
-  r2.paddingTop = 3; r2.paddingBottom = 3;
+  r2.paddingTop = 4; r2.paddingBottom = 4;
   card.appendChild(r2);
   r2.layoutSizingHorizontal = "FILL"; r2.layoutSizingVertical = "HUG";
   r2.appendChild(txt("총 이자", { weight: "Medium", size: 13, colorVar: v.textTertiary }));
@@ -1162,9 +1162,9 @@ for (const item of s.items) {
   bg.fills = []; bg.counterAxisAlignItems = "CENTER";
   bene.appendChild(bg);
   bg.layoutSizingHorizontal = "HUG"; bg.layoutSizingVertical = "HUG";
-  const b1 = cAL("HORIZONTAL", { itemSpacing: 3 });
+  const b1 = cAL("HORIZONTAL", { itemSpacing: 4 });
   b1.fills = [solid(v.bgBrandPrimary)]; b1.cornerRadius = 9999;
-  b1.paddingLeft = 8; b1.paddingRight = 8; b1.paddingTop = 3; b1.paddingBottom = 3;
+  b1.paddingLeft = 8; b1.paddingRight = 8; b1.paddingTop = 4; b1.paddingBottom = 4;
   b1.counterAxisAlignItems = "CENTER";
   bg.appendChild(b1);
   b1.layoutSizingHorizontal = "HUG"; b1.layoutSizingVertical = "HUG";
@@ -1174,10 +1174,10 @@ for (const item of s.items) {
     b1.appendChild(di);
   }
   b1.appendChild(txt(item.points + "P", { weight: "Bold", size: 11, colorVar: v.textBrandPrimary }));
-  const b2 = cAL("HORIZONTAL", { itemSpacing: 3 });
+  const b2 = cAL("HORIZONTAL", { itemSpacing: 4 });
   b2.fills = [solid(v.bgPrimary)]; b2.strokes = [solid(v.borderPrimary)]; b2.strokeWeight = 1;
   b2.cornerRadius = 9999;
-  b2.paddingLeft = 8; b2.paddingRight = 8; b2.paddingTop = 3; b2.paddingBottom = 3;
+  b2.paddingLeft = 8; b2.paddingRight = 8; b2.paddingTop = 4; b2.paddingBottom = 4;
   b2.counterAxisAlignItems = "CENTER";
   bg.appendChild(b2);
   b2.layoutSizingHorizontal = "HUG"; b2.layoutSizingVertical = "HUG";
@@ -1560,7 +1560,7 @@ cta.paddingTop = 14; cta.paddingBottom = 14;
 cta.primaryAxisAlignItems = "CENTER"; cta.counterAxisAlignItems = "CENTER";
 card.appendChild(cta);
 cta.layoutSizingHorizontal = "FILL"; cta.layoutSizingVertical = "HUG";
-cta.appendChild(txt(s.ctaText, { weight: "Bold", size: 15, colorVar: v.textPrimary }));
+cta.appendChild(txt(s.ctaText, { weight: "Bold", size: 14, colorVar: v.textPrimary }));
 
 // Toggle text "어떻게 계산되나요? v" below card
 if (s.toggleText) {
@@ -1872,7 +1872,7 @@ if (active.badge) {
   b.fills = [rawSolid(1, 1, 1, isBrand ? 0.18 : 1)];
   if (!isBrand) b.fills = [solid(v.bgPrimary)];
   b.cornerRadius = 9999;
-  b.paddingLeft = 8; b.paddingRight = 8; b.paddingTop = 3; b.paddingBottom = 3;
+  b.paddingLeft = 8; b.paddingRight = 8; b.paddingTop = 4; b.paddingBottom = 4;
   card.appendChild(b);
   b.layoutSizingHorizontal = "HUG"; b.layoutSizingVertical = "HUG";
   b.appendChild(txt(active.badge, { weight: "Medium", size: 10, colorVar: isBrand ? v.textWhite : v.textBrandPrimary }));
@@ -1987,7 +1987,7 @@ for (const p of s.products) {
     const bg = cAL("HORIZONTAL");
     bg.fills = [rawSolid(bp.fg.r, bp.fg.g, bp.fg.b)];
     bg.cornerRadius = 4;
-    bg.paddingLeft = 6; bg.paddingRight = 6; bg.paddingTop = 3; bg.paddingBottom = 3;
+    bg.paddingLeft = 6; bg.paddingRight = 6; bg.paddingTop = 4; bg.paddingBottom = 4;
     img.appendChild(bg);
     bg.layoutSizingHorizontal = "HUG"; bg.layoutSizingVertical = "HUG";
     bg.appendChild(txt(bp.text, { weight: "Bold", size: 10, colorVar: v.textWhite }));
