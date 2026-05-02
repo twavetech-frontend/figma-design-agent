@@ -895,11 +895,17 @@ If the user mentions a PRD or attaches a markdown file, you MUST Read it before 
 {
   width: 393,                                  // mobile root width
   positionRelativeTo?: "<figma node ID>",     // optional — placed to the right of the wireframe
-  bgVar?: "bg-primary" | "bg-secondary" | "bg-tertiary",  // wrapper background
+  // bgVar: IGNORED — wrapper bg is always bg-primary by absolute project rule.
+  //   Card hierarchy (bg-secondary/bg-tertiary/bg-quaternary) is handled inside sections.
   statusBar?: boolean,                         // default true — clones the in-file Status bar
   sections: SectionSpec[],                     // normal-flow children, top-to-bottom
   overlays?: OverlaySpec[]                     // ABSOLUTE bottom overlays (TabBar + FAB)
 }
+
+🚨 ABSOLUTE COLOR RULE
+- Screen wrapper background = bg-primary (always, no exceptions)
+- Inside cards/sections: bg-secondary > bg-tertiary > bg-quaternary hierarchy
+- Never use _Primitives raw scale colors. Only "1. Color modes" semantic tokens.
 
 🧩 AVAILABLE SECTION TYPES (sections[])
 
@@ -922,6 +928,17 @@ Cards / forms:
   { type: "avatarRow", add?: { label }, makers: [{ name, level, colorHue, crown? }, ...] }
   { type: "summaryCardLinkRows", title, titleIcons?, rows: [{ label, value, valueTone?: "positive"|"negative"|"neutral", asLink? }, ...] }
   { type: "stageCardList", layout: "timeline", items: [{ monthly, months, payoutAt, payout, interest, points, fee }, ...] }
+  { type: "stageCardScroll", cards: [{ status: "inProgress"|"scheduled"|"overdue"|"completed", statusLabel, rate, amount, description?, favorited? }, ...] }
+  { type: "creditUsageCard", usageLabel, usageAmount, usageUnit, rightInfo, progressPercent?, cta?: { iconKey?, text, tone?: "info"|"warning" } }
+  { type: "recommendHero", topLabel, amount, unit, subText?, slider?: { label, valueText, current, max }, steppers?: [{ label, value, unit? }, ...], ctaText, toggleText? }
+
+Alerts:
+  { type: "alertBanner", tone: "error"|"warning"|"info"|"success", iconKey?, title, description?, trailingChevron? }
+
+Engagement / commerce:
+  { type: "attendanceWeek", streakText, rewardText, ctaText, days: [{ label, state: "completed"|"today"|"future" }, ...] }
+  { type: "eventBannerCarousel", banners: [{ badge?, title, description?, iconKey?, tone?: "brand"|"neutral" }, ...], activeIndex? }
+  { type: "productHotDeal", title, pointBalance, trailing?, products: [{ badge?: "hotdeal"|"best"|"new", name, discount?, price, imageHue? }, ...] }
 
 Strips / calendars:
   { type: "monthScrollerCalendar", title?, months: [{ short, day, active?, activeLabel?, badge? }, ...], filterLabel? }

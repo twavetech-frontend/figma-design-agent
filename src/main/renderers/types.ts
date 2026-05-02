@@ -190,6 +190,95 @@ export interface SpacerSection {
   height: number;
 }
 
+// ─── Phase 1 additions ──────────────────────────────────────────────────
+
+export type AlertTone = 'error' | 'warning' | 'info' | 'success';
+
+export interface AlertBannerSection {
+  type: 'alertBanner';
+  tone: AlertTone;
+  iconKey?: IconKey;
+  title: string;
+  description?: string;
+  trailingChevron?: boolean;
+}
+
+export interface RecommendHeroSection {
+  type: 'recommendHero';
+  topLabel: string;
+  amount: string;
+  unit: string;
+  subText?: string;
+  slider?: { label: string; valueText: string; current: number; max: number };
+  steppers?: Array<{ label: string; value: string; unit?: string }>;
+  ctaText: string;
+  toggleText?: string;
+}
+
+export type StageCardStatus = 'inProgress' | 'scheduled' | 'overdue' | 'completed';
+
+export interface StageCardScrollSection {
+  type: 'stageCardScroll';
+  cards: Array<{
+    status: StageCardStatus;
+    statusLabel: string;
+    rate: string;
+    amount: string;
+    description?: string;
+    favorited?: boolean;
+  }>;
+}
+
+export interface CreditUsageCardSection {
+  type: 'creditUsageCard';
+  usageLabel: string;
+  usageAmount: string;
+  usageUnit: string;
+  rightInfo: string;
+  progressPercent?: number;
+  cta?: { iconKey?: IconKey; text: string; tone?: 'info' | 'warning' };
+}
+
+// ─── Phase 2 additions ──────────────────────────────────────────────────
+
+export type AttendanceDayState = 'completed' | 'today' | 'future';
+
+export interface AttendanceWeekSection {
+  type: 'attendanceWeek';
+  streakText: string;
+  rewardText: string;
+  ctaText: string;
+  days: Array<{ label: string; state: AttendanceDayState }>;
+}
+
+export interface EventBannerCarouselSection {
+  type: 'eventBannerCarousel';
+  banners: Array<{
+    badge?: string;
+    title: string;
+    description?: string;
+    iconKey?: IconKey;
+    tone?: 'brand' | 'neutral';
+  }>;
+  activeIndex?: number;
+}
+
+export type ProductBadgeKind = 'hotdeal' | 'best' | 'new';
+
+export interface ProductHotDealSection {
+  type: 'productHotDeal';
+  title: string;
+  pointBalance: string;
+  trailing?: string;
+  products: Array<{
+    badge?: ProductBadgeKind;
+    name: string;
+    discount?: string;
+    price: string;
+    imageHue?: ColorHue;
+  }>;
+}
+
 export type SectionSpec =
   | AppHeaderSection
   | ModalHeaderSection
@@ -206,7 +295,14 @@ export type SectionSpec =
   | TransactionTimelineSection
   | StageCardListSection
   | FooterLegalSection
-  | SpacerSection;
+  | SpacerSection
+  | AlertBannerSection
+  | RecommendHeroSection
+  | StageCardScrollSection
+  | CreditUsageCardSection
+  | AttendanceWeekSection
+  | EventBannerCarouselSection
+  | ProductHotDealSection;
 
 export type OverlaySpec = TabBarSection | FabSection;
 
@@ -215,7 +311,10 @@ export interface ScreenSpec {
   width: number;
   /** Optional figma node ID — new screen is placed to its right. */
   positionRelativeTo?: string;
-  /** Background of the wrapper. Default 'bg-primary' (white). */
+  /**
+   * @deprecated IGNORED. Wrapper bg is always bg-primary by absolute project rule.
+   * Cards/sections inside the wrapper handle their own bg-secondary/bg-tertiary hierarchy.
+   */
   bgVar?: 'bg-primary' | 'bg-secondary' | 'bg-tertiary';
   /** Whether to prepend the device Status Bar instance. Default true. */
   statusBar?: boolean;

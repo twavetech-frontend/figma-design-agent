@@ -13,11 +13,14 @@ import { renderSection, renderOverlay } from './components';
 export function buildScreenJS(spec: ScreenSpec): string {
   const setup = buildSetupJS();
 
-  const wrapperBg = spec.bgVar || 'bg-primary';
+  // 🚨 ABSOLUTE RULE: Screen wrapper bg MUST be bg-primary (single screen bg policy).
+  // spec.bgVar is intentionally ignored — wrapper background is always bg-primary.
+  // Cards/sections inside the wrapper may use bg-secondary/bg-tertiary for hierarchy.
+  // See memory: feedback_color_system_semantic_only.md (rule #4) and CLAUDE.md rule #27.
   const wrapperJSON = JSON.stringify({
     width: spec.width,
     positionRelativeTo: spec.positionRelativeTo || null,
-    bgVar: wrapperBg,
+    bgVar: 'bg-primary',
     statusBar: spec.statusBar !== false,
   });
 

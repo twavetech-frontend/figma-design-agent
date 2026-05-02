@@ -268,12 +268,14 @@ const ensureComponent = async (name, buildFn) => {
       catch (e) { continue; }
       if (p.bindNodeToCharacters) {
         try {
-          p.bindNodeToCharacters.componentPropertyReferences = { characters: propKey };
+          const existing = p.bindNodeToCharacters.componentPropertyReferences || {};
+          p.bindNodeToCharacters.componentPropertyReferences = Object.assign({}, existing, { characters: propKey });
         } catch (e) {}
       }
       if (p.bindNodeToVisible) {
         try {
-          p.bindNodeToVisible.componentPropertyReferences = { visible: propKey };
+          const existing = p.bindNodeToVisible.componentPropertyReferences || {};
+          p.bindNodeToVisible.componentPropertyReferences = Object.assign({}, existing, { visible: propKey });
         } catch (e) {}
       }
     }

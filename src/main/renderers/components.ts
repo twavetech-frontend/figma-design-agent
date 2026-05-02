@@ -16,6 +16,9 @@ import type {
   SummaryCardLinkRowsSection, MonthScrollerCalendarSection,
   StatsStrip3ColSection, TransactionTimelineSection, StageCardListSection,
   FooterLegalSection, TabBarSection, FabSection, SpacerSection,
+  AlertBannerSection, RecommendHeroSection, StageCardScrollSection,
+  CreditUsageCardSection,
+  AttendanceWeekSection, EventBannerCarouselSection, ProductHotDealSection,
 } from './types';
 
 const j = (x: unknown) => JSON.stringify(x);
@@ -328,7 +331,7 @@ for (const t of s.tabs) {
 function renderSectionHeader(s: SectionHeaderRow): string {
   return wrap(`
 const s = ${j(s)};
-const { component } = await ensureComponent("sectionHeader", async (parent) => {
+const { component } = await ensureComponent("sectionHeader_v3", async (parent) => {
   parent.layoutMode = "HORIZONTAL";
   parent.primaryAxisSizingMode = "FIXED";
   parent.counterAxisSizingMode = "AUTO";
@@ -745,7 +748,7 @@ stripRow.appendChild(strip);
 strip.layoutSizingHorizontal = "FILL"; strip.layoutSizingVertical = "HUG";
 
 // Month cell master — short + day (with active variant) + badge + activeLabel
-const { component: mcComp } = await ensureComponent("monthCell", async (parent) => {
+const { component: mcComp } = await ensureComponent("monthCell_v3", async (parent) => {
   parent.layoutMode = "VERTICAL";
   parent.primaryAxisSizingMode = "AUTO";
   parent.counterAxisSizingMode = "AUTO";
@@ -1358,6 +1361,654 @@ fab.y = wrapper.height - 80 - fab.height - 12;
 }
 
 // ─── Dispatch ──────────────────────────────────────────────────────────
+// ─── Alert Banner — inline notification (error/warning/info/success) ───
+function renderAlertBanner(s: AlertBannerSection): string {
+  return wrap(`
+const s = ${j(s)};
+const w = cAL("VERTICAL", { name: "Alert Banner Wrap" });
+w.fills = []; w.paddingLeft = 16; w.paddingRight = 16; w.paddingTop = 4; w.paddingBottom = 8;
+wrapper.appendChild(w);
+w.layoutSizingHorizontal = "FILL"; w.layoutSizingVertical = "HUG";
+
+// Tone palette — bg + accent + text
+const tonePalette = {
+  error:   { bgRaw: { r: 0.996, g: 0.949, b: 0.949 }, accentVar: v.textErrorPrimary, accentRaw: { r: 0.890, g: 0.196, b: 0.196 } },
+  warning: { bgRaw: { r: 0.996, g: 0.969, b: 0.918 }, accentVar: null,                accentRaw: { r: 0.961, g: 0.620, b: 0.043 } },
+  info:    { bgRaw: { r: 0.945, g: 0.949, b: 0.984 }, accentVar: v.textBrandPrimary,  accentRaw: { r: 0.412, g: 0.220, b: 0.937 } },
+  success: { bgRaw: { r: 0.929, g: 0.976, b: 0.953 }, accentVar: null,                accentRaw: { r: 0.063, g: 0.725, b: 0.506 } },
+};
+const tp = tonePalette[s.tone] || tonePalette.error;
+
+const card = cAL("HORIZONTAL", { name: "Alert " + s.tone, itemSpacing: 12 });
+card.fills = [rawSolid(tp.bgRaw.r, tp.bgRaw.g, tp.bgRaw.b)];
+card.cornerRadius = 12;
+card.paddingLeft = 14; card.paddingRight = 14; card.paddingTop = 12; card.paddingBottom = 12;
+card.counterAxisAlignItems = "CENTER";
+w.appendChild(card);
+card.layoutSizingHorizontal = "FILL"; card.layoutSizingVertical = "HUG";
+
+// Leading icon (circle with accent)
+if (s.iconKey && ic[s.iconKey]) {
+  const iconWrap = cAL("HORIZONTAL");
+  iconWrap.fills = [rawSolid(tp.accentRaw.r, tp.accentRaw.g, tp.accentRaw.b)];
+  iconWrap.cornerRadius = 9999;
+  iconWrap.primaryAxisAlignItems = "CENTER"; iconWrap.counterAxisAlignItems = "CENTER";
+  card.appendChild(iconWrap);
+  iconWrap.resize(24, 24);
+  iconWrap.layoutSizingHorizontal = "FIXED"; iconWrap.layoutSizingVertical = "FIXED";
+  const icInst = ic[s.iconKey].createInstance(); icInst.resize(14, 14);
+  tintIcon(icInst, v.textWhite);
+  iconWrap.appendChild(icInst);
+}
+
+// Text column
+const tcol = cAL("VERTICAL", { itemSpacing: 2 });
+tcol.fills = []; tcol.primaryAxisAlignItems = "CENTER";
+card.appendChild(tcol);
+tcol.layoutSizingHorizontal = "FILL"; tcol.layoutSizingVertical = "HUG";
+
+const titleOpts = tp.accentVar
+  ? { weight: "Bold", size: 13, colorVar: tp.accentVar }
+  : { weight: "Bold", size: 13, colorRaw: tp.accentRaw };
+tcol.appendChild(txt(s.title, titleOpts));
+if (s.description) {
+  tcol.appendChild(txt(s.description, { weight: "Regular", size: 12, colorVar: v.textSecondary }));
+}
+
+if (s.trailingChevron && ic.chevronRight) {
+  const cv = ic.chevronRight.createInstance();
+  cv.resize(20, 20);
+  tintIcon(cv, v.textTertiary);
+  card.appendChild(cv);
+}
+`);
+}
+
+// ─── Recommend Hero — purple brand card with prominent amount + slider + steppers + CTA + toggle
+function renderRecommendHero(s: RecommendHeroSection): string {
+  return wrap(`
+const s = ${j(s)};
+const w = cAL("VERTICAL", { name: "Recommend Hero Wrap" });
+w.fills = []; w.paddingLeft = 20; w.paddingRight = 20; w.paddingTop = 4; w.paddingBottom = 16;
+wrapper.appendChild(w);
+w.layoutSizingHorizontal = "FILL"; w.layoutSizingVertical = "HUG";
+
+const card = cAL("VERTICAL", { name: "Recommend Hero", itemSpacing: 14 });
+card.fills = [solid(v.bgBrandSection)];
+card.cornerRadius = 18;
+card.paddingLeft = 22; card.paddingRight = 22; card.paddingTop = 22; card.paddingBottom = 22;
+w.appendChild(card);
+card.layoutSizingHorizontal = "FILL"; card.layoutSizingVertical = "HUG";
+
+// Top label
+card.appendChild(txt(s.topLabel, { weight: "Medium", size: 13, colorRaw: { r: 0.85, g: 0.78, b: 1 } }));
+
+// Amount + unit row (massive display)
+const amtRow = cAL("HORIZONTAL", { itemSpacing: 6 });
+amtRow.fills = []; amtRow.counterAxisAlignItems = "BASELINE";
+card.appendChild(amtRow);
+amtRow.layoutSizingHorizontal = "HUG"; amtRow.layoutSizingVertical = "HUG";
+amtRow.appendChild(txt(s.amount, { weight: "Bold", size: 40, colorVar: v.textWhite }));
+amtRow.appendChild(txt(s.unit, { weight: "Bold", size: 18, colorVar: v.textWhite }));
+
+if (s.subText) {
+  // Sub text in alpha-white pill
+  const sub = cAL("HORIZONTAL");
+  sub.fills = [rawSolid(1, 1, 1, 0.1)];
+  sub.cornerRadius = 9999;
+  sub.paddingLeft = 12; sub.paddingRight = 12; sub.paddingTop = 6; sub.paddingBottom = 6;
+  card.appendChild(sub);
+  sub.layoutSizingHorizontal = "HUG"; sub.layoutSizingVertical = "HUG";
+  sub.appendChild(txt(s.subText, { weight: "Medium", size: 12, colorVar: v.textWhite }));
+}
+
+// Slider (label left, value right, then track)
+if (s.slider) {
+  const sl = cAL("VERTICAL", { itemSpacing: 8 });
+  sl.fills = []; sl.paddingTop = 10;
+  card.appendChild(sl);
+  sl.layoutSizingHorizontal = "FILL"; sl.layoutSizingVertical = "HUG";
+  const slHead = cAL("HORIZONTAL");
+  slHead.fills = []; slHead.primaryAxisAlignItems = "SPACE_BETWEEN"; slHead.counterAxisAlignItems = "CENTER";
+  sl.appendChild(slHead);
+  slHead.layoutSizingHorizontal = "FILL"; slHead.layoutSizingVertical = "HUG";
+  slHead.appendChild(txt(s.slider.label, { weight: "Medium", size: 13, colorVar: v.textWhite }));
+  slHead.appendChild(txt(s.slider.valueText, { weight: "Bold", size: 13, colorVar: v.textWhite }));
+
+  // Track
+  const track = cAL("HORIZONTAL");
+  track.fills = [rawSolid(1, 1, 1, 0.2)];
+  track.cornerRadius = 9999;
+  sl.appendChild(track);
+  track.resize(100, 6);
+  track.layoutSizingHorizontal = "FILL"; track.layoutSizingVertical = "FIXED";
+
+  // Fill (overlay using ABSOLUTE position)
+  const ratio = Math.max(0, Math.min(1, (s.slider.current || 0) / Math.max(1, s.slider.max || 1)));
+  // Use a child fill rectangle with FILL → resize after appending
+  // Hack: track is auto-layout HORIZONTAL; child becomes the fill
+  const fill = cAL("HORIZONTAL");
+  fill.fills = [rawSolid(0.91, 0.91, 0.91)];
+  fill.cornerRadius = 9999;
+  track.appendChild(fill);
+  // Compute fill width based on ratio of expected card content width (~280)
+  const fillW = Math.max(8, Math.round(280 * ratio));
+  fill.resize(fillW, 6);
+  fill.layoutSizingHorizontal = "FIXED"; fill.layoutSizingVertical = "FIXED";
+
+  // Thumb at end of fill
+  const thumb = cAL("HORIZONTAL");
+  thumb.fills = [rawSolid(0.91, 0.91, 0.91)];
+  thumb.cornerRadius = 9999;
+  thumb.strokes = [rawSolid(1, 1, 1)];
+  thumb.strokeWeight = 2;
+  fill.appendChild(thumb);
+  thumb.resize(16, 16);
+  thumb.layoutSizingHorizontal = "FIXED"; thumb.layoutSizingVertical = "FIXED";
+}
+
+// Stepper rows (label left, -/+ value right) — flat rows on brand bg
+if (s.steppers && s.steppers.length > 0) {
+  for (const st of s.steppers) {
+    const row = cAL("HORIZONTAL");
+    row.fills = []; row.primaryAxisAlignItems = "SPACE_BETWEEN"; row.counterAxisAlignItems = "CENTER";
+    row.paddingTop = 4; row.paddingBottom = 4;
+    card.appendChild(row);
+    row.layoutSizingHorizontal = "FILL"; row.layoutSizingVertical = "HUG";
+
+    row.appendChild(txt(st.label, { weight: "Medium", size: 14, colorVar: v.textWhite }));
+
+    const grp = cAL("HORIZONTAL", { itemSpacing: 14 });
+    grp.fills = []; grp.counterAxisAlignItems = "CENTER";
+    row.appendChild(grp);
+    grp.layoutSizingHorizontal = "HUG"; grp.layoutSizingVertical = "HUG";
+
+    const minus = cAL("HORIZONTAL");
+    minus.fills = [rawSolid(1, 1, 1, 0.15)];
+    minus.cornerRadius = 9999;
+    minus.primaryAxisAlignItems = "CENTER"; minus.counterAxisAlignItems = "CENTER";
+    grp.appendChild(minus);
+    minus.resize(28, 28);
+    minus.layoutSizingHorizontal = "FIXED"; minus.layoutSizingVertical = "FIXED";
+    if (ic.minus) { const m = ic.minus.createInstance(); m.resize(14, 14); tintIcon(m, v.textWhite); minus.appendChild(m); }
+
+    const valWrap = cAL("HORIZONTAL", { itemSpacing: 4 });
+    valWrap.fills = []; valWrap.counterAxisAlignItems = "BASELINE"; valWrap.primaryAxisAlignItems = "CENTER";
+    grp.appendChild(valWrap);
+    valWrap.resize(60, 20);
+    valWrap.layoutSizingHorizontal = "FIXED"; valWrap.layoutSizingVertical = "HUG";
+    valWrap.primaryAxisAlignItems = "CENTER";
+    valWrap.appendChild(txt(st.value, { weight: "Bold", size: 16, colorVar: v.textWhite, align: "CENTER" }));
+    if (st.unit) valWrap.appendChild(txt(st.unit, { weight: "Medium", size: 12, colorRaw: { r: 0.85, g: 0.78, b: 1 } }));
+
+    const plus = cAL("HORIZONTAL");
+    plus.fills = [rawSolid(1, 1, 1, 0.15)];
+    plus.cornerRadius = 9999;
+    plus.primaryAxisAlignItems = "CENTER"; plus.counterAxisAlignItems = "CENTER";
+    grp.appendChild(plus);
+    plus.resize(28, 28);
+    plus.layoutSizingHorizontal = "FIXED"; plus.layoutSizingVertical = "FIXED";
+    if (ic.plus) { const p = ic.plus.createInstance(); p.resize(14, 14); tintIcon(p, v.textWhite); plus.appendChild(p); }
+  }
+}
+
+// CTA — white background, brand text, FILL width
+const cta = cAL("HORIZONTAL");
+cta.fills = [solid(v.bgPrimary)];
+cta.cornerRadius = 12;
+cta.paddingTop = 14; cta.paddingBottom = 14;
+cta.primaryAxisAlignItems = "CENTER"; cta.counterAxisAlignItems = "CENTER";
+card.appendChild(cta);
+cta.layoutSizingHorizontal = "FILL"; cta.layoutSizingVertical = "HUG";
+cta.appendChild(txt(s.ctaText, { weight: "Bold", size: 15, colorVar: v.textPrimary }));
+
+// Toggle text "어떻게 계산되나요? v" below card
+if (s.toggleText) {
+  const tg = cAL("HORIZONTAL", { itemSpacing: 4 });
+  tg.fills = []; tg.paddingTop = 4; tg.counterAxisAlignItems = "CENTER";
+  w.appendChild(tg);
+  tg.layoutSizingHorizontal = "HUG"; tg.layoutSizingVertical = "HUG";
+  if (ic.infoCircle) {
+    const ii = ic.infoCircle.createInstance(); ii.resize(14, 14);
+    tintIcon(ii, v.textTertiary);
+    tg.appendChild(ii);
+  }
+  tg.appendChild(txt(s.toggleText, { weight: "Medium", size: 12, colorVar: v.textTertiary }));
+}
+`);
+}
+
+// ─── Stage Card Scroll — horizontal scrollable cards (참여 중 스테이지) ───
+function renderStageCardScroll(s: StageCardScrollSection): string {
+  return wrap(`
+const s = ${j(s)};
+const w = cAL("VERTICAL", { name: "Stage Card Scroll Wrap" });
+w.fills = []; w.paddingTop = 4; w.paddingBottom = 12;
+wrapper.appendChild(w);
+w.layoutSizingHorizontal = "FILL"; w.layoutSizingVertical = "HUG";
+
+// Horizontal scroller (clipsContent + overflowing children for scroll feel)
+const row = cAL("HORIZONTAL", { itemSpacing: 12 });
+row.fills = [];
+row.paddingLeft = 20; row.paddingRight = 20;
+row.clipsContent = true;
+w.appendChild(row);
+row.layoutSizingHorizontal = "FILL"; row.layoutSizingVertical = "HUG";
+
+const STATUS_BG = {
+  inProgress: { r: 0.945, g: 0.949, b: 0.984 },
+  scheduled:  { r: 0.945, g: 0.984, b: 0.953 },
+  overdue:    { r: 0.996, g: 0.949, b: 0.949 },
+  completed:  { r: 0.949, g: 0.949, b: 0.961 },
+};
+const STATUS_FG = {
+  inProgress: { r: 0.412, g: 0.220, b: 0.937 },
+  scheduled:  { r: 0.063, g: 0.725, b: 0.506 },
+  overdue:    { r: 0.890, g: 0.196, b: 0.196 },
+  completed:  { r: 0.4, g: 0.4, b: 0.4 },
+};
+
+for (const c of s.cards) {
+  const card = cAL("VERTICAL", { itemSpacing: 8 });
+  card.fills = [solid(v.bgPrimary)];
+  card.cornerRadius = 14;
+  card.strokes = [solid(v.borderPrimary)];
+  card.strokeWeight = 1;
+  card.paddingLeft = 14; card.paddingRight = 14; card.paddingTop = 14; card.paddingBottom = 14;
+  row.appendChild(card);
+  card.resize(150, 100);
+  card.layoutSizingHorizontal = "FIXED"; card.layoutSizingVertical = "HUG";
+
+  // Top row: status pill + favorite heart
+  const top = cAL("HORIZONTAL");
+  top.fills = []; top.primaryAxisAlignItems = "SPACE_BETWEEN"; top.counterAxisAlignItems = "CENTER";
+  card.appendChild(top);
+  top.layoutSizingHorizontal = "FILL"; top.layoutSizingVertical = "HUG";
+
+  const sBg = STATUS_BG[c.status] || STATUS_BG.inProgress;
+  const sFg = STATUS_FG[c.status] || STATUS_FG.inProgress;
+  const pill = cAL("HORIZONTAL");
+  pill.fills = [rawSolid(sBg.r, sBg.g, sBg.b)];
+  pill.cornerRadius = 9999;
+  pill.paddingLeft = 8; pill.paddingRight = 8; pill.paddingTop = 4; pill.paddingBottom = 4;
+  top.appendChild(pill);
+  pill.layoutSizingHorizontal = "HUG"; pill.layoutSizingVertical = "HUG";
+  pill.appendChild(txt(c.statusLabel, { weight: "Medium", size: 11, colorRaw: sFg }));
+
+  // Heart
+  if (ic.starFilled || ic.star) {
+    const hi = (c.favorited ? ic.starFilled : ic.star);
+    if (hi) {
+      const inst = hi.createInstance(); inst.resize(16, 16);
+      tintIcon(inst, c.favorited ? v.textBrandPrimary : v.textTertiary);
+      top.appendChild(inst);
+    }
+  }
+
+  // Rate
+  card.appendChild(txt(c.rate, { weight: "Medium", size: 11, colorVar: v.textTertiary }));
+
+  // Amount (large)
+  card.appendChild(txt(c.amount, { weight: "Bold", size: 20, colorVar: v.textPrimary }));
+
+  if (c.description) {
+    card.appendChild(txt(c.description, { weight: "Regular", size: 11, colorVar: v.textSecondary }));
+  }
+}
+`);
+}
+
+// ─── Credit Usage Card — 한도 사용률 + Progress bar + inline CTA ────────
+function renderCreditUsageCard(s: CreditUsageCardSection): string {
+  return wrap(`
+const s = ${j(s)};
+const w = cAL("VERTICAL", { name: "Credit Usage Wrap", itemSpacing: 10 });
+w.fills = []; w.paddingLeft = 20; w.paddingRight = 20; w.paddingTop = 8; w.paddingBottom = 14;
+wrapper.appendChild(w);
+w.layoutSizingHorizontal = "FILL"; w.layoutSizingVertical = "HUG";
+
+const card = cAL("VERTICAL", { name: "Credit Usage Card", itemSpacing: 12 });
+card.fills = [solid(v.bgPrimary)];
+card.cornerRadius = 14;
+card.strokes = [solid(v.borderPrimary)];
+card.strokeWeight = 1;
+card.paddingLeft = 18; card.paddingRight = 18; card.paddingTop = 16; card.paddingBottom = 16;
+w.appendChild(card);
+card.layoutSizingHorizontal = "FILL"; card.layoutSizingVertical = "HUG";
+
+// Top row: usageLabel (small) + rightInfo (small)
+const topRow = cAL("HORIZONTAL");
+topRow.fills = []; topRow.primaryAxisAlignItems = "SPACE_BETWEEN"; topRow.counterAxisAlignItems = "CENTER";
+card.appendChild(topRow);
+topRow.layoutSizingHorizontal = "FILL"; topRow.layoutSizingVertical = "HUG";
+topRow.appendChild(txt(s.usageLabel, { weight: "Medium", size: 13, colorVar: v.textSecondary }));
+topRow.appendChild(txt(s.rightInfo, { weight: "Medium", size: 12, colorVar: v.textTertiary }));
+
+// Big amount + unit (left aligned)
+const amtRow = cAL("HORIZONTAL", { itemSpacing: 4 });
+amtRow.fills = []; amtRow.counterAxisAlignItems = "BASELINE";
+card.appendChild(amtRow);
+amtRow.layoutSizingHorizontal = "HUG"; amtRow.layoutSizingVertical = "HUG";
+amtRow.appendChild(txt(s.usageAmount, { weight: "Bold", size: 28, colorVar: v.textPrimary }));
+amtRow.appendChild(txt(s.usageUnit, { weight: "Medium", size: 14, colorVar: v.textSecondary }));
+
+// Progress bar
+if (typeof s.progressPercent === "number") {
+  const ratio = Math.max(0, Math.min(1, s.progressPercent / 100));
+  const track = cAL("HORIZONTAL");
+  track.fills = [solid(v.bgTertiary)];
+  track.cornerRadius = 9999;
+  card.appendChild(track);
+  track.resize(100, 8);
+  track.layoutSizingHorizontal = "FILL"; track.layoutSizingVertical = "FIXED";
+  const fill = cAL("HORIZONTAL");
+  // Color tone: warning above 80
+  const isWarn = s.progressPercent >= 80;
+  fill.fills = isWarn
+    ? [rawSolid(0.961, 0.620, 0.043)]
+    : [solid(v.bgBrandSection)];
+  fill.cornerRadius = 9999;
+  track.appendChild(fill);
+  const fillW = Math.max(6, Math.round(330 * ratio));
+  fill.resize(fillW, 8);
+  fill.layoutSizingHorizontal = "FIXED"; fill.layoutSizingVertical = "FIXED";
+}
+
+// Inline CTA
+if (s.cta) {
+  const cta = cAL("HORIZONTAL", { itemSpacing: 8 });
+  cta.fills = [solid(v.bgSecondary)];
+  cta.cornerRadius = 10;
+  cta.paddingLeft = 14; cta.paddingRight = 14; cta.paddingTop = 12; cta.paddingBottom = 12;
+  cta.counterAxisAlignItems = "CENTER";
+  card.appendChild(cta);
+  cta.layoutSizingHorizontal = "FILL"; cta.layoutSizingVertical = "HUG";
+
+  if (s.cta.iconKey && ic[s.cta.iconKey]) {
+    const cInst = ic[s.cta.iconKey].createInstance(); cInst.resize(16, 16);
+    tintIcon(cInst, s.cta.tone === "warning" ? null : v.textBrandPrimary);
+    cta.appendChild(cInst);
+  }
+  const tcol = cAL("VERTICAL");
+  tcol.fills = [];
+  cta.appendChild(tcol);
+  tcol.layoutSizingHorizontal = "FILL"; tcol.layoutSizingVertical = "HUG";
+  tcol.appendChild(txt(s.cta.text, { weight: "Medium", size: 13, colorVar: v.textPrimary }));
+
+  if (ic.chevronRight) {
+    const cv = ic.chevronRight.createInstance(); cv.resize(16, 16);
+    tintIcon(cv, v.textTertiary);
+    cta.appendChild(cv);
+  }
+}
+`);
+}
+
+// ─── Attendance Week — 연속 출석 + 7일 dot row + CTA ────────────────────
+function renderAttendanceWeek(s: AttendanceWeekSection): string {
+  return wrap(`
+const s = ${j(s)};
+const w = cAL("VERTICAL", { name: "Attendance Wrap" });
+w.fills = []; w.paddingLeft = 20; w.paddingRight = 20; w.paddingTop = 4; w.paddingBottom = 12;
+wrapper.appendChild(w);
+w.layoutSizingHorizontal = "FILL"; w.layoutSizingVertical = "HUG";
+
+const card = cAL("VERTICAL", { name: "Attendance Card", itemSpacing: 14 });
+card.fills = [solid(v.bgPrimary)];
+card.cornerRadius = 14;
+card.strokes = [solid(v.borderPrimary)];
+card.strokeWeight = 1;
+card.paddingLeft = 16; card.paddingRight = 16; card.paddingTop = 16; card.paddingBottom = 16;
+w.appendChild(card);
+card.layoutSizingHorizontal = "FILL"; card.layoutSizingVertical = "HUG";
+
+// Top: streak + reward (left) + CTA button (right)
+const top = cAL("HORIZONTAL");
+top.fills = []; top.primaryAxisAlignItems = "SPACE_BETWEEN"; top.counterAxisAlignItems = "CENTER";
+card.appendChild(top);
+top.layoutSizingHorizontal = "FILL"; top.layoutSizingVertical = "HUG";
+
+const tcol = cAL("VERTICAL", { itemSpacing: 4 });
+tcol.fills = [];
+top.appendChild(tcol);
+tcol.layoutSizingHorizontal = "HUG"; tcol.layoutSizingVertical = "HUG";
+
+// Streak with leading bullet
+const streakRow = cAL("HORIZONTAL", { itemSpacing: 6 });
+streakRow.fills = []; streakRow.counterAxisAlignItems = "CENTER";
+tcol.appendChild(streakRow);
+streakRow.layoutSizingHorizontal = "HUG"; streakRow.layoutSizingVertical = "HUG";
+const bullet = figma.createEllipse();
+bullet.resize(8, 8);
+bullet.fills = [rawSolid(0.961, 0.620, 0.043)];
+streakRow.appendChild(bullet);
+streakRow.appendChild(txt(s.streakText, { weight: "Bold", size: 14, colorVar: v.textPrimary }));
+tcol.appendChild(txt(s.rewardText, { weight: "Regular", size: 12, colorVar: v.textSecondary }));
+
+// CTA pill
+const cta = cAL("HORIZONTAL");
+cta.fills = [rawSolid(0.961, 0.620, 0.043)];
+cta.cornerRadius = 9999;
+cta.paddingLeft = 16; cta.paddingRight = 16; cta.paddingTop = 8; cta.paddingBottom = 8;
+cta.primaryAxisAlignItems = "CENTER"; cta.counterAxisAlignItems = "CENTER";
+top.appendChild(cta);
+cta.layoutSizingHorizontal = "HUG"; cta.layoutSizingVertical = "HUG";
+cta.appendChild(txt(s.ctaText, { weight: "Bold", size: 13, colorVar: v.textWhite }));
+
+// Day row — 7 cells, each VERTICAL: dot + label
+const dayRow = cAL("HORIZONTAL", { itemSpacing: 0 });
+dayRow.fills = []; dayRow.primaryAxisAlignItems = "SPACE_BETWEEN"; dayRow.counterAxisAlignItems = "CENTER";
+card.appendChild(dayRow);
+dayRow.layoutSizingHorizontal = "FILL"; dayRow.layoutSizingVertical = "HUG";
+
+for (const d of s.days) {
+  const cell = cAL("VERTICAL", { itemSpacing: 6 });
+  cell.fills = []; cell.primaryAxisAlignItems = "CENTER"; cell.counterAxisAlignItems = "CENTER";
+  dayRow.appendChild(cell);
+  cell.layoutSizingHorizontal = "HUG"; cell.layoutSizingVertical = "HUG";
+
+  if (d.state === "today") {
+    // Today: large filled circle with check (orange)
+    const dot = cAL("HORIZONTAL");
+    dot.fills = [rawSolid(0.961, 0.620, 0.043)];
+    dot.cornerRadius = 9999;
+    dot.primaryAxisAlignItems = "CENTER"; dot.counterAxisAlignItems = "CENTER";
+    cell.appendChild(dot);
+    dot.resize(32, 32);
+    dot.layoutSizingHorizontal = "FIXED"; dot.layoutSizingVertical = "FIXED";
+    if (ic.check) { const ci = ic.check.createInstance(); ci.resize(16, 16); tintIcon(ci, v.textWhite); dot.appendChild(ci); }
+    cell.appendChild(txt("오늘", { weight: "Bold", size: 11, colorRaw: { r: 0.961, g: 0.620, b: 0.043 }, align: "CENTER" }));
+  } else if (d.state === "completed") {
+    // Completed: filled brand circle with check
+    const dot = cAL("HORIZONTAL");
+    dot.fills = [solid(v.bgBrandSection)];
+    dot.cornerRadius = 9999;
+    dot.opacity = 0.18;
+    dot.primaryAxisAlignItems = "CENTER"; dot.counterAxisAlignItems = "CENTER";
+    cell.appendChild(dot);
+    dot.resize(28, 28);
+    dot.layoutSizingHorizontal = "FIXED"; dot.layoutSizingVertical = "FIXED";
+    if (ic.check) { const ci = ic.check.createInstance(); ci.resize(14, 14); tintIcon(ci, v.textBrandPrimary); dot.appendChild(ci); }
+    cell.appendChild(txt(d.label, { weight: "Medium", size: 11, colorVar: v.textTertiary, align: "CENTER" }));
+  } else {
+    // Future: outline circle
+    const dot = cAL("HORIZONTAL");
+    dot.fills = [];
+    dot.strokes = [solid(v.borderPrimary)];
+    dot.strokeWeight = 1;
+    dot.cornerRadius = 9999;
+    cell.appendChild(dot);
+    dot.resize(28, 28);
+    dot.layoutSizingHorizontal = "FIXED"; dot.layoutSizingVertical = "FIXED";
+    cell.appendChild(txt(d.label, { weight: "Medium", size: 11, colorVar: v.textTertiary, align: "CENTER" }));
+  }
+}
+`);
+}
+
+// ─── Event Banner Carousel — 보라 brand 배너 + 페이지네이션 도트 ────────
+function renderEventBannerCarousel(s: EventBannerCarouselSection): string {
+  return wrap(`
+const s = ${j(s)};
+const w = cAL("VERTICAL", { name: "Event Banner Wrap" });
+w.fills = []; w.paddingLeft = 20; w.paddingRight = 20; w.paddingTop = 4; w.paddingBottom = 12;
+wrapper.appendChild(w);
+w.layoutSizingHorizontal = "FILL"; w.layoutSizingVertical = "HUG";
+
+const idx = Math.max(0, Math.min(s.banners.length - 1, s.activeIndex || 0));
+const active = s.banners[idx];
+const isBrand = (active.tone || "brand") === "brand";
+
+const card = cAL("VERTICAL", { name: "Event Banner", itemSpacing: 6 });
+card.fills = [isBrand ? solid(v.bgBrandSection) : solid(v.bgSecondary)];
+card.cornerRadius = 14;
+card.paddingLeft = 18; card.paddingRight = 18; card.paddingTop = 18; card.paddingBottom = 18;
+w.appendChild(card);
+card.layoutSizingHorizontal = "FILL"; card.layoutSizingVertical = "HUG";
+
+// Optional badge
+if (active.badge) {
+  const b = cAL("HORIZONTAL");
+  b.fills = [rawSolid(1, 1, 1, isBrand ? 0.18 : 1)];
+  if (!isBrand) b.fills = [solid(v.bgPrimary)];
+  b.cornerRadius = 9999;
+  b.paddingLeft = 8; b.paddingRight = 8; b.paddingTop = 3; b.paddingBottom = 3;
+  card.appendChild(b);
+  b.layoutSizingHorizontal = "HUG"; b.layoutSizingVertical = "HUG";
+  b.appendChild(txt(active.badge, { weight: "Medium", size: 10, colorVar: isBrand ? v.textWhite : v.textBrandPrimary }));
+}
+
+// Title
+const titleColor = isBrand ? v.textWhite : v.textPrimary;
+card.appendChild(txt(active.title, { weight: "Bold", size: 16, colorVar: titleColor }));
+
+// Description
+if (active.description) {
+  const descOpts = isBrand
+    ? { weight: "Regular", size: 12, colorRaw: { r: 0.85, g: 0.78, b: 1 } }
+    : { weight: "Regular", size: 12, colorVar: v.textSecondary };
+  card.appendChild(txt(active.description, descOpts));
+}
+
+// Pagination dots (bottom right)
+if (s.banners.length > 1) {
+  const dots = cAL("HORIZONTAL", { itemSpacing: 6 });
+  dots.fills = []; dots.primaryAxisAlignItems = "MAX"; dots.counterAxisAlignItems = "CENTER";
+  dots.paddingTop = 8;
+  card.appendChild(dots);
+  dots.layoutSizingHorizontal = "FILL"; dots.layoutSizingVertical = "HUG";
+  for (let i = 0; i < s.banners.length; i++) {
+    const dot = figma.createEllipse();
+    dot.fills = [rawSolid(1, 1, 1, i === idx ? 1 : 0.4)];
+    if (!isBrand) dot.fills = [solid(i === idx ? v.bgBrandSection : v.bgTertiary)];
+    if (i === idx) {
+      const wide = cAL("HORIZONTAL");
+      wide.fills = [rawSolid(1, 1, 1)];
+      if (!isBrand) wide.fills = [solid(v.bgBrandSection)];
+      wide.cornerRadius = 9999;
+      dots.appendChild(wide);
+      wide.resize(16, 6);
+      wide.layoutSizingHorizontal = "FIXED"; wide.layoutSizingVertical = "FIXED";
+    } else {
+      dot.resize(6, 6);
+      dots.appendChild(dot);
+    }
+  }
+}
+`);
+}
+
+// ─── Product Hot Deal — 라운지 진입점 + 가로 스크롤 핫딜 카드 ───────────
+function renderProductHotDeal(s: ProductHotDealSection): string {
+  return wrap(`
+const s = ${j(s)};
+const w = cAL("VERTICAL", { name: "Hot Deal Wrap", itemSpacing: 12 });
+w.fills = []; w.paddingTop = 8; w.paddingBottom = 12;
+wrapper.appendChild(w);
+w.layoutSizingHorizontal = "FILL"; w.layoutSizingVertical = "HUG";
+
+// Header row: title (left bold) + trailing (right small) + balance below title
+const head = cAL("VERTICAL", { itemSpacing: 4 });
+head.fills = []; head.paddingLeft = 20; head.paddingRight = 20;
+w.appendChild(head);
+head.layoutSizingHorizontal = "FILL"; head.layoutSizingVertical = "HUG";
+
+const titleRow = cAL("HORIZONTAL");
+titleRow.fills = []; titleRow.primaryAxisAlignItems = "SPACE_BETWEEN"; titleRow.counterAxisAlignItems = "CENTER";
+head.appendChild(titleRow);
+titleRow.layoutSizingHorizontal = "FILL"; titleRow.layoutSizingVertical = "HUG";
+titleRow.appendChild(txt(s.title, { weight: "Bold", size: 16, colorVar: v.textPrimary }));
+if (s.trailing) {
+  titleRow.appendChild(txt(s.trailing, { weight: "Medium", size: 12, colorVar: v.textTertiary }));
+}
+
+const balRow = cAL("HORIZONTAL", { itemSpacing: 4 });
+balRow.fills = []; balRow.counterAxisAlignItems = "CENTER";
+head.appendChild(balRow);
+balRow.layoutSizingHorizontal = "HUG"; balRow.layoutSizingVertical = "HUG";
+balRow.appendChild(txt("사용 가능", { weight: "Medium", size: 12, colorVar: v.textTertiary }));
+balRow.appendChild(txt(s.pointBalance, { weight: "Bold", size: 13, colorVar: v.textBrandPrimary }));
+
+// Product scroll
+const row = cAL("HORIZONTAL", { itemSpacing: 12 });
+row.fills = []; row.paddingLeft = 20; row.paddingRight = 20;
+row.clipsContent = true;
+w.appendChild(row);
+row.layoutSizingHorizontal = "FILL"; row.layoutSizingVertical = "HUG";
+
+const BADGE_PALETTE = {
+  hotdeal: { bg: { r: 0.996, g: 0.949, b: 0.949 }, fg: { r: 0.890, g: 0.196, b: 0.196 }, text: "핫딜" },
+  best:    { bg: { r: 0.945, g: 0.949, b: 0.984 }, fg: { r: 0.412, g: 0.220, b: 0.937 }, text: "BEST" },
+  new:     { bg: { r: 0.945, g: 0.984, b: 0.953 }, fg: { r: 0.063, g: 0.725, b: 0.506 }, text: "NEW" },
+};
+
+const HUE_TO_BG = HUE;
+
+for (const p of s.products) {
+  const card = cAL("VERTICAL", { itemSpacing: 8 });
+  card.fills = [];
+  row.appendChild(card);
+  card.resize(140, 100);
+  card.layoutSizingHorizontal = "FIXED"; card.layoutSizingVertical = "HUG";
+
+  // Image placeholder (140x140 squared)
+  const img = cAL("VERTICAL");
+  const hue = p.imageHue && HUE_TO_BG[p.imageHue] ? HUE_TO_BG[p.imageHue].c1 : { r: 0.95, g: 0.95, b: 0.92 };
+  img.fills = [rawSolid(hue.r * 1.05 > 1 ? 1 : hue.r * 1.05, hue.g * 1.05 > 1 ? 1 : hue.g * 1.05, hue.b * 1.05 > 1 ? 1 : hue.b * 1.05, 0.4)];
+  img.cornerRadius = 12;
+  img.paddingLeft = 8; img.paddingTop = 8;
+  card.appendChild(img);
+  img.resize(140, 140);
+  img.layoutSizingHorizontal = "FIXED"; img.layoutSizingVertical = "FIXED";
+
+  // Optional badge on image
+  if (p.badge) {
+    const bp = BADGE_PALETTE[p.badge] || BADGE_PALETTE.hotdeal;
+    const bg = cAL("HORIZONTAL");
+    bg.fills = [rawSolid(bp.fg.r, bp.fg.g, bp.fg.b)];
+    bg.cornerRadius = 4;
+    bg.paddingLeft = 6; bg.paddingRight = 6; bg.paddingTop = 3; bg.paddingBottom = 3;
+    img.appendChild(bg);
+    bg.layoutSizingHorizontal = "HUG"; bg.layoutSizingVertical = "HUG";
+    bg.appendChild(txt(bp.text, { weight: "Bold", size: 10, colorVar: v.textWhite }));
+  }
+
+  // Name
+  card.appendChild(txt(p.name, { weight: "Medium", size: 13, colorVar: v.textPrimary }));
+
+  // Discount + price row
+  const pr = cAL("HORIZONTAL", { itemSpacing: 6 });
+  pr.fills = []; pr.counterAxisAlignItems = "BASELINE";
+  card.appendChild(pr);
+  pr.layoutSizingHorizontal = "HUG"; pr.layoutSizingVertical = "HUG";
+  if (p.discount) {
+    pr.appendChild(txt(p.discount, { weight: "Bold", size: 14, colorRaw: { r: 0.890, g: 0.196, b: 0.196 } }));
+  }
+  pr.appendChild(txt(p.price, { weight: "Bold", size: 14, colorVar: v.textPrimary }));
+}
+`);
+}
+
 export function renderSection(s: SectionSpec): string {
   switch (s.type) {
     case 'appHeader': return renderAppHeader(s);
@@ -1376,6 +2027,13 @@ export function renderSection(s: SectionSpec): string {
     case 'stageCardList': return renderStageCardList(s);
     case 'footerLegal': return renderFooterLegal(s);
     case 'spacer': return renderSpacer(s);
+    case 'alertBanner': return renderAlertBanner(s);
+    case 'recommendHero': return renderRecommendHero(s);
+    case 'stageCardScroll': return renderStageCardScroll(s);
+    case 'creditUsageCard': return renderCreditUsageCard(s);
+    case 'attendanceWeek': return renderAttendanceWeek(s);
+    case 'eventBannerCarousel': return renderEventBannerCarousel(s);
+    case 'productHotDeal': return renderProductHotDeal(s);
     default:
       return `// Unknown section type: ${(s as { type: string }).type}\n`;
   }
