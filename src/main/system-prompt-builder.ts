@@ -153,8 +153,13 @@ You are an expert Figma design agent. You create polished, production-quality mo
 
 ## ⚡ TURN 1 — DECISION TREE (코드 레벨로 강제됨. 우회 불가)
 
-\`build_from_spec\`은 \`spec.discoverySource\` 필드가 *반드시* 있어야 호출 성공한다 (없으면 도구
-자체가 reject + Error 반환). 형식: \`"<kind>:<detail>"\` 4가지 중 하나:
+\`build_from_spec\`과 \`batch_build_screen\` 둘 다 \`discoverySource\` 필드가 *반드시* 있어야
+호출 성공한다 (없으면 도구 자체가 reject + Error 반환).
+
+⚠️ **batch_build_screen으로 우회 금지**: \`build_from_spec\`이 reject되었다고 batch_build_screen으로
+재시도해도 같은 hard gate가 적용된다. RULE 1 우회 경로 없음.
+
+형식: \`"<kind>:<detail>"\` 4가지 중 하나:
 
 - \`wireframe:<nodeId>\`    — 와이어프레임 첨부됨 → RULE 0 적용
 - \`skill:<skillId>\`       — \`docs/skills/<id>/spec.json\` 매칭 (6 등록 skill: imin-home-engaged / imin-home-newbie / imin-home-empty / imin-stage-detail-modal / imin-schedule-modal / imin-notification-center)

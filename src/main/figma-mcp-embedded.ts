@@ -929,6 +929,39 @@ Result: returns rootId, screenshot, and (when *Var fields were used) tokenBindCo
 
     const hasParentId = !!(params as Record<string, unknown>).parentId;
 
+    // ═══════════════════════════════════════════════════════════════════
+    // RULE 1 enforcement (mirror of build_from_spec gate). Without this,
+    // the agent bypasses RULE 1 by routing through batch_build_screen
+    // — exactly what happened in the 2026-05-03 fresh-session re-test.
+    // Section builds (parentId set) are exempt; otherwise discoverySource
+    // must be present in the blueprint root.
+    // ═══════════════════════════════════════════════════════════════════
+    const blueprintRaw = params.blueprint as Record<string, unknown> | undefined;
+    if (!hasParentId) {
+      const ds = blueprintRaw && typeof blueprintRaw === 'object'
+        ? (blueprintRaw as Record<string, unknown>).discoverySource
+        : undefined;
+      if (typeof ds !== 'string' || ds.length === 0 || !/^(wireframe|skill|form|skip):/.test(ds)) {
+        throw new Error([
+          'batch_build_screen REJECTED: blueprint.discoverySource is required for full-screen builds.',
+          '',
+          'Use build_from_spec instead — it is the preferred path. If you must use',
+          'batch_build_screen, declare how you decided what to build:',
+          '  - "wireframe:<nodeId>"    (wireframe attached → RULE 0)',
+          '  - "skill:<skillId>"       (matched docs/skills/<id>/spec.json)',
+          '  - "form:<key=val,...>"    (RULE 1 mode B — user answered form)',
+          '  - "skip:<reason>"         (user said "just build, skip questions")',
+          '',
+          'If wireframe is NOT attached and PRD is text-only, FIRST emit AskUserQuestion',
+          'with the 7-item discovery form (output / mode / activeTab / data / scale /',
+          'emphasis / constraints) and WAIT for the user response. Then build with',
+          'discoverySource: "form:<key=val,...>".',
+          '',
+          'Section builds (parentId set) are exempt from this gate.',
+        ].join('\n'));
+      }
+    }
+
     // Auto-check for DS token updates before building
     await syncTokensIfNeeded();
 
