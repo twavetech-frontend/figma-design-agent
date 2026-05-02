@@ -1370,17 +1370,17 @@ w.fills = []; w.paddingLeft = 16; w.paddingRight = 16; w.paddingTop = 4; w.paddi
 wrapper.appendChild(w);
 w.layoutSizingHorizontal = "FILL"; w.layoutSizingVertical = "HUG";
 
-// Tone palette — bg + accent + text
+// Tone palette — all DS semantic tokens (bg-secondary tier + solid icon bg + text-primary fg)
 const tonePalette = {
-  error:   { bgRaw: { r: 0.996, g: 0.949, b: 0.949 }, accentVar: v.textErrorPrimary, accentRaw: { r: 0.890, g: 0.196, b: 0.196 } },
-  warning: { bgRaw: { r: 0.996, g: 0.969, b: 0.918 }, accentVar: null,                accentRaw: { r: 0.961, g: 0.620, b: 0.043 } },
-  info:    { bgRaw: { r: 0.945, g: 0.949, b: 0.984 }, accentVar: v.textBrandPrimary,  accentRaw: { r: 0.412, g: 0.220, b: 0.937 } },
-  success: { bgRaw: { r: 0.929, g: 0.976, b: 0.953 }, accentVar: null,                accentRaw: { r: 0.063, g: 0.725, b: 0.506 } },
+  error:   { bgVar: v.bgErrorSecondary,   accentVar: v.textErrorPrimary,   solidVar: v.bgErrorSolid },
+  warning: { bgVar: v.bgWarningSecondary, accentVar: v.textWarningPrimary, solidVar: v.bgWarningSolid },
+  info:    { bgVar: v.bgSecondary,        accentVar: v.textBrandPrimary,   solidVar: v.bgBrandSection },
+  success: { bgVar: v.bgSuccessSecondary, accentVar: v.textSuccessPrimary, solidVar: v.bgSuccessSolid },
 };
 const tp = tonePalette[s.tone] || tonePalette.error;
 
 const card = cAL("HORIZONTAL", { name: "Alert " + s.tone, itemSpacing: 12 });
-card.fills = [rawSolid(tp.bgRaw.r, tp.bgRaw.g, tp.bgRaw.b)];
+card.fills = [solid(tp.bgVar)];
 card.cornerRadius = 12;
 card.paddingLeft = 14; card.paddingRight = 14; card.paddingTop = 12; card.paddingBottom = 12;
 card.counterAxisAlignItems = "CENTER";
@@ -1390,7 +1390,7 @@ card.layoutSizingHorizontal = "FILL"; card.layoutSizingVertical = "HUG";
 // Leading icon (circle with accent)
 if (s.iconKey && ic[s.iconKey]) {
   const iconWrap = cAL("HORIZONTAL");
-  iconWrap.fills = [rawSolid(tp.accentRaw.r, tp.accentRaw.g, tp.accentRaw.b)];
+  iconWrap.fills = [solid(tp.solidVar)];
   iconWrap.cornerRadius = 9999;
   iconWrap.primaryAxisAlignItems = "CENTER"; iconWrap.counterAxisAlignItems = "CENTER";
   card.appendChild(iconWrap);
@@ -1407,10 +1407,7 @@ tcol.fills = []; tcol.primaryAxisAlignItems = "CENTER";
 card.appendChild(tcol);
 tcol.layoutSizingHorizontal = "FILL"; tcol.layoutSizingVertical = "HUG";
 
-const titleOpts = tp.accentVar
-  ? { weight: "Bold", size: 13, colorVar: tp.accentVar }
-  : { weight: "Bold", size: 13, colorRaw: tp.accentRaw };
-tcol.appendChild(txt(s.title, titleOpts));
+tcol.appendChild(txt(s.title, { weight: "Bold", size: 13, colorVar: tp.accentVar }));
 if (s.description) {
   tcol.appendChild(txt(s.description, { weight: "Regular", size: 12, colorVar: v.textSecondary }));
 }
@@ -1595,17 +1592,12 @@ row.clipsContent = true;
 w.appendChild(row);
 row.layoutSizingHorizontal = "FILL"; row.layoutSizingVertical = "HUG";
 
-const STATUS_BG = {
-  inProgress: { r: 0.945, g: 0.949, b: 0.984 },
-  scheduled:  { r: 0.945, g: 0.984, b: 0.953 },
-  overdue:    { r: 0.996, g: 0.949, b: 0.949 },
-  completed:  { r: 0.949, g: 0.949, b: 0.961 },
-};
-const STATUS_FG = {
-  inProgress: { r: 0.412, g: 0.220, b: 0.937 },
-  scheduled:  { r: 0.063, g: 0.725, b: 0.506 },
-  overdue:    { r: 0.890, g: 0.196, b: 0.196 },
-  completed:  { r: 0.4, g: 0.4, b: 0.4 },
+// Status palette — DS variable bindings; pill bg ~ secondary tier, fg ~ primary text
+const STATUS = {
+  inProgress: { bgVar: v.bgSecondary,         fgVar: v.textBrandPrimary },
+  scheduled:  { bgVar: v.bgSuccessSecondary,  fgVar: v.textSuccessPrimary },
+  overdue:    { bgVar: v.bgErrorSecondary,    fgVar: v.textErrorPrimary },
+  completed:  { bgVar: v.bgTertiary,          fgVar: v.textTertiary },
 };
 
 for (const c of s.cards) {
@@ -1625,15 +1617,14 @@ for (const c of s.cards) {
   card.appendChild(top);
   top.layoutSizingHorizontal = "FILL"; top.layoutSizingVertical = "HUG";
 
-  const sBg = STATUS_BG[c.status] || STATUS_BG.inProgress;
-  const sFg = STATUS_FG[c.status] || STATUS_FG.inProgress;
+  const st = STATUS[c.status] || STATUS.inProgress;
   const pill = cAL("HORIZONTAL");
-  pill.fills = [rawSolid(sBg.r, sBg.g, sBg.b)];
+  pill.fills = [solid(st.bgVar)];
   pill.cornerRadius = 9999;
   pill.paddingLeft = 8; pill.paddingRight = 8; pill.paddingTop = 4; pill.paddingBottom = 4;
   top.appendChild(pill);
   pill.layoutSizingHorizontal = "HUG"; pill.layoutSizingVertical = "HUG";
-  pill.appendChild(txt(c.statusLabel, { weight: "Medium", size: 11, colorRaw: sFg }));
+  pill.appendChild(txt(c.statusLabel, { weight: "Medium", size: 11, colorVar: st.fgVar }));
 
   // Heart
   if (ic.starFilled || ic.star) {
@@ -1705,7 +1696,7 @@ if (typeof s.progressPercent === "number") {
   // Color tone: warning above 80
   const isWarn = s.progressPercent >= 80;
   fill.fills = isWarn
-    ? [rawSolid(0.961, 0.620, 0.043)]
+    ? [solid(v.bgWarningSolid)]
     : [solid(v.bgBrandSection)];
   fill.cornerRadius = 9999;
   track.appendChild(fill);
@@ -1780,14 +1771,14 @@ tcol.appendChild(streakRow);
 streakRow.layoutSizingHorizontal = "HUG"; streakRow.layoutSizingVertical = "HUG";
 const bullet = figma.createEllipse();
 bullet.resize(8, 8);
-bullet.fills = [rawSolid(0.961, 0.620, 0.043)];
+bullet.fills = [solid(v.bgWarningSolid)];
 streakRow.appendChild(bullet);
 streakRow.appendChild(txt(s.streakText, { weight: "Bold", size: 14, colorVar: v.textPrimary }));
 tcol.appendChild(txt(s.rewardText, { weight: "Regular", size: 12, colorVar: v.textSecondary }));
 
 // CTA pill
 const cta = cAL("HORIZONTAL");
-cta.fills = [rawSolid(0.961, 0.620, 0.043)];
+cta.fills = [solid(v.bgWarningSolid)];
 cta.cornerRadius = 9999;
 cta.paddingLeft = 16; cta.paddingRight = 16; cta.paddingTop = 8; cta.paddingBottom = 8;
 cta.primaryAxisAlignItems = "CENTER"; cta.counterAxisAlignItems = "CENTER";
@@ -1810,14 +1801,14 @@ for (const d of s.days) {
   if (d.state === "today") {
     // Today: large filled circle with check (orange)
     const dot = cAL("HORIZONTAL");
-    dot.fills = [rawSolid(0.961, 0.620, 0.043)];
+    dot.fills = [solid(v.bgWarningSolid)];
     dot.cornerRadius = 9999;
     dot.primaryAxisAlignItems = "CENTER"; dot.counterAxisAlignItems = "CENTER";
     cell.appendChild(dot);
     dot.resize(32, 32);
     dot.layoutSizingHorizontal = "FIXED"; dot.layoutSizingVertical = "FIXED";
     if (ic.check) { const ci = ic.check.createInstance(); ci.resize(16, 16); tintIcon(ci, v.textWhite); dot.appendChild(ci); }
-    cell.appendChild(txt("오늘", { weight: "Bold", size: 11, colorRaw: { r: 0.961, g: 0.620, b: 0.043 }, align: "CENTER" }));
+    cell.appendChild(txt("오늘", { weight: "Bold", size: 11, colorVar: v.textWarningPrimary, align: "CENTER" }));
   } else if (d.state === "completed") {
     // Completed: filled brand circle with check
     const dot = cAL("HORIZONTAL");
@@ -1956,10 +1947,11 @@ row.clipsContent = true;
 w.appendChild(row);
 row.layoutSizingHorizontal = "FILL"; row.layoutSizingVertical = "HUG";
 
+// Badge palette — DS solid bg variant; white fg via textWhite
 const BADGE_PALETTE = {
-  hotdeal: { bg: { r: 0.996, g: 0.949, b: 0.949 }, fg: { r: 0.890, g: 0.196, b: 0.196 }, text: "핫딜" },
-  best:    { bg: { r: 0.945, g: 0.949, b: 0.984 }, fg: { r: 0.412, g: 0.220, b: 0.937 }, text: "BEST" },
-  new:     { bg: { r: 0.945, g: 0.984, b: 0.953 }, fg: { r: 0.063, g: 0.725, b: 0.506 }, text: "NEW" },
+  hotdeal: { solidVar: v.bgErrorSolid,   text: "핫딜" },
+  best:    { solidVar: v.bgBrandSection, text: "BEST" },
+  new:     { solidVar: v.bgSuccessSolid, text: "NEW" },
 };
 
 const HUE_TO_BG = HUE;
@@ -1985,7 +1977,7 @@ for (const p of s.products) {
   if (p.badge) {
     const bp = BADGE_PALETTE[p.badge] || BADGE_PALETTE.hotdeal;
     const bg = cAL("HORIZONTAL");
-    bg.fills = [rawSolid(bp.fg.r, bp.fg.g, bp.fg.b)];
+    bg.fills = [solid(bp.solidVar)];
     bg.cornerRadius = 4;
     bg.paddingLeft = 6; bg.paddingRight = 6; bg.paddingTop = 4; bg.paddingBottom = 4;
     img.appendChild(bg);
@@ -2002,7 +1994,7 @@ for (const p of s.products) {
   card.appendChild(pr);
   pr.layoutSizingHorizontal = "HUG"; pr.layoutSizingVertical = "HUG";
   if (p.discount) {
-    pr.appendChild(txt(p.discount, { weight: "Bold", size: 14, colorRaw: { r: 0.890, g: 0.196, b: 0.196 } }));
+    pr.appendChild(txt(p.discount, { weight: "Bold", size: 14, colorVar: v.textErrorPrimary }));
   }
   pr.appendChild(txt(p.price, { weight: "Bold", size: 14, colorVar: v.textPrimary }));
 }
