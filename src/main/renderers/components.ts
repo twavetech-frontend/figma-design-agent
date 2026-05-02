@@ -502,7 +502,7 @@ if (s.add) {
     tintIcon(pi, v.textTertiary);
     ac.appendChild(pi);
   }
-  add.appendChild(txt(s.add.label, { weight: "Medium", size: 11, colorVar: v.textTertiary, align: "CENTER" }));
+  add.appendChild(txt(s.add.label, { weight: "Medium", size: 10, colorVar: v.textTertiary, align: "CENTER" }));
 }
 
 // Master: avatar circle + initial + optional crown overlay + name + level
@@ -930,7 +930,7 @@ const { component: txnRowComp } = await ensureComponent("transactionTimelineRow_
   dayBadge.resize(48, 48);
   dayBadge.layoutSizingHorizontal = "FIXED"; dayBadge.layoutSizingVertical = "FIXED";
   const dayLabelNode = txt("Day", { weight: "Bold", size: 13, colorVar: v.textTertiary, align: "CENTER" });
-  const dayStateNode = txt("D-0", { weight: "Medium", size: 11, colorVar: v.textTertiary, align: "CENTER" });
+  const dayStateNode = txt("D-0", { weight: "Medium", size: 10, colorVar: v.textTertiary, align: "CENTER" });
   dayBadge.appendChild(dayLabelNode);
   dayBadge.appendChild(dayStateNode);
 
@@ -1438,7 +1438,7 @@ w.appendChild(card);
 card.layoutSizingHorizontal = "FILL"; card.layoutSizingVertical = "HUG";
 
 // Top label
-card.appendChild(txt(s.topLabel, { weight: "Medium", size: 13, colorRaw: { r: 0.85, g: 0.78, b: 1 } }));
+card.appendChild(txt(s.topLabel, { weight: "Medium", size: 13, colorVar: v.textTertiaryOnBrand }));
 
 // Amount + unit row (massive display)
 const amtRow = cAL("HORIZONTAL", { itemSpacing: 6 });
@@ -1536,7 +1536,7 @@ if (s.steppers && s.steppers.length > 0) {
     valWrap.layoutSizingHorizontal = "FIXED"; valWrap.layoutSizingVertical = "HUG";
     valWrap.primaryAxisAlignItems = "CENTER";
     valWrap.appendChild(txt(st.value, { weight: "Bold", size: 16, colorVar: v.textWhite, align: "CENTER" }));
-    if (st.unit) valWrap.appendChild(txt(st.unit, { weight: "Medium", size: 12, colorRaw: { r: 0.85, g: 0.78, b: 1 } }));
+    if (st.unit) valWrap.appendChild(txt(st.unit, { weight: "Medium", size: 12, colorVar: v.textTertiaryOnBrand }));
 
     const plus = cAL("HORIZONTAL");
     plus.fills = [rawSolid(1, 1, 1, 0.15)];
@@ -1820,7 +1820,7 @@ for (const d of s.days) {
     dot.resize(28, 28);
     dot.layoutSizingHorizontal = "FIXED"; dot.layoutSizingVertical = "FIXED";
     if (ic.check) { const ci = ic.check.createInstance(); ci.resize(14, 14); tintIcon(ci, v.textBrandPrimary); dot.appendChild(ci); }
-    cell.appendChild(txt(d.label, { weight: "Medium", size: 11, colorVar: v.textTertiary, align: "CENTER" }));
+    cell.appendChild(txt(d.label, { weight: "Medium", size: 10, colorVar: v.textTertiary, align: "CENTER" }));
   } else {
     // Future: outline circle
     const dot = cAL("HORIZONTAL");
@@ -1831,7 +1831,7 @@ for (const d of s.days) {
     cell.appendChild(dot);
     dot.resize(28, 28);
     dot.layoutSizingHorizontal = "FIXED"; dot.layoutSizingVertical = "FIXED";
-    cell.appendChild(txt(d.label, { weight: "Medium", size: 11, colorVar: v.textTertiary, align: "CENTER" }));
+    cell.appendChild(txt(d.label, { weight: "Medium", size: 10, colorVar: v.textTertiary, align: "CENTER" }));
   }
 }
 `);
@@ -1876,7 +1876,7 @@ card.appendChild(txt(active.title, { weight: "Bold", size: 16, colorVar: titleCo
 // Description
 if (active.description) {
   const descOpts = isBrand
-    ? { weight: "Regular", size: 12, colorRaw: { r: 0.85, g: 0.78, b: 1 } }
+    ? { weight: "Regular", size: 12, colorVar: v.textTertiaryOnBrand }
     : { weight: "Regular", size: 12, colorVar: v.textSecondary };
   card.appendChild(txt(active.description, descOpts));
 }

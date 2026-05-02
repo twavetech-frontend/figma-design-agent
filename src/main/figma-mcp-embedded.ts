@@ -97,8 +97,8 @@ for (const t of texts) { if (t.fontSize > 0) sizeSet.add(t.fontSize); if (t.font
 const uniqueSizes = [...sizeSet].sort((a, b) => a - b);
 const uniqueWeights = [...weightSet];
 const typoIssues = [];
-if (uniqueSizes.length > 10) typoIssues.push({ severity: "P1", msg: "Type scale chaos: " + uniqueSizes.length + " unique font sizes (>10). Sizes: " + uniqueSizes.join(", ") });
-else if (uniqueSizes.length > 8) typoIssues.push({ severity: "P2", msg: "Type scale dense: " + uniqueSizes.length + " unique font sizes." });
+if (uniqueSizes.length > 12) typoIssues.push({ severity: "P1", msg: "Type scale chaos: " + uniqueSizes.length + " unique font sizes (>12). Sizes: " + uniqueSizes.join(", ") });
+else if (uniqueSizes.length > 10) typoIssues.push({ severity: "P2", msg: "Type scale dense: " + uniqueSizes.length + " unique font sizes (10-tier scale recommended)." });
 if (uniqueWeights.length > 5) typoIssues.push({ severity: "P2", msg: "Weight chaos: " + uniqueWeights.length + " font weights" });
 const typoScore = Math.max(0, 100 - typoIssues.filter(i => i.severity === "P1").length * 20 - typoIssues.filter(i => i.severity === "P2").length * 8);
 

@@ -31,6 +31,9 @@ const VK = {
   bgSuccessSolid: '36323b552f28b9711e91dfd3f294bd7d007d9a30',
   fgWarningPrimary: '2ed2128976bc567313c051914e5a037d7ea26eeb',
   fgSuccessPrimary: '32bd287a0f58570ceb338469ee27f36d11a4d13e',
+  textSecondaryOnBrand: '32bd03c6ca163fcc6a936e886781140586885211',
+  textTertiaryOnBrand: 'f7b36c35203592f8624ed00a3b787e24845edac5',
+  bgBrandSectionSubtle: '74d1ee89be9a46e41e4286107e874fd88fa99636',
   borderPrimary: '879d09834d327a7a5b103b731ce39d6c1abba6f4',
   borderSecondary: '414a1701c43313f6fdcffa0c8c4cd21630086749',
 };
