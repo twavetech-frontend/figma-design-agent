@@ -172,7 +172,84 @@ async function main() {
 
   console.log('[Bridge] Ready. Waiting for Figma plugin connection...');
 
-  // 6. Graceful shutdown
+  // 6. Bypass-detection watchdog with whitelist. Every 15s, scan the GUI page
+  // for root frames added AFTER the watchdog initialized. Original wireframes
+  // / pre-existing screens are whitelisted on first plugin connect so we
+  // never falsely flag user-authored content. Only frames born during this
+  // bridge session need a build stamp; absence of stamp on a delta frame
+  // proves use_figma bypass.
+  //
+  // Also UNDO any false-positive markings from earlier (no-whitelist) runs:
+  // any frame whose stamp exists OR whose nodeId is in the whitelist gets
+  // its "⚠️ RULE 1 우회 — " prefix stripped.
+  const POLL_INTERVAL_MS = 15_000;
+  const knownAtBoot = new Set<string>();
+  let bootScanDone = false;
+  let watchdogBusy = false;
+  setInterval(async () => {
+    if (watchdogBusy) return;
+    if (!figmaWS.isConnected) return;
+    watchdogBusy = true;
+    try {
+      const code = `
+const guiPage = figma.root.children.find(p => p.name === "GUI") || figma.currentPage;
+await figma.setCurrentPageAsync(guiPage);
+const known = new Set(${JSON.stringify(Array.from(knownAtBoot))});
+const bootDone = ${bootScanDone};
+const allRoots = []; const toMark = []; const toUnmark = [];
+for (const n of guiPage.children) {
+  if (n.type !== "FRAME" || n.width < 360) continue;
+  if (/디스크립션|description|AGENT_LIBRARY|Cover/.test(n.name || "")) continue;
+  allRoots.push(n.id);
+  let stamp = "";
+  try { stamp = n.getSharedPluginData("fda_renderer", "screenMeta"); } catch (e) {}
+  const isStamped = !!(stamp && stamp.length > 0);
+  const isWhitelisted = known.has(n.id);
+  const hasMark = /^⚠️ RULE 1 우회 — /.test(n.name || "");
+  if (!bootDone) continue;
+  // Repair: if a frame is whitelisted or stamped but still has the bypass mark,
+  // strip the prefix (false-positive from a no-whitelist run).
+  if ((isWhitelisted || isStamped) && hasMark) {
+    n.name = n.name.replace(/^⚠️ RULE 1 우회 — /, "");
+    toUnmark.push({ nodeId: n.id, newName: n.name });
+    continue;
+  }
+  // Mark: only frames added AFTER bridge boot AND lacking a stamp
+  if (!isWhitelisted && !isStamped && !hasMark) {
+    n.name = "⚠️ RULE 1 우회 — " + n.name;
+    toMark.push({ nodeId: n.id, newName: n.name });
+  }
+}
+return { allRoots, marked: toMark, unmarked: toUnmark };
+`;
+      const result = await figmaWS.sendCommand('execute_js', { code }, 20000) as Record<string, unknown>;
+      const allRoots = (result?.allRoots as string[]) || [];
+      if (!bootScanDone) {
+        // First successful pass after the plugin connects — capture the
+        // whitelist and unmark anything that previously got falsely flagged.
+        for (const id of allRoots) knownAtBoot.add(id);
+        bootScanDone = true;
+        console.log(`[Watchdog] Whitelist captured: ${knownAtBoot.size} pre-existing root frame(s).`);
+      }
+      const marked = (result?.marked as Array<{ nodeId: string; newName: string }>) || [];
+      const unmarked = (result?.unmarked as Array<{ nodeId: string; newName: string }>) || [];
+      if (unmarked.length > 0) {
+        console.log(`[Watchdog] Repaired ${unmarked.length} false-positive mark(s):`);
+        for (const u of unmarked) console.log(`  ✓ ${u.nodeId}  ${u.newName}`);
+      }
+      if (marked.length > 0) {
+        console.log(`[Watchdog] Auto-marked ${marked.length} new bypass screen(s):`);
+        for (const m of marked) console.log(`  ⚠ ${m.nodeId}  ${m.newName}`);
+      }
+    } catch (e) {
+      // Quiet — connection drops are normal during plugin reloads
+    } finally {
+      watchdogBusy = false;
+    }
+  }, POLL_INTERVAL_MS);
+  console.log(`[Bridge] Bypass watchdog armed (every ${POLL_INTERVAL_MS / 1000}s, whitelist mode).`);
+
+  // 7. Graceful shutdown
   const shutdown = async () => {
     console.log('\n[Bridge] Shutting down...');
     mcpServer.stop();
