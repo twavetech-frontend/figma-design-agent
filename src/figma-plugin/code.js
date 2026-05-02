@@ -290,10 +290,26 @@ async function handleCommand(command, params) {
       return clearComponentCache();
     case "batch_execute":
       return await batchExecute(params);
+    case "execute_js":
+      return await executeJsCode(params);
     default:
       throw new Error(`Unknown command: ${command}`);
   }
 };
+
+// Generic JS executor — used by `build_from_spec` so renderers (compiled
+// from a high-level spec) can run in the plugin Plugin API context.
+// Wraps user code in an async IIFE and exposes `figma` as a global so the
+// generated code reads naturally (same shape as the figma-power use_figma).
+async function executeJsCode(params) {
+  if (!params || typeof params.code !== "string") {
+    throw new Error("execute_js: params.code must be a string");
+  }
+  const wrapped = "return (async () => { " + params.code + " })();";
+  // eslint-disable-next-line no-new-func
+  const fn = new Function("figma", wrapped);
+  return await fn(figma);
+}
 
 // Command implementations
 

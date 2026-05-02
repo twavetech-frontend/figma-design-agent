@@ -13,6 +13,8 @@ import { getIcons, getVariants, getTokenMap, syncTokensIfNeeded, type VariantEnt
 
 import { getIconSvg, getIconSvgAsync, resolveIconFile } from './untitled-icons';
 import { simulateLayout } from './yoga-simulator';
+import { buildScreenJS } from './renderers/orchestrate';
+import type { ScreenSpec } from './renderers/types';
 
 // Re-export for convenience
 export type { ToolDefinition };
@@ -875,6 +877,103 @@ Result: returns rootId, screenshot, and (when *Var fields were used) tokenBindCo
 
     return result;
   }, { timeoutMs: 310_000 }); // 5min WS + 10s margin
+
+  // ============================================================
+  // build_from_spec — generic component-based screen builder
+  // ============================================================
+  reg('build_from_spec', `Build a polished screen from a high-level component spec — the PREFERRED path for all wireframe-to-figma work.
+
+🚨 INPUT REQUIREMENTS — ALWAYS READ BOTH
+
+1. **The selected wireframe** (use get_selection + scan_text_nodes + export_node_as_image to extract structure + actual data verbatim).
+2. **PRD.md (or any *.md product spec) attached or in the project repo** — Read the file and pull product context, exact copy, numbers, labels, and intended states from it. The wireframe shows structure, the PRD shows the source-of-truth content.
+
+If the user mentions a PRD or attaches a markdown file, you MUST Read it before authoring the spec.
+
+📐 SPEC SHAPE — generic, sections-based
+
+{
+  width: 393,                                  // mobile root width
+  positionRelativeTo?: "<figma node ID>",     // optional — placed to the right of the wireframe
+  bgVar?: "bg-primary" | "bg-secondary" | "bg-tertiary",  // wrapper background
+  statusBar?: boolean,                         // default true — clones the in-file Status bar
+  sections: SectionSpec[],                     // normal-flow children, top-to-bottom
+  overlays?: OverlaySpec[]                     // ABSOLUTE bottom overlays (TabBar + FAB)
+}
+
+🧩 AVAILABLE SECTION TYPES (sections[])
+
+Headers:
+  { type: "appHeader", rightIcons?: IconKey[], logoText?: string }
+  { type: "modalHeader", title?: string, showClose?: boolean }
+  { type: "backHeader", title?: string }
+
+Tabs / chips:
+  { type: "filterChipRow", chips: [{ text, selected? }, ...] }
+  { type: "segmentedTab", tabs: [{ id, label }, ...], activeId }
+  { type: "underlineTab", tabs: [{ id, label }, ...], activeId }
+
+Layout:
+  { type: "sectionHeader", title, trailing? }
+  { type: "spacer", height: number }
+
+Cards / forms:
+  { type: "stepperCard", rows: [{ label, value, unit }, ...] }
+  { type: "avatarRow", add?: { label }, makers: [{ name, level, colorHue, crown? }, ...] }
+  { type: "summaryCardLinkRows", title, titleIcons?, rows: [{ label, value, valueTone?: "positive"|"negative"|"neutral", asLink? }, ...] }
+  { type: "stageCardList", layout: "timeline", items: [{ monthly, months, payoutAt, payout, interest, points, fee }, ...] }
+
+Strips / calendars:
+  { type: "monthScrollerCalendar", title?, months: [{ short, day, active?, activeLabel?, badge? }, ...], filterLabel? }
+  { type: "statsStrip3Col", cols: [{ label, value, valueTone? }, ...] }
+
+Lists:
+  { type: "transactionTimeline", items: [{ dayLabel, dayState, rowState: "overdue"|"today"|"soon"|"scheduled"|"completed", title, amount, rightAction }, ...] }
+
+Footer:
+  { type: "footerLegal", legalLinks: string[], companyName, bizNumber, ceo, teleSalesNumber, disclaimer, copyright }
+
+🎯 OVERLAYS (overlays[])
+  { type: "tabBar", tabs: [{ id, label, iconKey }, ...], activeId }
+  { type: "fab", iconKey: "wallet"|"plus"|"message"|"gift" }
+
+🎨 IconKey values (typed enums)
+  bell, message, home, shoppingBag, award, users, menu, wallet, plus, gift, star, check, sparkle, info, chevronLeft, chevronRight, eye, search, x
+
+🚦 RULES THE AGENT MUST FOLLOW
+
+- Copy data VERBATIM from the wireframe + PRD. Do NOT substitute reference sample data ("비비빔밥파괴자", 이모지 등).
+- If a section type doesn't exist for a wireframe element, request a new section type (file an issue / ask the user) — do NOT fall back to batch_build_screen.
+- Never include figma fields (frame, autoLayout, fillVar, cornerRadius). The spec is data-only.
+- For colorHue values, choose by the wireframe's intent: brand items → "purple", warning → "amber", error → "red", success → "green", info → "blue", accent → "pink". No raw hex.
+- For TabBar/FAB: place under "overlays", not "sections".
+- For stage screens, use stageCardList. For modal-like 거래 내역 lists, use modalHeader + summaryCardLinkRows + monthScrollerCalendar + statsStrip3Col + sectionHeader + transactionTimeline.
+
+The renderer encodes all polished visual details (padding, dividers, shadows, gradient avatars, brand token mapping, font hierarchy) — agents never decide visual details.`, {
+    type: 'object',
+    properties: {
+      spec: { type: 'object', description: 'A ScreenSpec — see description for the schema.' },
+    },
+    required: ['spec'],
+  }, async (params) => {
+    if (!figmaWS.isConnected) throw new Error('Figma plugin is not connected.');
+    await syncTokensIfNeeded();
+    const spec = params.spec as Record<string, unknown>;
+    if (!spec || typeof spec !== 'object') {
+      throw new Error('build_from_spec: spec is required.');
+    }
+    const code = buildScreenJS(spec as unknown as ScreenSpec);
+    const result = await cmd('execute_js', { code }, 300000) as Record<string, unknown>;
+    if (result && typeof result === 'object' && result.wrapperId) {
+      try {
+        const screenshot = await cmd('export_node_as_image', {
+          nodeId: result.wrapperId, format: 'PNG', scale: 1,
+        }, 30000) as Record<string, unknown>;
+        if (screenshot?.imageData) (result as Record<string, unknown>).screenshot = screenshot;
+      } catch (e) { console.warn('[build_from_spec] screenshot failed:', e); }
+    }
+    return result;
+  }, { timeoutMs: 310_000 });
 
   reg('batch_bind_variables', 'Bind variables to multiple nodes at once', {
     type: 'object',
