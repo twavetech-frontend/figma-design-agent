@@ -1,0 +1,129 @@
+{
+  "spec": {
+    "width": 390,
+    "positionRelativeTo": "16993:63206",
+    "statusBar": false,
+    "sections": [
+      {
+        "type": "modalHeader",
+        "title": "",
+        "showClose": true
+      },
+      {
+        "type": "underlineTab",
+        "tabs": [
+          { "id": "now", "label": "거래 현황" },
+          { "id": "cumulative", "label": "누적 거래" }
+        ],
+        "activeId": "now"
+      },
+      {
+        "type": "summaryCardLinkRows",
+        "title": "진행중인 0건의 스테이지 내역",
+        "titleIcons": ["checkCircle", "sparkle"],
+        "rows": [
+          { "label": "모은 금액", "value": "+0원", "valueTone": "positive" },
+          { "label": "빌린 금액", "value": "-0원", "valueTone": "negative" },
+          { "label": "프로필에 추가 정보를 입력하면", "value": "'인증사용자'", "valueTone": "neutral" },
+          { "label": "선납 건이 1건 이상 있으면", "value": "'클린사용자'", "valueTone": "neutral" }
+        ]
+      },
+      {
+        "type": "attendanceWeek",
+        "streakText": "연속 0일째 출석 체크 중",
+        "rewardText": "매일매일 출첵하면 특별한 혜택이!",
+        "ctaText": "출석",
+        "days": [
+          { "label": "월", "state": "future" },
+          { "label": "화", "state": "future" },
+          { "label": "수", "state": "future" },
+          { "label": "목", "state": "future" },
+          { "label": "금", "state": "future" },
+          { "label": "토", "state": "future" },
+          { "label": "일", "state": "future" }
+        ]
+      },
+      {
+        "type": "sectionHeader",
+        "title": "추천 스테이지"
+      },
+      {
+        "type": "recommendHero",
+        "topLabel": "1회차 납입 후 목돈 수령",
+        "amount": "1,300",
+        "unit": "만원",
+        "subText": "월 10만원 × 13개월 모으기",
+        "slider": { "label": "몇 번째로 받을래요?", "valueText": "1 / 13회차", "current": 1, "max": 13 },
+        "steppers": [
+          { "label": "월 납입", "value": "10" },
+          { "label": "기간 (개월)", "value": "13" }
+        ],
+        "ctaText": "전체 보기(13개)",
+        "toggleText": "스테이지 이용을 위해 한도를 확인해주세요."
+      },
+      {
+        "type": "monthScrollerCalendar",
+        "title": "거래 스케줄",
+        "filterLabel": "납입 ▼",
+        "months": [
+          { "short": "Oct", "day": "10" },
+          { "short": "Nov", "day": "11" },
+          { "short": "Dec", "day": "12" },
+          { "short": "Jan", "day": "1", "active": true, "activeLabel": "이번달" },
+          { "short": "Feb", "day": "2" },
+          { "short": "Mar", "day": "3" },
+          { "short": "Apr", "day": "4" }
+        ]
+      },
+      {
+        "type": "statsStrip3Col",
+        "cols": [
+          { "label": "월 납입액", "value": "0원", "valueTone": "neutral" },
+          { "label": "납입 완료액", "value": "0원", "valueTone": "neutral" },
+          { "label": "남은 납입액", "value": "0원", "valueTone": "neutral" }
+        ]
+      },
+      {
+        "type": "sectionHeader",
+        "title": "2026년 1월",
+        "trailing": "총 0건"
+      },
+      {
+        "type": "alertBanner",
+        "tone": "info",
+        "iconKey": "infoCircle",
+        "title": "납입할 금액이 없습니다.",
+        "description": "아임인과 함께 목돈 모으기를 시작해보세요.",
+        "trailingChevron": true
+      },
+      {
+        "type": "productHotDeal",
+        "title": "추천 상품(라운지)",
+        "pointBalance": "312,490원(100p)",
+        "trailing": "전체보기 ›",
+        "products": [
+          { "name": "추천 상품 영역", "price": "준비 중", "imageHue": "purple" },
+          { "name": "추천 상품 영역", "price": "준비 중", "imageHue": "amber" },
+          { "name": "추천 상품 영역", "price": "준비 중", "imageHue": "green" }
+        ]
+      }
+    ],
+    "overlays": [
+      {
+        "type": "tabBar",
+        "tabs": [
+          { "id": "home", "label": "홈", "iconKey": "home" },
+          { "id": "lounge", "label": "라운지", "iconKey": "shoppingBag" },
+          { "id": "stage", "label": "스테이지", "iconKey": "award" },
+          { "id": "community", "label": "커뮤니티", "iconKey": "users" },
+          { "id": "all", "label": "전체", "iconKey": "menu" }
+        ],
+        "activeId": "home"
+      },
+      {
+        "type": "fab",
+        "iconKey": "wallet"
+      }
+    ]
+  }
+}
