@@ -165,7 +165,7 @@ batch_build_screen({
     children: [
       {
         type: "instance", name: "TopNav",
-        componentKey: "e7e4b8eb27cad1652257d7fa6b2b436da33baa79",
+        componentKey: "<<TopNav componentKey — replace with actual key from new DS>>",
         layoutSizing: { horizontal: "FILL" }
       },
       {
@@ -180,13 +180,13 @@ batch_build_screen({
             children: [
               {
                 type: "instance", name: "Metric1",
-                componentKey: "d2f8ce10ac86e602692de6b4c091354ba2a4210b",
+                componentKey: "079dc444d55fbde6423b2902d6f719ae8624914b",
                 layoutSizing: { horizontal: "FILL" },
                 textOverrides: { "1561:261476": "Total Visitors", "1561:261478": "12,847" }
               },
               {
                 type: "instance", name: "Metric2",
-                componentKey: "d2f8ce10ac86e602692de6b4c091354ba2a4210b",
+                componentKey: "079dc444d55fbde6423b2902d6f719ae8624914b",
                 layoutSizing: { horizontal: "FILL" },
                 textOverrides: { "1561:261476": "Active Users", "1561:261478": "3,521" }
               }

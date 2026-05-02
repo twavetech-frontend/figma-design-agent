@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>아임인 홈 화면</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>/* imin tokens — font paths fixed for local layout */
+@font-face { font-family: 'Pretendard'; src: url("5332a856-4888-4ac9-a021-d546d00eeb41")    format('woff'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Pretendard'; src: url("b60c0eb0-3785-49f5-abc4-c69ee9aa8e44")     format('woff'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Pretendard'; src: url("40dd39fa-f911-4716-aa5c-ec2c558681a3")   format('woff'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Pretendard'; src: url("cd3e6f2f-69f3-438c-82e7-3368b3b856b1")       format('woff'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Pretendard'; src: url("9fed029d-4e42-45c9-9536-b8edb2b55660")  format('woff'); font-weight: 800; font-style: normal; font-display: swap; }
+
+:root {
+  --brand-25:#fafaff; --brand-50:#f4f3ff; --brand-100:#ebe9fe; --brand-200:#d9d6fe;
+  --brand-300:#bdb4fe; --brand-400:#9b8afb; --brand-500:#7a5af8; --brand-600:#6938ef;
+  --brand-700:#5925dc; --brand-800:#4a1fb8; --brand-900:#3e1c96; --brand-950:#27115f;
+
+  --gray-25:#fdfdfd; --gray-50:#fafafa; --gray-100:#f5f5f5; --gray-200:#e9eaeb;
+  --gray-300:#d5d7da; --gray-400:#a4a7ae; --gray-500:#717680; --gray-600:#535862;
+  --gray-700:#414651; --gray-800:#252b37; --gray-900:#181d27; --gray-950:#0a0d12;
+
+  --error-50:#fef3f2; --error-100:#fee4e2; --error-300:#fda29b;
+  --error-500:#f04438; --error-600:#d92d20; --error-700:#b42318;
+  --warning-50:#fffaeb; --warning-100:#fef0c7; --warning-300:#fec84b;
+  --warning-500:#f79009; --warning-600:#dc6803; --warning-700:#b54708;
+  --success-50:#ecfdf3; --success-100:#dcfae6; --success-300:#75e0a7;
+  --success-500:#17b26a; --success-600:#079455; --success-700:#067647;
+
+  --fg1:#181d27; --fg2:#414651; --fg3:#535862; --fg4:#717680; --fg-white:#fff;
+  --fg-brand:#6938ef; --fg-brand-alt:#5925dc;
+  --fg-error:#d92d20; --fg-warning:#dc6803; --fg-success:#079455;
+
+  --bg-primary:#fff; --bg-secondary:#fafafa; --bg-tertiary:#f5f5f5; --bg-quaternary:#e9eaeb;
+  --bg-brand-primary:#f4f3ff; --bg-brand-secondary:#ebe9fe; --bg-brand-solid:#6938ef;
+
+  --border-primary:#d5d7da; --border-secondary:#e9eaeb; --border-tertiary:#f5f5f5;
+  --border-brand:#7a5af8;
+
+  --shadow-xs: 0 1px 2px 0 rgba(10,13,18,.05);
+  --shadow-sm: 0 1px 3px 0 rgba(10,13,18,.10), 0 1px 2px -1px rgba(10,13,18,.10);
+  --shadow-md: 0 4px 6px -1px rgba(10,13,18,.10), 0 2px 4px -2px rgba(10,13,18,.06);
+  --shadow-lg: 0 12px 16px -4px rgba(10,13,18,.08), 0 4px 6px -2px rgba(10,13,18,.03);
+
+  --radius-xs:4px; --radius-sm:6px; --radius-md:8px; --radius-lg:10px;
+  --radius-xl:12px; --radius-2xl:16px; --radius-3xl:20px; --radius-4xl:24px; --radius-full:9999px;
+
+  --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin:0; font-family: var(--font-body); color: var(--fg1); -webkit-font-smoothing: antialiased; }
+</style>
+<style>
+  html, body { margin: 0; padding: 0; background: #efeff3; min-height: 100vh; }
+  body { display: flex; align-items: center; justify-content: center; padding: 24px 0; }
+  .stage { display: flex; gap: 32px; align-items: flex-start; }
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .phone-label { font-size: 12px; font-weight: 500; color: #535862; }
+  /* tweaks panel */
+  .tweaks { position: fixed; right: 20px; bottom: 20px; width: 260px;
+    background: #fff; border: 1px solid #d5d7da; border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(10,13,18,.14); padding: 14px 16px;
+    font-family: 'Pretendard', -apple-system, system-ui; z-index: 100; display: none; }
+  .tweaks.open { display: block; }
+  .tweaks h4 { margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #181d27; letter-spacing: -0.01em; }
+  .tweaks .row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .tweaks label { font-size: 11px; font-weight: 500; color: #535862; }
+  .segmented { display: flex; border: 1px solid #d5d7da; border-radius: 8px; padding: 2px; gap: 2px; }
+  .segmented button { flex: 1; padding: 6px 8px; border: none; background: transparent;
+    font-family: inherit; font-size: 12px; font-weight: 500; color: #535862; cursor: pointer; border-radius: 6px; }
+  .segmented button.active { background: #6938ef; color: #fff; font-weight: 600; }
+  /* range pill */
+  input[type=range]::-webkit-slider-thumb {
+    appearance: none; width: 20px; height: 20px; border-radius: 999px;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer;
+    border: 2px solid #fff;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 999px;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer;
+    border: 2px solid #fff;
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+<div class="tweaks" id="tweaks">
+  <h4>Tweaks</h4>
+  <div class="row">
+    <label>캘린더 스타일</label>
+    <div class="segmented" id="calSeg">
+      <button data-val="horizontal" class="active">타임라인</button>
+      <button data-val="list">리스트</button>
+    </div>
+  </div>
+  <div class="row">
+    <label>활성 탭</label>
+    <div class="segmented" id="tabSeg">
+      <button data-val="transactions" class="active">거래 현황</button>
+      <button data-val="cumulative">누적 거래</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // TWEAK_DEFAULTS
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "calendarStyle": "horizontal",
+    "initialTab": "transactions"
+  }/*EDITMODE-END*/;
+  window.__TWEAKS = { ...TWEAK_DEFAULTS };
+</script>
+
+<script src="4200c240-5b98-4436-9c5c-4ab0dd66bd61" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="e2c813e7-3398-47d1-82d8-2ab3e19e7fd9" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="05c74e12-0c99-4d7f-88a4-88523289ab30" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="37bb94a6-71a0-45f9-aabc-def12f80fee7"></script>
+<script type="text/babel" src="e07ca344-a84e-452d-be4f-25294ecb35cc"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+function PhoneShell({ children }) {
+  const W = 390, H = 844;
+  return (
+    <div style={{
+      width: W, height: H, borderRadius: 48, overflow: 'hidden',
+      position: 'relative', background: '#F2F2F7',
+      boxShadow: '0 40px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.12)',
+      fontFamily: 'Pretendard, -apple-system, system-ui, sans-serif',
+      WebkitFontSmoothing: 'antialiased',
+    }}>
+      {/* dynamic island */}
+      <div style={{
+        position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
+        width: 126, height: 37, borderRadius: 24, background: '#000', zIndex: 50,
+      }} />
+      {/* status bar */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
+        padding: '18px 32px 0', display: 'flex', justifyContent: 'space-between',
+        alignItems: 'center', color: '#000',
+      }}>
+        <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em' }}>9:41</span>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginRight: -6 }}>
+          <svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="0.6" fill="#000"/><rect x="4.5" y="5" width="3" height="6" rx="0.6" fill="#000"/><rect x="9" y="2.5" width="3" height="8.5" rx="0.6" fill="#000"/><rect x="13.5" y="0" width="3" height="11" rx="0.6" fill="#000"/></svg>
+          <svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 3c2 0 3.8.8 5.1 2.1l1-1c-1.6-1.6-3.8-2.6-6.1-2.6S2.9 2.5 1.3 4.1l1 1C3.7 3.8 5.5 3 7.5 3zM7.5 6.1c1.2 0 2.3.5 3.1 1.3l1-1c-1.1-1.1-2.5-1.7-4.1-1.7s-3 .6-4.1 1.7l1 1c.8-.8 1.9-1.3 3.1-1.3zM7.5 9.4c.7 0 1.3.6 1.3 1.3 0 .1 0 .2-.1.3L7.5 13l-1.2-2c0-.1-.1-.2-.1-.3 0-.7.6-1.3 1.3-1.3z" fill="#000"/></svg>
+          <svg width="24" height="11" viewBox="0 0 24 11"><rect x="0.5" y="0.5" width="20" height="10" rx="3" stroke="#000" strokeOpacity="0.35" fill="none"/><rect x="2" y="2" width="17" height="7" rx="1.5" fill="#000"/><path d="M22 4v3c.6-.2 1-.8 1-1.5S22.6 4.2 22 4z" fill="#000" fillOpacity="0.4"/></svg>
+        </div>
+      </div>
+      {/* home indicator */}
+      <div style={{
+        position: 'absolute', bottom: 8, left: 0, right: 0, zIndex: 60,
+        display: 'flex', justifyContent: 'center', pointerEvents: 'none',
+      }}>
+        <div style={{ width: 139, height: 5, borderRadius: 100, background: 'rgba(0,0,0,0.3)' }}/>
+      </div>
+      {/* content */}
+      <div style={{ height: '100%', paddingTop: 54, display: 'flex', flexDirection: 'column' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function HomeScreen() {
+  const [tab, setTab] = useState(window.__TWEAKS.initialTab || 'transactions');
+  const [calStyle, setCalStyle] = useState(window.__TWEAKS.calendarStyle || 'horizontal');
+  const [balanceHidden, setBalanceHidden] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail?.calendarStyle) setCalStyle(e.detail.calendarStyle);
+      if (e.detail?.initialTab) setTab(e.detail.initialTab);
+    };
+    window.addEventListener('tweaks-change', handler);
+    return () => window.removeEventListener('tweaks-change', handler);
+  }, []);
+
+  return (
+    <PhoneShell>
+      {/* fixed header + tabs */}
+      <div style={{ flexShrink: 0 }}>
+        <AppHeader balanceHidden={balanceHidden} onToggleBalance={() => setBalanceHidden(!balanceHidden)}/>
+        <HomeTabs active={tab} onChange={setTab}/>
+      </div>
+      {/* scroll body */}
+      <div style={{ flex: 1, overflowY: 'auto', background: 'var(--gray-50)', paddingBottom: 24 }}>
+        {tab === 'transactions' ? (
+          <>
+            <MissedAlert/>
+            <SummaryCard stageCount={3} earned={14420320} owed={5240020} hidden={balanceHidden}/>
+            <ScheduleSection calendarStyle={calStyle}/>
+            <LimitSection hidden={balanceHidden}/>
+            <StageRecommender/>
+            <CurrentStages/>
+            <OnboardingNudge/>
+            <AttendanceStrip/>
+            <EventBanner/>
+            <LoungeSection/>
+            <div style={{ height: 16 }}/>
+          </>
+        ) : (
+          <>
+            <CumulativeView hidden={balanceHidden}/>
+            <AttendanceStrip/>
+            <EventBanner/>
+            <LoungeSection/>
+            <div style={{ height: 16 }}/>
+          </>
+        )}
+      </div>
+      <BottomNav/>
+    </PhoneShell>
+  );
+}
+
+function App() {
+  return (
+    <div className="stage">
+      <div className="phone-wrap">
+        <HomeScreen/>
+        <div className="phone-label">아임인 · 홈 (거래 현황 기본)</div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+
+<script>
+  // Tweaks protocol
+  const tweaksEl = document.getElementById('tweaks');
+
+  window.addEventListener('message', (e) => {
+    if (e.data?.type === '__activate_edit_mode') tweaksEl.classList.add('open');
+    if (e.data?.type === '__deactivate_edit_mode') tweaksEl.classList.remove('open');
+  });
+
+  function bindSeg(segId, key) {
+    const seg = document.getElementById(segId);
+    seg.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => {
+        seg.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        const val = b.dataset.val;
+        window.__TWEAKS[key] = val;
+        window.dispatchEvent(new CustomEvent('tweaks-change', { detail: { [key]: val } }));
+        window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+      });
+    });
+  }
+  bindSeg('calSeg', 'calendarStyle');
+  bindSeg('tabSeg', 'initialTab');
+
+  // sync initial
+  document.querySelectorAll('#calSeg button').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === window.__TWEAKS.calendarStyle);
+  });
+  document.querySelectorAll('#tabSeg button').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === window.__TWEAKS.initialTab);
+  });
+
+  window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+</script>
+
+
+</body></html>

@@ -1,0 +1,90 @@
+{
+  "_meta": {
+    "referenceId": "imin-home",
+    "schemaVersion": "1.0"
+  },
+  "referenceId": "imin-home",
+  "displayName": "아임인 홈 (거래 현황 탭)",
+  "screenType": ["home", "main", "tab-home", "거래 현황", "내 스테이지"],
+  "brand": "imin",
+  "theme": "light",
+  "features": [
+    "summary-card-2col",
+    "schedule-daycard",
+    "limit-progress",
+    "missed-alert",
+    "bottom-nav",
+    "underline-tabs"
+  ],
+  "keywords": [
+    "홈", "메인", "거래 현황", "내 스테이지",
+    "미납", "납입", "지급", "스케줄",
+    "한도", "신용", "사용률",
+    "모은 금액", "빌린 금액", "납입 예정액"
+  ],
+  "matchingHints": {
+    "positiveSignals": [
+      "홈 화면",
+      "메인 화면",
+      "거래 현황",
+      "내 스테이지",
+      "참여 중",
+      "납입 스케줄",
+      "이번 달 납입",
+      "한도 현황",
+      "미납 경고"
+    ],
+    "negativeSignals": [
+      "상세",
+      "모달",
+      "바텀시트",
+      "참여자 리스트",
+      "스테이지 탐색 탭",
+      "추천 피드",
+      "마감임박",
+      "직접 만들기"
+    ]
+  },
+  "targetPersona": [
+    "참여 중 유저 (액티브)",
+    "미납 발생 유저"
+  ],
+  "containedSections": [
+    "NavBar (logo + bell)",
+    "HomeTabs (Underline, 거래 현황 active)",
+    "MissedAlert (error, P0)",
+    "SummaryCard (2-col grid, 모은/빌린 금액)",
+    "ScheduleSection (missed badge + 5 day cards)",
+    "LimitSection (progress + nudge)",
+    "RecommendationSection (sparkles + title + Premium CTA with stepper)",
+    "StageCardsHeader (참여 중인 스테이지 + 전체보기)",
+    "StageCardScroll (3 cards: 진행 중 / 지급 예정 / 미납)",
+    "OnboardingAlert (계좌 연결 유도, warning)",
+    "AttendanceStrip (연속 12일 출석 + 7-day dots)",
+    "EventBanner (친구 초대, brand gradient)",
+    "LoungeHeader (라운지 + 사용 가능 포인트)",
+    "ProductScroll (3 product cards: 핫딜 / 일반 / BEST)",
+    "BottomNav (5 tabs, 홈 active)"
+  ],
+  "buildConstraints": {
+    "requiresSafeBuild": true,
+    "letterSpacingFormat": "raw number only (object {value, unit} forbidden — batch_build_screen parser 실패)",
+    "minPluginFont": "figma plugin font race condition 수정 필요 (src/figma-plugin/code.js 5798~ await loadFontAsync)",
+    "rootHeight": "3400 (전체 스크롤 콘텐츠 포함 — 뷰포트 852px가 아님)"
+  },
+  "coverageExpectation": {
+    "minPassThreshold": 0.85,
+    "currentCoverageVsPRD": 0.88,
+    "prdSectionsCovered": 7,
+    "prdSectionsTotal": 8,
+    "notYetCovered": ["누적 거래 탭 (헤비 유저 사용 현황) — 거래 현황 탭의 variant, 별도 모드"]
+  },
+  "lastVerified": {
+    "date": "2026-04-22",
+    "rootNodeId": "46:2524 (GUI page, 16 children sections)",
+    "matchScore": 0.88,
+    "blueprintSections": 15,
+    "slotsCount": 77,
+    "notes": "확장 완료: 원래 7 섹션 → 15 섹션 + BottomNav. 88% PRD 커버리지로 Coverage Gate 통과. 스크린샷 검증 완료 — 모든 신규 섹션 정상 렌더링 (Recommendation 보라 CTA / Stage 3 카드 / Onboarding / Attendance 7일 / Event / Lounge 3 상품)."
+  }
+}

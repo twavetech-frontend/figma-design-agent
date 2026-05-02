@@ -565,6 +565,29 @@ def cmd_build(blueprint_file: str):
     with open(blueprint_file) as f:
         blueprint = json.load(f)
 
+    # Step 0: Sanitize blueprint — letterSpacing/hex/textAutoResize/iconNames
+    # AND _Primitives color → DS semantic color remap (CLAUDE.md 규칙 #27).
+    # This guarantees every fill/stroke at build time uses a raw value that
+    # has a corresponding "1. Color modes" semantic token, so post-fix
+    # token-bind has no unmapped colors. Sanitizer is import-on-demand to
+    # avoid circular imports during `python -m` invocations.
+    try:
+        import os
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from blueprint_sanitizer import sanitize_blueprint
+        blueprint, sanitizer_warns = sanitize_blueprint(blueprint)
+        if sanitizer_warns:
+            print(f"\n[Sanitize] {len(sanitizer_warns)} fixes applied:")
+            # Show only REMAP entries summarized (verbose otherwise)
+            remap_count = sum(1 for w in sanitizer_warns if w.startswith("REMAP"))
+            other_count = len(sanitizer_warns) - remap_count
+            if remap_count:
+                print(f"  · _Primitives → semantic color remap: {remap_count}건")
+            if other_count:
+                print(f"  · 기타(letterSpacing/hex/icon/etc): {other_count}건")
+    except Exception as e:
+        print(f"[Sanitize] skipped: {e}")
+
     # Step 1: Validate blueprint before any processing
     issues = validate_blueprint(blueprint)
     errors = [i for i in issues if i.startswith("ERROR")]
@@ -1896,6 +1919,209 @@ def _match_status_bar_bg_to_nav(tree: dict) -> bool:
         return False
 
 
+# bg-primary raw value — DS Color modes light mode = #ffffff (white).
+# Verified from TOKEN_MAP.json: figmaPath "Colors/Background/bg-primary"
+# value = "#ffffff". Do not change without re-checking the token map.
+_BG_PRIMARY_RGB = (1.0, 1.0, 1.0)
+_BG_PRIMARY_NAME = "--colors-background-bgPrimary"
+
+# All direct-child wrappers must share the screen bg-primary fill — no
+# exemption. Per user policy 2026-05-01: "섹션마다 다른 bg컬러를 쓰지마".
+# Accent colors belong to inner cards (children of the wrapper), not the
+# wrapper itself. Exempting wrappers caused black bands when source blueprint
+# fills were transparent-black (r=0,g=0,b=0,a=0) and Figma rendered them as
+# opaque after some transformation.
+_BG_NORMALIZE_EXEMPT_NAME_FRAGMENTS = ()
+
+
+def _clear_icon_wrapper_fills(tree):
+    """Set fill to transparent (a=0) on all frames whose children are
+    VECTOR-only AND whose size is icon-sized (≤48px). User policy 2026-05-01:
+    "icon wrap frame에 컬러 넣지 말라". This catches both blueprint
+    transparent-black placeholders and figma.createNodeFromSvg's default
+    container fill that bind to bg-* tokens incorrectly.
+    """
+    ICON_TYPES = {"VECTOR", "BOOLEAN_OPERATION", "STAR", "POLYGON", "ELLIPSE", "LINE"}
+    cleared = 0
+
+    def is_icon_wrapper(node):
+        children = node.get("_children_full") or node.get("children") or []
+        if not children:
+            return False
+        types = [(c.get("type") or "").upper() for c in children]
+        if not all(t in ICON_TYPES for t in types):
+            return False
+        try:
+            w = float(node.get("width") or 0)
+            h = float(node.get("height") or 0)
+        except (TypeError, ValueError):
+            return False
+        return w <= 48 and h <= 48
+
+    def walk(node):
+        nonlocal cleared
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").upper() == "FRAME" and is_icon_wrapper(node):
+            fills = node.get("fills") or []
+            # Skip if already transparent / no fill
+            visible_fills = [
+                f for f in fills
+                if isinstance(f, dict) and f.get("visible", True)
+                and (f.get("opacity", 1) > 0)
+                and (f.get("color", {}).get("a", 1) > 0 if "a" in f.get("color", {}) else True)
+            ]
+            if visible_fills:
+                try:
+                    call_tool("set_fill_color", {
+                        "nodeId": node.get("id"),
+                        "r": 1, "g": 1, "b": 1, "a": 0, "opacity": 0,
+                    })
+                    cleared += 1
+                except Exception as e:
+                    print(f"  ⚠️ icon clear failed for {node.get('id')}: {e}")
+        for c in node.get("_children_full") or node.get("children") or []:
+            walk(c)
+
+    walk(tree)
+    print(f"  → {cleared}건 icon wrapper fill clear")
+    return cleared
+
+
+def _apply_bg_hierarchy(tree):
+    """Apply bg-* depth hierarchy on light-bg frames.
+
+    User policy 2026-05-01: 맨아래 bg-primary, 그 위 bg-secondary, 그 위
+    bg-tertiary, 그 위 bg-quaternary. Verified raw values from TOKEN_MAP.json:
+        bg-primary    = #ffffff
+        bg-secondary  = #fcfcfd
+        bg-tertiary   = #f3f4f6
+        bg-quaternary = #e6e8ea
+
+    Frame is retinted only if it is a "card-like" wrapper:
+      - type FRAME/COMPONENT/RECTANGLE
+      - has any cornerRadius (true card / alert / banner)
+      - existing fill is near-white (all channels >= 0.93) — preserves
+        accent-tinted alerts (pink/yellow), brand purple cards, etc.
+    """
+    # User-modified design (2026-05-01 v2) verified raw values from
+    # Figma node 16941:51284 (file SsgiLsXVMkf0wv8OhRGwks):
+    #   depth 0/1 (root/section)   = bg-primary   = #ffffff (or #fcfcfd in some)
+    #   depth 2   (card)           = bg-secondary = #f3f4f6  (← was #f9fafb)
+    #   depth 3   (sub-card/cell)  = bg-tertiary  = #e6e8ea  (← was #f3f4f6)
+    #   depth 4+  (deepest)        = bg-quaternary= #d2d6db  (deeper still)
+    DEPTH_HEX = {2: (0xf3, 0xf4, 0xf6), 3: (0xe6, 0xe8, 0xea), 4: (0xd2, 0xd6, 0xdb)}
+    fixes = 0
+
+    def is_near_white(fills):
+        if not fills or not isinstance(fills, list):
+            return False
+        f = fills[0]
+        if not isinstance(f, dict) or f.get("type") != "SOLID":
+            return False
+        c = f.get("color") or {}
+        try:
+            r = float(c.get("r", 0)); g = float(c.get("g", 0)); b = float(c.get("b", 0))
+        except (TypeError, ValueError):
+            return False
+        return r >= 0.93 and g >= 0.93 and b >= 0.93
+
+    def has_corner_radius(node):
+        cr = node.get("cornerRadius")
+        if isinstance(cr, (int, float)) and cr > 0:
+            return True
+        # mixed corner radii
+        for k in ("topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"):
+            v = node.get(k)
+            if isinstance(v, (int, float)) and v > 0:
+                return True
+        return False
+
+    def walk(node, depth, parent_is_neutral):
+        """Only retint a frame when its PARENT is neutral (white / near-white).
+        If a parent has an accent fill (brand purple, alert pink, warning
+        yellow, etc.), the child is intentional decoration on that surface
+        and must be preserved — never retint to gray."""
+        nonlocal fixes
+        if not isinstance(node, dict):
+            return
+        ntype = (node.get("type") or "").upper()
+        node_is_neutral = is_near_white(node.get("fills")) if node.get("fills") else True
+        if (
+            depth >= 2
+            and ntype in ("FRAME", "COMPONENT", "RECTANGLE")
+            and parent_is_neutral
+            and has_corner_radius(node)
+            and is_near_white(node.get("fills"))
+        ):
+            target = DEPTH_HEX.get(min(depth, 4))
+            if target:
+                nr, ng, nb = (v / 255.0 for v in target)
+                try:
+                    call_tool("set_fill_color", {
+                        "nodeId": node.get("id"),
+                        "r": nr, "g": ng, "b": nb, "a": 1,
+                    })
+                    fixes += 1
+                except Exception as e:
+                    print(f"  ⚠️ depth {depth} retint failed for {node.get('id')}: {e}")
+        for c in node.get("_children_full") or node.get("children") or []:
+            walk(c, depth + 1, parent_is_neutral=node_is_neutral)
+
+    walk(tree, depth=0, parent_is_neutral=True)
+    print(f"  → {fixes}건 위계 적용 (depth 2:secondary / 3:tertiary / 4+:quaternary)")
+    return fixes
+
+
+def _normalize_screen_background(root_node_id, tree):
+    """Force root fill to bg-primary and clear direct-child wrapper fills so
+    the screen has a single unified background. Wrappers whose name suggests a
+    deliberate accent (alert/event/etc.) are skipped.
+
+    Returns count of nodes mutated.
+    """
+    fixes = 0
+    bp_r, bp_g, bp_b = _BG_PRIMARY_RGB
+    # 1) Force root fill to bg-primary.
+    try:
+        call_tool("set_fill_color", {
+            "nodeId": root_node_id,
+            "r": bp_r, "g": bp_g, "b": bp_b, "a": 1,
+        })
+        fixes += 1
+        print(f"  Root fill → bg-primary (#ffffff)")
+    except Exception as e:
+        print(f"  ⚠️ Root fill 강제 실패: {e}")
+
+    # 2) Clear direct-child wrapper fills (FRAME only) unless name marks it as
+    #    an accent section. Status Bar / NavBar / BottomNav are wrappers too —
+    #    same screen bg, no separate fill.
+    children = tree.get("_children_full") or tree.get("children") or []
+    for c in children:
+        name = (c.get("name") or "").lower()
+        ntype = (c.get("type") or "").upper()
+        nid = c.get("id")
+        if not nid or ntype not in ("FRAME", "INSTANCE"):
+            continue
+        if any(frag in name for frag in _BG_NORMALIZE_EXEMPT_NAME_FRAGMENTS):
+            continue
+        # Skip Status Bar — already handled by _match_status_bar_bg_to_nav and
+        # may be a clone instance with locked fill.
+        if "status bar" in name:
+            continue
+        # Set fill to bg-primary so all wrappers visually match the root.
+        try:
+            call_tool("set_fill_color", {
+                "nodeId": nid,
+                "r": bp_r, "g": bp_g, "b": bp_b, "a": 1,
+            })
+            fixes += 1
+        except Exception as e:
+            print(f"  ⚠️ {name} fill 통일 실패: {e}")
+    print(f"  → {fixes}건 통일 (root + 직계 자식 wrapper)")
+    return fixes
+
+
 def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None, run_token_bind: bool = True):
     """빌드 후 자동 후처리: FILL 사이징, Tab Bar/FAB 배치, 섹션 갭, 텍스트 수정, stroke 정렬, semantic token binding.
 
@@ -1967,6 +2193,24 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None, run_token_
     sb_matched = _match_status_bar_bg_to_nav(tree)
     if not sb_matched:
         print(f"  → skip (Status Bar 자식 없음 또는 NavBar fill 미지정)")
+
+    # 8.5. Screen background normalization (CLAUDE.md 규칙 #27)
+    # Root + 직계 wrapper fill = bg-primary (#ffffff white).
+    print("\n[8.5/9] Screen background normalization (bg-primary 강제) 중...")
+    bg_norm_count = _normalize_screen_background(root_node_id, tree)
+
+    # 8.6. bg-* depth hierarchy (CLAUDE.md 규칙 #27)
+    # depth 2 카드 → bg-secondary, depth 3 → bg-tertiary, depth 4+ → bg-quaternary.
+    # white fill만 retint (다른 색상 fill은 보존).
+    print("\n[8.6/9] bg-* 위계 적용 (depth 2~ → secondary/tertiary/quaternary)...")
+    bg_hier_count = _apply_bg_hierarchy(tree)
+
+    # 8.7. Icon wrapper fill clear — 자식이 VECTOR-only인 작은 frame은 fill
+    # 제거. createNodeFromSvg가 SVG container에 default fill을 남기는 plugin
+    # 동작 + blueprint placeholder fill 모두 청소. 사용자 정책 2026-05-01:
+    # "icon wrap frame에 컬러 넣지 말라".
+    print("\n[8.7/9] Icon wrapper fill clear 중...")
+    icon_clear_count = _clear_icon_wrapper_fills(tree)
 
     # 9. Semantic Token Binding Sweep
     token_counts = {}
@@ -2422,18 +2666,101 @@ def main():
 _SEMANTIC_PREFIXES = ("fg-", "bg-", "border-", "text-")
 _SEMANTIC_PATH_PARTS = ("/Fg/", "/Bg/", "/Border/", "/Text/", "/Background/", "/Foreground/")
 
+# Tokens belonging to the "1. Color modes" Figma collection — the only ones
+# allowed for binding. _Primitives (raw scale Colors/Brand/300, Colors/Gray/200,
+# Colors/Base/white etc.) is forbidden per user policy (2026-05-01).
+_COLOR_MODES_PATH_PREFIXES = (
+    "Colors/Background/",
+    "Colors/Foreground/",
+    "Colors/Border/",
+    "Colors/Text/",
+    "Colors/Effects/",
+    "Component colors/",
+)
+
+# Token name fragments that are deny-listed even within Color modes.
+# Per user policy 2026-05-01:
+#   - "disabled": pollutes bg/fg matching (bg-disabled raw == bg-primary raw).
+#                 Only bind when user explicitly requests a disabled state.
+#   - "hover":    mobile has no hover state. _hover toggles like
+#                 bg-primary_hover, bg-secondary_hover etc. must NEVER be
+#                 chosen as a binding for a static mobile node.
+_DENIED_TOKEN_NAME_FRAGMENTS = ("disabled", "hover")
+
 
 def _is_semantic_token(name, figma_path):
-    """Heuristic: token is semantic if name contains fg-/bg-/border-/text- after
-    the type prefix, or if figmaPath has those segments."""
+    """Returns True iff token belongs to the '1. Color modes' Figma collection
+    AND is not in the deny list. Used both for index inclusion (only Color
+    modes tokens are eligible for binding) and for sort priority."""
     lower_name = name.lower()
-    for p in _SEMANTIC_PREFIXES:
-        if p in lower_name:
-            return True
-    for p in _SEMANTIC_PATH_PARTS:
-        if p in figma_path:
+    for frag in _DENIED_TOKEN_NAME_FRAGMENTS:
+        if frag in lower_name:
+            return False
+    for prefix in _COLOR_MODES_PATH_PREFIXES:
+        if figma_path.startswith(prefix):
             return True
     return False
+
+
+# Role classification of a Color modes token by figmaPath.
+# Returns one of "bg" / "fg" / "border" / "text" / None.
+# Per user policy 2026-05-01:
+#   - background frames    → bg-* (Colors/Background/*)
+#   - buttons / icons / interactive on-bg → fg-* (Colors/Foreground/*, icons)
+#   - strokes / lines      → border-* (Colors/Border/*)
+#   - text                 → text-* (Colors/Text/*)
+def _classify_color_token_role(figma_path, name):
+    if figma_path.startswith("Colors/Background/"):
+        return "bg"
+    if figma_path.startswith("Colors/Foreground/"):
+        return "fg"
+    if figma_path.startswith("Colors/Border/"):
+        return "border"
+    if figma_path.startswith("Colors/Text/"):
+        return "text"
+    if figma_path.startswith("Component colors/Components/Icons/"):
+        return "fg"  # icon-fg-* maps to fg category
+    if "icon-fg-" in name.lower():
+        return "fg"
+    return None
+
+
+# Sort priority within each color bucket.
+# Per user policy 2026-05-01: "primary -> secondary -> tertiary -> quaternary".
+# Lower = higher priority. Tokens with no priority keyword fall back to
+# "_alt" / "_hover" / etc. and rank after the four primary tiers.
+_PRIORITY_RANK_MAP = {
+    "primary": 0,
+    "secondary": 1,
+    "tertiary": 2,
+    "quaternary": 3,
+}
+
+
+def _color_priority_rank(token_name, figma_path=""):
+    """Returns sort key. Smaller = higher priority.
+
+    User policy 2026-05-01: "primary 위에 갑자기 tertiary나 quaternary가 올라올
+    수 없어" — every plain (modifier=0) token must rank above every modifier
+    token, regardless of tier. So the key is:
+        (has_modifier, tier, modifier_rank, name)
+    With this, all plain tokens come first sorted by tier, then all modifier
+    tokens. A node whose raw matches both bg-secondary (plain) and
+    bg-primary_hover (modifier) will choose bg-secondary.
+    """
+    src = (figma_path or token_name).lower()
+    tier = 99
+    for kw, r in _PRIORITY_RANK_MAP.items():
+        if f"-{kw}" in src or src.endswith(kw):
+            tier = r
+            break
+    modifier = 0
+    if "_on-brand" in src: modifier = 4
+    elif "_hover" in src:  modifier = 3
+    elif "_alt" in src:    modifier = 2
+    elif "_subtle" in src: modifier = 1
+    has_modifier = modifier > 0
+    return (has_modifier, tier, modifier, src)
 
 
 def _classify_number_token(figma_path, name):
@@ -2531,7 +2858,28 @@ def _load_token_index(token_map):
             rgba = _hex_to_rgba_ints(value)
             if rgba is None:
                 continue
-            color_index.setdefault(rgba, []).append((name, is_semantic))
+            # Allow-list: only register tokens from the "1. Color modes"
+            # collection. _Primitives raw scales (Colors/Brand/300 etc.) and
+            # disabled-state tokens are excluded from binding candidates.
+            if not is_semantic:
+                continue
+            # Per-category color indexes (user policy 2026-05-01):
+            #   bg-*     → frame fills        (Colors/Background/*)
+            #   fg-*     → button/icon fills  (Colors/Foreground/*, Component colors/Components/Icons/*)
+            #   border-* → strokes            (Colors/Border/*)
+            #   text-*   → text fills         (Colors/Text/*)
+            # The "all" bucket retains every semantic token as a fallback for
+            # ambiguous cases (e.g., effects, shadows, gradient stops).
+            cat = _classify_color_token_role(figma_path, name)
+            color_index.setdefault(("all", rgba), []).append((name, is_semantic))
+            if cat:
+                color_index.setdefault((cat, rgba), []).append((name, is_semantic))
+            # Alpha tokens (Component colors/Alpha/*) are register-everywhere —
+            # white-alpha / black-alpha overlays can sit on bg/fg/border/text.
+            # Per user note 2026-05-01.
+            if figma_path.startswith("Component colors/Alpha/"):
+                for c in ("bg", "fg", "border", "text"):
+                    color_index.setdefault((c, rgba), []).append((name, is_semantic))
         elif ttype == "NUMBER":
             if isinstance(value, (int, float)):
                 category = _classify_number_token(figma_path, name)
@@ -2564,12 +2912,27 @@ def _load_token_index(token_map):
                     "spread":  layer.get("spread", 0),
                 })
 
-    # Sort each bucket: semantic first, then alphabetical
+    # Sort each bucket. Priority order (user policy 2026-05-01):
+    #   1) semantic first (always),
+    #   2) primary > secondary > tertiary > quaternary > others (modifier-aware),
+    #   3) alphabetical within tie.
+    # This guarantees that the matched token preserves visual hierarchy —
+    # a primary-tier raw never resolves to a tertiary/quaternary token.
+    def _sort_color_bucket(bucket):
+        return sorted(
+            bucket,
+            key=lambda t: (
+                not t[1],
+                _color_priority_rank(t[0], name_to_path.get(t[0], "")),
+                t[0],
+            ),
+        )
+
     def _sort_bucket(bucket):
         return sorted(bucket, key=lambda t: (not t[1], t[0]))
 
     for k in list(color_index.keys()):
-        color_index[k] = _sort_bucket(color_index[k])
+        color_index[k] = _sort_color_bucket(color_index[k])
     for cat_idx in number_indexes.values():
         for k in list(cat_idx.keys()):
             cat_idx[k] = _sort_bucket(cat_idx[k])
@@ -2586,29 +2949,37 @@ def _load_token_index(token_map):
 _COLOR_THRESHOLD = 12  # ΔRGB sum, RGB 0-255
 
 
-def _match_color(rgba_tuple, color_index):
-    """Return the best-matching token name for an (r,g,b,a) tuple, or None.
+def _match_color(rgba_tuple, color_index, category="all"):
+    """Return the best-matching token name within a given category bucket.
 
-    Strategy:
-        1. Exact (r,g,b,a) hit → first token in pre-sorted bucket (semantic first).
-        2. Otherwise scan all entries with same alpha (±0.05), find lowest
-           ΔRGB that is ≤ _COLOR_THRESHOLD. Tie-break by semantic-first sort.
+    The new color_index uses keyed-by (category, rgba) so that, e.g., a TEXT
+    node's fill never matches against Border tokens. Caller passes:
+        category="bg"     for Frame.fills
+        category="fg"     for Button/Icon/Vector fills, on-bg interactive
+        category="border" for Frame.strokes
+        category="text"   for Text.fills
+        category="all"    fallback (effects, gradient stops, etc.)
     """
-    if rgba_tuple in color_index:
-        return color_index[rgba_tuple][0][0]
+    # Exact match within requested category.
+    key = (category, rgba_tuple)
+    if key in color_index:
+        return color_index[key][0][0]
 
     r, g, b, a = rgba_tuple
     best_dist = _COLOR_THRESHOLD + 1
     best_token = None
     best_is_semantic = False
-    for (cr, cg, cb, ca), bucket in color_index.items():
+    for k, bucket in color_index.items():
+        if not (isinstance(k, tuple) and len(k) == 2 and k[0] == category):
+            continue
+        cat_rgba = k[1]
+        cr, cg, cb, ca = cat_rgba
         if abs(ca - a) > 0.05:
             continue
         dist = abs(cr - r) + abs(cg - g) + abs(cb - b)
         if dist > _COLOR_THRESHOLD:
             continue
         cand_name, cand_semantic = bucket[0]
-        # Prefer: smaller distance > semantic > alphabetical (already in bucket order)
         better = (
             dist < best_dist
             or (dist == best_dist and cand_semantic and not best_is_semantic)
@@ -2848,6 +3219,33 @@ def _collect_bindings(nodes, indexes):
         if not nid:
             continue
 
+        node_type = (n.get("type") or "").upper()
+        node_name = (n.get("name") or "").lower()
+
+        # Decide fill category (user policy 2026-05-01):
+        #   TEXT.fills              → text
+        #   VECTOR/BOOLEAN_OPERATION.fills → fg (icon-like)
+        #   INSTANCE.fills          → fg if name suggests icon/button, else bg
+        #   FRAME/COMPONENT.fills with name fragment button|btn|cta|fab|tab|pill|chip
+        #                           → fg (interactive on-bg)
+        #   FRAME/RECTANGLE/etc.    → bg
+        if node_type == "TEXT":
+            fill_category = "text"
+        elif node_type in ("VECTOR", "STAR", "POLYGON", "BOOLEAN_OPERATION", "ELLIPSE", "LINE"):
+            fill_category = "fg"
+        elif node_type == "INSTANCE":
+            if any(k in node_name for k in ("icon", "button", "btn", "fab", "cta", "tab", "pill", "chip")):
+                fill_category = "fg"
+            else:
+                fill_category = "bg"
+        elif node_type in ("FRAME", "COMPONENT", "COMPONENT_SET", "RECTANGLE"):
+            if any(k in node_name for k in ("button", "btn", "cta", "fab", "chip")):
+                fill_category = "fg"
+            else:
+                fill_category = "bg"
+        else:
+            fill_category = "all"
+
         # fills
         for i, fill in enumerate(n.get("fills") or []):
             if not isinstance(fill, dict):
@@ -2857,17 +3255,18 @@ def _collect_bindings(nodes, indexes):
             rgba = _figma_color_to_rgba_ints(fill.get("color"))
             if rgba is None:
                 continue
-            tok = _match_color(rgba, color_idx)
+            tok = _match_color(rgba, color_idx, category=fill_category)
             if tok:
                 out["color_bindings"].append(
                     {"nodeId": nid, "field": "fills", "index": i, "token_name": tok}
                 )
             else:
                 out["unmapped"]["colors"].append(
-                    {"nodeId": nid, "field": "fills", "index": i, "rgba": rgba}
+                    {"nodeId": nid, "field": "fills", "index": i,
+                     "rgba": rgba, "category": fill_category}
                 )
 
-        # strokes
+        # strokes — always border category
         for i, stroke in enumerate(n.get("strokes") or []):
             if not isinstance(stroke, dict):
                 continue
@@ -2876,14 +3275,15 @@ def _collect_bindings(nodes, indexes):
             rgba = _figma_color_to_rgba_ints(stroke.get("color"))
             if rgba is None:
                 continue
-            tok = _match_color(rgba, color_idx)
+            tok = _match_color(rgba, color_idx, category="border")
             if tok:
                 out["color_bindings"].append(
                     {"nodeId": nid, "field": "strokes", "index": i, "token_name": tok}
                 )
             else:
                 out["unmapped"]["colors"].append(
-                    {"nodeId": nid, "field": "strokes", "index": i, "rgba": rgba}
+                    {"nodeId": nid, "field": "strokes", "index": i,
+                     "rgba": rgba, "category": "border"}
                 )
 
         # numbers (category-aware)
@@ -3092,16 +3492,81 @@ def _bind_semantic_tokens(root_node_id):
         print(f"[token-bind] failed to load token index: {exc} → skip")
         return {"skipped": True}
 
-    try:
-        results = call_tool("get_node_info", {"nodeId": root_node_id})
-        tree = parse_content(results).get("json") or {}
-        if not tree or "_error" in tree:
-            err = tree.get("_error", "empty response") if isinstance(tree, dict) else "no tree"
-            print(f"[token-bind] get_node_info returned error: {err} → skip")
+    def _fetch_subtree(node_id, depth=5):
+        """Fetch a subtree via get_node_info; return parsed dict or None."""
+        try:
+            res = call_tool("get_node_info", {"nodeId": node_id, "depth": depth})
+            t = parse_content(res).get("json") or {}
+            if not t or "_error" in t:
+                return None
+            return t
+        except Exception:
+            return None
+
+    tree = _fetch_subtree(root_node_id, depth=5)
+    if not tree:
+        # Fallback: root fetch failed (often due to figma.mixed Symbol on large
+        # trees). Walk children one-by-one — each child subtree is small enough
+        # to serialize cleanly. We rebuild a synthetic root node.
+        print("[token-bind] root fetch failed → falling back to per-child fetch")
+        try:
+            shallow = call_tool("get_node_info", {"nodeId": root_node_id, "depth": 0})
+            shallow_tree = parse_content(shallow).get("json") or {}
+        except Exception as exc:
+            print(f"[token-bind] shallow fetch also failed: {exc} → skip")
             return {"skipped": True}
-    except Exception as exc:
-        print(f"[token-bind] get_node_info failed: {exc} → skip")
-        return {"skipped": True}
+        if not shallow_tree or "_error" in shallow_tree:
+            print("[token-bind] shallow fetch returned no data → skip")
+            return {"skipped": True}
+        child_ids = [c.get("id") for c in shallow_tree.get("children") or [] if c.get("id")]
+        if not child_ids:
+            print("[token-bind] no direct children found → skip")
+            return {"skipped": True}
+        def _fetch_recursive(node_id, max_recurse=3):
+            """Try depth=5 fetch; if fails, fetch shallow + recurse into
+            grandchildren. Returns assembled subtree or None."""
+            t = _fetch_subtree(node_id, depth=5)
+            if t:
+                return t
+            if max_recurse <= 0:
+                return None
+            try:
+                sh = call_tool("get_node_info", {"nodeId": node_id, "depth": 0})
+                sh_tree = parse_content(sh).get("json") or {}
+            except Exception:
+                return None
+            if not sh_tree or "_error" in sh_tree:
+                return None
+            grand_ids = [g.get("id") for g in sh_tree.get("children") or [] if g.get("id")]
+            if not grand_ids:
+                return sh_tree
+            sub_children = []
+            for gid in grand_ids:
+                gt = _fetch_recursive(gid, max_recurse - 1)
+                if gt:
+                    sub_children.append(gt)
+            sh_tree = dict(sh_tree)
+            sh_tree["children"] = sub_children
+            return sh_tree
+
+        print(f"[token-bind] fallback: fetching {len(child_ids)} children individually")
+        child_trees = []
+        recovered_via_recurse = 0
+        for cid in child_ids:
+            ct = _fetch_subtree(cid, depth=5)
+            if ct:
+                child_trees.append(ct)
+            else:
+                ct2 = _fetch_recursive(cid, max_recurse=3)
+                if ct2:
+                    child_trees.append(ct2)
+                    recovered_via_recurse += 1
+                else:
+                    print(f"[token-bind] child {cid} fetch failed (even with recursive fallback) — skipping that subtree")
+        if recovered_via_recurse:
+            print(f"[token-bind] recovered {recovered_via_recurse} children via recursive fallback")
+        tree = dict(shallow_tree)
+        tree["children"] = child_trees
 
     nodes = _flatten_node_tree(tree)
     queues = _collect_bindings(nodes, indexes)

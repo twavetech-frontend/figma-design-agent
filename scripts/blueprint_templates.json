@@ -30,7 +30,7 @@
             "type": "frame",
             "width": 80,
             "height": 32,
-            "_comment": "빌드 후 create_component_instance(componentKey='957912b03baf924a48ef83424ed66f22a4a386a8') → insert_child로 교체"
+            "_comment": "빌드 후 create_component_instance(componentKey='81efeddd245e95f31a2724aa370ee54d3caf93d0') → insert_child로 교체"
           },
           {
             "name": "Nav Right",
@@ -260,7 +260,8 @@
       "_notes": [
         "post-fix가 자동 처리: ABSOLUTE 배치, x=253, 루트 하단 Tab Bar 위에 위치",
         "56x56 원형 사용 금지 — 텍스트가 잘림. 반드시 pill 형태 120x44 사용",
-        "layoutSizingHorizontal은 HUG 유지 (post-fix가 width 복원)"
+        "layoutSizingHorizontal은 HUG 유지 (post-fix가 width 복원)",
+        "⭕ 원형 variant (아이콘만, 텍스트 없음): 52×52, cornerRadius 999, 3px 흰 border, fill $token(bg-brand-solid), 아이콘 24 흰색 strokeWidth 2.4. 스테이지 생성 등 단일 액션 전용 — VS24 및 rule R4 참조"
       ],
       "template": {
         "name": "FAB",
@@ -613,6 +614,3544 @@
             "fontSize": 13,
             "fontName": { "family": "Pretendard", "style": "Medium" },
             "fontColor": "$token(fg-brand-primary)"
+          }
+        ]
+      }
+    },
+
+    "SummaryCard2Col": {
+      "_description": "2열 그리드 금액 요약 카드. 좌측(brand 톤)/우측(뉴트럴 톤) 대비로 긍정/중립 정보 병렬 표시. 아임인 홈 '내 스테이지' 요약 패턴.",
+      "_variables": [
+        "badgeText: 상단 Pill 배지 텍스트 (예: '3건 진행 중')",
+        "titleText: 헤더 타이틀 (예: '내 스테이지')",
+        "leftLabel/leftAmount/leftUnit: 좌측 셀 라벨·숫자·단위 (예: '모은 금액', '14,420,320', '원')",
+        "rightLabel/rightAmount/rightUnit: 우측 셀 라벨·숫자·단위 (예: '빌린 금액', '−5,240,020', '원')",
+        "leftIcon/rightIcon: 라벨 옆 아이콘 (기본: arrow-down / arrow-up)"
+      ],
+      "_notes": [
+        "카드 자체는 FILL 가로, 내부 2-col 그리드는 HORIZONTAL + itemSpacing:12 + 각 셀 FILL로 균등 분배",
+        "셀 카드의 숫자는 20sp/Bold + letterSpacing -0.02em (VS1 규칙)",
+        "좌측 셀: bg-brand-primary + border-brand (강조톤), 우측 셀: bg-secondary + border-secondary (뉴트럴)",
+        "배지는 반드시 HUG (rule 13)"
+      ],
+      "template": {
+        "name": "Summary Card",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 16,
+          "paddingTop": 20,
+          "paddingBottom": 20,
+          "paddingLeft": 20,
+          "paddingRight": 20
+        },
+        "fill": "$token(bg-primary)",
+        "stroke": "$token(border-secondary)",
+        "strokeWeight": 1,
+        "cornerRadius": 16,
+        "children": [
+          {
+            "name": "Header Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 8
+            },
+            "children": [
+              {
+                "name": "Header Left",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "counterAxisAlignItems": "CENTER",
+                  "itemSpacing": 8
+                },
+                "children": [
+                  {
+                    "name": "Count Pill",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "HUG",
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "counterAxisAlignItems": "CENTER",
+                      "paddingTop": 3,
+                      "paddingBottom": 3,
+                      "paddingLeft": 9,
+                      "paddingRight": 9
+                    },
+                    "fill": "$token(bg-brand-primary)",
+                    "cornerRadius": 999,
+                    "children": [
+                      {
+                        "name": "pill-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: badgeText}}",
+                        "fontSize": 12,
+                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontColor": "$token(fg-brand-primary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "title-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: titleText}}",
+                    "fontSize": 15,
+                    "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                    "fontColor": "$token(fg-primary)"
+                  }
+                ]
+              },
+              {
+                "name": "chevron-right",
+                "type": "icon",
+                "iconName": "chevron-right",
+                "size": 18,
+                "iconColor": "$token(fg-quaternary)"
+              }
+            ]
+          },
+          {
+            "name": "Grid Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 12
+            },
+            "children": [
+              {
+                "name": "Grid Cell Left",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 6,
+                  "paddingTop": 14,
+                  "paddingBottom": 14,
+                  "paddingLeft": 14,
+                  "paddingRight": 14
+                },
+                "fill": "$token(bg-brand-primary)",
+                "stroke": "$token(border-brand)",
+                "strokeWeight": 1,
+                "cornerRadius": 12,
+                "children": [
+                  {
+                    "name": "Label Row",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "HUG",
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "counterAxisAlignItems": "CENTER",
+                      "itemSpacing": 4
+                    },
+                    "children": [
+                      {
+                        "name": "label-icon",
+                        "type": "icon",
+                        "iconName": "arrow-down",
+                        "size": 12,
+                        "iconColor": "$token(fg-brand-primary)"
+                      },
+                      {
+                        "name": "label-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: leftLabel}}",
+                        "fontSize": 12,
+                        "fontName": { "family": "Pretendard", "style": "Medium" },
+                        "fontColor": "$token(fg-brand-primary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "amount-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: leftAmount}}",
+                    "fontSize": 20,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-brand-primary)",
+                    "letterSpacing": { "value": -2, "unit": "PERCENT" }
+                  },
+                  {
+                    "name": "unit-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: leftUnit}}",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "Regular" },
+                    "fontColor": "$token(fg-brand-primary)"
+                  }
+                ]
+              },
+              {
+                "name": "Grid Cell Right",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 6,
+                  "paddingTop": 14,
+                  "paddingBottom": 14,
+                  "paddingLeft": 14,
+                  "paddingRight": 14
+                },
+                "fill": "$token(bg-secondary)",
+                "stroke": "$token(border-secondary)",
+                "strokeWeight": 1,
+                "cornerRadius": 12,
+                "children": [
+                  {
+                    "name": "Label Row",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "HUG",
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "counterAxisAlignItems": "CENTER",
+                      "itemSpacing": 4
+                    },
+                    "children": [
+                      {
+                        "name": "label-icon",
+                        "type": "icon",
+                        "iconName": "arrow-up",
+                        "size": 12,
+                        "iconColor": "$token(fg-tertiary)"
+                      },
+                      {
+                        "name": "label-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: rightLabel}}",
+                        "fontSize": 12,
+                        "fontName": { "family": "Pretendard", "style": "Medium" },
+                        "fontColor": "$token(fg-tertiary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "amount-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: rightAmount}}",
+                    "fontSize": 20,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-primary)",
+                    "letterSpacing": { "value": -2, "unit": "PERCENT" }
+                  },
+                  {
+                    "name": "unit-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: rightUnit}}",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "Regular" },
+                    "fontColor": "$token(fg-tertiary)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "AlertCard": {
+      "_description": "상태 알림 카드 (error/warning/success 3톤). 아이콘 배지 + 타이틀/서브 + chevron. 미납·주의·완료 등 상태성 메시지 전용.",
+      "_variables": [
+        "variant: 'error' | 'warning' | 'success' — 색상 세트 선택 (기본: error)",
+        "iconName: 좌측 배지 아이콘 (기본: alert-circle / warning / check)",
+        "titleText: 강조 타이틀 (예: '미납 1건 · 4월 18일')",
+        "subText: 보조 설명 (예: '지금 납입하지 않으면 연체 이자가 발생해요')"
+      ],
+      "_notes": [
+        "배경: bg-{variant}-primary, 테두리: border-{variant} (warning/success는 border-primary 대체)",
+        "아이콘 배지 32sq 원형 + bg-{variant}-secondary (진한톤) + 흰 아이콘 strokeWidth 2 (VS4)",
+        "카드 전체 FILL 가로, 내부는 HORIZONTAL + CENTER + itemSpacing 10",
+        "텍스트 그룹 중앙은 FILL로 남는 공간 흡수, chevron은 HUG"
+      ],
+      "template": {
+        "name": "Alert Card",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "counterAxisAlignItems": "CENTER",
+          "itemSpacing": 10,
+          "paddingTop": 12,
+          "paddingBottom": 12,
+          "paddingLeft": 14,
+          "paddingRight": 14
+        },
+        "fill": "$token(bg-error-primary)",
+        "stroke": "$token(border-error)",
+        "strokeWeight": 1,
+        "cornerRadius": 12,
+        "children": [
+          {
+            "name": "Icon Badge",
+            "type": "frame",
+            "width": 32,
+            "height": 32,
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER"
+            },
+            "fill": "$token(bg-error-secondary)",
+            "cornerRadius": 999,
+            "children": [
+              {
+                "name": "alert-icon",
+                "type": "icon",
+                "iconName": "alert-circle",
+                "size": 18,
+                "iconColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+              }
+            ]
+          },
+          {
+            "name": "Text Group",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 1
+            },
+            "children": [
+              {
+                "name": "title-text",
+                "type": "text",
+                "text": "{{VARIABLE: titleText}}",
+                "fontSize": 14,
+                "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                "fontColor": "$token(fg-error-primary)"
+              },
+              {
+                "name": "sub-text",
+                "type": "text",
+                "text": "{{VARIABLE: subText}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-error-primary)"
+              }
+            ]
+          },
+          {
+            "name": "chevron-right",
+            "type": "icon",
+            "iconName": "chevron-right",
+            "size": 18,
+            "iconColor": "$token(fg-error-primary)"
+          }
+        ]
+      }
+    },
+
+    "SectionHeader": {
+      "_description": "섹션 헤더 공통 패턴. 좌측 타이틀(+옵션 배지) + 우측 '전체보기 >' 링크. VS6 규칙 준수 3요소 구조.",
+      "_variables": [
+        "titleText: 섹션 타이틀 (기본: Bold 16sp, 예: '이번 달 납입·지급')",
+        "badgeText: 타이틀 옆 상태 배지 텍스트 (선택, 예: '미납 1')",
+        "badgeVariant: 'error' | 'warning' | 'success' | 'brand' — 배지 색상 세트 (기본: error)",
+        "linkText: 우측 링크 텍스트 (기본: '전체보기')"
+      ],
+      "_notes": [
+        "가로 FILL, paddingLeft/Right 20, paddingBottom 12",
+        "배지가 없을 경우 Title Badge Group 내부에서 Badge 노드를 제거할 것",
+        "링크 텍스트와 chevron은 서로 HUG, itemSpacing 2"
+      ],
+      "template": {
+        "name": "Section Header",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "primaryAxisAlignItems": "SPACE_BETWEEN",
+          "counterAxisAlignItems": "CENTER",
+          "paddingLeft": 20,
+          "paddingRight": 20,
+          "paddingBottom": 12
+        },
+        "children": [
+          {
+            "name": "Title Badge Group",
+            "type": "frame",
+            "layoutSizingHorizontal": "HUG",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 8
+            },
+            "children": [
+              {
+                "name": "title-text",
+                "type": "text",
+                "text": "{{VARIABLE: titleText}}",
+                "fontSize": 16,
+                "fontName": { "family": "Pretendard", "style": "Bold" },
+                "fontColor": "$token(fg-primary)"
+              },
+              {
+                "name": "Status Badge",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "counterAxisAlignItems": "CENTER",
+                  "paddingTop": 2,
+                  "paddingBottom": 2,
+                  "paddingLeft": 7,
+                  "paddingRight": 7
+                },
+                "fill": "$token(bg-error-secondary)",
+                "cornerRadius": 999,
+                "children": [
+                  {
+                    "name": "badge-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: badgeText}}",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Link Group",
+            "type": "frame",
+            "layoutSizingHorizontal": "HUG",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 2
+            },
+            "children": [
+              {
+                "name": "link-text",
+                "type": "text",
+                "text": "{{VARIABLE: linkText}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-tertiary)"
+              },
+              {
+                "name": "chevron-right",
+                "type": "icon",
+                "iconName": "chevron-right",
+                "size": 14,
+                "iconColor": "$token(fg-tertiary)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "HorizontalCardScroll": {
+      "_description": "가로 스크롤 카드 리스트. 220px 고정폭 카드가 옆으로 흐르는 구조 (참여 스테이지·상품 라운지용). 캐로셀 래퍼 + FIXED 카드 패턴.",
+      "_variables": [
+        "cards: 카드 배열 (각 항목 = statusText/statusVariant/rate/amount/label/isFav)",
+        "paddingLeft: 좌측 패딩 (기본 16)"
+      ],
+      "_notes": [
+        "Carousel Wrapper는 HORIZONTAL + clipsContent:true + FILL × HUG + paddingLeft:16 + itemSpacing:10 (R3와 동일 캐로셀 패턴)",
+        "각 카드는 FIXED 220×auto — FILL 금지 (캐로셀 내에서 너비가 줄어듦)",
+        "상태 Pill은 HUG, fav heart 아이콘 18sp",
+        "이율: '이율'(11sp/SemiBold fg-brand-primary) + 숫자(18sp/Bold fg-brand-primary letterSpacing -0.02em) 베이스라인 정렬",
+        "카드 3장 이상 배치하여 가로 스크롤 의도 명시"
+      ],
+      "template": {
+        "name": "Horizontal Card Scroll",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 10,
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "clipsContent": true
+        },
+        "children": [
+          {
+            "name": "Stage Card",
+            "type": "frame",
+            "width": 220,
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 6,
+              "paddingTop": 16,
+              "paddingBottom": 16,
+              "paddingLeft": 16,
+              "paddingRight": 16
+            },
+            "fill": "$token(bg-primary)",
+            "stroke": "$token(border-secondary)",
+            "strokeWeight": 1,
+            "cornerRadius": 14,
+            "children": [
+              {
+                "name": "Top Row",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "SPACE_BETWEEN",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "children": [
+                  {
+                    "name": "Status Pill",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "HUG",
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "counterAxisAlignItems": "CENTER",
+                      "paddingTop": 3,
+                      "paddingBottom": 3,
+                      "paddingLeft": 8,
+                      "paddingRight": 8
+                    },
+                    "fill": "$token(bg-brand-primary)",
+                    "cornerRadius": 999,
+                    "children": [
+                      {
+                        "name": "status-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: statusText}}",
+                        "fontSize": 11,
+                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontColor": "$token(fg-brand-primary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "fav-icon",
+                    "type": "icon",
+                    "iconName": "heart",
+                    "size": 18,
+                    "iconColor": "$token(fg-quaternary)"
+                  }
+                ]
+              },
+              {
+                "name": "Rate Row",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "counterAxisAlignItems": "BASELINE",
+                  "itemSpacing": 4
+                },
+                "children": [
+                  {
+                    "name": "rate-label",
+                    "type": "text",
+                    "text": "이율",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                    "fontColor": "$token(fg-brand-primary)"
+                  },
+                  {
+                    "name": "rate-value",
+                    "type": "text",
+                    "text": "{{VARIABLE: rate}}",
+                    "fontSize": 18,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-brand-primary)",
+                    "letterSpacing": { "value": -2, "unit": "PERCENT" }
+                  }
+                ]
+              },
+              {
+                "name": "amount-text",
+                "type": "text",
+                "text": "{{VARIABLE: amount}}",
+                "fontSize": 20,
+                "fontName": { "family": "Pretendard", "style": "Bold" },
+                "fontColor": "$token(fg-primary)",
+                "letterSpacing": { "value": -2, "unit": "PERCENT" }
+              },
+              {
+                "name": "meta-text",
+                "type": "text",
+                "text": "{{VARIABLE: label}}",
+                "fontSize": 12,
+                "fontName": { "family": "Pretendard", "style": "Regular" },
+                "fontColor": "$token(fg-tertiary)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "ProgressCard": {
+      "_description": "진행률·한도 카드. 상단 라벨/비율 행 + 큰 숫자 + 진행률 바 + (옵션) nudge 서브카드. 한도/신용점수/적립 진행률 표시.",
+      "_variables": [
+        "titleText: 섹션 타이틀 (예: '한도 · 신용 현황')",
+        "leftLabel: 좌측 라벨 (예: '이용 중')",
+        "rightLabel: 우측 %라벨 (예: '6.9% 사용')",
+        "amountText: 대표 숫자 (예: '360')",
+        "unitText: 단위 (예: '만원')",
+        "totalText: 전체 한도 (예: '총 5,200만원')",
+        "progressPct: 0~100 진행률 — Fill 프레임의 width % 계산용",
+        "nudgeText: (선택) 서브카드 안내 텍스트"
+      ],
+      "_notes": [
+        "카드 FILL, padding 18, radius 16, bg-primary + border-secondary",
+        "Amount Row는 baseline 정렬 필수 (큰 숫자 + 작은 단위 + spacer + 총액)",
+        "Progress Bar: height 8, radius 999, track bg-quaternary, fill bg-brand-solid + width: progressPct%",
+        "Nudge 서브카드는 HORIZONTAL padding 10/12, radius 10, bg-brand-primary + border-brand, 아이콘 18 + 텍스트 FILL + chevron 16"
+      ],
+      "template": {
+        "name": "Progress Card",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 10,
+          "paddingTop": 18,
+          "paddingBottom": 18,
+          "paddingLeft": 18,
+          "paddingRight": 18
+        },
+        "fill": "$token(bg-primary)",
+        "stroke": "$token(border-secondary)",
+        "strokeWeight": 1,
+        "cornerRadius": 16,
+        "children": [
+          {
+            "name": "Label Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "counterAxisAlignItems": "BASELINE"
+            },
+            "children": [
+              {
+                "name": "left-label",
+                "type": "text",
+                "text": "{{VARIABLE: leftLabel}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-tertiary)"
+              },
+              {
+                "name": "right-label",
+                "type": "text",
+                "text": "{{VARIABLE: rightLabel}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-quaternary)"
+              }
+            ]
+          },
+          {
+            "name": "Amount Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "BASELINE",
+              "itemSpacing": 6
+            },
+            "children": [
+              {
+                "name": "amount-text",
+                "type": "text",
+                "text": "{{VARIABLE: amountText}}",
+                "fontSize": 24,
+                "fontName": { "family": "Pretendard", "style": "Bold" },
+                "fontColor": "$token(fg-primary)",
+                "letterSpacing": { "value": -2, "unit": "PERCENT" }
+              },
+              {
+                "name": "unit-text",
+                "type": "text",
+                "text": "{{VARIABLE: unitText}}",
+                "fontSize": 14,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-tertiary)"
+              },
+              {
+                "name": "Spacer",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL"
+              },
+              {
+                "name": "total-text",
+                "type": "text",
+                "text": "{{VARIABLE: totalText}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Regular" },
+                "fontColor": "$token(fg-quaternary)"
+              }
+            ]
+          },
+          {
+            "name": "Progress Bar Track",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "height": 8,
+            "fill": "$token(bg-quaternary)",
+            "cornerRadius": 999,
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL"
+            },
+            "children": [
+              {
+                "name": "Progress Bar Fill",
+                "type": "frame",
+                "width": 120,
+                "height": 8,
+                "fill": "$token(bg-brand-solid)",
+                "cornerRadius": 999,
+                "_comment": "width는 progressPct에 비례해 계산: Math.round((progressPct/100) * trackWidth)"
+              }
+            ]
+          },
+          {
+            "name": "Nudge Card",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 10,
+              "paddingTop": 10,
+              "paddingBottom": 10,
+              "paddingLeft": 12,
+              "paddingRight": 12
+            },
+            "fill": "$token(bg-brand-primary)",
+            "stroke": "$token(border-brand)",
+            "strokeWeight": 1,
+            "cornerRadius": 10,
+            "children": [
+              {
+                "name": "nudge-icon",
+                "type": "icon",
+                "iconName": "shield-tick",
+                "size": 18,
+                "iconColor": "$token(fg-brand-primary)"
+              },
+              {
+                "name": "nudge-text",
+                "type": "text",
+                "layoutSizingHorizontal": "FILL",
+                "text": "{{VARIABLE: nudgeText}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-brand-primary)"
+              },
+              {
+                "name": "chevron-right",
+                "type": "icon",
+                "iconName": "chevron-right",
+                "size": 16,
+                "iconColor": "$token(fg-brand-primary)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "AttendanceStrip": {
+      "_description": "연속 출석/streak 카드. 상단 헤더(🔥 + 연속일수 + 서브) + 출석 버튼 + 7일 체크 원형. 포인트 적립·출석 체크·퀘스트 등 일일 리텐션 유도 전용.",
+      "_variables": [
+        "streakText: 연속일수 텍스트 (예: '연속 12일 출석 중')",
+        "subText: 보조 문구 (예: '오늘 출석 시 100P 적립')",
+        "buttonText: 우측 버튼 라벨 (기본: '출석')",
+        "days: 요일 라벨 배열 (기본: ['월','화','수','목','금','토','일'])",
+        "todayIndex: 오늘 인덱스 0~6",
+        "checkedCount: 체크 완료 갯수 0~7 (todayIndex 포함 앞쪽 모두 체크된 것으로 렌더)"
+      ],
+      "_notes": [
+        "카드 FILL, padding 18, radius 16, bg-primary + border-secondary",
+        "헤더 좌측 그룹은 VERTICAL itemSpacing 2, 내부 Fire Row는 HORIZONTAL CENTER itemSpacing 6",
+        "오른쪽 '출석' 버튼은 HUG — 가급적 DS Buttons/Button md 인스턴스 권장 (프레임+텍스트 수동 구성 금지, rule 확인)",
+        "Days Row는 FILL, 내부 7개 아이템 각각 FILL+VERTICAL+CENTER+itemSpacing:4 (각 셀 폭 균등)",
+        "각 Day 원형: 32sq radius 999. 상태별 배경/아이콘: 체크(bg-brand-primary + check fg-brand-primary), 오늘(bg-warning-secondary + fire 흰색 + border warning), 미래(bg-secondary + 요일 텍스트 fg-quaternary)",
+        "Label 아래 요일 10sp/500, 오늘 인덱스는 '오늘' + fg-warning-primary"
+      ],
+      "template": {
+        "name": "Attendance Strip",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 14,
+          "paddingTop": 18,
+          "paddingBottom": 18,
+          "paddingLeft": 18,
+          "paddingRight": 18
+        },
+        "fill": "$token(bg-primary)",
+        "stroke": "$token(border-secondary)",
+        "strokeWeight": 1,
+        "cornerRadius": 16,
+        "children": [
+          {
+            "name": "Header Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 12
+            },
+            "children": [
+              {
+                "name": "Header Left",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 2
+                },
+                "children": [
+                  {
+                    "name": "Fire Row",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "HUG",
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "counterAxisAlignItems": "CENTER",
+                      "itemSpacing": 6
+                    },
+                    "children": [
+                      {
+                        "name": "fire-icon",
+                        "type": "icon",
+                        "iconName": "flame",
+                        "size": 18,
+                        "iconColor": "$token(fg-warning-primary)"
+                      },
+                      {
+                        "name": "streak-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: streakText}}",
+                        "fontSize": 15,
+                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontColor": "$token(fg-primary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "sub-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: subText}}",
+                    "fontSize": 12,
+                    "fontName": { "family": "Pretendard", "style": "Regular" },
+                    "fontColor": "$token(fg-tertiary)"
+                  }
+                ]
+              },
+              {
+                "name": "Check-in Button",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER",
+                  "paddingTop": 8,
+                  "paddingBottom": 8,
+                  "paddingLeft": 14,
+                  "paddingRight": 14
+                },
+                "fill": "$token(bg-brand-solid)",
+                "cornerRadius": 8,
+                "_comment": "DS Buttons/Button (md, Primary) 인스턴스로 교체 권장 — componentKey='ed0032bcf28f03da97e4b3006f54d30a0fbe5914'",
+                "children": [
+                  {
+                    "name": "button-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: buttonText}}",
+                    "fontSize": 13,
+                    "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Days Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 4
+            },
+            "_comment": "7개 Day Cell 자식. 각 셀은 FILL 균등 분배. 상태별 스타일 분기: past/today/future",
+            "children": [
+              {
+                "name": "Day Cell Example (today)",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER",
+                  "itemSpacing": 4
+                },
+                "children": [
+                  {
+                    "name": "Day Circle",
+                    "type": "frame",
+                    "width": 32,
+                    "height": 32,
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "primaryAxisAlignItems": "CENTER",
+                      "counterAxisAlignItems": "CENTER"
+                    },
+                    "fill": "$token(bg-warning-secondary)",
+                    "stroke": "$token(fg-warning-primary)",
+                    "strokeWeight": 2,
+                    "cornerRadius": 999,
+                    "children": [
+                      {
+                        "name": "day-icon",
+                        "type": "icon",
+                        "iconName": "flame",
+                        "size": 16,
+                        "iconColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "day-label",
+                    "type": "text",
+                    "text": "오늘",
+                    "fontSize": 10,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-warning-primary)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "ModalHeader": {
+      "_description": "X-close 전용 간소 모달 헤더. 우측 끝 X 버튼, 좌측은 빈 공간. 모달 콘텐츠가 타이틀 역할을 대신하는 패턴 (진행 스테이지 내역 모달 등).",
+      "_variables": [
+        "iconName: 닫기 아이콘 (기본: x-close 또는 x)",
+        "iconSize: X 아이콘 크기 (기본: 24)"
+      ],
+      "_notes": [
+        "높이 48~56, padding 16/20",
+        "HORIZONTAL + primaryAxisAlignItems: END + counterAxisAlignItems: CENTER",
+        "타이틀 텍스트 금지 — 모달 본문 첫 카드가 타이틀 역할 수행 (VS9)",
+        "배경은 투명 또는 bg-primary (모달 배경과 동일)"
+      ],
+      "template": {
+        "name": "Modal Header",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "height": 48,
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "primaryAxisAlignItems": "MAX",
+          "counterAxisAlignItems": "CENTER",
+          "paddingTop": 12,
+          "paddingBottom": 12,
+          "paddingLeft": 20,
+          "paddingRight": 20
+        },
+        "fill": { "r": 0, "g": 0, "b": 0, "a": 0 },
+        "children": [
+          {
+            "name": "close-icon",
+            "type": "icon",
+            "iconName": "x-close",
+            "size": 24,
+            "iconColor": "$token(fg-primary)"
+          }
+        ]
+      }
+    },
+
+    "SummaryCardLinkRows": {
+      "_description": "타이틀 + 우측 아이콘 그룹 + 라벨/값 링크 row 리스트 카드. 탭 가능한 금액 값이 우측에 링크 스타일(underline+brand)로 정렬되는 요약 카드 패턴. SummaryCard2Col과 다른 구조: 2-col grid가 아닌 세로로 쌓인 key/value row.",
+      "_variables": [
+        "titleText: 타이틀 (예: '진행중인 4건의 스테이지 내역')",
+        "rightIcons: 우측 아이콘 배열 (기본: check-circle success + sparkles brand)",
+        "rows: 라벨/값 배열 (각 항목 = label + value + valueSign['+'|'−'|null])"
+      ],
+      "_notes": [
+        "카드 shell은 SummaryCard2Col과 동일: bg-primary + border-secondary 1px + radius 16 + padding 20",
+        "Header Row: HORIZONTAL + SPACE_BETWEEN + CENTER, 타이틀은 FILL, 우측 아이콘 그룹은 HUG",
+        "각 Row: HORIZONTAL + SPACE_BETWEEN + BASELINE, 라벨(13sp Regular fg-tertiary) + 값(14sp Bold fg-brand-primary + UNDERLINE) — VS10 참조",
+        "금액 부호(+ −)는 값 텍스트 앞에 붙임: '+ 14,420,320원' / '− 5,240,010원'",
+        "타이틀 내 부분 강조(예: '4건')는 set_styled_text_segments로 brand 컬러 적용"
+      ],
+      "template": {
+        "name": "Summary Card (Link Rows)",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 12,
+          "paddingTop": 20,
+          "paddingBottom": 20,
+          "paddingLeft": 20,
+          "paddingRight": 20
+        },
+        "fill": "$token(bg-primary)",
+        "stroke": "$token(border-secondary)",
+        "strokeWeight": 1,
+        "cornerRadius": 16,
+        "children": [
+          {
+            "name": "Header Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 12
+            },
+            "children": [
+              {
+                "name": "title-text",
+                "type": "text",
+                "layoutSizingHorizontal": "FILL",
+                "text": "{{VARIABLE: titleText}}",
+                "fontSize": 16,
+                "fontName": { "family": "Pretendard", "style": "Bold" },
+                "fontColor": "$token(fg-primary)"
+              },
+              {
+                "name": "Right Icons",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "counterAxisAlignItems": "CENTER",
+                  "itemSpacing": 6
+                },
+                "children": [
+                  {
+                    "name": "icon-check-circle",
+                    "type": "icon",
+                    "iconName": "check-circle",
+                    "size": 20,
+                    "iconColor": "$token(fg-success-primary)"
+                  },
+                  {
+                    "name": "icon-sparkles",
+                    "type": "icon",
+                    "iconName": "stars-02",
+                    "size": 20,
+                    "iconColor": "$token(fg-brand-primary)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Link Row Example",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "counterAxisAlignItems": "BASELINE"
+            },
+            "children": [
+              {
+                "name": "row-label",
+                "type": "text",
+                "text": "{{VARIABLE: rows[0].label}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Regular" },
+                "fontColor": "$token(fg-tertiary)"
+              },
+              {
+                "name": "row-value",
+                "type": "text",
+                "text": "{{VARIABLE: rows[0].value}}",
+                "fontSize": 14,
+                "fontName": { "family": "Pretendard", "style": "Bold" },
+                "fontColor": "$token(fg-brand-primary)",
+                "textDecoration": "UNDERLINE"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "MonthScrollerCalendar": {
+      "_description": "월 가로 스크롤 캘린더. 7개 월 셀(월 이름 + 날짜 숫자 + 이벤트 dot) + active 원형 강조 + 좌우 chevron nav + 하단 필터 드롭다운. 거래 스케줄/납입 일정 등 월 단위 타임라인 엔트리 전용.",
+      "_variables": [
+        "titleText: 카드 타이틀 (기본: '거래 스케줄')",
+        "months: 월 셀 배열 (각 = {monthLabel, dayNumber, isActive, hasEvent})",
+        "activeSubLabel: 활성 월 하단 라벨 (기본: '이번달')",
+        "filterText: 우측 필터 드롭다운 텍스트 (기본: '납입')"
+      ],
+      "_notes": [
+        "카드 shell: bg-primary + border-secondary + radius 16 + padding 20",
+        "Title: 14sp Bold, textAlignHorizontal CENTER",
+        "Nav Row: HORIZONTAL + SPACE_BETWEEN + CENTER. 좌 chevron + Month Cells(FILL SPACE_BETWEEN) + 우 chevron",
+        "Month Cell: VERTICAL + CENTER + itemSpacing 4, HUG × HUG. 자식: 월이름(11sp fg-tertiary) + 날짜(18sp Bold fg-primary) + dot(4sq radius 999)",
+        "Active Cell: 날짜 숫자를 원형 컨테이너로 감쌈 (36sq radius 999, bg-brand-solid). 원 안 텍스트는 흰색. 원 아래 '이번달' 라벨(11sp Medium fg-brand-primary) — VS11",
+        "Filter Row: HORIZONTAL + END, paddingTop 12. 텍스트(13sp Medium) + chevron-down 14"
+      ],
+      "template": {
+        "name": "Month Scroller Calendar",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 16,
+          "paddingTop": 20,
+          "paddingBottom": 20,
+          "paddingLeft": 20,
+          "paddingRight": 20
+        },
+        "fill": "$token(bg-primary)",
+        "stroke": "$token(border-secondary)",
+        "strokeWeight": 1,
+        "cornerRadius": 16,
+        "children": [
+          {
+            "name": "title-text",
+            "type": "text",
+            "layoutSizingHorizontal": "FILL",
+            "text": "{{VARIABLE: titleText}}",
+            "fontSize": 14,
+            "fontName": { "family": "Pretendard", "style": "Bold" },
+            "fontColor": "$token(fg-primary)",
+            "textAlignHorizontal": "CENTER"
+          },
+          {
+            "name": "Nav Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 8
+            },
+            "children": [
+              {
+                "name": "chevron-left",
+                "type": "icon",
+                "iconName": "chevron-left",
+                "size": 20,
+                "iconColor": "$token(fg-tertiary)"
+              },
+              {
+                "name": "Month Cells",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "SPACE_BETWEEN",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "_comment": "7개 Month Cell. 한 셀만 isActive=true — 원형 강조 + 하단 '이번달' 라벨. 나머지는 일반 셀",
+                "children": [
+                  {
+                    "name": "Month Cell Inactive Example",
+                    "type": "frame",
+                    "autoLayout": {
+                      "layoutMode": "VERTICAL",
+                      "primaryAxisAlignItems": "CENTER",
+                      "counterAxisAlignItems": "CENTER",
+                      "itemSpacing": 4
+                    },
+                    "children": [
+                      {
+                        "name": "month-label",
+                        "type": "text",
+                        "text": "Oct",
+                        "fontSize": 11,
+                        "fontName": { "family": "Pretendard", "style": "Regular" },
+                        "fontColor": "$token(fg-tertiary)"
+                      },
+                      {
+                        "name": "day-number",
+                        "type": "text",
+                        "text": "10",
+                        "fontSize": 18,
+                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontColor": "$token(fg-primary)"
+                      },
+                      {
+                        "name": "event-dot",
+                        "type": "frame",
+                        "width": 4,
+                        "height": 4,
+                        "fill": "$token(fg-quaternary)",
+                        "cornerRadius": 999
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Month Cell Active Example",
+                    "type": "frame",
+                    "autoLayout": {
+                      "layoutMode": "VERTICAL",
+                      "primaryAxisAlignItems": "CENTER",
+                      "counterAxisAlignItems": "CENTER",
+                      "itemSpacing": 4
+                    },
+                    "children": [
+                      {
+                        "name": "month-label",
+                        "type": "text",
+                        "text": "Jan",
+                        "fontSize": 11,
+                        "fontName": { "family": "Pretendard", "style": "Regular" },
+                        "fontColor": "$token(fg-tertiary)"
+                      },
+                      {
+                        "name": "Day Number Circle",
+                        "type": "frame",
+                        "width": 36,
+                        "height": 36,
+                        "autoLayout": {
+                          "layoutMode": "HORIZONTAL",
+                          "primaryAxisAlignItems": "CENTER",
+                          "counterAxisAlignItems": "CENTER"
+                        },
+                        "fill": "$token(bg-brand-solid)",
+                        "cornerRadius": 999,
+                        "children": [
+                          {
+                            "name": "day-number",
+                            "type": "text",
+                            "text": "1",
+                            "fontSize": 18,
+                            "fontName": { "family": "Pretendard", "style": "Bold" },
+                            "fontColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+                          }
+                        ]
+                      },
+                      {
+                        "name": "active-sublabel",
+                        "type": "text",
+                        "text": "{{VARIABLE: activeSubLabel}}",
+                        "fontSize": 11,
+                        "fontName": { "family": "Pretendard", "style": "Medium" },
+                        "fontColor": "$token(fg-brand-primary)"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "chevron-right",
+                "type": "icon",
+                "iconName": "chevron-right",
+                "size": 20,
+                "iconColor": "$token(fg-tertiary)"
+              }
+            ]
+          },
+          {
+            "name": "Filter Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "MAX",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 4
+            },
+            "children": [
+              {
+                "name": "filter-text",
+                "type": "text",
+                "text": "{{VARIABLE: filterText}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-secondary)"
+              },
+              {
+                "name": "chevron-down",
+                "type": "icon",
+                "iconName": "chevron-down",
+                "size": 14,
+                "iconColor": "$token(fg-secondary)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "StatsStrip3Col": {
+      "_description": "카드/테두리 없는 flat 3-col 통계 띠. 중복되는 관련 수치를 얇은 구간으로 한 줄에 병렬 표시 (월 납입액/완료액/남은액 등). Card 위계를 피하고 싶을 때 사용.",
+      "_variables": [
+        "stats: 3개 통계 배열 (각 = {label, value, unit})"
+      ],
+      "_notes": [
+        "배경은 bg-secondary (얕은 구분) 또는 투명",
+        "padding 16/20, border 없음",
+        "3개 셀: 각 VERTICAL + CENTER + itemSpacing 4 + FILL (균등 분배)",
+        "라벨(12sp Regular fg-tertiary) + 값(16sp Bold fg-primary) — VS14",
+        "셀 사이 divider 금지 (flat 스타일)"
+      ],
+      "template": {
+        "name": "Stats Strip",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "primaryAxisAlignItems": "SPACE_BETWEEN",
+          "counterAxisAlignItems": "CENTER",
+          "paddingTop": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 20,
+          "paddingRight": 20
+        },
+        "fill": "$token(bg-secondary)",
+        "children": [
+          {
+            "name": "Stat Cell Example",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 4
+            },
+            "_comment": "3개 Stat Cell 반복. 각 셀 FILL로 균등 분배",
+            "children": [
+              {
+                "name": "stat-label",
+                "type": "text",
+                "text": "{{VARIABLE: stats[0].label}}",
+                "fontSize": 12,
+                "fontName": { "family": "Pretendard", "style": "Regular" },
+                "fontColor": "$token(fg-tertiary)"
+              },
+              {
+                "name": "stat-value",
+                "type": "text",
+                "text": "{{VARIABLE: stats[0].value}}",
+                "fontSize": 16,
+                "fontName": { "family": "Pretendard", "style": "Bold" },
+                "fontColor": "$token(fg-primary)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "TransactionTimelineItem": {
+      "_description": "타임라인 리스트 아이템. 좌측 D-day 날짜 배지(48×56) + 중앙 콘텐츠(타이틀 + 금액 + 얇은 progress bar) + 우측 액션 pill/상태 텍스트. 스테이지 납입 스케줄/미납 리스트 전용. 아이템들을 VERTICAL로 쌓아 타임라인 구성.",
+      "_variables": [
+        "dayText: 날짜 숫자 텍스트 (예: '29일')",
+        "dayStatus: D+n/D-n/오늘 라벨 (예: 'D+3', '오늘', 'D-1')",
+        "isActive: 오늘/미납 여부 — 배지 배경 dark",
+        "titleText: 타이틀 (예: '미납 (1/5회차)', '납입 (5/5회차)')",
+        "amountText: 금액 (예: '100,000원')",
+        "progressPct: 0~100 회차 진행률",
+        "statusVariant: 'overdue'(빨강) | 'today'(brand) | 'completed'(초록) | 'scheduled'(gray) — progress bar 색상",
+        "actionType: 'pill' 또는 'text' — 우측 영역 타입",
+        "actionLabel: 우측 라벨 (예: '납입 하기', '납입 처리 완료', '선납 하기')"
+      ],
+      "_notes": [
+        "아이템 전체: HORIZONTAL + CENTER + itemSpacing 12 + FILL, padding 12/20",
+        "Left Date Badge: FIXED 48×56, radius 10, VERTICAL + CENTER, 자식 2개 (dayText + dayStatus)",
+        "  - isActive=true: fill bg-primary (dark) + 흰 텍스트",
+        "  - isActive=false: fill bg-secondary + fg-primary — VS12",
+        "Middle Content: FILL + VERTICAL + itemSpacing 4, 자식 3개 (title + amount + Progress Bar)",
+        "Progress Bar: height 3 + radius 999 + track bg-quaternary + Fill 색상 변이 (statusVariant별) — VS13",
+        "Right Action: HUG",
+        "  - actionType='pill': outline pill (stroke border-primary, bg 투명, padding 8/12, radius 999, 13sp Medium fg-primary)",
+        "  - actionType='text': 13sp Medium fg-tertiary (비활성 상태 표기)",
+        "아이템 사이 구분: 1px border-tertiary 하단 또는 itemSpacing 16"
+      ],
+      "template": {
+        "name": "Timeline Item",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "counterAxisAlignItems": "CENTER",
+          "itemSpacing": 12,
+          "paddingTop": 12,
+          "paddingBottom": 12,
+          "paddingLeft": 20,
+          "paddingRight": 20
+        },
+        "children": [
+          {
+            "name": "Date Badge",
+            "type": "frame",
+            "width": 48,
+            "height": 56,
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 2
+            },
+            "fill": "$token(bg-primary)",
+            "cornerRadius": 10,
+            "_comment": "isActive=false일 때 fill: $token(bg-secondary), 텍스트 컬러 fg-primary로 교체",
+            "children": [
+              {
+                "name": "day-text",
+                "type": "text",
+                "text": "{{VARIABLE: dayText}}",
+                "fontSize": 14,
+                "fontName": { "family": "Pretendard", "style": "Bold" },
+                "fontColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+              },
+              {
+                "name": "day-status",
+                "type": "text",
+                "text": "{{VARIABLE: dayStatus}}",
+                "fontSize": 10,
+                "fontName": { "family": "Pretendard", "style": "Regular" },
+                "fontColor": { "r": 1, "g": 1, "b": 1, "a": 0.85 }
+              }
+            ]
+          },
+          {
+            "name": "Middle Content",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 4
+            },
+            "children": [
+              {
+                "name": "title-text",
+                "type": "text",
+                "text": "{{VARIABLE: titleText}}",
+                "fontSize": 14,
+                "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                "fontColor": "$token(fg-primary)"
+              },
+              {
+                "name": "amount-text",
+                "type": "text",
+                "text": "{{VARIABLE: amountText}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Regular" },
+                "fontColor": "$token(fg-secondary)"
+              },
+              {
+                "name": "Progress Bar Track",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "height": 3,
+                "fill": "$token(bg-quaternary)",
+                "cornerRadius": 999,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL"
+                },
+                "children": [
+                  {
+                    "name": "Progress Bar Fill",
+                    "type": "frame",
+                    "width": 60,
+                    "height": 3,
+                    "fill": "$token(bg-error-secondary)",
+                    "cornerRadius": 999,
+                    "_comment": "statusVariant별 fill: overdue→bg-error-secondary, today→bg-brand-solid, completed→bg-success-secondary, scheduled→bg-quaternary(Fill=0). width는 progressPct 비례"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Action Pill",
+            "type": "frame",
+            "layoutSizingHorizontal": "HUG",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 8,
+              "paddingBottom": 8,
+              "paddingLeft": 14,
+              "paddingRight": 14
+            },
+            "fill": { "r": 0, "g": 0, "b": 0, "a": 0 },
+            "stroke": "$token(border-primary)",
+            "strokeWeight": 1,
+            "cornerRadius": 999,
+            "_comment": "actionType='text'일 때는 stroke 제거 + padding 0 + 텍스트 컬러 fg-tertiary로 교체",
+            "children": [
+              {
+                "name": "action-label",
+                "type": "text",
+                "text": "{{VARIABLE: actionLabel}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-primary)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "CategoryChipScroller": {
+      "_description": "카테고리 필터용 outline pill 가로 스크롤. 추천/직접/신규/인기/마감임박 등 콘텐츠 세그먼트 전환 전용. DS Tabs(Underline)와 다른 용도 — 섹션 필터는 pill 허용 (VS15).",
+      "_variables": [
+        "chips: 칩 배열 (각 = {label, active})",
+        "paddingLeft/Right: 좌우 패딩 (기본 20)"
+      ],
+      "_notes": [
+        "컨테이너: HORIZONTAL + clipsContent true + itemSpacing 6 + paddingTop 12 + paddingBottom 6 + paddingLeft/Right 20 + FILL",
+        "각 칩: HUG + HORIZONTAL + CENTER + padding 8/16 + radius 999",
+        "Active: border brand + fill bg-brand-primary + fg-brand-primary + Bold 700",
+        "Inactive: border border-primary + fill bg-primary + fg-tertiary + Medium 500",
+        "하단 padding 6은 섹션 간 압축 연결 전용 — 다음 섹션과 분리 원하면 후처리로 gap 추가"
+      ],
+      "template": {
+        "name": "Category Chip Scroller",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 6,
+          "paddingTop": 12,
+          "paddingBottom": 6,
+          "paddingLeft": 20,
+          "paddingRight": 20,
+          "clipsContent": true
+        },
+        "fill": "$token(bg-primary)",
+        "children": [
+          {
+            "name": "Chip Active Example",
+            "type": "frame",
+            "layoutSizingHorizontal": "HUG",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 8,
+              "paddingBottom": 8,
+              "paddingLeft": 16,
+              "paddingRight": 16
+            },
+            "fill": "$token(bg-brand-primary)",
+            "stroke": "$token(border-brand)",
+            "strokeWeight": 1,
+            "cornerRadius": 999,
+            "children": [
+              {
+                "name": "chip-text",
+                "type": "text",
+                "text": "추천",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Bold" },
+                "fontColor": "$token(fg-brand-primary)"
+              }
+            ]
+          },
+          {
+            "name": "Chip Inactive Example",
+            "type": "frame",
+            "layoutSizingHorizontal": "HUG",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 8,
+              "paddingBottom": 8,
+              "paddingLeft": 16,
+              "paddingRight": 16
+            },
+            "fill": "$token(bg-primary)",
+            "stroke": "$token(border-primary)",
+            "strokeWeight": 1,
+            "cornerRadius": 999,
+            "children": [
+              {
+                "name": "chip-text",
+                "type": "text",
+                "text": "직접",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-tertiary)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "SegmentedTabControl": {
+      "_description": "2~3개 세그먼트 탭 컨트롤. iOS-style — pill track 안에 active 세그먼트는 흰 배경 + 미세 shadow, inactive는 투명 배경. 상호 배타적 2-way/3-way 선택 전용 (예: 추천/직접, 월별/연별). 카테고리 필터(`CategoryChipScroller`)와 용도 다름 — 적은 수의 주요 뷰 전환 (VS16).",
+      "_variables": [
+        "segments: 세그먼트 배열 (각 = {label, active}), 권장 2~3개",
+        "activeIndex: 활성 세그먼트 인덱스"
+      ],
+      "_notes": [
+        "Track (외곽): HORIZONTAL + itemSpacing 0 + padding 4 + bg-secondary + radius 999 + FILL 가로 또는 width 고정",
+        "각 세그먼트: FILL (균등 분배) + HORIZONTAL + CENTER + padding 10/16 + radius 999",
+        "Active: fill bg-primary (흰) + shadow-xs (0 1px 2px rgba(10,13,18,.05)) + 텍스트 13sp Bold fg-primary",
+        "Inactive: fill 투명 {r:0,g:0,b:0,a:0} + 테두리 없음 + 텍스트 13sp Medium fg-tertiary",
+        "Track 내 padding 4 덕분에 active segment가 track 안쪽으로 inset — 외곽 track 눈에 띔",
+        "세그먼트 3개 이상 필요하면 CategoryChipScroller (outline chip 스크롤) 사용 권장 — 세그먼트는 2~3개 권장",
+        "4탭 variant (상세 화면 내부 서브 탭): padding 3 (track), radius 10 (track) / 7 (segment), 각 segment padding 8/4, 텍스트 12sp — 2-3탭보다 소형화. 스테이지 상세 화면 등 한정 공간에서 사용"
+      ],
+      "template": {
+        "name": "Segmented Tab Control",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 0,
+          "paddingTop": 4,
+          "paddingBottom": 4,
+          "paddingLeft": 4,
+          "paddingRight": 4
+        },
+        "fill": "$token(bg-secondary)",
+        "cornerRadius": 999,
+        "children": [
+          {
+            "name": "Segment Active Example",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 10,
+              "paddingBottom": 10,
+              "paddingLeft": 16,
+              "paddingRight": 16
+            },
+            "fill": "$token(bg-primary)",
+            "cornerRadius": 999,
+            "effects": [
+              {
+                "type": "DROP_SHADOW",
+                "color": { "r": 0.039, "g": 0.051, "b": 0.071, "a": 0.05 },
+                "offset": { "x": 0, "y": 1 },
+                "radius": 2,
+                "spread": 0,
+                "visible": true,
+                "blendMode": "NORMAL"
+              }
+            ],
+            "children": [
+              {
+                "name": "segment-text",
+                "type": "text",
+                "text": "추천",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Bold" },
+                "fontColor": "$token(fg-primary)"
+              }
+            ]
+          },
+          {
+            "name": "Segment Inactive Example",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 10,
+              "paddingBottom": 10,
+              "paddingLeft": 16,
+              "paddingRight": 16
+            },
+            "fill": { "r": 0, "g": 0, "b": 0, "a": 0 },
+            "cornerRadius": 999,
+            "children": [
+              {
+                "name": "segment-text",
+                "type": "text",
+                "text": "직접",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-tertiary)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "StepperFilterCard": {
+      "_description": "± 스테퍼 입력 필터 카드. 라벨 + 값 + 단위 행이 세로 반복. 월 납입 금액/기간/시점 등 숫자 범위 필터링 전용 (VS16).",
+      "_variables": [
+        "rows: 스테퍼 행 배열 (각 = {label, value, unit, min, max, step})",
+        "fill: 카드 배경 (기본 bg-secondary)"
+      ],
+      "_notes": [
+        "카드 shell: bg-secondary + radius 14 + padding 6/16 (수직 6, 수평 16)",
+        "각 Stepper Row: HORIZONTAL + SPACE_BETWEEN + CENTER + padding 10/0 + 하단 border-bottom 1px border-tertiary (마지막 행은 border 제거)",
+        "좌측 라벨: 14sp Medium fg-secondary",
+        "우측 그룹: HORIZONTAL + CENTER + itemSpacing 14. 자식 3개: minus 버튼(26sq radius 999 border) + 값 표시(min-width 90 + Bold 14sp + unit 12sp Medium fg-tertiary) + plus 버튼"
+      ],
+      "template": {
+        "name": "Stepper Filter Card",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "paddingTop": 6,
+          "paddingBottom": 6,
+          "paddingLeft": 16,
+          "paddingRight": 16
+        },
+        "fill": "$token(bg-secondary)",
+        "cornerRadius": 14,
+        "children": [
+          {
+            "name": "Stepper Row Example",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 10,
+              "paddingBottom": 10
+            },
+            "_comment": "아이템 사이 1px border-tertiary bottom stroke 권장 (마지막 행은 제외)",
+            "children": [
+              {
+                "name": "row-label",
+                "type": "text",
+                "text": "{{VARIABLE: rows[0].label}}",
+                "fontSize": 14,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-secondary)"
+              },
+              {
+                "name": "Stepper Controls",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "counterAxisAlignItems": "CENTER",
+                  "itemSpacing": 14
+                },
+                "children": [
+                  {
+                    "name": "Minus Button",
+                    "type": "frame",
+                    "width": 26,
+                    "height": 26,
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "primaryAxisAlignItems": "CENTER",
+                      "counterAxisAlignItems": "CENTER"
+                    },
+                    "fill": "$token(bg-primary)",
+                    "stroke": "$token(border-primary)",
+                    "strokeWeight": 1,
+                    "cornerRadius": 999,
+                    "children": [
+                      {
+                        "name": "minus-icon",
+                        "type": "icon",
+                        "iconName": "minus",
+                        "size": 16,
+                        "iconColor": "$token(fg-secondary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Value Display",
+                    "type": "frame",
+                    "width": 90,
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "primaryAxisAlignItems": "CENTER",
+                      "counterAxisAlignItems": "BASELINE",
+                      "itemSpacing": 2
+                    },
+                    "children": [
+                      {
+                        "name": "value-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: rows[0].value}}",
+                        "fontSize": 14,
+                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontColor": "$token(fg-primary)"
+                      },
+                      {
+                        "name": "unit-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: rows[0].unit}}",
+                        "fontSize": 12,
+                        "fontName": { "family": "Pretendard", "style": "Medium" },
+                        "fontColor": "$token(fg-tertiary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Plus Button",
+                    "type": "frame",
+                    "width": 26,
+                    "height": 26,
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "primaryAxisAlignItems": "CENTER",
+                      "counterAxisAlignItems": "CENTER"
+                    },
+                    "fill": "$token(bg-primary)",
+                    "stroke": "$token(border-primary)",
+                    "strokeWeight": 1,
+                    "cornerRadius": 999,
+                    "children": [
+                      {
+                        "name": "plus-icon",
+                        "type": "icon",
+                        "iconName": "plus",
+                        "size": 16,
+                        "iconColor": "$token(fg-secondary)"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "SliderFilterCard": {
+      "_description": "Native range slider 필터 카드. 헤더 row(좌 라벨 + 우 값 brand 강조) + slider track 조합이 세로 반복. 스테퍼보다 빠른 범위 스캔용 (VS17).",
+      "_variables": [
+        "rows: 필터 행 배열 (각 = {label, value, unit, min, max, step})",
+        "trackColor: slider track 컬러 (기본 $token(bg-quaternary))"
+      ],
+      "_notes": [
+        "Slider는 Figma에서 네이티브 지원 없음 — track(height 4 radius 999 bg-quaternary) + thumb(16sq radius 999 brand-solid) + fill(FILL width pct% + brand-solid)로 시뮬레이션",
+        "헤더 Row: HORIZONTAL + SPACE_BETWEEN + CENTER. 좌 라벨 13sp Medium fg-secondary / 우 값 13sp Bold fg-brand-secondary + 단위 11sp Medium fg-tertiary",
+        "각 Row 사이 1px border-tertiary bottom (마지막 제외)"
+      ],
+      "template": {
+        "name": "Slider Filter Card",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "paddingTop": 10,
+          "paddingBottom": 14,
+          "paddingLeft": 16,
+          "paddingRight": 16
+        },
+        "fill": "$token(bg-secondary)",
+        "cornerRadius": 14,
+        "children": [
+          {
+            "name": "Slider Row Example",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 6,
+              "paddingTop": 10,
+              "paddingBottom": 10
+            },
+            "children": [
+              {
+                "name": "Header Row",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "SPACE_BETWEEN",
+                  "counterAxisAlignItems": "BASELINE"
+                },
+                "children": [
+                  {
+                    "name": "row-label",
+                    "type": "text",
+                    "text": "{{VARIABLE: rows[0].label}}",
+                    "fontSize": 13,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-secondary)"
+                  },
+                  {
+                    "name": "Value Group",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "HUG",
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "counterAxisAlignItems": "BASELINE",
+                      "itemSpacing": 2
+                    },
+                    "children": [
+                      {
+                        "name": "value-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: rows[0].value}}",
+                        "fontSize": 13,
+                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontColor": "$token(fg-brand-secondary)"
+                      },
+                      {
+                        "name": "unit-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: rows[0].unit}}",
+                        "fontSize": 11,
+                        "fontName": { "family": "Pretendard", "style": "Medium" },
+                        "fontColor": "$token(fg-tertiary)"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "Slider Track",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "height": 4,
+                "fill": "$token(bg-quaternary)",
+                "cornerRadius": 999,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "children": [
+                  {
+                    "name": "Slider Fill",
+                    "type": "frame",
+                    "width": 120,
+                    "height": 4,
+                    "fill": "$token(bg-brand-solid)",
+                    "cornerRadius": 999,
+                    "_comment": "width = Math.round(trackWidth * (value-min)/(max-min))"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "FilterChipTriggers": {
+      "_description": "바텀시트 트리거 outline 칩 가로 스크롤. 각 칩은 상단 작은 라벨 + 하단 값 + chevron-down 구조. 탭하면 BottomSheetFilter 등 바텀시트를 열어 세부 입력 (VS18).",
+      "_variables": [
+        "chips: 칩 배열 (각 = {label, value})"
+      ],
+      "_notes": [
+        "컨테이너: HORIZONTAL + clipsContent true + itemSpacing 8 + padding 8/20/4/20",
+        "각 칩: HUG + HORIZONTAL + CENTER + itemSpacing 6 + padding 10/14 + radius 10 + border-primary 1px + bg-primary",
+        "좌측 내부 Text Group: VERTICAL + itemSpacing 1. 자식: 라벨(10sp Medium fg-quaternary) + 값(13sp Bold fg-primary)",
+        "우측: chevron-down 16 fg-tertiary"
+      ],
+      "template": {
+        "name": "Filter Chip Triggers",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 8,
+          "paddingTop": 8,
+          "paddingBottom": 4,
+          "paddingLeft": 20,
+          "paddingRight": 20,
+          "clipsContent": true
+        },
+        "children": [
+          {
+            "name": "Trigger Chip Example",
+            "type": "frame",
+            "layoutSizingHorizontal": "HUG",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 6,
+              "paddingTop": 10,
+              "paddingBottom": 10,
+              "paddingLeft": 14,
+              "paddingRight": 14
+            },
+            "fill": "$token(bg-primary)",
+            "stroke": "$token(border-primary)",
+            "strokeWeight": 1,
+            "cornerRadius": 10,
+            "children": [
+              {
+                "name": "Text Group",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 1
+                },
+                "children": [
+                  {
+                    "name": "chip-label",
+                    "type": "text",
+                    "text": "{{VARIABLE: chips[0].label}}",
+                    "fontSize": 10,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-quaternary)"
+                  },
+                  {
+                    "name": "chip-value",
+                    "type": "text",
+                    "text": "{{VARIABLE: chips[0].value}}",
+                    "fontSize": 13,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-primary)"
+                  }
+                ]
+              },
+              {
+                "name": "chevron-down",
+                "type": "icon",
+                "iconName": "chevron-down",
+                "size": 16,
+                "iconColor": "$token(fg-tertiary)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "BottomSheetFilter": {
+      "_description": "풀스크린 오버레이 + 하단 정렬 바텀시트. 드래그 핸들 + 타이틀 + 대형 값 디스플레이 + slider + min/max 라벨 + 적용 CTA. 단일 값 조정 전용 (VS19).",
+      "_variables": [
+        "titleText: 시트 타이틀 (예: '월 납입 금액')",
+        "valueText: 대형 값 (36sp ExtraBold brand, 예: '30')",
+        "unitText: 단위 (16sp Medium, 예: '만원')",
+        "minLabel/maxLabel: 하단 라벨 (예: '10만원' / '130만원')",
+        "ctaText: 적용 버튼 라벨 (기본: '적용')"
+      ],
+      "_notes": [
+        "Overlay (부모): 투명 오버레이는 디자인 파일에선 반투명 검정 프레임으로 표현 — ABSOLUTE inset 0, fill {r:0,g:0,b:0,a:0.4}",
+        "Sheet 본체: FILL 가로 + HUG 세로 + borderTopLeft/RightRadius 20 + padding 12/20/28/20 + bg-primary",
+        "Drag Handle: 40×4 radius 2 bg-quaternary, CENTER 정렬. 필수",
+        "X 닫기 버튼: 선택적 — 복합 정보 시트(DecisionBottomSheet 등)에서는 우측 상단 36sq X 허용. 단순 값 조정 시트는 drag handle만으로 충분",
+        "큰 값 디스플레이: VS7 Premium 숫자 스펙 확장 — 36sp ExtraBold fg-brand-secondary letterSpacing -3%",
+        "CTA 버튼: FILL 가로 + padding 14 + radius 10 + bg-brand-solid + 흰 텍스트 15sp Bold. DS Buttons/Button (Size=xl, Primary) 인스턴스 권장"
+      ],
+      "template": {
+        "name": "Bottom Sheet Filter",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 0,
+          "paddingTop": 12,
+          "paddingBottom": 28,
+          "paddingLeft": 20,
+          "paddingRight": 20
+        },
+        "fill": "$token(bg-primary)",
+        "topLeftRadius": 20,
+        "topRightRadius": 20,
+        "children": [
+          {
+            "name": "Drag Handle Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "paddingBottom": 12
+            },
+            "children": [
+              {
+                "name": "drag-handle",
+                "type": "frame",
+                "width": 40,
+                "height": 4,
+                "fill": "$token(bg-quaternary)",
+                "cornerRadius": 2
+              }
+            ]
+          },
+          {
+            "name": "title-text",
+            "type": "text",
+            "layoutSizingHorizontal": "FILL",
+            "text": "{{VARIABLE: titleText}}",
+            "fontSize": 16,
+            "fontName": { "family": "Pretendard", "style": "Bold" },
+            "fontColor": "$token(fg-primary)",
+            "letterSpacing": { "value": -2, "unit": "PERCENT" }
+          },
+          {
+            "name": "Value Display",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "BASELINE",
+              "itemSpacing": 4,
+              "paddingTop": 18,
+              "paddingBottom": 18
+            },
+            "children": [
+              {
+                "name": "value-text",
+                "type": "text",
+                "text": "{{VARIABLE: valueText}}",
+                "fontSize": 36,
+                "fontName": { "family": "Pretendard", "style": "ExtraBold" },
+                "fontColor": "$token(fg-brand-secondary)",
+                "letterSpacing": { "value": -3, "unit": "PERCENT" }
+              },
+              {
+                "name": "unit-text",
+                "type": "text",
+                "text": "{{VARIABLE: unitText}}",
+                "fontSize": 16,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-tertiary)"
+              }
+            ]
+          },
+          {
+            "name": "Slider Track",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "height": 4,
+            "fill": "$token(bg-quaternary)",
+            "cornerRadius": 999,
+            "autoLayout": { "layoutMode": "HORIZONTAL" },
+            "children": [
+              {
+                "name": "Slider Fill",
+                "type": "frame",
+                "width": 120,
+                "height": 4,
+                "fill": "$token(bg-brand-solid)",
+                "cornerRadius": 999
+              }
+            ]
+          },
+          {
+            "name": "Min Max Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "paddingTop": 4,
+              "paddingBottom": 20
+            },
+            "children": [
+              {
+                "name": "min-label",
+                "type": "text",
+                "text": "{{VARIABLE: minLabel}}",
+                "fontSize": 11,
+                "fontName": { "family": "Pretendard", "style": "Regular" },
+                "fontColor": "$token(fg-quaternary)"
+              },
+              {
+                "name": "max-label",
+                "type": "text",
+                "text": "{{VARIABLE: maxLabel}}",
+                "fontSize": 11,
+                "fontName": { "family": "Pretendard", "style": "Regular" },
+                "fontColor": "$token(fg-quaternary)"
+              }
+            ]
+          },
+          {
+            "name": "CTA Button",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 14,
+              "paddingBottom": 14
+            },
+            "fill": "$token(bg-brand-solid)",
+            "cornerRadius": 10,
+            "_comment": "DS Buttons/Button (Size=xl, Primary) 인스턴스로 교체 권장",
+            "children": [
+              {
+                "name": "cta-text",
+                "type": "text",
+                "text": "{{VARIABLE: ctaText}}",
+                "fontSize": 15,
+                "fontName": { "family": "Pretendard", "style": "Bold" },
+                "fontColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "AvatarScroller": {
+      "_description": "원형 아바타 가로 스크롤. 추가(+) 버튼(dashed border) + 실제 아바타들(그라데이션 배경 + 이모지/이니셜) + crown badge overlay + 이름/레벨. 스테이지 메이커·참여자 목록 전용 (VS20).",
+      "_variables": [
+        "avatars: 아바타 배열 (각 = {name, lv, emoji, color, isCrown})"
+      ],
+      "_notes": [
+        "컨테이너: HORIZONTAL + itemSpacing 16 + padding 4/20/18/20 + bg-primary + FILL",
+        "첫 아이템 '+ 추가' 버튼: VERTICAL + CENTER + itemSpacing 6. 자식: 원(52sq radius 999 + dashed border-primary 1.5 + bg-primary + plus 아이콘 22 fg-quaternary) + 라벨(11sp Medium fg-quaternary)",
+        "각 Avatar: VERTICAL + CENTER + itemSpacing 6. 자식: Avatar 프레임(포지션 relative for crown) + Text Group",
+        "Avatar Circle: 52sq radius 999 + fillGradient (color 0%, color+cc 100%, 135deg) + 중앙 이모지 20sp 또는 이니셜. 왕관 아이콘은 ABSOLUTE bottom-right (18sq radius 999 + brand-solid + 2px 흰 border + 👑 9sp)",
+        "Text Group: 중앙 정렬 + maxWidth 60. 자식: 이름(10sp Bold fg-secondary letterSpacing -2% + truncate) + lv(9sp Medium fg-quaternary)"
+      ],
+      "template": {
+        "name": "Avatar Scroller",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "itemSpacing": 16,
+          "paddingTop": 4,
+          "paddingBottom": 18,
+          "paddingLeft": 20,
+          "paddingRight": 20,
+          "clipsContent": true
+        },
+        "fill": "$token(bg-primary)",
+        "children": [
+          {
+            "name": "Add Avatar Button",
+            "type": "frame",
+            "layoutSizingHorizontal": "HUG",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 6
+            },
+            "children": [
+              {
+                "name": "Add Circle",
+                "type": "frame",
+                "width": 52,
+                "height": 52,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "fill": "$token(bg-primary)",
+                "stroke": "$token(border-primary)",
+                "strokeWeight": 1.5,
+                "dashPattern": [4, 4],
+                "cornerRadius": 999,
+                "children": [
+                  {
+                    "name": "plus-icon",
+                    "type": "icon",
+                    "iconName": "plus",
+                    "size": 22,
+                    "iconColor": "$token(fg-quaternary)"
+                  }
+                ]
+              },
+              {
+                "name": "add-label",
+                "type": "text",
+                "text": "추가",
+                "fontSize": 11,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-quaternary)"
+              }
+            ]
+          },
+          {
+            "name": "Avatar Item Example",
+            "type": "frame",
+            "layoutSizingHorizontal": "HUG",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 6
+            },
+            "children": [
+              {
+                "name": "Avatar Circle",
+                "type": "frame",
+                "width": 52,
+                "height": 52,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "fill": "$token(bg-brand-secondary)",
+                "cornerRadius": 999,
+                "_comment": "실제론 fillGradient 135deg. 중앙에 이모지 또는 이니셜. 🥗/🌸/🎯/🔥 등 ABSOLUTE 위치로 crown 배지 overlay 가능",
+                "children": [
+                  {
+                    "name": "avatar-emoji",
+                    "type": "text",
+                    "text": "🥗",
+                    "fontSize": 20,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+                  }
+                ]
+              },
+              {
+                "name": "Text Group",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER",
+                  "itemSpacing": 1
+                },
+                "children": [
+                  {
+                    "name": "avatar-name",
+                    "type": "text",
+                    "text": "{{VARIABLE: avatars[0].name}}",
+                    "fontSize": 10,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-secondary)",
+                    "textAutoResize": "TRUNCATE",
+                    "maxLines": 1,
+                    "letterSpacing": { "value": -2, "unit": "PERCENT" }
+                  },
+                  {
+                    "name": "avatar-lv",
+                    "type": "text",
+                    "text": "(lv.{{VARIABLE: avatars[0].lv}})",
+                    "fontSize": 9,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-quaternary)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "StageCardTimeline": {
+      "_description": "스테이지 추천 카드 (타임라인 바 레이아웃). 상단 설명 문구 + 회차 스트라이프(N개 gridCell, 수령 회차 강조) + 안내 텍스트 + 금액 요약 row(목돈/이자) + 혜택 배지 band. 추천 피드 메인 카드 (VS21).",
+      "_variables": [
+        "headerText: 상단 설명 (예: '→ 월 100,000원 씩 13개월 모으기')",
+        "months: 회차 수 (예: 13)",
+        "payoutAt: 수령 회차 (예: 1)",
+        "infoText: 하단 안내 (예: '1차 납입 후 목돈 수령')",
+        "payoutAmount: 목돈 (예: '1,092,200원')",
+        "interestAmount: 총 이자 (예: '-129,100원')",
+        "points: 적립 포인트 (예: '500P')",
+        "feeText: 수수료 (예: '0원')"
+      ],
+      "_notes": [
+        "카드 shell: bg-primary + border-secondary + radius 14 + padding 16/16/14/16 + shadow-xs",
+        "Timeline Strip: 상단 설명(13sp SemiBold center) → Strip(HORIZONTAL + itemSpacing 2 + N cells each 22 height radius 4) → 안내 텍스트(12sp SemiBold center)",
+        "Stripe Cell Payout: fill bg-brand-solid, 흰 숫자 / Other cells: fill bg-brand-primary, fg-brand-secondary 숫자. 모든 숫자 9sp Bold",
+        "Amount Summary: paddingTop 12 + border-top border-tertiary. 2개 row 각각 HORIZONTAL + SPACE_BETWEEN. 라벨 13sp Medium fg-tertiary + 값 14sp Bold (목돈 fg-primary, 이자 fg-error-primary)",
+        "Benefit Band: marginTop 10 + padding 8/10 + radius 8 + bg-secondary + HORIZONTAL + SPACE_BETWEEN + CENTER. 좌 라벨 11sp Medium fg-tertiary + 우 Pill 배지 2개(포인트/수수료)",
+        "Variant 레퍼런스 (세부 구조는 VS21 참조):",
+        "- Ring Gauge Layout: SVG 90sq 링 + progress arc + 중앙 회차 숫자 + 우측 텍스트",
+        "- Number Hero Layout: 11sp 상단 라벨(brand, letterSpacing +4% uppercase) + 22sp ExtraBold 월 금액 + 13sp Medium 부제 + 4px progress bar"
+      ],
+      "template": {
+        "name": "Stage Card (Timeline)",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 10,
+          "paddingTop": 16,
+          "paddingBottom": 14,
+          "paddingLeft": 16,
+          "paddingRight": 16
+        },
+        "fill": "$token(bg-primary)",
+        "stroke": "$token(border-secondary)",
+        "strokeWeight": 1,
+        "cornerRadius": 14,
+        "children": [
+          {
+            "name": "header-text",
+            "type": "text",
+            "layoutSizingHorizontal": "FILL",
+            "text": "{{VARIABLE: headerText}}",
+            "fontSize": 13,
+            "fontName": { "family": "Pretendard", "style": "SemiBold" },
+            "fontColor": "$token(fg-secondary)",
+            "textAlignHorizontal": "CENTER",
+            "letterSpacing": { "value": -2, "unit": "PERCENT" }
+          },
+          {
+            "name": "Timeline Strip",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 2
+            },
+            "_comment": "N개 Stripe Cell. 각 cell FILL width + height 22 + radius 4. payoutAt 회차 cell만 bg-brand-solid + 흰 텍스트, 나머지는 bg-brand-primary + fg-brand-secondary",
+            "children": [
+              {
+                "name": "Stripe Cell Payout",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "height": 22,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "fill": "$token(bg-brand-solid)",
+                "cornerRadius": 4,
+                "children": [
+                  {
+                    "name": "cell-num",
+                    "type": "text",
+                    "text": "1",
+                    "fontSize": 9,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "info-text",
+            "type": "text",
+            "layoutSizingHorizontal": "FILL",
+            "text": "{{VARIABLE: infoText}}",
+            "fontSize": 12,
+            "fontName": { "family": "Pretendard", "style": "SemiBold" },
+            "fontColor": "$token(fg-secondary)",
+            "textAlignHorizontal": "CENTER",
+            "letterSpacing": { "value": -1, "unit": "PERCENT" }
+          },
+          {
+            "name": "Amount Summary",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 6,
+              "paddingTop": 12
+            },
+            "stroke": "$token(border-tertiary)",
+            "strokeWeight": 1,
+            "strokeTopWeight": 1,
+            "strokeBottomWeight": 0,
+            "strokeLeftWeight": 0,
+            "strokeRightWeight": 0,
+            "children": [
+              {
+                "name": "Payout Row",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "SPACE_BETWEEN",
+                  "counterAxisAlignItems": "BASELINE"
+                },
+                "children": [
+                  {
+                    "name": "payout-label",
+                    "type": "text",
+                    "text": "목돈",
+                    "fontSize": 13,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-tertiary)"
+                  },
+                  {
+                    "name": "payout-value",
+                    "type": "text",
+                    "text": "{{VARIABLE: payoutAmount}}",
+                    "fontSize": 14,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-primary)"
+                  }
+                ]
+              },
+              {
+                "name": "Interest Row",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "SPACE_BETWEEN",
+                  "counterAxisAlignItems": "BASELINE"
+                },
+                "children": [
+                  {
+                    "name": "interest-label",
+                    "type": "text",
+                    "text": "총 이자",
+                    "fontSize": 13,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-tertiary)"
+                  },
+                  {
+                    "name": "interest-value",
+                    "type": "text",
+                    "text": "{{VARIABLE: interestAmount}}",
+                    "fontSize": 14,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-error-primary)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Benefit Band",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 8,
+              "paddingBottom": 8,
+              "paddingLeft": 10,
+              "paddingRight": 10
+            },
+            "fill": "$token(bg-secondary)",
+            "cornerRadius": 8,
+            "children": [
+              {
+                "name": "benefit-label",
+                "type": "text",
+                "text": "추가 혜택",
+                "fontSize": 11,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-tertiary)"
+              },
+              {
+                "name": "Benefit Pills",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "counterAxisAlignItems": "CENTER",
+                  "itemSpacing": 6
+                },
+                "children": [
+                  {
+                    "name": "Points Pill",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "HUG",
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "counterAxisAlignItems": "CENTER",
+                      "paddingTop": 3,
+                      "paddingBottom": 3,
+                      "paddingLeft": 8,
+                      "paddingRight": 8
+                    },
+                    "fill": "$token(bg-brand-primary)",
+                    "cornerRadius": 999,
+                    "children": [
+                      {
+                        "name": "points-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: points}}",
+                        "fontSize": 11,
+                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontColor": "$token(fg-brand-primary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Fee Pill",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "HUG",
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "counterAxisAlignItems": "CENTER",
+                      "paddingTop": 3,
+                      "paddingBottom": 3,
+                      "paddingLeft": 8,
+                      "paddingRight": 8
+                    },
+                    "fill": "$token(bg-primary)",
+                    "stroke": "$token(border-primary)",
+                    "strokeWeight": 1,
+                    "cornerRadius": 999,
+                    "children": [
+                      {
+                        "name": "fee-text",
+                        "type": "text",
+                        "text": "{{VARIABLE: feeText}}",
+                        "fontSize": 11,
+                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontColor": "$token(fg-tertiary)"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "LegalFooter": {
+      "_description": "최하단 약관·사업자 정보 푸터. 3-col 약관 링크 그리드 + 사업자 등록·대표자·통신판매업 정보 블록 + 카피라이트. 추천 피드·설정 화면 등 스크롤 최하단 고정 (VS22).",
+      "_variables": [
+        "links: 약관 링크 텍스트 배열 (3-col grid, 최대 6개)",
+        "company: 회사 정보 텍스트 (다중 라인)",
+        "copyright: 카피라이트 텍스트"
+      ],
+      "_notes": [
+        "컨테이너: FILL + VERTICAL + itemSpacing 6 + padding 18/20 + border-top 1px border-tertiary",
+        "Links Grid: 3-col gridTemplateColumns — Figma에선 2-row 3-col HORIZONTAL frames. 각 링크 11sp Medium fg-tertiary, HUG",
+        "Company Block: VERTICAL + itemSpacing 6. 각 line 10sp Regular fg-quaternary lineHeight 1.7",
+        "Copyright: 10sp Regular fg-quaternary"
+      ],
+      "template": {
+        "name": "Legal Footer",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 6,
+          "paddingTop": 18,
+          "paddingBottom": 16,
+          "paddingLeft": 20,
+          "paddingRight": 20
+        },
+        "stroke": "$token(border-tertiary)",
+        "strokeWeight": 1,
+        "strokeTopWeight": 1,
+        "strokeBottomWeight": 0,
+        "strokeLeftWeight": 0,
+        "strokeRightWeight": 0,
+        "children": [
+          {
+            "name": "Links Grid",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 4,
+              "paddingBottom": 10
+            },
+            "children": [
+              {
+                "name": "Links Row 1",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "itemSpacing": 12
+                },
+                "children": [
+                  {
+                    "name": "link-1",
+                    "type": "text",
+                    "layoutSizingHorizontal": "FILL",
+                    "text": "{{VARIABLE: links[0]}}",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-tertiary)"
+                  },
+                  {
+                    "name": "link-2",
+                    "type": "text",
+                    "layoutSizingHorizontal": "FILL",
+                    "text": "{{VARIABLE: links[1]}}",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-tertiary)"
+                  },
+                  {
+                    "name": "link-3",
+                    "type": "text",
+                    "layoutSizingHorizontal": "FILL",
+                    "text": "{{VARIABLE: links[2]}}",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-tertiary)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Company Block",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 6
+            },
+            "children": [
+              {
+                "name": "company-line-1",
+                "type": "text",
+                "layoutSizingHorizontal": "FILL",
+                "text": "{{VARIABLE: company.line1}}",
+                "fontSize": 10,
+                "fontName": { "family": "Pretendard", "style": "Regular" },
+                "fontColor": "$token(fg-quaternary)",
+                "lineHeight": { "value": 170, "unit": "PERCENT" }
+              },
+              {
+                "name": "company-line-2",
+                "type": "text",
+                "layoutSizingHorizontal": "FILL",
+                "text": "{{VARIABLE: company.line2}}",
+                "fontSize": 10,
+                "fontName": { "family": "Pretendard", "style": "Regular" },
+                "fontColor": "$token(fg-quaternary)"
+              }
+            ]
+          },
+          {
+            "name": "copyright-text",
+            "type": "text",
+            "layoutSizingHorizontal": "FILL",
+            "text": "{{VARIABLE: copyright}}",
+            "fontSize": 10,
+            "fontName": { "family": "Pretendard", "style": "Regular" },
+            "fontColor": "$token(fg-quaternary)"
+          }
+        ]
+      }
+    },
+
+    "BackOnlyHeader": {
+      "_description": "뒤로가기 버튼만 있는 페이지 헤더 (상세 화면 전용). 타이틀·우측 액션 없음 — 본문 상단 첫 카드가 타이틀 역할. ModalHeader(X-close 우측)의 쌍 개념 (VS24).",
+      "_variables": [
+        "iconName: 뒤로가기 아이콘 (기본: chevron-left)"
+      ],
+      "_notes": [
+        "HORIZONTAL + primaryAxisAlignItems: MIN (좌측) + counterAxisAlignItems: CENTER",
+        "padding 4/8/8/8 (상/좌우/하/좌우), fill bg-primary",
+        "버튼 컨테이너 40×40 radius 8 + 중앙 아이콘 24 fg-primary strokeWidth 2",
+        "타이틀 추가 금지 — 스테이지 상세 등 '첫 카드가 컨텍스트' 패턴 유지"
+      ],
+      "template": {
+        "name": "Back Only Header",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "paddingTop": 4,
+          "paddingBottom": 8,
+          "paddingLeft": 8,
+          "paddingRight": 8
+        },
+        "fill": "$token(bg-primary)",
+        "children": [
+          {
+            "name": "Back Button",
+            "type": "frame",
+            "width": 40,
+            "height": 40,
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER"
+            },
+            "fill": { "r": 0, "g": 0, "b": 0, "a": 0 },
+            "cornerRadius": 8,
+            "children": [
+              {
+                "name": "back-icon",
+                "type": "icon",
+                "iconName": "chevron-left",
+                "size": 24,
+                "iconColor": "$token(fg-primary)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "StageDetailSummaryCard": {
+      "_description": "스테이지 상세 상단 요약 카드. 타이틀 + 시작 라벨(baseline 정렬) + 3-col 비대칭 grid (1fr 1.4fr 1fr). 중앙 셀이 가장 중요한 숫자(약정금) 담당 (VS25).",
+      "_variables": [
+        "titleText: 스테이지 타이틀 (예: '스테이지 제목')",
+        "startLabel: 시작 안내 (예: '모두 참여시 내일 오전 10시 시작')",
+        "items: 3개 summary item 배열 (각 = {label, value}) — 기본: [총 납입수, 약정금, 인원]"
+      ],
+      "_notes": [
+        "카드 shell: bg-primary + border-secondary 1px + radius 14 + padding 18/20 + shadow-xs",
+        "Header Row: HORIZONTAL + BASELINE + itemSpacing 10 (타이틀과 라벨이 베이스라인 공유)",
+        "타이틀: 16sp ExtraBold fg-primary letterSpacing -2%",
+        "시작 라벨: 11sp Medium fg-tertiary letterSpacing -1%",
+        "Grid Row: HORIZONTAL + itemSpacing 12 + FILL, 각 Summary Item에 layoutGrow 비율 부여 (1, 1.4, 1) — Figma에선 layoutGrow 속성",
+        "각 Item: VERTICAL + itemSpacing 4. 라벨 11sp SemiBold fg-tertiary + 값 14sp Bold fg-primary letterSpacing -2%",
+        "중앙 셀(약정금)이 가장 넓은 비율 — 가격이 판매 포인트의 핵심"
+      ],
+      "template": {
+        "name": "Stage Detail Summary Card",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 14,
+          "paddingTop": 18,
+          "paddingBottom": 18,
+          "paddingLeft": 20,
+          "paddingRight": 20
+        },
+        "fill": "$token(bg-primary)",
+        "stroke": "$token(border-secondary)",
+        "strokeWeight": 1,
+        "cornerRadius": 14,
+        "children": [
+          {
+            "name": "Header Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "BASELINE",
+              "itemSpacing": 10
+            },
+            "children": [
+              {
+                "name": "title-text",
+                "type": "text",
+                "text": "{{VARIABLE: titleText}}",
+                "fontSize": 16,
+                "fontName": { "family": "Pretendard", "style": "ExtraBold" },
+                "fontColor": "$token(fg-primary)",
+                "letterSpacing": { "value": -2, "unit": "PERCENT" }
+              },
+              {
+                "name": "start-label",
+                "type": "text",
+                "text": "{{VARIABLE: startLabel}}",
+                "fontSize": 11,
+                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontColor": "$token(fg-tertiary)"
+              }
+            ]
+          },
+          {
+            "name": "Grid Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 12
+            },
+            "children": [
+              {
+                "name": "Summary Item 1",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "layoutGrow": 1,
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 4
+                },
+                "children": [
+                  {
+                    "name": "item-1-label",
+                    "type": "text",
+                    "text": "{{VARIABLE: items[0].label}}",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                    "fontColor": "$token(fg-tertiary)"
+                  },
+                  {
+                    "name": "item-1-value",
+                    "type": "text",
+                    "text": "{{VARIABLE: items[0].value}}",
+                    "fontSize": 14,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-primary)",
+                    "letterSpacing": { "value": -2, "unit": "PERCENT" }
+                  }
+                ]
+              },
+              {
+                "name": "Summary Item 2 (primary)",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "layoutGrow": 1.4,
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 4
+                },
+                "_comment": "중앙 셀 — 가장 중요한 값(약정금). layoutGrow 1.4로 더 넓은 폭 확보",
+                "children": [
+                  {
+                    "name": "item-2-label",
+                    "type": "text",
+                    "text": "{{VARIABLE: items[1].label}}",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                    "fontColor": "$token(fg-tertiary)"
+                  },
+                  {
+                    "name": "item-2-value",
+                    "type": "text",
+                    "text": "{{VARIABLE: items[1].value}}",
+                    "fontSize": 14,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-primary)",
+                    "letterSpacing": { "value": -2, "unit": "PERCENT" }
+                  }
+                ]
+              },
+              {
+                "name": "Summary Item 3",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "layoutGrow": 1,
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 4
+                },
+                "children": [
+                  {
+                    "name": "item-3-label",
+                    "type": "text",
+                    "text": "{{VARIABLE: items[2].label}}",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                    "fontColor": "$token(fg-tertiary)"
+                  },
+                  {
+                    "name": "item-3-value",
+                    "type": "text",
+                    "text": "{{VARIABLE: items[2].value}}",
+                    "fontSize": 14,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-primary)",
+                    "letterSpacing": { "value": -2, "unit": "PERCENT" }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "ParticipantTimelineRow": {
+      "_description": "참여자/단계 타임라인 리스트 아이템. 좌측 세로선 rail(width 36 + 2px vertical line) + 원형 노드(36sq) + 우측 카드. 스테이지 상세 '참여자 탭' 전용. 회차별 행사 타임라인 + 참여자 프로필 한 리스트에서 혼합 표시 (VS26).",
+      "_variables": [
+        "nodeVisual: 'number' | 'avatar' | 'stage' — 원형 노드 표시 모드 (VS27)",
+        "emphasize: 강조 여부 — true면 노드 brand-solid + 카드 brand-solid + 흰 텍스트 + brand shadow",
+        "isLast: 리스트 마지막 여부 — true면 rail 하단 세로선 없음",
+        "rowType: 'invite' (이름+lv+설명+액션 버튼) | 'plan' (타이틀+설명, 탭 가능)",
+        "nameOrTitle, lv, desc, action, actionState: 'default' | 'muted' | 'exit'"
+      ],
+      "_notes": [
+        "Row: HORIZONTAL + itemSpacing 14 + padding 상하(density=normal이면 10, tight면 6) + CENTER, FILL",
+        "Left Rail: width 36 + VERTICAL + CENTER. 자식: (옵션) 세로선(ABSOLUTE 2px × FILL, bg-quaternary, zIndex 1, top 0 bottom -padY*2) + TimelineNode(36sq radius 999, zIndex 2)",
+        "TimelineNode: 36sq radius 999 + CENTER. 3가지 visual variant — 상세는 VS27",
+        "Right Card: FILL + padding 14/16 (normal) 또는 10/14 (tight) + radius 12 + HORIZONTAL CENTER itemSpacing 10",
+        "Card(기본): bg-primary + border-secondary + shadow-xs / Card(emphasize): bg-brand-solid + border 없음 + brand shadow (0 4px 12px rgba(brand,.25))",
+        "Card 내부 텍스트 그룹은 FILL + VERTICAL + itemSpacing 2. 타이틀 14sp Bold letterSpacing -2% + 설명 12sp Medium letterSpacing -1%",
+        "emphasize=true일 때 타이틀 흰색 / 설명 rgba(255,255,255,0.85)",
+        "Action 버튼: HUG pill (padding 6/14, radius 999). actionState: default=bg-brand-solid+흰, muted=투명+fg-quaternary (emphasize 시 rgba 흰 20% bg), exit=bg-primary+border-primary+fg-secondary"
+      ],
+      "template": {
+        "name": "Participant Timeline Row",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "counterAxisAlignItems": "CENTER",
+          "itemSpacing": 14,
+          "paddingTop": 10,
+          "paddingBottom": 10
+        },
+        "children": [
+          {
+            "name": "Left Rail",
+            "type": "frame",
+            "width": 36,
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER"
+            },
+            "_comment": "세로 연결선(ABSOLUTE 2px × full height, bg-quaternary, zIndex 1)은 부모 Row 단위가 아닌 컨테이너 단위로 전체를 감싸서 그리는 게 깔끔. 여기선 Node만 표시",
+            "children": [
+              {
+                "name": "Timeline Node",
+                "type": "frame",
+                "width": 36,
+                "height": 36,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "fill": "$token(bg-primary)",
+                "stroke": "$token(border-primary)",
+                "strokeWeight": 1.5,
+                "cornerRadius": 999,
+                "_comment": "visual variant별 세부 fill/stroke/자식은 VS27 참조. 기본은 stage-dot variant (흰 bg + border + 10sq brand dot)",
+                "children": [
+                  {
+                    "name": "node-text-or-icon",
+                    "type": "text",
+                    "text": "{{VARIABLE: nodeContent}}",
+                    "fontSize": 13,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-secondary)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Right Card",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 10,
+              "paddingTop": 14,
+              "paddingBottom": 14,
+              "paddingLeft": 16,
+              "paddingRight": 16
+            },
+            "fill": "$token(bg-primary)",
+            "stroke": "$token(border-secondary)",
+            "strokeWeight": 1,
+            "cornerRadius": 12,
+            "_comment": "emphasize=true일 때 fill bg-brand-solid + stroke 제거 + effects brand shadow",
+            "children": [
+              {
+                "name": "Text Group",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 2
+                },
+                "children": [
+                  {
+                    "name": "title-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: nameOrTitle}}",
+                    "fontSize": 14,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-primary)",
+                    "letterSpacing": { "value": -2, "unit": "PERCENT" }
+                  },
+                  {
+                    "name": "desc-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: desc}}",
+                    "fontSize": 12,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-tertiary)",
+                    "letterSpacing": { "value": -1, "unit": "PERCENT" }
+                  }
+                ]
+              },
+              {
+                "name": "Action Pill",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER",
+                  "paddingTop": 6,
+                  "paddingBottom": 6,
+                  "paddingLeft": 14,
+                  "paddingRight": 14
+                },
+                "fill": "$token(bg-brand-solid)",
+                "cornerRadius": 999,
+                "children": [
+                  {
+                    "name": "action-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: action}}",
+                    "fontSize": 12,
+                    "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    "EmptyStatePlaceholder": {
+      "_description": "빈 상태 placeholder. 중앙 아이콘 원 + 타이틀 + 설명 텍스트. 빈 탭, 검색 결과 없음, 데이터 없음 등 'empty state' 전용 (VS28).",
+      "_variables": [
+        "iconName: 중앙 아이콘 (기본: sparkles)",
+        "titleText: 타이틀 (예: '이율 내역')",
+        "subText: 서브 텍스트 (예: '이후 디자인에서 내용이 추가됩니다')"
+      ],
+      "_notes": [
+        "컨테이너: FILL + VERTICAL + CENTER + itemSpacing 18 + padding 80/24 (상하 80, 좌우 24) — 상하 큰 padding으로 중앙 정렬 효과",
+        "Icon Circle: 64×64 + radius 999 + bg-secondary + CENTER. 중앙 아이콘 28 fg-quaternary strokeWidth 1.6 (얇은 선 — 낮은 강조)",
+        "타이틀: 15sp Bold fg-secondary letterSpacing -2%",
+        "서브: 12sp Regular fg-quaternary — 말풍선/가이드 톤",
+        "⚠️ 빈 상태에 CTA 버튼 추가 금지 — 진짜 empty는 '탐험해보세요' 톤, 설명만 제공. 액션 필요하면 별도 블록에서"
+      ],
+      "template": {
+        "name": "Empty State Placeholder",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "itemSpacing": 18,
+          "paddingTop": 80,
+          "paddingBottom": 80,
+          "paddingLeft": 24,
+          "paddingRight": 24
+        },
+        "children": [
+          {
+            "name": "Icon Circle",
+            "type": "frame",
+            "width": 64,
+            "height": 64,
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER"
+            },
+            "fill": "$token(bg-secondary)",
+            "cornerRadius": 999,
+            "children": [
+              {
+                "name": "placeholder-icon",
+                "type": "icon",
+                "iconName": "stars-02",
+                "size": 28,
+                "iconColor": "$token(fg-quaternary)"
+              }
+            ]
+          },
+          {
+            "name": "title-text",
+            "type": "text",
+            "text": "{{VARIABLE: titleText}}",
+            "fontSize": 15,
+            "fontName": { "family": "Pretendard", "style": "Bold" },
+            "fontColor": "$token(fg-secondary)",
+            "textAlignHorizontal": "CENTER",
+            "letterSpacing": { "value": -2, "unit": "PERCENT" }
+          },
+          {
+            "name": "sub-text",
+            "type": "text",
+            "text": "{{VARIABLE: subText}}",
+            "fontSize": 12,
+            "fontName": { "family": "Pretendard", "style": "Regular" },
+            "fontColor": "$token(fg-quaternary)",
+            "textAlignHorizontal": "CENTER"
+          }
+        ]
+      }
+    },
+
+    "RoundSelectorGrid": {
+      "_description": "N-cell 가로 바 선택 그리드 + 선택 셀 아래 삼각 pointer. 회차/월/파라미터 등 순차형 선택 전용. 바텀시트 내부 또는 상세 화면에서 사용 (VS29).",
+      "_variables": [
+        "totalCells: 셀 개수 (예: 13)",
+        "activeIndex: 활성 셀 인덱스 (1-based)",
+        "infoText: 셀렉터 하단 안내 (예: '4회차 납입 후 목돈 수령') — 회차 숫자는 brand 강조"
+      ],
+      "_notes": [
+        "Grid Row: HORIZONTAL + itemSpacing 3 + FILL — gridTemplateColumns: repeat(N, 1fr) 효과",
+        "각 Cell: FILL + height 26 + radius 4 + HORIZONTAL CENTER",
+        "  - Active: bg-brand-solid + 숫자 흰색 11sp Bold",
+        "  - Inactive: bg-brand-primary + 숫자 fg-brand-secondary 11sp Bold",
+        "Pointer Row (Grid 바로 아래): height 14 + 상대 위치 컨테이너, 내부에 ABSOLUTE 삼각형 (6sq CSS border trick) — Figma에선 polygon SVG 또는 rotate된 rectangle",
+        "  - 삼각 좌표: left = ((activeIndex - 0.5) / totalCells) * 100% - 5px",
+        "  - 삼각 크기: 10×6, fill bg-brand-solid, CSS: rotate 180 (뾰족 아래쪽)",
+        "info-text: 셀렉터 아래 12~13sp SemiBold CENTER. 회차 숫자만 color $token(fg-brand-secondary) fontWeight 700 (partial text style)"
+      ],
+      "template": {
+        "name": "Round Selector Grid",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 2
+        },
+        "children": [
+          {
+            "name": "Cell Grid",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 3
+            },
+            "_comment": "N개 Cell. 모두 FILL + layoutGrow: 1로 균등 분배",
+            "children": [
+              {
+                "name": "Cell Active Example",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "layoutGrow": 1,
+                "height": 26,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "fill": "$token(bg-brand-solid)",
+                "cornerRadius": 4,
+                "children": [
+                  {
+                    "name": "cell-num",
+                    "type": "text",
+                    "text": "4",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+                  }
+                ]
+              },
+              {
+                "name": "Cell Inactive Example",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "layoutGrow": 1,
+                "height": 26,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "fill": "$token(bg-brand-primary)",
+                "cornerRadius": 4,
+                "children": [
+                  {
+                    "name": "cell-num",
+                    "type": "text",
+                    "text": "5",
+                    "fontSize": 11,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-brand-secondary)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Pointer Container",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "height": 14,
+            "_comment": "내부에 ABSOLUTE 삼각형 배치 — left 계산값 기반 (VS29 스펙 참조)",
+            "children": [
+              {
+                "name": "pointer-triangle",
+                "type": "shape",
+                "shapeType": "polygon",
+                "points": [[0, 0], [10, 0], [5, 6]],
+                "fill": "$token(bg-brand-solid)",
+                "_comment": "ABSOLUTE: left=((activeIndex-0.5)/totalCells)*100% - 5px, top 0"
+              }
+            ]
+          },
+          {
+            "name": "info-text",
+            "type": "text",
+            "layoutSizingHorizontal": "FILL",
+            "text": "{{VARIABLE: infoText}}",
+            "fontSize": 13,
+            "fontName": { "family": "Pretendard", "style": "SemiBold" },
+            "fontColor": "$token(fg-secondary)",
+            "textAlignHorizontal": "CENTER",
+            "letterSpacing": { "value": -1, "unit": "PERCENT" }
+          }
+        ]
+      }
+    },
+
+    "DecisionBottomSheet": {
+      "_description": "복합 정보 + 결정 CTA 바텀시트. 3-section 구조: (1) 셀렉터/헤더, (2) 금액 상세 (divider 포함), (3) CTA 버튼 (top border 분리). 스테이지 참여 회차 선택 등 '선택 → 확인 → 실행' 결정 플로우 전용. BottomSheetFilter(VS20, 단일 값 조정)의 상위 호환 (VS30).",
+      "_variables": [
+        "headerText: 헤더 설명 (예: '→ 월 105,120원 씩 13개월 모으기')",
+        "selectorTotalRounds: 회차 수",
+        "selectorActiveRound: 선택된 회차",
+        "infoText: 회차 안내 (예: '4회차 납입 후 목돈 수령')",
+        "amountRows: 금액 상세 rows [{label, value, color, bold}]",
+        "giftBadges: 선물/수수료 배지 배열 [{text, variant}]",
+        "ctaText: CTA 라벨 (기본 '참여하기')"
+      ],
+      "_notes": [
+        "Overlay (부모 ABSOLUTE inset 0 + fill rgba(0,0,0,0.45)) + 하단 정렬 Sheet",
+        "Sheet: FILL 가로 + HUG 세로 + topLeftRadius/topRightRadius 20 + bg-primary + overflow hidden",
+        "Section 1 (Header Band):",
+        "  - Grabber row: HORIZONTAL CENTER paddingTop 10 — 40×4 drag handle (VS20)",
+        "  - Close row: HORIZONTAL END padding 4/12 — 36sq X 버튼 (우측)",
+        "  - Header text: 13sp SemiBold fg-secondary CENTER — 금액/기간 요약, padding 0/20/14/20",
+        "  - Round Selector Grid (VS29 RoundSelectorGrid 사용) — padding 0/20/6/20",
+        "  - Info text: 13sp SemiBold CENTER padding 2/20/18/20",
+        "Section 2 (Amount Detail): padding 0/20/14/20 + top border border-tertiary 1px",
+        "  - 각 amountRow: HORIZONTAL SPACE_BETWEEN padding 4/0. 라벨 13sp Medium fg-tertiary + 값 14sp Bold (color 가변: 이자>0=success, 이자<0=error, 기본=fg-primary)",
+        "  - 선물 배지 row: HORIZONTAL SPACE_BETWEEN CENTER padding 6/0. 좌 11sp Medium fg-quaternary + 우 Pill 배지 2개 (포인트 + 수수료)",
+        "Section 3 (CTA): padding 10/20/24/20 + top border border-tertiary 1px",
+        "  - Full width 버튼: padding 15 + radius 10 + bg-brand-solid + 흰 15sp Bold + brand shadow. DS Buttons/Button (xl, Primary) 인스턴스 권장",
+        "VS20과의 차이: VS20은 단일 값 focus (36sp 대형 숫자 + slider), VS30은 복합 정보 (여러 row + 배지 + CTA) — 정보 밀도가 더 높음",
+        "바텀시트 내부 스크롤 가능 — overflow hidden + 내부 스크롤 컨테이너 (Figma에선 단일 프레임 HUG로 표현)"
+      ],
+      "template": {
+        "name": "Decision Bottom Sheet",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 0
+        },
+        "fill": "$token(bg-primary)",
+        "topLeftRadius": 20,
+        "topRightRadius": 20,
+        "clipsContent": true,
+        "children": [
+          {
+            "name": "Grabber Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "paddingTop": 10
+            },
+            "children": [
+              {
+                "name": "drag-handle",
+                "type": "frame",
+                "width": 40,
+                "height": 4,
+                "fill": "$token(bg-quaternary)",
+                "cornerRadius": 2
+              }
+            ]
+          },
+          {
+            "name": "Close Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "MAX",
+              "paddingTop": 4,
+              "paddingLeft": 12,
+              "paddingRight": 12
+            },
+            "children": [
+              {
+                "name": "Close Button",
+                "type": "frame",
+                "width": 36,
+                "height": 36,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "fill": { "r": 0, "g": 0, "b": 0, "a": 0 },
+                "children": [
+                  {
+                    "name": "close-icon",
+                    "type": "icon",
+                    "iconName": "x-close",
+                    "size": 20,
+                    "iconColor": "$token(fg-secondary)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Header Text Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "paddingLeft": 20,
+              "paddingRight": 20,
+              "paddingBottom": 14
+            },
+            "children": [
+              {
+                "name": "header-text",
+                "type": "text",
+                "text": "{{VARIABLE: headerText}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                "fontColor": "$token(fg-secondary)",
+                "textAlignHorizontal": "CENTER",
+                "letterSpacing": { "value": -2, "unit": "PERCENT" }
+              }
+            ]
+          },
+          {
+            "name": "Selector Slot",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "paddingLeft": 20,
+              "paddingRight": 20,
+              "paddingBottom": 6
+            },
+            "_comment": "RoundSelectorGrid 템플릿을 여기 삽입"
+          },
+          {
+            "name": "Info Text Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "paddingTop": 2,
+              "paddingBottom": 18,
+              "paddingLeft": 20,
+              "paddingRight": 20
+            },
+            "children": [
+              {
+                "name": "info-text",
+                "type": "text",
+                "text": "{{VARIABLE: infoText}}",
+                "fontSize": 13,
+                "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                "fontColor": "$token(fg-secondary)",
+                "textAlignHorizontal": "CENTER"
+              }
+            ]
+          },
+          {
+            "name": "Amount Detail Section",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 0,
+              "paddingTop": 16,
+              "paddingBottom": 16,
+              "paddingLeft": 20,
+              "paddingRight": 20
+            },
+            "stroke": "$token(border-tertiary)",
+            "strokeWeight": 1,
+            "strokeTopWeight": 1,
+            "strokeBottomWeight": 0,
+            "strokeLeftWeight": 0,
+            "strokeRightWeight": 0,
+            "_comment": "각 Amount Row: HORIZONTAL SPACE_BETWEEN + padding 4/0. 라벨(13sp Medium fg-tertiary) + 값(14sp Bold fg-primary or error/success)",
+            "children": [
+              {
+                "name": "Amount Row Example",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "SPACE_BETWEEN",
+                  "paddingTop": 4,
+                  "paddingBottom": 4
+                },
+                "children": [
+                  {
+                    "name": "amount-label",
+                    "type": "text",
+                    "text": "{{VARIABLE: amountRows[0].label}}",
+                    "fontSize": 13,
+                    "fontName": { "family": "Pretendard", "style": "Medium" },
+                    "fontColor": "$token(fg-tertiary)"
+                  },
+                  {
+                    "name": "amount-value",
+                    "type": "text",
+                    "text": "{{VARIABLE: amountRows[0].value}}",
+                    "fontSize": 14,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": "$token(fg-primary)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "CTA Section",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "paddingTop": 10,
+              "paddingBottom": 24,
+              "paddingLeft": 20,
+              "paddingRight": 20
+            },
+            "stroke": "$token(border-tertiary)",
+            "strokeWeight": 1,
+            "strokeTopWeight": 1,
+            "strokeBottomWeight": 0,
+            "strokeLeftWeight": 0,
+            "strokeRightWeight": 0,
+            "children": [
+              {
+                "name": "CTA Button",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER",
+                  "paddingTop": 15,
+                  "paddingBottom": 15
+                },
+                "fill": "$token(bg-brand-solid)",
+                "cornerRadius": 10,
+                "_comment": "DS Buttons/Button (Size=xl, Primary) 인스턴스로 교체 권장. brand shadow (0 2px 8px rgba(brand,.25))",
+                "children": [
+                  {
+                    "name": "cta-text",
+                    "type": "text",
+                    "text": "{{VARIABLE: ctaText}}",
+                    "fontSize": 15,
+                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 1 }
+                  }
+                ]
+              }
+            ]
           }
         ]
       }

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>아임인 스테이지 탭</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>/* imin tokens — font paths fixed for local layout */
+@font-face { font-family: 'Pretendard'; src: url("2c0b9e4a-36fe-45fc-9a2c-1683a8569f84")    format('woff'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Pretendard'; src: url("69f3b5ec-b6ec-4b5d-8a7c-227cb3dd8ac8")     format('woff'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Pretendard'; src: url("a13184bc-c796-4ce4-bd4b-7286a349ca12")   format('woff'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Pretendard'; src: url("9e4ee17a-23a8-4022-a717-3ef3679e3ef5")       format('woff'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Pretendard'; src: url("66d3953e-acc4-4f71-83c1-08c0e4b70c8b")  format('woff'); font-weight: 800; font-style: normal; font-display: swap; }
+
+:root {
+  --brand-25:#fafaff; --brand-50:#f4f3ff; --brand-100:#ebe9fe; --brand-200:#d9d6fe;
+  --brand-300:#bdb4fe; --brand-400:#9b8afb; --brand-500:#7a5af8; --brand-600:#6938ef;
+  --brand-700:#5925dc; --brand-800:#4a1fb8; --brand-900:#3e1c96; --brand-950:#27115f;
+
+  --gray-25:#fdfdfd; --gray-50:#fafafa; --gray-100:#f5f5f5; --gray-200:#e9eaeb;
+  --gray-300:#d5d7da; --gray-400:#a4a7ae; --gray-500:#717680; --gray-600:#535862;
+  --gray-700:#414651; --gray-800:#252b37; --gray-900:#181d27; --gray-950:#0a0d12;
+
+  --error-50:#fef3f2; --error-100:#fee4e2; --error-300:#fda29b;
+  --error-500:#f04438; --error-600:#d92d20; --error-700:#b42318;
+  --warning-50:#fffaeb; --warning-100:#fef0c7; --warning-300:#fec84b;
+  --warning-500:#f79009; --warning-600:#dc6803; --warning-700:#b54708;
+  --success-50:#ecfdf3; --success-100:#dcfae6; --success-300:#75e0a7;
+  --success-500:#17b26a; --success-600:#079455; --success-700:#067647;
+
+  --fg1:#181d27; --fg2:#414651; --fg3:#535862; --fg4:#717680; --fg-white:#fff;
+  --fg-brand:#6938ef; --fg-brand-alt:#5925dc;
+  --fg-error:#d92d20; --fg-warning:#dc6803; --fg-success:#079455;
+
+  --bg-primary:#fff; --bg-secondary:#fafafa; --bg-tertiary:#f5f5f5; --bg-quaternary:#e9eaeb;
+  --bg-brand-primary:#f4f3ff; --bg-brand-secondary:#ebe9fe; --bg-brand-solid:#6938ef;
+
+  --border-primary:#d5d7da; --border-secondary:#e9eaeb; --border-tertiary:#f5f5f5;
+  --border-brand:#7a5af8;
+
+  --shadow-xs: 0 1px 2px 0 rgba(10,13,18,.05);
+  --shadow-sm: 0 1px 3px 0 rgba(10,13,18,.10), 0 1px 2px -1px rgba(10,13,18,.10);
+  --shadow-md: 0 4px 6px -1px rgba(10,13,18,.10), 0 2px 4px -2px rgba(10,13,18,.06);
+  --shadow-lg: 0 12px 16px -4px rgba(10,13,18,.08), 0 4px 6px -2px rgba(10,13,18,.03);
+
+  --radius-xs:4px; --radius-sm:6px; --radius-md:8px; --radius-lg:10px;
+  --radius-xl:12px; --radius-2xl:16px; --radius-3xl:20px; --radius-4xl:24px; --radius-full:9999px;
+
+  --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin:0; font-family: var(--font-body); color: var(--fg1); -webkit-font-smoothing: antialiased; }
+</style>
+
+<style>
+  html, body { margin: 0; padding: 0; background: #efeff3; min-height: 100vh; }
+  body { display: flex; align-items: center; justify-content: center; padding: 24px 0;
+    font-family: 'Pretendard', -apple-system, system-ui, sans-serif; }
+  .stage { display: flex; gap: 32px; align-items: flex-start; }
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .phone-label { font-size: 12px; font-weight: 500; color: #535862; }
+  /* Tweaks panel */
+  .tweaks { position: fixed; right: 20px; bottom: 20px; width: 280px;
+    background: #fff; border: 1px solid #d5d7da; border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(10,13,18,.14); padding: 14px 16px;
+    font-family: 'Pretendard', -apple-system, system-ui; z-index: 100; display: none; }
+  .tweaks.open { display: block; }
+  .tweaks h4 { margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #181d27; letter-spacing: -0.01em; }
+  .tweaks .row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .tweaks label { font-size: 11px; font-weight: 500; color: #535862; }
+  .segmented { display: flex; border: 1px solid #d5d7da; border-radius: 8px; padding: 2px; gap: 2px; }
+  .segmented button { flex: 1; padding: 6px 8px; border: none; background: transparent;
+    font-family: inherit; font-size: 11px; font-weight: 500; color: #535862; cursor: pointer; border-radius: 6px; }
+  .segmented button.active { background: #6938ef; color: #fff; font-weight: 600; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+  .toggle-row input { accent-color: #6938ef; }
+  *::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<div class="tweaks" id="tweaks">
+  <h4>Tweaks</h4>
+  <div class="row">
+    <label>필터 인터랙션</label>
+    <div class="segmented" id="filterSeg">
+      <button data-val="stepper" class="active">± 스텝퍼</button>
+      <button data-val="slider">슬라이더</button>
+      <button data-val="sheet">바텀시트</button>
+    </div>
+  </div>
+  <div class="row">
+    <label>카드 레이아웃</label>
+    <div class="segmented" id="layoutSeg">
+      <button data-val="timeline" class="active">타임라인 바</button>
+      <button data-val="ring">링 게이지</button>
+      <button data-val="number">숫자 중심</button>
+    </div>
+  </div>
+  <div class="row">
+    <label>카드 개수</label>
+    <div class="segmented" id="countSeg">
+      <button data-val="3" class="active">3개</button>
+      <button data-val="6">6개</button>
+    </div>
+  </div>
+  <div class="row">
+    <label class="toggle-row">
+      <span>메이커 아바타 행</span>
+      <input type="checkbox" id="makerToggle" checked="">
+    </label>
+  </div>
+</div>
+
+<script>
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "filterStyle": "slider",
+    "cardLayout": "timeline",
+    "cardCount": 3,
+    "showMakers": true
+  }/*EDITMODE-END*/;
+  window.__TWEAKS = { ...TWEAK_DEFAULTS };
+</script>
+
+<script src="8d6535ec-951d-40ef-aeda-913693490921" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="67d8e59c-4b53-41ec-8207-bd75d286fc73" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="31856f7c-1a83-409c-b633-af1376c3ec89" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- 홈 top(Icon, AppHeader) / bottom(BottomNav) 재사용 -->
+<script type="text/babel" src="8116a58c-0e99-4a25-8b3e-b4837acb61ff"></script>
+<script type="text/babel" src="601ff091-794e-4187-bffc-bd42924c4b0f"></script>
+<script type="text/babel" src="e9d505c9-043e-4987-b1c9-b45de99d5a3a"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+function PhoneShell({ children }) {
+  const W = 390, H = 844;
+  return (
+    <div style={{
+      width: W, height: H, borderRadius: 48, overflow: 'hidden',
+      position: 'relative', background: '#F2F2F7',
+      boxShadow: '0 40px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.12)',
+      fontFamily: 'Pretendard, -apple-system, system-ui, sans-serif',
+      WebkitFontSmoothing: 'antialiased',
+    }}>
+      <div style={{
+        position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
+        width: 126, height: 37, borderRadius: 24, background: '#000', zIndex: 50,
+      }} />
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
+        padding: '18px 32px 0', display: 'flex', justifyContent: 'space-between',
+        alignItems: 'center', color: '#000',
+      }}>
+        <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em' }}>10:34</span>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginRight: -6 }}>
+          <svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="0.6" fill="#000"/><rect x="4.5" y="5" width="3" height="6" rx="0.6" fill="#000"/><rect x="9" y="2.5" width="3" height="8.5" rx="0.6" fill="#000"/><rect x="13.5" y="0" width="3" height="11" rx="0.6" fill="#000"/></svg>
+          <svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 3c2 0 3.8.8 5.1 2.1l1-1c-1.6-1.6-3.8-2.6-6.1-2.6S2.9 2.5 1.3 4.1l1 1C3.7 3.8 5.5 3 7.5 3zM7.5 6.1c1.2 0 2.3.5 3.1 1.3l1-1c-1.1-1.1-2.5-1.7-4.1-1.7s-3 .6-4.1 1.7l1 1c.8-.8 1.9-1.3 3.1-1.3zM7.5 9.4c.7 0 1.3.6 1.3 1.3 0 .1 0 .2-.1.3L7.5 13l-1.2-2c0-.1-.1-.2-.1-.3 0-.7.6-1.3 1.3-1.3z" fill="#000"/></svg>
+          <svg width="24" height="11" viewBox="0 0 24 11"><rect x="0.5" y="0.5" width="20" height="10" rx="3" stroke="#000" strokeOpacity="0.35" fill="none"/><rect x="2" y="2" width="17" height="7" rx="1.5" fill="#000"/><path d="M22 4v3c.6-.2 1-.8 1-1.5S22.6 4.2 22 4z" fill="#000" fillOpacity="0.4"/></svg>
+        </div>
+      </div>
+      <div style={{
+        position: 'absolute', bottom: 8, left: 0, right: 0, zIndex: 60,
+        display: 'flex', justifyContent: 'center', pointerEvents: 'none',
+      }}>
+        <div style={{ width: 139, height: 5, borderRadius: 100, background: 'rgba(0,0,0,0.3)' }}/>
+      </div>
+      <div style={{ height: '100%', paddingTop: 54, display: 'flex', flexDirection: 'column' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// 스테이지 탭이 active된 BottomNav
+const StagesBottomNav = () => {
+  const items = [
+    { id: 'home', label: '홈', icon: 'home' },
+    { id: 'lounge', label: '라운지', icon: 'gift' },
+    { id: 'stages', label: '스테이지', icon: 'layers', active: true },
+    { id: 'community', label: '커뮤니티', icon: 'users' },
+    { id: 'all', label: '전체', icon: 'grid' },
+  ];
+  return (
+    <div style={{
+      padding: '8px 8px 6px', background: '#fff',
+      borderTop: '1px solid var(--border-secondary)',
+      display: 'flex', justifyContent: 'space-around',
+    }}>
+      {items.map(it => (
+        <button key={it.id} style={{
+          flex: 1, padding: '6px 4px', background: 'transparent', border: 'none',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+          cursor: 'pointer', fontFamily: 'inherit',
+        }}>
+          <Icon name={it.icon} size={22}
+            color={it.active ? 'var(--brand-600)' : 'var(--fg4)'}
+            strokeWidth={it.active ? 2 : 1.8}/>
+          <span style={{
+            fontSize: 10, fontWeight: it.active ? 600 : 500,
+            color: it.active ? 'var(--brand-600)' : 'var(--fg4)',
+          }}>{it.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+function StagesScreen() {
+  const [category, setCategory] = useState('recommend');
+  const [filterStyle, setFilterStyle] = useState(window.__TWEAKS.filterStyle);
+  const [cardLayout, setCardLayout] = useState(window.__TWEAKS.cardLayout);
+  const [cardCount, setCardCount] = useState(Number(window.__TWEAKS.cardCount));
+  const [showMakers, setShowMakers] = useState(window.__TWEAKS.showMakers);
+  const [filters, setFilters] = useState({ monthly: 30, when: 13, duration: 13 });
+  const [sheetOpen, setSheetOpen] = useState(null); // monthly|when|duration|null
+
+  useEffect(() => {
+    const handler = (e) => {
+      const d = e.detail || {};
+      if (d.filterStyle !== undefined) setFilterStyle(d.filterStyle);
+      if (d.cardLayout !== undefined) setCardLayout(d.cardLayout);
+      if (d.cardCount !== undefined) setCardCount(Number(d.cardCount));
+      if (d.showMakers !== undefined) setShowMakers(d.showMakers);
+    };
+    window.addEventListener('tweaks-change', handler);
+    return () => window.removeEventListener('tweaks-change', handler);
+  }, []);
+
+  const onCardTap = (s) => alert(`${KRW(s.monthly)} × ${s.months}개월 스테이지 상세로 이동`);
+
+  return (
+    <PhoneShell>
+      {/* Fixed header */}
+      <div style={{ flexShrink: 0, background: '#fff' }}>
+        <AppHeader balanceHidden={false} onToggleBalance={() => {}}/>
+        <CategoryChips active={category} onChange={setCategory}/>
+      </div>
+      {/* Scroll body */}
+      <div style={{
+        flex: 1, overflowY: 'auto', background: 'var(--gray-50)',
+        position: 'relative',
+      }}>
+        {/* 필터 (스타일에 따라 다른 컴포넌트) */}
+        {filterStyle === 'stepper' && (
+          <div style={{ background: '#fff', paddingBottom: 4 }}>
+            <FilterCard filters={filters} setFilters={setFilters}/>
+          </div>
+        )}
+        {filterStyle === 'slider' && (
+          <div style={{ background: '#fff', paddingBottom: 12 }}>
+            <SliderFilter filters={filters} setFilters={setFilters}/>
+          </div>
+        )}
+        {filterStyle === 'sheet' && (
+          <div style={{ background: '#fff', paddingBottom: 16 }}>
+            <SheetTriggers filters={filters} onOpen={setSheetOpen}/>
+          </div>
+        )}
+
+        {/* 메이커 아바타 */}
+        {showMakers && (
+          <div style={{ background: '#fff' }}>
+            <MakerAvatars/>
+          </div>
+        )}
+
+        <div style={{ height: 10 }}/>
+
+        {/* 스테이지 카드 리스트 */}
+        {STAGE_POOL.slice(0, cardCount).map(s => (
+          <StageCard key={s.id} stage={s} layout={cardLayout} onTap={() => onCardTap(s)}/>
+        ))}
+
+        {/* 더보기 */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 20px 14px' }}>
+          <button style={{
+            width: '100%', padding: '12px',
+            border: '1px solid var(--border-primary)', borderRadius: 10,
+            background: '#fff', fontSize: 13, fontWeight: 600,
+            color: 'var(--fg2)', cursor: 'pointer', fontFamily: 'inherit',
+            letterSpacing: '-0.01em',
+          }}>더 많은 스테이지 보기</button>
+        </div>
+
+        <StagesFooter/>
+        <div style={{ height: 24 }}/>
+      </div>
+
+      <CreateStageFAB/>
+      <StagesBottomNav/>
+
+      {/* Bottom sheet for filters */}
+      {sheetOpen && (
+        <FilterSheet
+          type={sheetOpen}
+          value={filters[sheetOpen]}
+          onChange={(v) => setFilters(f => ({ ...f, [sheetOpen]: v }))}
+          onClose={() => setSheetOpen(null)}
+        />
+      )}
+    </PhoneShell>
+  );
+}
+
+// 슬라이더 필터
+const SliderFilter = ({ filters, setFilters }) => {
+  const rows = [
+    { key: 'monthly', label: '월 납입 금액', unit: '만원', min: 10, max: 130, step: 10 },
+    { key: 'when', label: '목돈 필요 시점', unit: '개월 뒤', min: 5, max: 13, step: 1 },
+    { key: 'duration', label: '납입 기간', unit: '개월 내', min: 5, max: 13, step: 1 },
+  ];
+  return (
+    <div style={{ margin: '8px 20px 0', padding: '10px 16px 14px',
+      background: 'var(--gray-50)', borderRadius: 14 }}>
+      {rows.map((r, i) => (
+        <div key={r.key} style={{
+          padding: '10px 0',
+          borderBottom: i < rows.length - 1 ? '1px solid var(--gray-100)' : 'none',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--fg2)' }}>{r.label}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-700)', letterSpacing: '-0.01em' }}>
+              {filters[r.key]}<span style={{ fontSize: 11, color: 'var(--fg3)', fontWeight: 500, marginLeft: 2 }}>{r.unit}</span>
+            </span>
+          </div>
+          <input type="range" min={r.min} max={r.max} step={r.step}
+            value={filters[r.key]}
+            onChange={e => setFilters(f => ({ ...f, [r.key]: Number(e.target.value) }))}
+            style={{
+              width: '100%', accentColor: 'var(--brand-600)',
+              height: 4,
+            }}/>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// 바텀시트 트리거 (버튼 3개)
+const SheetTriggers = ({ filters, onOpen }) => {
+  const rows = [
+    { key: 'monthly', label: '월 납입', value: `${filters.monthly}만원` },
+    { key: 'when', label: '목돈 시점', value: `${filters.when}개월 뒤` },
+    { key: 'duration', label: '납입 기간', value: `${filters.duration}개월 내` },
+  ];
+  return (
+    <div style={{
+      display: 'flex', gap: 8, padding: '8px 20px 4px',
+      overflowX: 'auto', scrollbarWidth: 'none',
+    }}>
+      {rows.map(r => (
+        <button key={r.key} onClick={() => onOpen(r.key)} style={{
+          flexShrink: 0, padding: '10px 14px', borderRadius: 10,
+          border: '1px solid var(--border-primary)', background: '#fff',
+          display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+          fontFamily: 'inherit',
+        }}>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: 10, color: 'var(--fg4)', fontWeight: 500, marginBottom: 1 }}>{r.label}</div>
+            <div style={{ fontSize: 13, color: 'var(--fg1)', fontWeight: 700, letterSpacing: '-0.01em' }}>{r.value}</div>
+          </div>
+          <Icon name="chevron-down" size={16} color="var(--fg3)"/>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// 바텀시트
+const FilterSheet = ({ type, value, onChange, onClose }) => {
+  const cfg = {
+    monthly: { label: '월 납입 금액', unit: '만원', min: 10, max: 130, step: 10 },
+    when: { label: '목돈 필요 시점', unit: '개월 뒤', min: 5, max: 13, step: 1 },
+    duration: { label: '납입 기간', unit: '개월 내', min: 5, max: 13, step: 1 },
+  }[type];
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 80,
+      background: 'rgba(0,0,0,0.4)',
+      display: 'flex', alignItems: 'flex-end',
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: '100%', background: '#fff',
+        borderTopLeftRadius: 20, borderTopRightRadius: 20,
+        padding: '12px 20px 28px',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+          <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--gray-200)' }}/>
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--fg1)', marginBottom: 18, letterSpacing: '-0.02em' }}>
+          {cfg.label}
+        </div>
+        <div style={{ textAlign: 'center', marginBottom: 18 }}>
+          <span style={{ fontSize: 36, fontWeight: 800, color: 'var(--brand-600)', letterSpacing: '-0.03em' }}>{value}</span>
+          <span style={{ fontSize: 16, color: 'var(--fg3)', fontWeight: 500, marginLeft: 4 }}>{cfg.unit}</span>
+        </div>
+        <input type="range" min={cfg.min} max={cfg.max} step={cfg.step}
+          value={value} onChange={e => onChange(Number(e.target.value))}
+          style={{ width: '100%', accentColor: 'var(--brand-600)' }}/>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, marginBottom: 20 }}>
+          <span style={{ fontSize: 11, color: 'var(--fg4)' }}>{cfg.min}{cfg.unit}</span>
+          <span style={{ fontSize: 11, color: 'var(--fg4)' }}>{cfg.max}{cfg.unit}</span>
+        </div>
+        <button onClick={onClose} style={{
+          width: '100%', padding: '14px', borderRadius: 10, border: 'none',
+          background: 'var(--brand-600)', color: '#fff',
+          fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+          letterSpacing: '-0.01em',
+        }}>적용</button>
+      </div>
+    </div>
+  );
+};
+
+function App() {
+  return (
+    <div className="stage">
+      <div className="phone-wrap">
+        <StagesScreen/>
+        <div className="phone-label">아임인 · 스테이지 탭 (추천 피드)</div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+
+<script>
+  const tweaksEl = document.getElementById('tweaks');
+  window.addEventListener('message', (e) => {
+    if (e.data?.type === '__activate_edit_mode') tweaksEl.classList.add('open');
+    if (e.data?.type === '__deactivate_edit_mode') tweaksEl.classList.remove('open');
+  });
+
+  function bindSeg(segId, key, parse) {
+    const seg = document.getElementById(segId);
+    seg.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => {
+        seg.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        const val = parse ? parse(b.dataset.val) : b.dataset.val;
+        window.__TWEAKS[key] = val;
+        window.dispatchEvent(new CustomEvent('tweaks-change', { detail: { [key]: val } }));
+        window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+      });
+    });
+  }
+  bindSeg('filterSeg', 'filterStyle');
+  bindSeg('layoutSeg', 'cardLayout');
+  bindSeg('countSeg', 'cardCount', v => Number(v));
+
+  document.getElementById('makerToggle').addEventListener('change', (e) => {
+    const val = e.target.checked;
+    window.__TWEAKS.showMakers = val;
+    window.dispatchEvent(new CustomEvent('tweaks-change', { detail: { showMakers: val } }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { showMakers: val } }, '*');
+  });
+
+  // initial sync
+  function syncSeg(id, key) {
+    document.querySelectorAll('#' + id + ' button').forEach(b => {
+      b.classList.toggle('active', String(b.dataset.val) === String(window.__TWEAKS[key]));
+    });
+  }
+  syncSeg('filterSeg', 'filterStyle');
+  syncSeg('layoutSeg', 'cardLayout');
+  syncSeg('countSeg', 'cardCount');
+  document.getElementById('makerToggle').checked = window.__TWEAKS.showMakers;
+
+  window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+</script>
+
+
+</body></html>

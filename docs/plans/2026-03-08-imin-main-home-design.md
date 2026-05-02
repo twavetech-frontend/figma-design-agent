@@ -25,7 +25,7 @@
 ## 섹션 상세
 
 ### A. NavBar
-- 좌: imin 로고 (componentKey: 957912b03baf924a48ef83424ed66f22a4a386a8)
+- 좌: imin 로고 (componentKey: 81efeddd245e95f31a2724aa370ee54d3caf93d0)
 - 우: bell 아이콘 + message-chat 아이콘
 - HORIZONTAL, SPACE_BETWEEN, CENTER, padding L/R 16
 

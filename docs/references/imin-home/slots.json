@@ -1,0 +1,118 @@
+{
+  "_meta": {
+    "referenceId": "imin-home",
+    "schemaVersion": "1.1",
+    "generatedOn": "2026-04-22",
+    "slotCount": 77,
+    "note": "lodash-path 기반 slot. Content Binder가 slot id → PRD 값 매핑 후 lodash set으로 blueprint.json에 주입. 정적 라벨(이율, 전체보기, 요일 등)은 slot화하지 않음 — PRD가 바꿀 가능성이 낮은 고정 UI 텍스트."
+  },
+  "slots": [
+    { "id": "tabs.active.label",           "path": "children[1].children[0].children[0].text", "type": "text", "default": "거래 현황", "hint": "활성 탭 라벨 (PRD § 4 Open Q: '내 스테이지' 제안도 가능)" },
+    { "id": "tabs.inactive.label",         "path": "children[1].children[1].children[0].text", "type": "text", "default": "누적 거래", "hint": "비활성 탭 라벨" },
+
+    { "id": "alert.title",                 "path": "children[2].children[0].children[1].children[0].text", "type": "text", "default": "미납 1건 · 4월 18일", "hint": "미납 개수 + 날짜" },
+    { "id": "alert.sub",                   "path": "children[2].children[0].children[1].children[1].text", "type": "text", "default": "지금 납입하지 않으면 연체 이자가 발생해요", "hint": "미납 경고 문구" },
+
+    { "id": "summary.pill.text",           "path": "children[3].children[0].children[0].children[0].children[0].text", "type": "text", "default": "3건 진행 중", "hint": "진행 중 스테이지 수 pill (예: 'N건 진행 중')" },
+    { "id": "summary.title",               "path": "children[3].children[0].children[0].children[1].text", "type": "text", "default": "내 스테이지", "hint": "Summary 카드 타이틀" },
+
+    { "id": "summary.earned.label",        "path": "children[3].children[0].children[1].children[0].children[0].children[1].text", "type": "text", "default": "모은 금액", "hint": "좌측 금액 라벨" },
+    { "id": "summary.earned.amount",       "path": "children[3].children[0].children[1].children[0].children[1].text", "type": "text", "default": "14,420,320", "hint": "모은 금액 숫자 (쉼표 포함, 원 단위)", "format": "number_krw_comma" },
+    { "id": "summary.earned.unit",         "path": "children[3].children[0].children[1].children[0].children[2].text", "type": "text", "default": "원", "hint": "통화 단위" },
+
+    { "id": "summary.owed.label",          "path": "children[3].children[0].children[1].children[1].children[0].children[1].text", "type": "text", "default": "빌린 금액", "hint": "우측 금액 라벨 (PRD Open Q: '납입 예정액' 제안도 가능)" },
+    { "id": "summary.owed.amount",         "path": "children[3].children[0].children[1].children[1].children[1].text", "type": "text", "default": "−5,240,020", "hint": "빌린 금액 숫자 (음수 부호 포함)", "format": "number_krw_signed" },
+    { "id": "summary.owed.unit",           "path": "children[3].children[0].children[1].children[1].children[2].text", "type": "text", "default": "원" },
+
+    { "id": "schedule.title",              "path": "children[4].children[0].children[0].children[0].text", "type": "text", "default": "이번 달 납입·지급" },
+    { "id": "schedule.missed.badge",       "path": "children[4].children[0].children[0].children[1].children[0].text", "type": "text", "default": "미납 1", "hint": "미납 건수 배지" },
+    { "id": "schedule.view_all",           "path": "children[4].children[0].children[1].children[0].text", "type": "text", "default": "전체보기" },
+
+    { "id": "schedule.day1.dow",           "path": "children[4].children[1].children[0].children[0].children[0].text", "type": "text", "default": "토" },
+    { "id": "schedule.day1.number",        "path": "children[4].children[1].children[0].children[0].children[1].text", "type": "text", "default": "18" },
+    { "id": "schedule.day1.amount",        "path": "children[4].children[1].children[0].children[1].text", "type": "text", "default": "35만" },
+    { "id": "schedule.day1.status",        "path": "children[4].children[1].children[0].children[2].children[1].text", "type": "text", "default": "미납" },
+
+    { "id": "schedule.day2.dow",           "path": "children[4].children[1].children[1].children[0].children[0].text", "type": "text", "default": "일" },
+    { "id": "schedule.day2.number",        "path": "children[4].children[1].children[1].children[0].children[1].text", "type": "text", "default": "19" },
+
+    { "id": "schedule.day3.dow",           "path": "children[4].children[1].children[2].children[0].children[0].text", "type": "text", "default": "월", "hint": "today 카드 (brand outline)" },
+    { "id": "schedule.day3.number",        "path": "children[4].children[1].children[2].children[0].children[1].text", "type": "text", "default": "20" },
+    { "id": "schedule.day3.amount",        "path": "children[4].children[1].children[2].children[1].text", "type": "text", "default": "50만" },
+    { "id": "schedule.day3.status",        "path": "children[4].children[1].children[2].children[2].children[1].text", "type": "text", "default": "오늘" },
+
+    { "id": "schedule.day4.dow",           "path": "children[4].children[1].children[3].children[0].children[0].text", "type": "text", "default": "화" },
+    { "id": "schedule.day4.number",        "path": "children[4].children[1].children[3].children[0].children[1].text", "type": "text", "default": "21" },
+
+    { "id": "schedule.day5.dow",           "path": "children[4].children[1].children[4].children[0].children[0].text", "type": "text", "default": "수" },
+    { "id": "schedule.day5.number",        "path": "children[4].children[1].children[4].children[0].children[1].text", "type": "text", "default": "22" },
+
+    { "id": "limit.title",                 "path": "children[5].children[0].text", "type": "text", "default": "한도 · 신용 현황" },
+    { "id": "limit.label",                 "path": "children[5].children[1].children[0].children[0].text", "type": "text", "default": "이용 중" },
+    { "id": "limit.usage_pct",             "path": "children[5].children[1].children[0].children[1].text", "type": "text", "default": "6.9% 사용" },
+    { "id": "limit.amount",                "path": "children[5].children[1].children[1].children[0].text", "type": "text", "default": "360", "hint": "사용 중 금액 숫자" },
+    { "id": "limit.unit",                  "path": "children[5].children[1].children[1].children[1].text", "type": "text", "default": "만원" },
+    { "id": "limit.total",                 "path": "children[5].children[1].children[1].children[3].text", "type": "text", "default": "총 5,200만원", "hint": "전체 한도" },
+    { "id": "limit.nudge.text",            "path": "children[5].children[1].children[3].children[1].text", "type": "text", "default": "신용점수를 연동하면 한도가 늘어나요" },
+
+    { "id": "rec.tag",                     "path": "children[6].children[0].children[1].text", "type": "text", "default": "지민님을 위한 추천", "hint": "유저명 + 추천 (예: 'OOO님을 위한 추천')" },
+    { "id": "rec.title",                   "path": "children[6].children[1].text", "type": "text", "default": "1,300만원 모으기 도전", "hint": "추천 스테이지 타이틀/목표" },
+    { "id": "rec.cta.sub",                 "path": "children[6].children[3].children[0].text", "type": "text", "default": "3번째 회차 예상 수령액" },
+    { "id": "rec.cta.amount",              "path": "children[6].children[3].children[1].children[0].text", "type": "text", "default": "126", "format": "number_krw_comma" },
+    { "id": "rec.cta.unit",                "path": "children[6].children[3].children[1].children[1].text", "type": "text", "default": "만원" },
+    { "id": "rec.info.pill",               "path": "children[6].children[3].children[2].children[0].text", "type": "text", "default": "월 10만원 × 13개월", "hint": "월 납입 × 개월 수" },
+    { "id": "rec.turn.value",              "path": "children[6].children[3].children[3].children[0].children[0].children[1].text", "type": "text", "default": "3 / 13회차" },
+    { "id": "rec.stepper.month",           "path": "children[6].children[3].children[3].children[1].children[1].children[1].text", "type": "text", "default": "10" },
+    { "id": "rec.stepper.duration",        "path": "children[6].children[3].children[3].children[2].children[1].children[1].text", "type": "text", "default": "13" },
+    { "id": "rec.cta.button",              "path": "children[6].children[3].children[4].children[0].text", "type": "text", "default": "맞는 스테이지 찾기" },
+
+    { "id": "stage.header.title",          "path": "children[7].children[0].text", "type": "text", "default": "참여 중인 스테이지" },
+
+    { "id": "stage.card0.status",          "path": "children[8].children[0].children[0].children[0].children[0].text", "type": "text", "default": "진행 중" },
+    { "id": "stage.card0.rate",            "path": "children[8].children[0].children[1].children[1].text", "type": "text", "default": "3.2%", "hint": "이율 % (단위 포함)" },
+    { "id": "stage.card0.amount",          "path": "children[8].children[0].children[2].text", "type": "text", "default": "300만원" },
+    { "id": "stage.card0.label",           "path": "children[8].children[0].children[3].text", "type": "text", "default": "13개월 · 5번째 수령" },
+
+    { "id": "stage.card1.status",          "path": "children[8].children[1].children[0].children[0].children[0].text", "type": "text", "default": "지급 예정" },
+    { "id": "stage.card1.rate",            "path": "children[8].children[1].children[1].children[1].text", "type": "text", "default": "2.8%" },
+    { "id": "stage.card1.amount",          "path": "children[8].children[1].children[2].text", "type": "text", "default": "500만원" },
+    { "id": "stage.card1.label",           "path": "children[8].children[1].children[3].text", "type": "text", "default": "12개월 · 8번째 수령" },
+
+    { "id": "stage.card2.status",          "path": "children[8].children[2].children[0].children[0].children[0].text", "type": "text", "default": "미납" },
+    { "id": "stage.card2.rate",            "path": "children[8].children[2].children[1].children[1].text", "type": "text", "default": "4.1%" },
+    { "id": "stage.card2.amount",          "path": "children[8].children[2].children[2].text", "type": "text", "default": "200만원" },
+    { "id": "stage.card2.label",           "path": "children[8].children[2].children[3].text", "type": "text", "default": "10개월 · 3번째 수령" },
+
+    { "id": "onb.title",                   "path": "children[9].children[0].children[1].children[0].text", "type": "text", "default": "지급 계좌 연결이 필요해요" },
+    { "id": "onb.sub",                     "path": "children[9].children[0].children[1].children[1].text", "type": "text", "default": "수령액을 받으려면 계좌를 연결해주세요" },
+    { "id": "onb.button",                  "path": "children[9].children[0].children[2].children[0].text", "type": "text", "default": "연결" },
+
+    { "id": "att.streak",                  "path": "children[10].children[0].children[0].children[0].children[0].children[1].text", "type": "text", "default": "연속 12일 출석 중", "hint": "연속 출석 일수" },
+    { "id": "att.sub",                     "path": "children[10].children[0].children[0].children[0].children[1].text", "type": "text", "default": "오늘 출석 시 100P 적립" },
+    { "id": "att.button",                  "path": "children[10].children[0].children[0].children[1].children[0].text", "type": "text", "default": "출석" },
+
+    { "id": "event.title",                 "path": "children[11].children[0].children[1].text", "type": "text", "default": "친구 초대하고 1만 포인트 받기", "hint": "이벤트 타이틀" },
+    { "id": "event.sub",                   "path": "children[11].children[0].children[2].text", "type": "text", "default": "친구가 첫 스테이지 참여 시" },
+
+    { "id": "lounge.points",               "path": "children[12].children[1].children[1].text", "type": "text", "default": "8,420P", "hint": "사용 가능 포인트" },
+
+    { "id": "product0.title",              "path": "children[13].children[0].children[1].children[0].text", "type": "text", "default": "캠핑 감성 티셔츠" },
+    { "id": "product0.discount",           "path": "children[13].children[0].children[1].children[1].children[0].text", "type": "text", "default": "42%" },
+    { "id": "product0.price",              "path": "children[13].children[0].children[1].children[1].children[1].text", "type": "text", "default": "19,800원" },
+
+    { "id": "product1.title",              "path": "children[13].children[1].children[1].children[0].text", "type": "text", "default": "프리미엄 원두 500g" },
+    { "id": "product1.discount",           "path": "children[13].children[1].children[1].children[1].children[0].text", "type": "text", "default": "28%" },
+    { "id": "product1.price",              "path": "children[13].children[1].children[1].children[1].children[1].text", "type": "text", "default": "14,900원" },
+
+    { "id": "product2.title",              "path": "children[13].children[2].children[1].children[0].text", "type": "text", "default": "무선 이어폰" },
+    { "id": "product2.discount",           "path": "children[13].children[2].children[1].children[1].children[0].text", "type": "text", "default": "35%" },
+    { "id": "product2.price",              "path": "children[13].children[2].children[1].children[1].children[1].text", "type": "text", "default": "49,000원" }
+  ],
+  "_notMappedNotes": {
+    "navbar": "로고는 figma_mcp_client의 post-build 컴포넌트 인스턴스 교체 로직이 처리 (slot 불필요)",
+    "bottomNav": "5개 탭 라벨은 정적 — PRD가 탭 이름 변경을 요구하는 경우 드뭄. 필요 시 slot 추가 가능",
+    "static_labels": "'한도 · 신용 현황', '이용 중', '이율', '전체보기', '사용 가능', 요일(월~일), 상품 태그('핫딜', 'BEST') 등 반복되는 UI 라벨은 기본값 유지",
+    "attendance_day_labels": "출석 체크 7일 요일 라벨은 정적 (월,화,수,오늘,금,토,일) — 현재 날짜 기준 '오늘'만 backend에서 이동",
+    "imageGen_nodes": "Lounge Product 썸네일은 imageGen 필드로 별도 생성 (slot 아님)"
+  }
+}

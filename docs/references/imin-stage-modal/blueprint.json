@@ -1,0 +1,1923 @@
+{
+  "name": "imin-stage-modal (progress list)",
+  "type": "frame",
+  "width": 393,
+  "fill": {
+    "r": 1.0,
+    "g": 1.0,
+    "b": 1.0,
+    "a": 1
+  },
+  "cornerRadius": 0,
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "itemSpacing": 0
+  },
+  "children": [
+    {
+      "name": "Close Header",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisAlignItems": "MAX",
+        "counterAxisAlignItems": "CENTER",
+        "paddingTop": 14,
+        "paddingBottom": 8,
+        "paddingLeft": 20,
+        "paddingRight": 20
+      },
+      "children": [
+        {
+          "type": "icon",
+          "iconName": "x-close",
+          "size": 24,
+          "iconColor": {
+            "r": 0.255,
+            "g": 0.275,
+            "b": 0.318,
+            "a": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "Summary Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "itemSpacing": 10,
+        "paddingTop": 4,
+        "paddingBottom": 20,
+        "paddingLeft": 20,
+        "paddingRight": 20
+      },
+      "children": [
+        {
+          "name": "Summary Title Row",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 8
+          },
+          "children": [
+            {
+              "type": "text",
+              "text": "진행중인 4건의 스테이지 내역",
+              "fontSize": 16,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "SemiBold"
+              },
+              "fontColor": {
+                "r": 0.094,
+                "g": 0.114,
+                "b": 0.153,
+                "a": 1
+              },
+              "letterSpacing": -0.02
+            },
+            {
+              "name": "Icons Row",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 6
+              },
+              "children": [
+                {
+                  "type": "icon",
+                  "iconName": "check-circle",
+                  "size": 20,
+                  "iconColor": {
+                    "r": 0.09,
+                    "g": 0.698,
+                    "b": 0.416,
+                    "a": 1
+                  }
+                },
+                {
+                  "type": "icon",
+                  "iconName": "star-01",
+                  "size": 18,
+                  "iconColor": {
+                    "r": 0.478,
+                    "g": 0.353,
+                    "b": 0.973,
+                    "a": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Summary Spacer",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "height": 4,
+          "fill": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        },
+        {
+          "name": "Amount Row — 모은 금액",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "type": "text",
+              "text": "모은 금액",
+              "fontSize": 14,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Regular"
+              },
+              "fontColor": {
+                "r": 0.443,
+                "g": 0.463,
+                "b": 0.502,
+                "a": 1
+              },
+              "letterSpacing": -0.02
+            },
+            {
+              "type": "text",
+              "text": "+ 14,420,320원",
+              "fontSize": 15,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": {
+                "r": 0.412,
+                "g": 0.22,
+                "b": 0.937,
+                "a": 1
+              },
+              "letterSpacing": -0.02,
+              "textDecoration": "UNDERLINE"
+            }
+          ]
+        },
+        {
+          "name": "Amount Row — 빌린 금액",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "type": "text",
+              "text": "빌린 금액",
+              "fontSize": 14,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Regular"
+              },
+              "fontColor": {
+                "r": 0.443,
+                "g": 0.463,
+                "b": 0.502,
+                "a": 1
+              },
+              "letterSpacing": -0.02
+            },
+            {
+              "type": "text",
+              "text": "- 5,240,010원",
+              "fontSize": 15,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": {
+                "r": 0.851,
+                "g": 0.176,
+                "b": 0.125,
+                "a": 1
+              },
+              "letterSpacing": -0.02,
+              "textDecoration": "UNDERLINE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Schedule Wrap",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingBottom": 0
+      },
+      "children": [
+        {
+          "name": "Schedule Card",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "fill": {
+            "r": 1.0,
+            "g": 1.0,
+            "b": 1.0,
+            "a": 1
+          },
+          "stroke": {
+            "r": 0.914,
+            "g": 0.918,
+            "b": 0.922,
+            "a": 1
+          },
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "cornerRadius": 16,
+          "effects": [
+            {
+              "type": "DROP_SHADOW",
+              "color": {
+                "r": 0.039,
+                "g": 0.051,
+                "b": 0.071,
+                "a": 0.05
+              },
+              "offset": {
+                "x": 0,
+                "y": 1
+              },
+              "radius": 3
+            }
+          ],
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 0,
+            "paddingTop": 16,
+            "paddingBottom": 14,
+            "paddingLeft": 16,
+            "paddingRight": 16
+          },
+          "children": [
+            {
+              "type": "text",
+              "text": "거래 스케줄",
+              "fontSize": 14,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": {
+                "r": 0.094,
+                "g": 0.114,
+                "b": 0.153,
+                "a": 1
+              },
+              "letterSpacing": -0.02,
+              "textAlignHorizontal": "CENTER"
+            },
+            {
+              "name": "Month Row",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 10,
+                "paddingBottom": 4
+              },
+              "children": [
+                {
+                  "type": "icon",
+                  "iconName": "chevron-left",
+                  "size": 20,
+                  "iconColor": {
+                    "r": 0.325,
+                    "g": 0.345,
+                    "b": 0.384,
+                    "a": 1
+                  }
+                },
+                {
+                  "name": "Month — Oct",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "itemSpacing": 4,
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "Oct",
+                      "fontSize": 11,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": {
+                        "r": 0.443,
+                        "g": 0.463,
+                        "b": 0.502,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "type": "text",
+                      "text": "10",
+                      "fontSize": 17,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "SemiBold"
+                      },
+                      "fontColor": {
+                        "r": 0.094,
+                        "g": 0.114,
+                        "b": 0.153,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "name": "Dot Spacer",
+                      "type": "frame",
+                      "width": 8,
+                      "height": 8,
+                      "fill": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Month — Nov",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "itemSpacing": 4,
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "Nov",
+                      "fontSize": 11,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": {
+                        "r": 0.443,
+                        "g": 0.463,
+                        "b": 0.502,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "type": "text",
+                      "text": "11",
+                      "fontSize": 17,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "SemiBold"
+                      },
+                      "fontColor": {
+                        "r": 0.094,
+                        "g": 0.114,
+                        "b": 0.153,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "name": "Dot Wrap",
+                      "type": "frame",
+                      "width": 8,
+                      "height": 8,
+                      "fill": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0
+                      },
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "name": "Month Dot",
+                          "type": "frame",
+                          "width": 4,
+                          "height": 4,
+                          "fill": {
+                            "r": 0.325,
+                            "g": 0.345,
+                            "b": 0.384,
+                            "a": 1
+                          },
+                          "cornerRadius": 999
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Month — Dec",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "itemSpacing": 4,
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "Dec",
+                      "fontSize": 11,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": {
+                        "r": 0.443,
+                        "g": 0.463,
+                        "b": 0.502,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "type": "text",
+                      "text": "12",
+                      "fontSize": 17,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "SemiBold"
+                      },
+                      "fontColor": {
+                        "r": 0.094,
+                        "g": 0.114,
+                        "b": 0.153,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "name": "Dot Wrap",
+                      "type": "frame",
+                      "width": 8,
+                      "height": 8,
+                      "fill": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0
+                      },
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "name": "Month Dot",
+                          "type": "frame",
+                          "width": 4,
+                          "height": 4,
+                          "fill": {
+                            "r": 0.325,
+                            "g": 0.345,
+                            "b": 0.384,
+                            "a": 1
+                          },
+                          "cornerRadius": 999
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Month — Jan",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "itemSpacing": 4,
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "Jan",
+                      "fontSize": 11,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": {
+                        "r": 0.443,
+                        "g": 0.463,
+                        "b": 0.502,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "name": "Day Circle",
+                      "type": "frame",
+                      "width": 32,
+                      "height": 32,
+                      "fill": {
+                        "r": 0.094,
+                        "g": 0.114,
+                        "b": 0.153,
+                        "a": 1
+                      },
+                      "cornerRadius": 999,
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "text": "1",
+                          "fontSize": 15,
+                          "fontName": {
+                            "family": "Pretendard",
+                            "style": "Bold"
+                          },
+                          "fontColor": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1
+                          },
+                          "letterSpacing": -0.02
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "이번달",
+                      "fontSize": 11,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 0.412,
+                        "g": 0.22,
+                        "b": 0.937,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    }
+                  ]
+                },
+                {
+                  "name": "Month — Feb",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "itemSpacing": 4,
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "Feb",
+                      "fontSize": 11,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": {
+                        "r": 0.443,
+                        "g": 0.463,
+                        "b": 0.502,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "type": "text",
+                      "text": "2",
+                      "fontSize": 17,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "SemiBold"
+                      },
+                      "fontColor": {
+                        "r": 0.094,
+                        "g": 0.114,
+                        "b": 0.153,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "name": "Dot Spacer",
+                      "type": "frame",
+                      "width": 8,
+                      "height": 8,
+                      "fill": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Month — Mar",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "itemSpacing": 4,
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "Mar",
+                      "fontSize": 11,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": {
+                        "r": 0.443,
+                        "g": 0.463,
+                        "b": 0.502,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "type": "text",
+                      "text": "3",
+                      "fontSize": 17,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "SemiBold"
+                      },
+                      "fontColor": {
+                        "r": 0.094,
+                        "g": 0.114,
+                        "b": 0.153,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "name": "Dot Wrap",
+                      "type": "frame",
+                      "width": 8,
+                      "height": 8,
+                      "fill": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0
+                      },
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "name": "Month Dot",
+                          "type": "frame",
+                          "width": 4,
+                          "height": 4,
+                          "fill": {
+                            "r": 0.325,
+                            "g": 0.345,
+                            "b": 0.384,
+                            "a": 1
+                          },
+                          "cornerRadius": 999
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Month — Apr",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "itemSpacing": 4,
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "Apr",
+                      "fontSize": 11,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": {
+                        "r": 0.443,
+                        "g": 0.463,
+                        "b": 0.502,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "type": "text",
+                      "text": "4",
+                      "fontSize": 17,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "SemiBold"
+                      },
+                      "fontColor": {
+                        "r": 0.094,
+                        "g": 0.114,
+                        "b": 0.153,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "name": "Dot Spacer",
+                      "type": "frame",
+                      "width": 8,
+                      "height": 8,
+                      "fill": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "iconName": "chevron-right",
+                  "size": 20,
+                  "iconColor": {
+                    "r": 0.325,
+                    "g": 0.345,
+                    "b": 0.384,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Filter Row",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "MAX",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 8,
+                "itemSpacing": 4
+              },
+              "children": [
+                {
+                  "name": "Filter Pill",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 4
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "납입",
+                      "fontSize": 13,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": {
+                        "r": 0.255,
+                        "g": 0.275,
+                        "b": 0.318,
+                        "a": 1
+                      },
+                      "letterSpacing": -0.02
+                    },
+                    {
+                      "type": "icon",
+                      "iconName": "chevron-down",
+                      "size": 14,
+                      "iconColor": {
+                        "r": 0.443,
+                        "g": 0.463,
+                        "b": 0.502,
+                        "a": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Stats Grid",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": {
+        "r": 0.961,
+        "g": 0.961,
+        "b": 0.961,
+        "a": 1
+      },
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "itemSpacing": 0,
+        "paddingTop": 18,
+        "paddingBottom": 18,
+        "paddingLeft": 16,
+        "paddingRight": 16
+      },
+      "children": [
+        {
+          "name": "Col — 월 납입액",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 6,
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "type": "text",
+              "text": "월 납입액",
+              "fontSize": 12,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Medium"
+              },
+              "fontColor": {
+                "r": 0.443,
+                "g": 0.463,
+                "b": 0.502,
+                "a": 1
+              },
+              "letterSpacing": -0.02,
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            },
+            {
+              "type": "text",
+              "text": "0원",
+              "fontSize": 15,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": {
+                "r": 0.094,
+                "g": 0.114,
+                "b": 0.153,
+                "a": 1
+              },
+              "letterSpacing": -0.02,
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            }
+          ]
+        },
+        {
+          "name": "Col — 납입 완료액",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 6,
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "type": "text",
+              "text": "납입 완료액",
+              "fontSize": 12,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Medium"
+              },
+              "fontColor": {
+                "r": 0.443,
+                "g": 0.463,
+                "b": 0.502,
+                "a": 1
+              },
+              "letterSpacing": -0.02,
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            },
+            {
+              "type": "text",
+              "text": "0원",
+              "fontSize": 15,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": {
+                "r": 0.094,
+                "g": 0.114,
+                "b": 0.153,
+                "a": 1
+              },
+              "letterSpacing": -0.02,
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            }
+          ]
+        },
+        {
+          "name": "Col — 남은 납입액",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 6,
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "type": "text",
+              "text": "남은 납입액",
+              "fontSize": 12,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Medium"
+              },
+              "fontColor": {
+                "r": 0.443,
+                "g": 0.463,
+                "b": 0.502,
+                "a": 1
+              },
+              "letterSpacing": -0.02,
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            },
+            {
+              "type": "text",
+              "text": "0원",
+              "fontSize": 15,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": {
+                "r": 0.094,
+                "g": 0.114,
+                "b": 0.153,
+                "a": 1
+              },
+              "letterSpacing": -0.02,
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tx Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "itemSpacing": 2,
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingBottom": 40
+      },
+      "children": [
+        {
+          "name": "Tx Header",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "CENTER",
+            "paddingTop": 20,
+            "paddingBottom": 12
+          },
+          "children": [
+            {
+              "type": "text",
+              "text": "2026년 1월",
+              "fontSize": 16,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": {
+                "r": 0.094,
+                "g": 0.114,
+                "b": 0.153,
+                "a": 1
+              },
+              "letterSpacing": -0.02
+            },
+            {
+              "type": "text",
+              "text": "총 8건",
+              "fontSize": 13,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Regular"
+              },
+              "fontColor": {
+                "r": 0.443,
+                "g": 0.463,
+                "b": 0.502,
+                "a": 1
+              },
+              "letterSpacing": -0.02
+            }
+          ]
+        },
+        {
+          "name": "Tx Item — 미납 (1/5회차)",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 14,
+            "paddingTop": 8,
+            "paddingBottom": 8
+          },
+          "children": [
+            {
+              "name": "Date Box — 29",
+              "type": "frame",
+              "width": 48,
+              "height": 48,
+              "fill": {
+                "r": 0.094,
+                "g": 0.114,
+                "b": 0.153,
+                "a": 1
+              },
+              "cornerRadius": 8,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 2,
+                "paddingTop": 6,
+                "paddingBottom": 6
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "29",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "type": "text",
+                  "text": "D+3",
+                  "fontSize": 10,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                }
+              ]
+            },
+            {
+              "name": "Main",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 4,
+                "paddingTop": 2,
+                "paddingBottom": 4
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "미납 (1/5회차)",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 0.094,
+                    "g": 0.114,
+                    "b": 0.153,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "type": "text",
+                  "text": "100,000원",
+                  "fontSize": 13,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Regular"
+                  },
+                  "fontColor": {
+                    "r": 0.255,
+                    "g": 0.275,
+                    "b": 0.318,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "name": "Progress Bar",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 3,
+                  "fill": {
+                    "r": 0.851,
+                    "g": 0.176,
+                    "b": 0.125,
+                    "a": 1
+                  },
+                  "cornerRadius": 2
+                }
+              ]
+            },
+            {
+              "name": "Action Pill (dark)",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "fill": {
+                "r": 0.094,
+                "g": 0.114,
+                "b": 0.153,
+                "a": 1
+              },
+              "cornerRadius": 999,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 6,
+                "paddingBottom": 6,
+                "paddingLeft": 12,
+                "paddingRight": 12
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "납입 하기",
+                  "fontSize": 11,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "SemiBold"
+                  },
+                  "fontColor": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tx Item — 납입 (1/5회차)",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 14,
+            "paddingTop": 8,
+            "paddingBottom": 8
+          },
+          "children": [
+            {
+              "name": "Date Box — 1",
+              "type": "frame",
+              "width": 48,
+              "height": 48,
+              "fill": {
+                "r": 0.961,
+                "g": 0.961,
+                "b": 0.961,
+                "a": 1
+              },
+              "cornerRadius": 8,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 2,
+                "paddingTop": 6,
+                "paddingBottom": 6
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "1",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 0.094,
+                    "g": 0.114,
+                    "b": 0.153,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "type": "text",
+                  "text": "오늘",
+                  "fontSize": 10,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": {
+                    "r": 0.443,
+                    "g": 0.463,
+                    "b": 0.502,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                }
+              ],
+              "stroke": {
+                "r": 0.835,
+                "g": 0.843,
+                "b": 0.855,
+                "a": 1
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE"
+            },
+            {
+              "name": "Main",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 4,
+                "paddingTop": 2,
+                "paddingBottom": 4
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "납입 (1/5회차)",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 0.094,
+                    "g": 0.114,
+                    "b": 0.153,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "type": "text",
+                  "text": "100,000원",
+                  "fontSize": 13,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Regular"
+                  },
+                  "fontColor": {
+                    "r": 0.255,
+                    "g": 0.275,
+                    "b": 0.318,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "name": "Progress Bar",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 3,
+                  "fill": {
+                    "r": 0.412,
+                    "g": 0.22,
+                    "b": 0.937,
+                    "a": 1
+                  },
+                  "cornerRadius": 2
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "납입 처리 완료",
+              "fontSize": 12,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Medium"
+              },
+              "fontColor": {
+                "r": 0.443,
+                "g": 0.463,
+                "b": 0.502,
+                "a": 1
+              },
+              "letterSpacing": -0.02
+            }
+          ]
+        },
+        {
+          "name": "Tx Item — 납입 (5/5회차)",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 14,
+            "paddingTop": 8,
+            "paddingBottom": 8
+          },
+          "children": [
+            {
+              "name": "Date Box — 2",
+              "type": "frame",
+              "width": 48,
+              "height": 48,
+              "fill": {
+                "r": 0.961,
+                "g": 0.961,
+                "b": 0.961,
+                "a": 1
+              },
+              "cornerRadius": 8,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 2,
+                "paddingTop": 6,
+                "paddingBottom": 6
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "2",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 0.094,
+                    "g": 0.114,
+                    "b": 0.153,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "type": "text",
+                  "text": "D-1",
+                  "fontSize": 10,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": {
+                    "r": 0.443,
+                    "g": 0.463,
+                    "b": 0.502,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                }
+              ],
+              "stroke": {
+                "r": 0.835,
+                "g": 0.843,
+                "b": 0.855,
+                "a": 1
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE"
+            },
+            {
+              "name": "Main",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 4,
+                "paddingTop": 2,
+                "paddingBottom": 4
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "납입 (5/5회차)",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 0.094,
+                    "g": 0.114,
+                    "b": 0.153,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "type": "text",
+                  "text": "100,000원",
+                  "fontSize": 13,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Regular"
+                  },
+                  "fontColor": {
+                    "r": 0.255,
+                    "g": 0.275,
+                    "b": 0.318,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "name": "Progress Bar",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 3,
+                  "fill": {
+                    "r": 0.09,
+                    "g": 0.698,
+                    "b": 0.416,
+                    "a": 1
+                  },
+                  "cornerRadius": 2
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "납입 완료",
+              "fontSize": 12,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Medium"
+              },
+              "fontColor": {
+                "r": 0.443,
+                "g": 0.463,
+                "b": 0.502,
+                "a": 1
+              },
+              "letterSpacing": -0.02
+            }
+          ]
+        },
+        {
+          "name": "Tx Item — 납입 (1/13회차)",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 14,
+            "paddingTop": 8,
+            "paddingBottom": 8
+          },
+          "children": [
+            {
+              "name": "Date Box — 10",
+              "type": "frame",
+              "width": 48,
+              "height": 48,
+              "fill": {
+                "r": 0.961,
+                "g": 0.961,
+                "b": 0.961,
+                "a": 1
+              },
+              "cornerRadius": 8,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 2,
+                "paddingTop": 6,
+                "paddingBottom": 6
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "10",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 0.094,
+                    "g": 0.114,
+                    "b": 0.153,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "type": "text",
+                  "text": "D-10",
+                  "fontSize": 10,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": {
+                    "r": 0.443,
+                    "g": 0.463,
+                    "b": 0.502,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                }
+              ],
+              "stroke": {
+                "r": 0.835,
+                "g": 0.843,
+                "b": 0.855,
+                "a": 1
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE"
+            },
+            {
+              "name": "Main",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 4,
+                "paddingTop": 2,
+                "paddingBottom": 4
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "납입 (1/13회차)",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 0.094,
+                    "g": 0.114,
+                    "b": 0.153,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "type": "text",
+                  "text": "100,000원",
+                  "fontSize": 13,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Regular"
+                  },
+                  "fontColor": {
+                    "r": 0.255,
+                    "g": 0.275,
+                    "b": 0.318,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "name": "Progress Bar",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 3,
+                  "fill": {
+                    "r": 0.914,
+                    "g": 0.918,
+                    "b": 0.922,
+                    "a": 1
+                  },
+                  "cornerRadius": 2
+                }
+              ]
+            },
+            {
+              "name": "Action Pill (outline)",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "fill": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1
+              },
+              "stroke": {
+                "r": 0.835,
+                "g": 0.843,
+                "b": 0.855,
+                "a": 1
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "cornerRadius": 999,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 6,
+                "paddingBottom": 6,
+                "paddingLeft": 12,
+                "paddingRight": 12
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "선납 하기",
+                  "fontSize": 11,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "SemiBold"
+                  },
+                  "fontColor": {
+                    "r": 0.255,
+                    "g": 0.275,
+                    "b": 0.318,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Tx Item — 납입 (1/13회차)",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 14,
+            "paddingTop": 8,
+            "paddingBottom": 8
+          },
+          "children": [
+            {
+              "name": "Date Box — 10",
+              "type": "frame",
+              "width": 48,
+              "height": 48,
+              "fill": {
+                "r": 0.961,
+                "g": 0.961,
+                "b": 0.961,
+                "a": 1
+              },
+              "cornerRadius": 8,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 2,
+                "paddingTop": 6,
+                "paddingBottom": 6
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "10",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 0.094,
+                    "g": 0.114,
+                    "b": 0.153,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "type": "text",
+                  "text": "D-10",
+                  "fontSize": 10,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": {
+                    "r": 0.443,
+                    "g": 0.463,
+                    "b": 0.502,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                }
+              ],
+              "stroke": {
+                "r": 0.835,
+                "g": 0.843,
+                "b": 0.855,
+                "a": 1
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE"
+            },
+            {
+              "name": "Main",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 4,
+                "paddingTop": 2,
+                "paddingBottom": 4
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "납입 (1/13회차)",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 0.094,
+                    "g": 0.114,
+                    "b": 0.153,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "type": "text",
+                  "text": "100,000원",
+                  "fontSize": 13,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Regular"
+                  },
+                  "fontColor": {
+                    "r": 0.255,
+                    "g": 0.275,
+                    "b": 0.318,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                },
+                {
+                  "name": "Progress Bar",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 3,
+                  "fill": {
+                    "r": 0.914,
+                    "g": 0.918,
+                    "b": 0.922,
+                    "a": 1
+                  },
+                  "cornerRadius": 2
+                }
+              ]
+            },
+            {
+              "name": "Action Pill (outline)",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "fill": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1
+              },
+              "stroke": {
+                "r": 0.835,
+                "g": 0.843,
+                "b": 0.855,
+                "a": 1
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "cornerRadius": 999,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 6,
+                "paddingBottom": 6,
+                "paddingLeft": 12,
+                "paddingRight": 12
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "text": "선납 하기",
+                  "fontSize": 11,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "SemiBold"
+                  },
+                  "fontColor": {
+                    "r": 0.255,
+                    "g": 0.275,
+                    "b": 0.318,
+                    "a": 1
+                  },
+                  "letterSpacing": -0.02
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

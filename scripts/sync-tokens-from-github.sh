@@ -40,7 +40,13 @@ fi
 TOKEN_COUNT=$(python3 -c "import json; d=json.load(open('$TMP_DIR/tokens.json')); print(sum(1 for k in d if not k.startswith('\$')))" 2>/dev/null || echo "?")
 echo "Downloaded tokens.json ($TOKEN_COUNT token sets)"
 
-# 2. sync-to-agent.js 실행 → DESIGN_TOKENS.md + TOKEN_MAP.json 생성
+# 2. sync-to-agent.js 패치 (라이트 모드 default 강제)
+# GitHub 원본의 dark-mode 필터가 'dark mode' 문자열을 찾지만
+# 실제 토큰 키는 'Color modes/Dark' (slash 분리) — 매칭 실패해서 dark가 light를 덮어씀.
+# /dark 또는 modes/dark 패턴도 함께 매칭되도록 패치.
+sed -i '' "s|!k.toLowerCase().includes('dark mode')|!k.toLowerCase().includes('dark mode') \&\& !k.toLowerCase().includes('modes/dark')|" "$TMP_DIR/sync-to-agent.js"
+
+# 3. sync-to-agent.js 실행 → DESIGN_TOKENS.md + TOKEN_MAP.json 생성
 echo "Generating DESIGN_TOKENS.md and TOKEN_MAP.json..."
 cd "$TMP_DIR"
 node sync-to-agent.js --out "$OUT_DIR"

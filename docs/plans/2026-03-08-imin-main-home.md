@@ -93,7 +93,7 @@ python3 scripts/figma_mcp_client.py call resize_node '{"nodeId":"<STATUS_BAR_ID>
 **Step 2: NavBar 로고 인스턴스 교체**
 ```bash
 # 로고 텍스트 노드 삭제 → 컴포넌트 인스턴스 생성 → insert_child
-python3 scripts/figma_mcp_client.py call create_component_instance '{"componentKey":"957912b03baf924a48ef83424ed66f22a4a386a8"}'
+python3 scripts/figma_mcp_client.py call create_component_instance '{"componentKey":"81efeddd245e95f31a2724aa370ee54d3caf93d0"}'
 python3 scripts/figma_mcp_client.py call insert_child '{"parentId":"<NAVBAR_ID>","childId":"<LOGO_INSTANCE_ID>","index":0}'
 # 기존 "Logo Placeholder" 텍스트 삭제
 python3 scripts/figma_mcp_client.py call delete_node '{"nodeId":"<LOGO_PLACEHOLDER_ID>"}'

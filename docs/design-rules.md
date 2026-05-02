@@ -79,13 +79,13 @@
 - **NavBar 로고는 반드시 icons 페이지의 logo 컴포넌트(`64:1449`)를 인스턴스로 생성**해서 사용할 것
 - 텍스트 노드로 "imin" 로고를 직접 만들지 않는다
 - **`clone_node` 사용 금지** — 마스터 컴포넌트를 `clone_node`하면 마스터가 복제되어 의도치 않은 마스터 컴포넌트가 생김
-- 절차: `create_component_instance(componentKey="957912b03baf924a48ef83424ed66f22a4a386a8")` → `insert_child(parentId=navBarId, childId=인스턴스ID, index=0)` — NavBar의 첫 번째 자식으로 배치
+- 절차: `create_component_instance(componentKey="81efeddd245e95f31a2724aa370ee54d3caf93d0")` → `insert_child(parentId=navBarId, childId=인스턴스ID, index=0)` — NavBar의 첫 번째 자식으로 배치
 
 ## 버튼/CTA 컴포넌트 인스턴스 필수
 - 버튼은 반드시 DS `Buttons/Button` 컴포넌트 인스턴스를 사용 — 프레임+텍스트로 수동 구성 금지
-- **CTA 버튼**: `Size=xl, Hierarchy=Primary, State=Default, Icon only=False` (componentKey: `90cc91183f75975cc066f2fc156babfdad1c6937`)
-- **일반 버튼 (Large)**: `Size=lg, Hierarchy=Primary, State=Default, Icon only=False` (componentKey: `e31817b31fc5241395325fe519bba29c306c9d5e`)
-- **일반 버튼 (Medium)**: `Size=md, Hierarchy=Primary, State=Default, Icon only=False` (componentKey: `db2280e1aaa99563769a7d0fce59dfcde7a39b09`)
+- **CTA 버튼**: `Size=xl, Hierarchy=Primary, State=Default, Icon only=False` (componentKey: `83a1917f02ba561dbbaa08dbf3845b91a47b0907`)
+- **일반 버튼 (Large)**: `Size=lg, Hierarchy=Primary, State=Default, Icon only=False` (componentKey: `0caf4692294b0ec93e44516b94b3728a85b0963c`)
+- **일반 버튼 (Medium)**: `Size=md, Hierarchy=Primary, State=Default, Icon only=False` (componentKey: `ed0032bcf28f03da97e4b3006f54d30a0fbe5914`)
 - **Secondary 버튼**: `Size=md, Hierarchy=Secondary, State=Default, Icon only=False` (componentKey: `10d012c26a93c7623d06`)
 - 텍스트 변경: `textOverrides` 또는 `set_text_content`로 인스턴스 내부 텍스트 노드(name="Text") 수정
 - `batch_build_screen`에서 `type: "instance"` + `componentKey` 사용
@@ -251,6 +251,395 @@
 ### R5. 카드 내 레이블 텍스트 가시성
 - 카드 배경이 밝은 색이면 텍스트는 어두운 색(`fg-primary`) + Bold
 - 배경색과 텍스트 색이 비슷하면 안 보임 → 스크린샷으로 반드시 확인
+
+---
+
+## 시각 스타일 레퍼런스 — 아임인 홈 스타일
+
+> 아임인 홈 화면 레퍼런스(`docs/references/imin-home/`)에서 추출한 **비주얼 DNA**. 토큰·컴포넌트 구조와 독립적으로 시각 패턴만 규정한다.
+> 컬러는 모두 `$token()` 참조(최신 DS 자동 반영), 수치 스펙(padding·radius·size)은 숫자 고정. DS 토큰이 없는 항목(border-warning/success 등)은 `fg-*-primary`나 `border-primary`로 폴백.
+
+### VS1. 큰 숫자 강조 패턴
+- **금액/카운트 등 대표 숫자**는 반드시 아래 조합으로 강조 (평탄한 타이포그래피 방지):
+  - `fontName: { family: "Pretendard", style: "Bold" }` 또는 `ExtraBold`
+  - `letterSpacing: { value: -2, unit: "PERCENT" }` (−0.02em, 36px 이상 숫자는 −3 권장)
+  - **사이즈 단계**: 보조 숫자 18~20sp / 강조 24sp / Premium 카드 대표 숫자 36sp
+- **숫자 + 단위 페어링**: 큰 숫자 Bold + 바로 옆 작은 단위 Medium (예: `360` 24sp Bold + `만원` 14sp Medium) — 같은 HORIZONTAL auto-layout에 `counterAxisAlignItems: "BASELINE"` 설정해 베이스라인 정렬
+- **단위 텍스트 컬러**는 보조톤 (`fg-tertiary` 또는 `fg-quaternary`) — 숫자와 동일 톤으로 하지 말 것
+
+### VS2. 상태 컬러 3원색 세트 (error / warning / success)
+- 모든 **상태성 알림·카드·배지**는 아래 공식으로 컬러 세트 구성:
+  | 레이어 | 토큰 |
+  |-------|------|
+  | 배경 (연한톤) | `$token(bg-{status}-primary)` |
+  | 테두리 | `$token(border-{status})` — warning/success는 DS에 없으면 `$token(fg-{status}-primary)` 폴백 |
+  | 아이콘 배지 배경 (진한톤) | `$token(bg-{status}-secondary)` |
+  | 타이틀/강조 텍스트 | `$token(fg-{status}-primary)` |
+  | 배지 내 흰 아이콘 | `{r:1, g:1, b:1, a:1}` |
+- `{status}` = `error` / `warning` / `success` — 동일 구조로 variant만 교체
+- **절대 금지**: 상태 카드에 `bg-brand-*` 사용 금지, 컬러 배경 위 검정 아이콘 금지 (대비 부족)
+
+### VS3. Pill 배지 표준 스펙
+- 카운트/라벨/카테고리 배지는 아래 스펙 고정:
+  - `layoutSizingHorizontal: "HUG"` (rule 13 필수)
+  - `autoLayout: HORIZONTAL + CENTER + paddingTop:3 + paddingBottom:3 + paddingLeft:8~9 + paddingRight:8~9`
+  - `cornerRadius: 999`
+  - 텍스트: **11~12sp / Bold 700**
+  - 컬러 조합은 VS2 공식 적용 (bg-{variant}-primary + fg-{variant}-primary) 또는 brand(bg-brand-primary + fg-brand-primary)
+- **우측 상단 수치 배지**(알림 dot 등)는 bg-{error|warning}-secondary + 흰 텍스트 + 2px 흰 border
+
+### VS4. 아이콘 배지 원형/라운드
+- 상태 알림·리스트 아이콘·카운트 뱃지에 쓰이는 **아이콘 컨테이너** 스펙:
+  - **크기**: 32×32 (Alert/리스트) / 40×40 (온보딩/CTA) / 36×36 (ListTimeline 항목)
+  - **radius**: 999 (원형, 상태 알림) 또는 10 (라운드, 온보딩)
+  - **배경**: `$token(bg-{status}-secondary)` 진한톤
+  - **아이콘**: 흰색 `{r:1,g:1,b:1,a:1}`, 사이즈 18, **strokeWidth 2~2.5** (기본 1.67보다 굵게)
+  - autoLayout HORIZONTAL + primaryAxis CENTER + counterAxis CENTER
+- **절대 금지**: 컬러 배경 위 검정/다크 아이콘, strokeWidth 1.67 이하 — 작은 배지에선 선이 얇아 보이지 않음
+
+### VS5. 가로 스크롤 섹션 표준 패턴
+- 카드 3+개를 옆으로 흘려 보여주는 섹션(스테이지 목록, 상품 라운지 등)은 모두 동일 구조:
+  - **Carousel Wrapper**: `HORIZONTAL` + `clipsContent: true` + `itemSpacing: 10` + `paddingLeft: 16` + `paddingRight: 16` + `layoutSizingHorizontal: "FILL"`, height는 HUG
+  - **각 카드**: **FIXED width** (150~220px 범위) — FILL 금지 (캐로셀 안에서 너비 수축)
+  - 우측 peek을 만들고 싶으면 카드 폭을 화면 폭 − 48px 근사치로 설정 (예: 393 화면 → 220 카드는 73px peek)
+- R3 (히어로 캐로셀) 패턴과 동일 원리 — Banner는 353px 고정, Stage/상품 카드는 150~220px 고정
+
+### VS6. 섹션 헤더 3요소 구조
+- 모든 콘텐츠 섹션 상단은 **(좌) 타이틀 + (옵션) 상태 배지 · (우) '전체보기 >' 링크** 3요소 구조 고정:
+  - **컨테이너**: HORIZONTAL + SPACE_BETWEEN + CENTER, paddingLeft/Right 20, paddingBottom 12, FILL
+  - **좌측 그룹**: HORIZONTAL + CENTER + itemSpacing 8
+    - 타이틀: **16sp / Bold 700** (rule 11과 일치), `$token(fg-primary)`
+    - 배지(옵션): VS3 Pill 스펙, 상태별 variant (미납 → error, 신규 → warning 등)
+  - **우측 링크 그룹**: HORIZONTAL + CENTER + itemSpacing 2
+    - 텍스트: **13sp / Medium 500**, `$token(fg-tertiary)`
+    - chevron-right 14, `$token(fg-tertiary)`
+- 단독 타이틀(배지 없음)은 좌측 그룹 내부에서 배지 노드만 제거, 타이틀은 그대로 유지
+
+### VS7. Premium CTA 카드
+- 사용자의 **핵심 Conversion 지점**(추천 스테이지, 도전 시뮬레이터 등)에만 사용하는 최상위 CTA 카드:
+  - **배경**: `$token(bg-brand-solid)` 단색 또는 `linear-gradient(180deg, bg-brand-solid, bg-brand-secondary)` — Figma는 `fillGradient` 사용
+  - **padding**: 20 전방향
+  - **cornerRadius**: 20
+  - **shadow**: 브랜드 컬러 글로우 `0 8px 24px -4px rgba(브랜드rgb, 0.35)` (DS에 effectStyle 있으면 우선 사용)
+  - **대표 숫자**: **36sp / ExtraBold 800 / letterSpacing −3%** (VS1 확장)
+  - **내부 보조 라벨**: 흰색 불투명 85% — `{r:1,g:1,b:1,a:0.85}` 또는 DS에 `fg-white-secondary` 있으면 사용
+  - **CTA 버튼**: 흰 배경 + 브랜드 텍스트 — `fill:{r:1,g:1,b:1,a:1}` + `fontColor: $token(fg-brand-primary)` + radius 12, padding 14/16, 15sp/Bold
+- **절대 금지**: Premium 카드에 gray 톤 배경, 36sp 미만의 대표 숫자, 아웃라인 버튼 — 시각적 위계가 떨어짐
+- **사용 빈도**: 화면당 **최대 1개** — 여러 개면 Premium의 의미가 없어짐
+
+### VS8. 진행률 바 스펙
+- 한도·적립·목표 달성률 등 모든 **Linear Progress Bar**는 스펙 고정:
+  - **Track (트랙)**: `layoutSizingHorizontal: "FILL"` + height 8 + `cornerRadius: 999` + `fill: $token(bg-quaternary)` (가장 연한 회색)
+  - **Fill (채움)**: inner frame + width = `Math.round(trackWidth * pct/100)` + height 8 + `cornerRadius: 999` + `fill: $token(bg-brand-solid)` (또는 그라데이션 `bg-brand-secondary → bg-brand-solid`)
+  - Track는 `autoLayout HORIZONTAL` + counterAxis가 기본이면 Fill 프레임이 left-align됨
+- **수치 라벨**은 반드시 Progress Bar 위쪽 헤더 라인에 배치 — 바 내부에 텍스트 올리지 말 것 (대비 문제)
+- **절대 금지**: height 8px 미만(시각적 검색 어려움), radius 999 미만(각진 바는 핀테크 톤 아님), Fill에 테두리(stroke) 적용
+
+### VS9. Modal Header (X-close only)
+- 풀스크린·바텀시트 모달의 **가장 간소한 헤더** 패턴 (타이틀 텍스트 없음):
+  - `HORIZONTAL` + `primaryAxisAlignItems: "MAX"` (우측 끝) + `counterAxisAlignItems: "CENTER"`
+  - padding 12/20, height 48~56, 배경 투명 또는 `bg-primary`
+  - 우측 아이콘: `x-close` 24sp, `$token(fg-primary)`
+  - **좌측은 빈 공간** — 모달 본문의 첫 카드가 타이틀 역할 수행 (예: "진행중인 4건의 스테이지 내역" 카드가 헤더 대신)
+- **절대 금지**: 중앙 타이틀 텍스트 + X 버튼 조합 — 이 조합은 페이지 네비게이션용 (AppBar)이지 모달 헤더 아님. 모달은 본문이 타이틀 역할을 맡음
+- **X 버튼은 반드시 우측** — 좌측 X는 iOS 네비게이션 back 관례와 충돌
+
+### VS10. 금액 값 링크 스타일 (탭 가능 표시)
+- 요약 카드의 **탭 가능한 금액/수치 값**은 링크임을 시각적으로 명시:
+  - `fontName: Bold`, `fontColor: $token(fg-brand-primary)`, `textDecoration: "UNDERLINE"`
+  - 부호(+ −)는 값 텍스트 앞에 공백 붙여 포함: `"+ 14,420,320원"` / `"− 5,240,010원"`
+  - 14sp 기본 (VS1 대표 숫자와 다름 — 링크 row는 한 줄에 나란히 읽히는 용도)
+- **Row 구조**: `HORIZONTAL` + `SPACE_BETWEEN` + `BASELINE`
+  - 좌측 라벨: 13sp Regular, `$token(fg-tertiary)` — 탭 불가능
+  - 우측 값: 위 링크 스타일
+- **언제 사용**: 요약 카드 내 "모은 금액 / 빌린 금액" 같이 **값 자체가 상세 화면 진입점**인 경우
+- **반대로 금지**: 탭 불가능한 단순 정보 표시에 underline 넣지 말 것 — 링크 affordance 오인
+
+### VS11. 월 캘린더 가로 스크롤 + Active Ring
+- 거래 스케줄·납입 일정 등 **월 단위 타임라인 엔트리**는 아래 구조 고정:
+  - 컨테이너: `HORIZONTAL` + `SPACE_BETWEEN` + `CENTER`, 좌/우 chevron-left/right 20sp (`$token(fg-tertiary)`) nav
+  - 월 셀 7개 균등 배치, 각 셀: `VERTICAL` + `CENTER` + `itemSpacing: 4`
+    - 월 이름(영문 3자): 11sp Regular, `$token(fg-tertiary)`
+    - 날짜 숫자: 18sp Bold, `$token(fg-primary)`
+    - 이벤트 dot: 4×4 radius 999, `$token(fg-quaternary)` (이벤트 있을 때만) / brand 컬러(강조 이벤트)
+  - **Active 월**: 날짜 숫자를 **원형 컨테이너**(36sq, radius 999, `$token(bg-brand-solid)`)로 감쌈, 내부 숫자 흰색. 원 아래 보조 라벨("이번달" 등) 11sp Medium `$token(fg-brand-primary)`
+- **필터 드롭다운**(옵션): 캘린더 카드 하단 `paddingTop: 12` + `HORIZONTAL END`, 텍스트 13sp Medium + `chevron-down` 14
+- **절대 금지**: Active 월에 사각형 배경 강조(원형이 원칙), 월 이름 한글("10월") 대신 영문 약자 사용
+
+### VS12. D-day 날짜 배지 (타임라인 좌측)
+- 납입 스케줄·미션·이벤트 등 **타임라인 리스트 아이템 좌측 날짜 박스**:
+  - 사이즈 **48×56** 고정 (정사각형 아님 — 세로로 약간 긴 rect)
+  - `cornerRadius: 10`
+  - `VERTICAL` + `CENTER` + `itemSpacing: 2`
+  - 상단: 날짜 텍스트(예: "29일") 14sp Bold
+  - 하단: D-day 라벨(예: "D+3", "D-1", "오늘") 10sp Regular, opacity 85%
+- **상태별 컬러 매핑**:
+  - **오늘/미납(active)**: `fill: $token(bg-primary)` (다크) + 흰색 텍스트 `{r:1,g:1,b:1,a:1}`
+  - **과거/미래(inactive)**: `fill: $token(bg-secondary)` + `fontColor: $token(fg-primary)`
+- **절대 금지**: D-day 라벨 생략, 날짜 박스 radius 999(원형) — 원형은 타임라인의 "점" 메타포와 혼동
+
+### VS13. 타임라인 리스트 with Progress Bar (회차 진행률)
+- 스테이지/분납/적립 회차처럼 **아이템마다 진행률 정보가 있는 리스트**는 progress bar를 리스트 아이템에 직접 포함:
+  - 아이템 전체: `HORIZONTAL` + `CENTER` + `itemSpacing: 12` + `FILL`, padding 12/20
+  - 구조: `Date Badge(VS12) | Middle Content(FILL) | Action(HUG)`
+  - Middle Content: `VERTICAL` + `itemSpacing: 4`
+    - 타이틀 14sp SemiBold, 금액 13sp Regular, **얇은 Progress Bar (height 3)**
+  - Progress Bar: VS8 스펙에서 **height만 3으로 축소** (리스트 내 밀집 표현용) + 상태별 Fill 컬러:
+    - `overdue`(미납): `$token(bg-error-secondary)`
+    - `today`(진행 중): `$token(bg-brand-solid)`
+    - `completed`(완료 5/5): `$token(bg-success-secondary)` — Fill 100%
+    - `scheduled`(예정): `$token(bg-quaternary)` — Fill 0% (트랙만 표시)
+- **우측 Action**:
+  - `actionType: "pill"` — outline pill (stroke `$token(border-primary)`, 투명 bg, padding 8/14, radius 999, 13sp Medium `$token(fg-primary)`). 사용자 액션 유도("납입 하기", "선납 하기")
+  - `actionType: "text"` — 테두리 없음, 13sp Medium `$token(fg-tertiary)`. 완료/대기 등 **불가 상태 표시**("납입 처리 완료", "납입 완료")
+- **아이템 사이**: 1px bottom border `$token(border-tertiary)` 또는 `itemSpacing: 0` + 내부 divider
+- **절대 금지**: 리스트 아이템에 두꺼운 progress bar(height 8, VS8은 카드 전용), 액션 pill + 텍스트 혼용
+
+### VS14. Flat Stats Strip (카드 없는 3-col 통계 띠)
+- 카드/테두리 없이 **3개 관련 수치를 얇은 구간으로 병렬 표시**:
+  - `HORIZONTAL` + `SPACE_BETWEEN` + `CENTER` + `FILL`, padding 16/20
+  - 배경: `$token(bg-secondary)` (얕은 구분) 또는 투명
+  - 3개 셀 각각: `VERTICAL` + `CENTER` + `itemSpacing: 4` + **FILL 균등 분배**
+    - 라벨: 12sp Regular, `$token(fg-tertiary)`
+    - 값: 16sp Bold, `$token(fg-primary)`
+- **언제 사용**: Summary Card와 리스트 사이 **중간 요약 구간**, 월 납입액/완료액/남은액처럼 **같은 카테고리 3개 수치**를 짧게 보여줄 때
+- **절대 금지**: 셀 사이 divider 추가(flat이 원칙), 카드 shell(border/shadow) 추가 — 카드 구성이 필요하면 `SummaryCard2Col` 사용
+- **카드와의 구분**: Card는 독립적 정보 단위, Stats Strip은 **카드들 사이 brief**
+
+### VS15. Outline Chip 필터 스크롤
+- 추천/직접/신규/인기/마감임박 등 **4+ 카테고리 필터**는 outline pill 가로 스크롤:
+  - 각 칩: `HUG` + `HORIZONTAL` + `CENTER`, padding `8px 16px`, `cornerRadius: 999`
+  - **Active**: stroke `$token(border-brand)` 1px + fill `$token(bg-brand-primary)` + 텍스트 `$token(fg-brand-primary)` Bold 700 / 13sp
+  - **Inactive**: stroke `$token(border-primary)` 1px + fill `$token(bg-primary)` + 텍스트 `$token(fg-tertiary)` Medium 500 / 13sp
+  - 컨테이너: `HORIZONTAL` + `clipsContent: true` + `itemSpacing: 6` + 좌우 padding 20
+- **rule 14(Underline DS Tabs) 면제 조건**: Underline은 **뷰/섹션 전환**, Outline chip은 **필터링**. 용도 다름
+- **절대 금지**: 칩 개수 3개 이하에 사용(세그먼티드 탭이 더 적합 — VS16), active inactive 모두 같은 border 색(차별화 실패)
+
+### VS16. Segmented Tab Control (2~3-way 뷰 전환)
+- "추천/직접" 같이 **적은 수의 상호 배타 뷰 전환**은 iOS-style Segmented Control:
+  - Track (외곽): `HORIZONTAL` + `FILL` + padding 4 전방향 + fill `$token(bg-secondary)` + `cornerRadius: 999`
+  - 각 세그먼트: **FILL 균등 분배** + `HORIZONTAL` + `CENTER`, padding `10px 16px`, `cornerRadius: 999`
+  - **Active**: fill `$token(bg-primary)` (흰) + `effects: [{type:"DROP_SHADOW", color:rgba(10,13,18,.05), offset:{x:0,y:1}, radius:2}]` (subtle lift) + 텍스트 13sp Bold `$token(fg-primary)`
+  - **Inactive**: fill 투명 `{r:0,g:0,b:0,a:0}` + 테두리 없음 + 텍스트 13sp Medium `$token(fg-tertiary)`
+- **track padding 4의 역할**: active 세그먼트가 track 내부로 inset 되면서 외곽 track을 시각적으로 유지 — **padding 없이 active가 track에 꽉 차면 track이 안 보여 패턴 붕괴**
+- **권장 세그먼트 개수**: 2~3개. 4개 이상은 `CategoryChipScroller` (VS15) 사용
+- **절대 금지**: Active에 brand 배경 사용(과한 강조), inactive에 border 추가(시각적 노이즈), 가로 스크롤(세그먼트는 FILL 균등)
+- **VS15와의 선택 기준**: 탐색 필터(여러 카테고리 탐색) → VS15 / 뷰 전환(추천 vs 직접 등 명확한 이분법) → VS16
+- **4탭 variant (상세 화면 서브 탭)**: 스테이지 상세 등 **한정 공간에서 4개 뷰 전환**이 필요할 때만 예외. 스펙: track padding 3 (축소) + radius 10 (track) / 7 (segment), 각 segment padding 8/4, 텍스트 **12sp**로 축소. 5개 이상은 여전히 VS15 Outline Chip 사용
+
+### VS17. Stepper 입력 행 (필터 카드)
+- ± 버튼으로 값 조정하는 필터 행 표준 스펙:
+  - Row: `HORIZONTAL` + `SPACE_BETWEEN` + `CENTER`, padding 상하 10
+  - 좌측 라벨: 14sp Medium, `$token(fg-secondary)`
+  - 우측 Stepper Group: `HORIZONTAL` + `CENTER` + `itemSpacing: 14`
+    - **Minus/Plus 버튼**: 26×26, `cornerRadius: 999`, stroke `$token(border-primary)` 1px, fill `$token(bg-primary)`, 중앙 아이콘 16 `$token(fg-secondary)` strokeWidth 2.2
+    - **값 디스플레이**: **width 90 고정** + `textAlignHorizontal: "CENTER"` — 값이 바뀌어도 간격 안정. 숫자 14sp Bold `$token(fg-primary)` + 단위 12sp Medium `$token(fg-tertiary)` 옆에 `marginLeft: 2`
+- **카드 shell (여러 Stepper Row 묶기)**: fill `$token(bg-secondary)` + `cornerRadius: 14` + padding `6px 16px` (수직 6 수평 16)
+- Row 사이 구분: 1px `$token(border-tertiary)` bottom stroke (마지막 Row 제외)
+- **절대 금지**: 값 디스플레이 width가 가변(HUG) — 숫자 자릿수 바뀌면 ± 버튼이 움직여 탭 정확도 저하
+
+### VS18. Slider — Track + Fill + **Thumb(필수)** 3요소
+- **Thumb은 옵션이 아니라 필수**. Track + Fill만 있으면 슬라이더로 인지되지 않음 (2026-04-22 사용자 피드백)
+- 드래그로 범위 빠르게 스캔하는 필터 / 값 선택 UI:
+  - Row: `VERTICAL` + `itemSpacing: 6~8`, padding 상하 10
+  - **Header Row**: `HORIZONTAL` + `SPACE_BETWEEN` + `BASELINE`. 좌 라벨 12~13sp Medium / 우 값 12~13sp Bold + 단위 11sp Medium
+  - **Slider Track**: `FILL` 가로 + height `4~6` + `cornerRadius: 999` + 옅은 배경 (`$token(bg-quaternary)` 또는 `white 30% alpha` for colored cards) + **`clipsContent: false`**
+  - **Slider Fill**: FIXED width = `(value-min)/(max-min) * trackWidth` + height `4~6` + cornerRadius 999 + 강조 fill (`$token(bg-brand-solid)` 또는 white for dark cards) + **`clipsContent: false`**
+  - **Slider Thumb**: **16×16**, cornerRadius 999, fill white, Drop Shadow `(offset y=2, radius 6, color black 20%)`
+
+**Fill width 계산 공식** (이걸 안 하면 Thumb 위치가 progress와 어긋남):
+```
+fill_width = track_available_width × (current / max)
+```
+- `track_available_width` = 부모 체인 padding 전부 뺀 실제 가용 폭
+- 예: iPhone 16 → Recommendation(20×2) → Card(20×2) → Panel(14×2) = **285px**
+- 3/13회차 → 285 × 3/13 ≈ **66px**
+
+**권장 구현 — autoLayout MAX 정렬 (ABSOLUTE 불필요)**:
+```
+Slider Track  (FILL, h=6, cornerRadius 999, clipsContent: false,
+               autoLayout HORIZONTAL, counterAxisAlignItems CENTER)
+  └── Slider Fill  (**FIXED** w=계산값, h=6, cornerRadius 999, clipsContent: false,
+                    autoLayout HORIZONTAL,
+                    primaryAxisAlignItems MAX, counterAxisAlignItems CENTER)
+        └── Slider Thumb  (16×16, **FIXED**, cornerRadius 999, fill white, DROP_SHADOW)
+```
+**Fill/Thumb에 반드시 `layoutSizingHorizontal: "FIXED"` 명시** — post-fix가 이름에 `slider` 포함한 노드를 skip하므로 FIXED 보존됨 (`figma_mcp_client.py` SKIP_KEYWORDS에 `"slider"` 등록)
+- Fill의 `primaryAxisAlignItems: MAX` → Thumb이 Fill 우측 끝(progress value 지점)에 위치
+- `counterAxisAlignItems: CENTER` → Thumb이 Fill 세로 중앙 = Track 세로 중앙
+- Track/Fill 모두 `clipsContent: false` — Thumb(16px)이 Track(6px)보다 커서 상하 5px씩 튀어나옴
+- Slider Track 감싸는 **상위 Row(Turn Row 등)에도 `clipsContent: false`** — 안 그러면 튀어나온 Thumb 잘림
+- Thumb이 autoLayout 자식이므로 `layoutPositioning: ABSOLUTE` / 수동 후속 API 호출 **불필요**
+
+**대안 — ABSOLUTE 오버레이 방식** (Thumb이 Fill 우측 끝을 **정확히 중심**으로 나와야 하는 경우):
+- Thumb을 Track의 자식으로 두고 `layoutPositioning: ABSOLUTE`, `x = Fill.width - 8` (thumb 반지름만큼 안쪽), `y = (track.h - thumb.h) / 2`
+- 빌드 후 `set_layout_positioning` 수동 호출 필요 — 구조 간단한 autoLayout 방식 우선 검토
+- **VS17과의 차이**: Stepper는 **정확한 값**(1단위 조정), Slider는 **범위 감각**(빠른 스캔). 금액/기간 둘 다 가능하지만 사용자가 정확한 숫자 원하면 Stepper 권장
+
+### VS19. 필터 칩 트리거 (바텀시트 호출)
+- 상단 작은 라벨 + 하단 큰 값 + chevron-down 형태의 outline 칩 — 탭하면 바텀시트(VS20)로 상세 입력:
+  - 각 칩: `HUG` + `HORIZONTAL` + `CENTER` + `itemSpacing: 6`, padding `10px 14px`, stroke `$token(border-primary)` 1px, fill `$token(bg-primary)`, `cornerRadius: 10`
+  - Text Group: `VERTICAL` + `itemSpacing: 1`
+    - 라벨 10sp Medium `$token(fg-quaternary)`
+    - 값 13sp Bold `$token(fg-primary)` — 현재 설정된 값 명시
+  - chevron-down 16sp `$token(fg-tertiary)`
+- 컨테이너: `HORIZONTAL` + `clipsContent: true` + `itemSpacing: 8`, 좌우 padding 20
+- **언제 사용**: 여러 필터가 있지만 화면 공간 한정될 때 — 칩은 현재 값만 보여주고 편집은 시트에서
+- **VS17/VS18과의 선택**: 같은 화면에서 즉시 편집(VS17/18), 모달 편집(VS19). 화면 밀도 ↓ 원하면 VS19
+
+### VS20. Bottom Sheet 공통 구조
+- 단일 값·옵션을 full-attention 모달로 받는 하단 시트:
+  - **Overlay**: ABSOLUTE inset 0, fill `{r:0, g:0, b:0, a:0.4}` (반투명 검정) — 하단으로 시트 정렬
+  - **Sheet**: `FILL` 가로 + `HUG` 세로 + `borderTopLeftRadius: 20` + `borderTopRightRadius: 20` + padding `12/20/28/20` (상/좌우/하/좌우), fill `$token(bg-primary)`
+  - **Drag Handle**: 40×4, `cornerRadius: 2`, fill `$token(bg-quaternary)`, CENTER 정렬. 시트 최상단, paddingBottom 12
+  - **Title**: 16sp Bold `$token(fg-primary)`, `letterSpacing: -2%`
+  - **Value Display** (시트의 핵심): `HORIZONTAL` + `CENTER` + `BASELINE` + `itemSpacing: 4`, padding 상하 18
+    - 대형 숫자: **36sp ExtraBold `$token(fg-brand-secondary)` letterSpacing -3%** — VS7 Premium 숫자 확장
+    - 단위: 16sp Medium `$token(fg-tertiary)` 옆에 부착
+  - **Slider/컨트롤**: VS18 Slider Track/Fill 스펙
+  - **Min/Max Labels**: `HORIZONTAL` + `SPACE_BETWEEN`, 각 11sp Regular `$token(fg-quaternary)` — slider 아래
+  - **CTA**: `FILL` + padding 14 + `cornerRadius: 10` + fill `$token(bg-brand-solid)` + 텍스트 흰 15sp Bold. DS Buttons/Button (xl, Primary) 인스턴스 권장
+- **X 닫기 버튼**: 선택적 — 단순 값 조정 시트는 drag handle만으로 충분. **복합 정보 시트**(VS30 DecisionBottomSheet 등 회차 선택+금액 상세+CTA 혼합)는 우측 상단 **36sq X 버튼** 허용 — drag handle보다 명시적 닫기 동선 제공
+- **절대 금지**: 시트 높이 꽉 채움(full-screen은 별도 모달), radius 둥글지 않은 사각 모서리, drag handle 생략
+
+### VS21. 아바타 스크롤 Row (메이커·참여자)
+- 스테이지 메이커·모임 참여자·친구 등 **소셜 단위 가로 스크롤**:
+  - 컨테이너: `HORIZONTAL` + `clipsContent: true` + `itemSpacing: 16`, padding `4/20/18/20`, fill `$token(bg-primary)`
+  - **추가(+) 버튼** (맨 앞): VERTICAL CENTER itemSpacing 6
+    - 원 52×52, radius 999, **dashed stroke `$token(border-primary)` 1.5** (dashPattern [4,4]), fill `$token(bg-primary)`, plus 아이콘 22 `$token(fg-quaternary)`
+    - 라벨 "추가" 11sp Medium `$token(fg-quaternary)`
+  - **각 아바타**: VERTICAL CENTER itemSpacing 6
+    - Avatar Circle 52×52, radius 999, **fillGradient 135deg (고유 컬러 0% → 알파 80% 100%)**, 중앙 이모지/이니셜 20sp 흰색 Bold
+    - **Crown/Rank Badge** (옵션): ABSOLUTE `bottom: -2, right: -2`, 18×18, radius 999, fill `$token(bg-brand-solid)` + 2px 흰 border, 중앙 👑 9sp
+    - Text Group: CENTER 정렬, maxWidth 60
+      - 이름 10sp Bold `$token(fg-secondary)` letterSpacing -2% + truncate 1-line
+      - 레벨 "(lv.123)" 9sp Medium `$token(fg-quaternary)`
+- **절대 금지**: 사각 아바타, 크기 52 미만(얼굴 인식 어려움), 이름 2줄(디자인 깨짐), rank badge 좌측 상단(시선 혼선 — 반드시 우하단)
+
+### VS22. 스테이지 카드 multi-layout (timeline/ring/number)
+- 스테이지 추천 카드는 **3가지 상단 레이아웃 중 1개** 선택 (같은 페이지에서는 일관된 레이아웃 유지):
+  - 공통 카드 shell: fill `$token(bg-primary)` + border `$token(border-secondary)` 1px + `cornerRadius: 14` + padding `16/16/14/16` + `shadow-xs`
+  - 공통 하단: **금액 요약 2-row** (목돈 + 총이자, `border-top` 1px `$token(border-tertiary)`) + **혜택 배지 band** (bg-secondary + radius 8 + 포인트/수수료 Pill 2개)
+- **레이아웃 A — Timeline Bar**: 회차 수만큼 `gridTemplateColumns: repeat(N, 1fr)` + `itemSpacing: 2`. 각 cell height 22 + radius 4. 수령 회차는 `bg-brand-solid` + 흰 숫자 / 나머지 `bg-brand-primary` + `fg-brand-secondary` 숫자. 상단 설명/하단 안내 텍스트 13sp SemiBold CENTER.
+- **레이아웃 B — Ring Gauge**: SVG 90×90, 배경 원(brand-primary stroke 8), progress arc(brand-solid stroke 8 + strokeDasharray + strokeDashoffset + rotate -90), 중앙 큰 숫자 + "/N회차" 작은 텍스트. 우측 보조 텍스트 그룹.
+- **레이아웃 C — Number Hero**: 상단 라벨 11sp Bold `$token(fg-brand-secondary)` letterSpacing +4% UPPERCASE + 22sp ExtraBold 대표 금액 letterSpacing -3% + 13sp Medium 부제 + 얇은 progress bar height 4.
+- **언제 어느 레이아웃**: Timeline = 납입 스케줄 시각화 강조 / Ring = 진행률 %감각 / Number = 금액 중심 판매
+- **절대 금지**: 한 화면 내 레이아웃 혼용(일관성 파괴), 혜택 배지 4개 이상(카드 밀도 과다), 카드 내 CTA 버튼(탭 전체가 CTA이므로 이중 버튼 불필요)
+
+### VS23. Legal Footer (3-col 약관 + 사업자 정보)
+- 스크롤 최하단 법적 고지·사업자 정보 블록:
+  - 컨테이너: `VERTICAL` + `FILL` + `itemSpacing: 6`, padding `18/20/16/20`, **상단 1px border-top `$token(border-tertiary)`**
+  - **약관 Links Grid**: `VERTICAL` + `itemSpacing: 4` + paddingBottom 10. 각 Row `HORIZONTAL` + `itemSpacing: 12` + 3개 link FILL. 링크 11sp Medium `$token(fg-tertiary)`
+  - **Company Block**: `VERTICAL` + `itemSpacing: 6`. 각 라인 10sp Regular `$token(fg-quaternary)`, lineHeight 170%
+    - 대표자·사업자번호·통신판매업번호 등 다중 라인
+  - **Copyright**: 10sp Regular `$token(fg-quaternary)` — 최하단
+- **절대 금지**: footer에 색 배경/그라데이션(시선 유인 금지), 11sp 초과 폰트(footer 위계 파괴), 브랜드 로고 반복(상단에 이미 있음)
+
+### VS24. Back-only Header (상세 화면 네비게이션)
+- 상세 화면 상단 헤더는 **뒤로가기 버튼만** — 타이틀/우측 액션 없음:
+  - `HORIZONTAL` + `MIN` (좌측) + `CENTER`, padding `4/8/8/8`, fill `$token(bg-primary)`
+  - 버튼: 40×40 + `cornerRadius: 8` + 중앙 아이콘 `chevron-left` 24 `$token(fg-primary)` strokeWidth 2
+- **본문 첫 카드가 타이틀 역할**: 스테이지 상세는 첫 카드가 스테이지 제목+요약(VS25), 모달 화면은 첫 카드가 제목 — AppBar 중앙 타이틀 패턴과 의도적으로 다름
+- **VS9(X-close) vs VS24(back-only) 구분**: 모달/시트 → VS9 우측 X / 페이지 네비게이션 → VS24 좌측 chevron
+- **절대 금지**: 중앙 타이틀 텍스트(AppBar 관례와 혼동), 우측 액션 버튼 추가(단일 진입 페이지는 액션 최소화)
+
+### VS25. Asymmetric 3-col Summary (1fr : 1.4fr : 1fr)
+- 상세 화면 요약 카드의 3-col 그리드는 **비대칭 비율**로 중요도 표현:
+  - Grid Row: `HORIZONTAL` + `FILL` + `itemSpacing: 12`. 각 Item `layoutGrow` **1 / 1.4 / 1** — 중앙 셀(보통 금액·가격)이 가장 넓게
+  - 각 Item: `VERTICAL` + `itemSpacing: 4`. 라벨 11sp SemiBold `$token(fg-tertiary)` + 값 14sp Bold `$token(fg-primary)` `letterSpacing: -2%`
+- **카드 Header Row (타이틀+라벨 페어)**: `HORIZONTAL` + `BASELINE` + `itemSpacing: 10` — 타이틀과 보조 라벨이 베이스라인 공유
+  - 타이틀: 16sp **ExtraBold** `letterSpacing: -2%`
+  - 시작/서브 라벨: 11sp Medium `$token(fg-tertiary)` `letterSpacing: -1%`
+- **왜 비대칭?**: 등분(1:1:1)은 숫자 자릿수 다를 때 셀이 어색하게 남고, 의사결정에 핵심인 값(약정금·목돈)을 시각적으로 부각하지 못함. **가운데가 가장 중요한 숫자**라는 구조를 명시
+- **절대 금지**: 1:1:1 균등 그리드(중요도 불명확), 5-col 이상(`StatsStrip3Col`로 압축), 숫자 자릿수에 따라 비율 임의 변경
+
+### VS26. Timeline 참여자 Row (rail + node + card)
+- 좌측 세로선 **rail** + 원형 **node** + 우측 **card** 3-부 구성:
+  - Row: `HORIZONTAL` + `itemSpacing: 14` + `CENTER` + `FILL`, 상하 padding **10** (normal) / **6** (tight density)
+  - **Left Rail** (width 36): `VERTICAL` + `CENTER`. 자식 2개
+    - **세로 연결선** (옵션): ABSOLUTE 2px × FILL, fill `$token(bg-quaternary)`, zIndex 1, top 0 bottom `-padY*2` (다음 Row까지 연결). **마지막 Row는 세로선 생략**
+    - **Timeline Node** 36×36 radius 999 + zIndex 2 + 중앙 정렬 (VS27 비주얼 variant)
+  - **Right Card** (FILL): `HORIZONTAL` + `CENTER` + `itemSpacing: 10`, padding 14/16 (normal) / 10/14 (tight), radius 12
+    - 기본: fill `$token(bg-primary)` + border `$token(border-secondary)` + shadow-xs
+    - **emphasize=true**: fill `$token(bg-brand-solid)` + stroke 없음 + brand shadow (`0 4px 12px rgba(brand-rgb, 0.25)`) + 텍스트 흰색 + 설명 `rgba(255,255,255,0.85)`
+  - 카드 내부: Text Group (FILL, VERTICAL, itemSpacing 2) + 우측 Action Pill (HUG)
+- **VS13과의 차이**: VS13은 D-day 날짜 배지 중심(회차 납입 리스트), VS26은 **세로선 rail + 원형 node 중심** (참여자 + 회차 목표 혼합 타임라인)
+- **absolute 세로선 주의**: Figma에서 autoLayout 내부에 ABSOLUTE로 연결선을 만들려면 Left Rail을 HUG + 중앙 node 위아래에 ABSOLUTE 선 삽입. 대안: 각 Row 사이에 독립된 vertical-line 요소를 외부 컨테이너에서 그릴 것
+
+### VS27. TimelineNode 비주얼 variant (number / avatar / stage)
+- VS26 Timeline Row의 36×36 원형 노드는 **3가지 모드** 중 하나:
+  - **`number` (기본)**: 숫자 1~N. 기본은 fill `$token(bg-primary)` + border `$token(border-primary)` 1.5px + 텍스트 13sp Bold `$token(fg-secondary)` `letterSpacing: -2%`. **emphasize=true**: fill `$token(bg-brand-solid)` + border `$token(border-brand)` + 텍스트 흰색
+  - **`avatar`**: 사용자 프로필
+    - `rowType='invite'` (실제 사용자): fill **linear-gradient 135deg** (팔레트 5색 중 id 기반 선택: 보라/핑크/오렌지/그린/블루) + border 없음 + 중앙 이니셜 13sp Bold 흰색
+    - `rowType='plan'` (계획/목표): fill `$token(bg-brand-primary)` + 중앙 아이콘 `credit-card` 18 `$token(fg-brand-secondary)`. emphasize 시 fill brand-solid + 흰 아이콘
+  - **`stage` (단계 dot)**: fill `$token(bg-primary)` + border `$token(border-primary)` 1.5px. 중앙에 10×10 radius 999 dot `$token(bg-brand-solid)`. emphasize 시 node fill brand-solid + 중앙 dot 흰색
+- **그라데이션 팔레트** (avatar/invite): `['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6']` — DS에 없는 보조 컬러. 135deg 각도, 0% fullColor → 100% 알파 80%
+- **어느 variant 언제**: 숫자 시퀀스 강조 → `number` / 소셜 관계 강조 → `avatar` / 달성 여부 강조 → `stage`. 같은 타임라인 내에서 **혼용 허용** (plan은 credit-card 아이콘, invite은 이니셜, milestone은 dot)
+
+### VS28. Empty State Placeholder (빈 상태)
+- 빈 탭·검색 결과 없음·데이터 미존재 등 'empty state':
+  - 컨테이너: `VERTICAL` + `CENTER` + `FILL` + `itemSpacing: 18`, padding **80/24** (상하 80, 좌우 24) — 상하 여백으로 수직 중앙 느낌
+  - **Icon Circle**: 64×64 + `cornerRadius: 999` + fill `$token(bg-secondary)` + 중앙 아이콘 28 `$token(fg-quaternary)` **strokeWidth 1.6** (얇은 선으로 낮은 강조)
+  - 타이틀: 15sp Bold `$token(fg-secondary)` `letterSpacing: -2%` CENTER
+  - 서브: 12sp Regular `$token(fg-quaternary)` CENTER — 안내/가이드 톤
+- **절대 금지**: 빈 상태에 CTA 버튼 추가(진짜 empty는 탐색 유도만, 액션은 별도 블록에서 / 3회 이상 같은 empty 반복되면 온보딩 필요 시그널), 아이콘 strokeWidth 2+ (과한 강조), 타이틀 Bold-ExtraBold (empty는 시선을 적게 끌어야 함)
+- **isolation**: 부모 컨테이너가 `FILL` 높이여야 세로 중앙 정렬이 유효. 고정 높이면 padding 80/80 유지 (상하 40+ 보장)
+
+### VS29. N-cell 선택 그리드 (+ 삼각 pointer)
+- 회차·월·숫자 등 **순차형 선택 UI**:
+  - Grid Row: `HORIZONTAL` + `FILL` + `itemSpacing: 3`. 각 Cell `FILL` + `layoutGrow: 1` (균등 분배) — gridTemplateColumns repeat(N,1fr) 동등
+  - 각 Cell: height **26** + `cornerRadius: 4` + `HORIZONTAL CENTER`. 내부 숫자 11sp Bold
+    - **Active**: fill `$token(bg-brand-solid)` + 숫자 흰색
+    - **Inactive**: fill `$token(bg-brand-primary)` + 숫자 `$token(fg-brand-secondary)`
+  - **Pointer Container** (바로 아래): FILL + height 14. 내부 ABSOLUTE 삼각형 (10×6, fill `$token(bg-brand-solid)`, 뾰족 아래쪽)
+    - **삼각 위치**: `left = ((activeIndex - 0.5) / totalCells) * 100% - 5px`, `top: 0`
+  - Info Text (선택적, 하단): 13sp SemiBold CENTER + 선택 숫자 부분만 `$token(fg-brand-secondary)` Bold (set_styled_text_segments)
+- **VS22 Stage Card Timeline Bar와 차이**: VS22는 정적 시각화 (회차 스트라이프 + 수령 포인트 고정), VS29는 **사용자 상호작용 선택** (활성 셀이 탭으로 바뀜 + pointer 이동)
+- **절대 금지**: 셀 높이 20 미만(탭 영역 부족), 13+ 셀 개수에서 gap 5+ (스트라이프 깨짐), pointer 없이 active만으로 식별(시각적 연결 부족)
+
+### VS30. Decision BottomSheet (복합 결정 시트)
+- 선택 → 확인 → 실행 결정 플로우의 복합 바텀시트 (단일 값 조정 VS20과 구분):
+  - **3-Section 구조**:
+    1. **Header Band**: Grabber(VS20) + (옵션) 우측 상단 X(VS20 업데이트) + 헤더 설명 텍스트(13sp SemiBold CENTER) + 셀렉터(VS29) + 안내 텍스트
+    2. **Amount Detail Section**: top border `$token(border-tertiary)` 1px, padding 16/20. 라벨/값 row 반복 (라벨 13sp Medium `$token(fg-tertiary)` / 값 14sp Bold — 상태별 컬러: 이자>0=success, 이자<0=error, 기본=fg-primary) + 하단 배지 row (선물/수수료 Pill, VS3)
+    3. **CTA Section**: top border `$token(border-tertiary)` 1px, padding 10/20/24/20. Full-width CTA 버튼 (padding 15, radius 10, fill `$token(bg-brand-solid)`, 흰 15sp Bold, brand shadow)
+  - Sheet 본체: FILL 가로 + HUG 세로 + topLeftRadius/topRightRadius 20 + `clipsContent: true` + `$token(bg-primary)`
+- **VS20과의 선택 기준**: 단일 값 조정 (월 납입 슬라이더) → VS20 / 복합 정보 확인 후 실행 (회차 선택 + 금액 확인 + 참여하기) → VS30
+- **Section 사이 visual divider**: 2개 border-tertiary top border로 3섹션을 명확히 분리 — 단일 Card처럼 합치면 CTA가 덜 중요해 보임
+- **절대 금지**: CTA 없는 DecisionBottomSheet(결정을 요구하는데 실행 동선 없음 = 설계 실패), 3-section 외 섹션 추가(밀도 과다, 별도 풀스크린 모달로), sticky CTA 없이 CTA를 중간에 배치(화면 하단에 고정되어야 엄지 도달 가능)
+
+### VS32. 가로 스크롤 섹션 — Peek 패턴 (뷰포트 40% 카드 + 3번째 카드 부분 노출)
+- **규칙**: 가로 스크롤 리스트(HORIZONTAL autoLayout + `clipsContent: true`) 내부 카드 너비는 **뷰포트 40% 이하** (iPhone 16 393px 기준 **150~165px**).
+- **목적**: 한 화면에 2.1~2.5개 카드가 들어와 **마지막 카드가 20~40% peek** — "스와이프 가능" 시각 힌트 제공. 2개 카드가 딱 맞게 들어와 3번째가 완전히 숨으면 사용자는 리스트를 스크롤 가능한지 알 수 없음.
+- **실전 비교 (2026-04-22 imin-home)**:
+  - ❌ **Stage Card 220px (뷰포트 56%)**: 2개 full + 3번째 완전 hidden → 스와이프 힌트 없음
+  - ✅ **Product Card 150px (뷰포트 38%)**: 2개 full + 3번째 28% peek → 자연스러운 스와이프 유도
+  - 조치: Stage Card를 220 → 160px로 축소 (뷰포트 40.7%)
+- **권장 수치 (뷰포트 393, paddingLeft 16, itemSpacing 10)**:
+  - 카드 width **150~160px** → 3번째 카드 22~30% peek
+  - `paddingRight: 0` (또는 ≤ 8) — peek 영역 확보
+- **카드 내부 밀도**: 160px 내부 padding 16 양쪽 = 가용 128px. 금액(24sp Bold)·이율·라벨 10~13자(12sp) 모두 수용.
+- **예외 — 히어로 배너 캐로셀**: 1개씩 전체 스와이프하는 배너는 카드 **353px (뷰포트 90%)**, 좌우 20px peek로 다음 배너 힌트. VS5 참조.
+- **자동 검증 (post-fix)**: `_check_horizontal_scroll_peek()`가 아래 조건을 모두 충족한 섹션에서 카드 width > 165px 감지 시 경고:
+  - HORIZONTAL autoLayout + `clipsContent: true`
+  - **섹션 이름에 "Scroll" 포함** (네이밍 컨벤션 강제 — 일반 grid/row와 구분)
+  - 자식 모두 `layoutSizingHorizontal: FIXED`
+  - 자식 총 너비 > 부모 width (실제 스크롤 필요)
+- **절대 금지**:
+  - 가로 스크롤 카드 width > 180px (뷰포트 50% 초과) — 3번째 카드 peek 사라짐
+  - `clipsContent: false` + 가로 스크롤 — 카드가 화면 밖으로 나가 레이아웃 깨짐
+  - paddingRight를 itemSpacing 이상으로 설정 — peek 영역이 padding에 의해 사라짐
+
+### VS31. Stroke Alignment — 항상 INSIDE (OUTSIDE 금지)
+- **규칙**: stroke가 있는 모든 프레임/카드는 `strokeAlign: "INSIDE"` 강제. OUTSIDE/CENTER 절대 금지.
+- **배경**: OUTSIDE/CENTER stroke는 부모가 `clipsContent: true`(가로 캐로셀, 스크롤 영역 등)이면 바깥쪽 stroke가 **잘려보임**. 특히 "today" 강조 카드처럼 ±2px OUTSIDE 보더를 쓰는 케이스에서 상단/좌우가 잘리는 버그가 반복적으로 발생.
+- **실전 사례 (2026-04-22)**: Schedule 섹션의 Today Card(월/20/50만/오늘 pill)가 Day Card Row의 `clipsContent: true`에 의해 상단 보더가 잘림. INSIDE로 교체 후 4방향 모두 정상 렌더.
+- **Why INSIDE가 안전한가**:
+  - 프레임의 실제 bbox(외곽 치수) = 지정 width/height — 부모 레이아웃 계산에 영향 없음
+  - 부모 clip 여부와 무관하게 항상 렌더됨
+  - 내부 콘텐츠 영역이 stroke 굵기만큼 줄어들지만, 카드 padding이 보통 8px+ 여유라 간섭 없음
+- **자동 강제**: `scripts/figma_mcp_client.py` post-fix의 `_fix_stroke_alignment()`가 모든 OUTSIDE stroke를 빌드 후 INSIDE로 자동 변환. Blueprint에서 OUTSIDE로 작성했어도 post-fix가 교정.
+- **절대 금지**: OUTSIDE stroke를 "의도적인 디자인"으로 남겨두기 (모든 케이스에서 INSIDE로 시각 결과 동등하거나 우월), CENTER 정렬(OUTSIDE와 동일한 clip 리스크).
 
 ---
 
