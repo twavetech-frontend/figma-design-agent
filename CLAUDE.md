@@ -90,6 +90,19 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 ## 디자인 생성 필수 규칙
 
+### 0. ⚠️ Reference-first — 빌드 전 references[] 필수
+- **모든 새 디자인은 `references/uibowl/`의 실제 polished UI를 참조해서 만든다**
+- 빌드 직전 워크플로우:
+  1. blueprint 작성 (children 구조)
+  2. `python3 scripts/figma_mcp_client.py reference brief <bp.json> --top=3` 실행
+  3. 출력된 추천 reference 이미지를 Read로 직접 보고 (실제 시각 디테일 확인)
+  4. blueprint root에 `references[]` 채워 넣기 (각 항목: `{section, ref, extract}`)
+     - `extract`는 "어떤 시각 요소를 차용했는지" 한 줄 명시
+  5. blueprint의 archetypeData / fill / cornerRadius / effects 등에 reference 내용 반영
+  6. 빌드 — S20 lint가 references[] 누락 시 차단함
+- **Bypass**: trivial 디자인 (2-3 element modal 등)은 `_referencesSkipped: "<사유>"` 명시
+- 보유 reference: toss 24장 + kakaopay 21장 (`reference apps`로 확인)
+
 ### 1. NavBar 로고는 반드시 컴포넌트 인스턴스로 생성
 - 텍스트 노드로 로고를 만들지 말 것
 - `create_component_instance(componentKey="957912b03baf924a48ef83424ed66f22a4a386a8")` → `insert_child`로 NavBar에 삽입

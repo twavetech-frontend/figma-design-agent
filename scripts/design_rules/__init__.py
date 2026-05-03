@@ -28,7 +28,9 @@ from .base import (
 # Auto-import every R*.py sibling so its @register calls fire
 _pkg_dir = Path(__file__).parent
 for mod in pkgutil.iter_modules([str(_pkg_dir)]):
-    if mod.name.startswith("R") or mod.name == "schema":
+    if (mod.name.startswith("R")
+            or mod.name.startswith("S")
+            or mod.name == "schema"):
         importlib.import_module(f"{__name__}.{mod.name}")
 
 __all__ = [

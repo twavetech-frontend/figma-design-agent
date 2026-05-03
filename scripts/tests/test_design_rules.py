@@ -30,6 +30,7 @@ def make_root(**overrides) -> dict:
         "width": 393,
         "fill": "$token(Colors/Background/bg-primary)",
         "statusBar": True,
+        "_referencesSkipped": "test fixture",
         "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 0},
         "children": [
             {"name": "Status Bar", "type": "frame", "height": 50,
@@ -276,7 +277,9 @@ def test_registry_loads_all_rules():
     rules = REGISTRY.all()
     ids = {r.rule_id for r in rules}
     expected = {
-        "S00-schema", "R10-layout", "R11-typography", "R12-image-gen",
+        "S00-schema", "S20-references-required",
+        "R05-archetype-inject",
+        "R10-layout", "R11-typography", "R12-image-gen", "R13-auto-layout",
         "R20-semantic-only", "R21-bg-hierarchy", "R22-brand-text-color",
         "R23-ds-first", "R24-status-bar", "R25-tab-bar-stroke",
         "R30-fill-sizing", "R31-tab-bar-items", "R32-zero-width-text",
@@ -284,3 +287,34 @@ def test_registry_loads_all_rules():
     }
     missing = expected - ids
     assert not missing, f"missing rules: {missing}"
+
+
+def test_s20_references_required():
+    """Blueprint without references[] must ERROR."""
+    bp = {"name": "X", "type": "frame", "width": 393, "statusBar": True,
+          "children": []}
+    vs = REGISTRY.run_lint(bp)
+    errs = [v for v in vs if v.severity == Severity.ERROR
+            and v.rule_id.startswith("S20")]
+    assert errs, "missing references should ERROR"
+
+
+def test_s20_bypass_with_skipped_reason():
+    bp = {"name": "X", "type": "frame", "width": 393, "statusBar": True,
+          "_referencesSkipped": "trivial modal", "children": []}
+    vs = REGISTRY.run_lint(bp)
+    errs = [v for v in vs if v.severity == Severity.ERROR
+            and v.rule_id.startswith("S20")]
+    assert not errs
+
+
+def test_s20_accepts_proper_references():
+    bp = {"name": "X", "type": "frame", "width": 393, "statusBar": True,
+          "references": [
+              {"section": "Hero", "ref": "uibowl/toss/x.png",
+               "extract": "gradient bg + bold headline"}],
+          "children": []}
+    vs = REGISTRY.run_lint(bp)
+    errs = [v for v in vs if v.severity == Severity.ERROR
+            and v.rule_id.startswith("S20")]
+    assert not errs
