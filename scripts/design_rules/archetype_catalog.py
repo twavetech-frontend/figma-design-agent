@@ -83,8 +83,8 @@ def stage_card_template(node: dict) -> dict:
     return {
         "name": node["name"],
         "type": "frame",
-        "width": node.get("width", 132),
-        "height": node.get("height", 168),
+        "width": node.get("width", 168),
+        "height": node.get("height", 180),
         "layoutSizingHorizontal": node.get("layoutSizingHorizontal", "FIXED"),
         "layoutSizingVertical": node.get("layoutSizingVertical", "FIXED"),
         "fill": TOK("Background/bg-secondary"),
@@ -120,7 +120,7 @@ def stage_card_template(node: dict) -> dict:
                 layoutSizingHorizontal="FILL", height=4,
                 layoutSizingVertical="FIXED",
             ),
-            _text(amount, weight=700, size=20, color="Foreground/fg-primary"),
+            _text(amount, weight=700, size=20, color="Foreground/fg-primary", layoutSizingHorizontal="HUG"),
             _text(period, weight=500, size=11,
                   color="Foreground/fg-tertiary",
                   layoutSizingHorizontal="FILL"),
@@ -137,7 +137,7 @@ def stage_card_template(node: dict) -> dict:
                 cornerRadius=3,
                 children=[_frame(
                     f"{node['name']} Fill",
-                    width=max(2, int((node.get('width', 132) - 28) * progress / 100)),
+                    width=max(2, int((node.get('width', 168) - 28) * progress / 100)),
                     height=6,
                     layoutSizingHorizontal="FIXED",
                     layoutSizingVertical="FIXED",

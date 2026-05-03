@@ -723,12 +723,19 @@ def cmd_build(blueprint_file: str):
         cmd_post_fix(root_id)
 
         # Step E.LAST: blueprint layoutMode integrity enforcement.
-        # Defensive against yoga sim / post-fix steps that silently mutate
-        # layoutMode (e.g. Stage Tabs Section VERTICAL → HORIZONTAL bug).
         if node_map:
             print("\n🛡️  Blueprint layoutMode 무결성 검증 중...")
             layout_fixes = _enforce_blueprint_layout(blueprint, node_map)
             print(f"  → {layout_fixes}건 layout 복원")
+
+            # Step E.LAST2: re-apply instance text overrides after post-fix.
+            # post-fix's binding sweep + layout enforcement can silently
+            # reset some instance text overrides (observed: pill 10만원/13개월
+            # reverted to master "Label" for some pills). Run again as
+            # final-pass to guarantee text persists.
+            print("\n🏷️  Instance text 재적용 (post-fix 후 final pass)...")
+            final_applied = _apply_instance_overrides(blueprint, node_map)
+            print(f"  → {final_applied}건 재적용")
     else:
         print("⚠️  rootId를 찾을 수 없어 post-fix를 건너뜁니다.")
 
