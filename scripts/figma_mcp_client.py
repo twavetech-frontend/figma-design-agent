@@ -1887,16 +1887,22 @@ def _apply_instance_overrides(blueprint, node_map):
         if isinstance(node, dict):
             if node.get("type") == "instance":
                 name = node.get("name")
+                # Source 1: explicit instanceProperties from blueprint
                 ip = node.get("instanceProperties") or {}
-                if name and ip and name in node_map:
+                # Source 2: R23 inject's _instanceText (auto-extracted from name)
+                inj_text = node.get("_instanceText")
+                if name and name in node_map:
                     nid = node_map[name]
-                    label = ip.get("Label")
+                    label = ip.get("Label") or inj_text
                     if label:
                         overrides.append((nid, "text", str(label)))
                     other = {k: v for k, v in ip.items() if k != "Label"}
                     if other:
                         overrides.append((nid, "props", other))
             for c in node.get("children") or []:
+                walk(c)
+            # Also walk _originalChildren (R23 stripped them but they're still data)
+            for c in node.get("_originalChildren") or []:
                 walk(c)
         elif isinstance(node, list):
             for c in node:

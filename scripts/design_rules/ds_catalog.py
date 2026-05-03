@@ -119,9 +119,12 @@ _NAME_RESOLVERS: list[Tuple[re.Pattern, str]] = [
     # Brand (full-name or "Logo Placeholder")
     (re.compile(r"^(?:imin\s*)?logo(?:\s*placeholder)?$",     re.I), "Logo"),
 
-    # CTA Action Button (must end with Btn/Button)
-    (re.compile(r"\ball[\s-]*view\s+btn$",                    re.I), "Action Button md"),
-    (re.compile(r"^(?:cta|primary|action)\s+button$",         re.I), "Action Button md"),
+    # CTA Action Button — only for explicitly-named primary action buttons.
+    # NOTE: "All View Btn" intentionally NOT mapped — DS Action Button master
+    # is a 2-link button group (Delete/Edit), not a single-text CTA. Keep
+    # such single-text CTAs as raw styled frames or use DS only when names
+    # clearly indicate dual-action.
+    (re.compile(r"^(?:primary|action)\s+button$",             re.I), "Action Button md"),
 
     # Pills — must end with " Pill" + color prefix
     (re.compile(r"^(?:active|brand)\s+pill(?:\s+\S+)?$",      re.I), "Pill md Brand"),

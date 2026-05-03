@@ -20,6 +20,29 @@ from .ds_catalog import DS_PATTERNS, is_container, resolve_component_key
 
 # ── L3 inject — name → componentKey auto-swap ───────────────────
 
+_NAME_TEXT_EXTRACT = __import__("re").compile(
+    r"^(?:Gray|Brand|Active|Success|Warning|Pink|Purple|Blue\s*light)\s+Pill\s+(.+)$",
+    __import__("re").I,
+)
+
+
+def _extract_instance_text(node: dict, role: str) -> str | None:
+    """Pull a text override from name or explicit field.
+
+    Priority:
+      1. node['instanceText'] explicit
+      2. name pattern "<color> Pill <CONTENT>" → CONTENT
+      3. None (use master default)
+    """
+    if "instanceText" in node:
+        return str(node["instanceText"])
+    name = node.get("name") or ""
+    m = _NAME_TEXT_EXTRACT.match(name.strip())
+    if m:
+        return m.group(1).strip()
+    return None
+
+
 def _inject_node(node: dict) -> int:
     """Mutate `node` in place to add componentKey + type=instance if applicable.
 
@@ -43,7 +66,11 @@ def _inject_node(node: dict) -> int:
     role, key = resolved
     node["componentKey"] = key
     node["type"] = "instance"
-    node["_dsResolvedRole"] = role  # informational
+    node["_dsResolvedRole"] = role
+    # Capture text override for post-fix instance text application
+    text_override = _extract_instance_text(node, role)
+    if text_override is not None:
+        node["_instanceText"] = text_override
     # Strip raw children — instances render via main component
     if "children" in node:
         node["_originalChildren"] = node.pop("children")
