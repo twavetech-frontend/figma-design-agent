@@ -721,6 +721,14 @@ def cmd_build(blueprint_file: str):
         cmd_post_fix(root_id, pre_computed_layout=sim_layout)
         print("\n🔧 후처리 2회차 (레이아웃 안정화 후 최종 배치)...")
         cmd_post_fix(root_id)
+
+        # Step E.LAST: blueprint layoutMode integrity enforcement.
+        # Defensive against yoga sim / post-fix steps that silently mutate
+        # layoutMode (e.g. Stage Tabs Section VERTICAL → HORIZONTAL bug).
+        if node_map:
+            print("\n🛡️  Blueprint layoutMode 무결성 검증 중...")
+            layout_fixes = _enforce_blueprint_layout(blueprint, node_map)
+            print(f"  → {layout_fixes}건 layout 복원")
     else:
         print("⚠️  rootId를 찾을 수 없어 post-fix를 건너뜁니다.")
 
@@ -1871,6 +1879,64 @@ def _match_status_bar_bg_to_nav(tree: dict) -> bool:
     except Exception as e:
         print(f"  ⚠️ Status Bar bg 매칭 실패: {e}")
         return False
+
+
+def _enforce_blueprint_layout(blueprint, node_map):
+    """Defensive: post-fix or yoga sim may mutate layoutMode silently.
+    Walk blueprint by name, look up built node via node_map, and force
+    layoutMode/primaryAxis/counterAxis back to what the blueprint declared.
+
+    Returns count of fixes applied.
+    """
+    fixes = 0
+
+    def walk(node):
+        nonlocal fixes
+        if isinstance(node, dict):
+            name = node.get("name")
+            al = node.get("autoLayout")
+            ntype = node.get("type", "frame")
+            if name and ntype in ("frame", "FRAME") and al and name in node_map:
+                want_mode = al.get("layoutMode") or al.get("direction")
+                if want_mode in ("HORIZONTAL", "VERTICAL"):
+                    nid = node_map[name]
+                    try:
+                        r = call_tool("get_node_info", {"nodeId": nid})
+                        if isinstance(r, list) and r:
+                            try:
+                                info = json.loads(r[0].get("text", ""))
+                                actual_mode = info.get("layoutMode")
+                                if actual_mode and actual_mode != want_mode:
+                                    # Mismatch — force back
+                                    payload = {
+                                        "nodeId": nid,
+                                        "layoutMode": want_mode,
+                                        "itemSpacing": al.get("itemSpacing", 0),
+                                    }
+                                    if "primaryAxisAlignItems" in al:
+                                        payload["primaryAxisAlignItems"] = al["primaryAxisAlignItems"]
+                                    if "counterAxisAlignItems" in al:
+                                        payload["counterAxisAlignItems"] = al["counterAxisAlignItems"]
+                                    for k in ("paddingTop", "paddingBottom", "paddingLeft", "paddingRight"):
+                                        if k in al:
+                                            payload[k] = al[k]
+                                    call_tool("set_auto_layout", payload)
+                                    fixes += 1
+                                    print(f"  ↩️  layout restore '{name}': {actual_mode} → {want_mode}")
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+            for c in node.get("children") or []:
+                walk(c)
+            for c in node.get("_originalChildren") or []:
+                walk(c)
+        elif isinstance(node, list):
+            for c in node:
+                walk(c)
+
+    walk(blueprint)
+    return fixes
 
 
 def _apply_instance_overrides(blueprint, node_map):
