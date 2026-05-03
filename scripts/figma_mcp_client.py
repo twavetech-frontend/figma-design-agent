@@ -444,11 +444,61 @@ def cmd_call(tool_name: str, args_json: str):
         print(f"\n[{len(result['images'])} image(s) returned]")
 
 
+_BUILT_BLUEPRINTS_LEDGER = os.path.join(os.path.dirname(__file__), ".built_blueprints.json")
+
+
+def _ledger_load() -> dict:
+    if not os.path.exists(_BUILT_BLUEPRINTS_LEDGER):
+        return {}
+    try:
+        with open(_BUILT_BLUEPRINTS_LEDGER) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _ledger_save(d: dict):
+    try:
+        with open(_BUILT_BLUEPRINTS_LEDGER, "w") as f:
+            json.dump(d, f, indent=2)
+    except Exception:
+        pass
+
+
+def _ledger_check_reuse(blueprint_file: str) -> Optional[str]:
+    """Return error message if blueprint_file path was already used for a successful build."""
+    abs_path = os.path.abspath(blueprint_file)
+    ledger = _ledger_load()
+    entry = ledger.get(abs_path)
+    if entry:
+        return (f"BLUEPRINT REUSE BLOCKED: '{abs_path}' was already used for build "
+                f"on {entry.get('builtAt','?')} (rootId={entry.get('rootId','?')}). "
+                f"Per project rule: blueprints must be authored fresh for every build. "
+                f"Write a new file with a different name.")
+    return None
+
+
+def _ledger_record(blueprint_file: str, root_id: str):
+    abs_path = os.path.abspath(blueprint_file)
+    ledger = _ledger_load()
+    ledger[abs_path] = {
+        "builtAt": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "rootId": root_id,
+    }
+    _ledger_save(ledger)
+
+
 def cmd_build(blueprint_file: str):
     """Build a screen from a blueprint JSON file.
 
     Supports $token() references in color fields. Before building,
     all $token(name) values are resolved to RGBA using TOKEN_MAP.json.
+
+    Project rules enforced:
+      • Blueprint files cannot be reused — once a file path is built, ledger
+        blocks subsequent builds from the same path.
+      • On successful build the blueprint file is auto-deleted to prevent
+        reuse and force fresh authoring next time.
 
     Example blueprint color:
         "fill": "$token(bg-brand-solid)"
@@ -456,6 +506,12 @@ def cmd_build(blueprint_file: str):
     These are resolved to {"r": ..., "g": ..., "b": ..., "a": ...} at build time.
     """
     ensure_session()
+
+    # Reuse-guard: block known-built paths
+    reuse_err = _ledger_check_reuse(blueprint_file)
+    if reuse_err and "--force" not in sys.argv:
+        print(f"\n{'='*50}\n{reuse_err}\n{'='*50}\n")
+        return
 
     with open(blueprint_file) as f:
         blueprint = json.load(f)
@@ -722,6 +778,18 @@ def cmd_build(blueprint_file: str):
     print(f"\n{'='*50}")
     print(f"전체 완료: {total_elapsed:.1f}s (빌드 {build_elapsed:.1f}s + 후처리 + 이미지)")
     print(f"{'='*50}")
+
+    # Project rule: blueprint files must be authored fresh per build.
+    # Record + auto-delete the source file so reuse is physically prevented.
+    if root_id:
+        try:
+            _ledger_record(blueprint_file, root_id)
+            if os.path.exists(blueprint_file) and "--keep-blueprint" not in sys.argv:
+                os.unlink(blueprint_file)
+                print(f"\n🗑️  Blueprint auto-deleted: {blueprint_file}")
+                print("    (project rule: write a fresh blueprint for each build)")
+        except Exception as e:
+            print(f"\n⚠️  Blueprint cleanup failed: {e}")
 
 
 def _extract_image_specs(blueprint: dict, node_map: dict) -> list:

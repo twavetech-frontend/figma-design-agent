@@ -176,6 +176,102 @@ def test_tab_bar_per_side_stroke_passes():
 
 # ── Registry meta ────────────────────────────────────────────────
 
+# ── R23 ds-first inject + lint ───────────────────────────────────
+
+def test_r23_inject_swaps_bell_to_instance():
+    bp = make_root()
+    bp["children"].append({"name": "Bell Btn", "type": "frame", "width": 24, "height": 24})
+    REGISTRY.run_inject(bp)
+    bell = next(c for c in bp["children"] if c["name"] == "Bell Btn")
+    assert bell["type"] == "instance", "Bell Btn should be auto-swapped to instance"
+    assert bell.get("componentKey"), "componentKey should be auto-injected"
+
+
+def test_r23_inject_swaps_pill_to_instance():
+    bp = make_root()
+    bp["children"].append({"name": "Active Pill", "type": "frame"})
+    REGISTRY.run_inject(bp)
+    pill = next(c for c in bp["children"] if c["name"] == "Active Pill")
+    assert pill["type"] == "instance"
+    assert pill.get("componentKey"), "Pill should resolve to a brand pill key"
+
+
+def test_r23_lint_blocks_unresolvable_ds_pattern():
+    """A name matching a DS pattern with no catalog match must ERROR."""
+    bp = make_root()
+    bp["children"].append({"name": "ZZZ Avatar custom unknown", "type": "frame"})
+    # First inject (no resolver match) → still raw frame
+    REGISTRY.run_inject(bp)
+    avatar = next(c for c in bp["children"] if "Avatar" in c["name"])
+    assert avatar["type"] == "frame", "no resolver → no swap"
+    # Then lint → expect ERROR
+    violations = REGISTRY.run_lint(bp)
+    errs = [v for v in violations if v.severity == Severity.ERROR
+            and v.rule_id == "R23-ds-unresolvable"]
+    assert errs, "unresolvable DS pattern should hard-block build"
+
+
+def test_r23_container_left_as_frame():
+    """NavBar / Tab Bar are containers; they must NOT be swapped."""
+    bp = make_root()
+    bp["children"].append({"name": "NavBar", "type": "frame", "children": [
+        {"name": "Bell Btn", "type": "frame"}
+    ]})
+    REGISTRY.run_inject(bp)
+    nav = next(c for c in bp["children"] if c["name"] == "NavBar")
+    assert nav["type"] == "frame", "NavBar is a container, not an instance"
+    # but its child should be swapped
+    bell = nav.get("_originalChildren", nav.get("children", []))
+    # When NavBar is a container, its bell child is processed normally
+    # (NavBar itself doesn't lose children)
+    assert nav.get("children") is not None, "NavBar should still have children"
+    bell_node = nav["children"][0]
+    assert bell_node["type"] == "instance", "Bell Btn inside container should still swap"
+
+
+def test_r23_does_not_swap_wrappers():
+    """Wrapper names like 'Home Tabs', 'Stage Progress Wrap', 'Recommend Stage Card'
+    must NOT be auto-swapped to icons. Container guard prevents this."""
+    bp = make_root()
+    bp["children"].extend([
+        {"name": "Home Tabs", "type": "frame"},
+        {"name": "Stage Progress Wrap", "type": "frame"},
+        {"name": "Recommend Stage Card", "type": "frame"},
+        {"name": "Lounge Section", "type": "frame"},
+        {"name": "Stage Tabs Section", "type": "frame"},
+        {"name": "Day Cells Row", "type": "frame"},
+    ])
+    REGISTRY.run_inject(bp)
+    for c in bp["children"]:
+        if c["name"] in {"Home Tabs", "Stage Progress Wrap", "Recommend Stage Card",
+                         "Lounge Section", "Stage Tabs Section", "Day Cells Row"}:
+            assert c["type"] == "frame", \
+                f"{c['name']} should remain frame, got {c['type']}"
+
+
+def test_r23_strict_icon_suffix():
+    """'Home Icon' swaps; bare 'Home' does not."""
+    bp = make_root()
+    bp["children"].extend([
+        {"name": "Home Icon", "type": "frame"},
+        {"name": "Home", "type": "frame"},  # ambiguous, no suffix → no swap
+    ])
+    REGISTRY.run_inject(bp)
+    home_icon = next(c for c in bp["children"] if c["name"] == "Home Icon")
+    home_bare = next(c for c in bp["children"] if c["name"] == "Home")
+    assert home_icon["type"] == "instance"
+    assert home_bare["type"] == "frame"
+
+
+def test_r23_idempotent():
+    bp = make_root()
+    bp["children"].append({"name": "Bell Btn", "type": "frame"})
+    REGISTRY.run_inject(bp)
+    REGISTRY.run_inject(bp)  # second run should be no-op
+    bell = next(c for c in bp["children"] if c["name"] == "Bell Btn")
+    assert bell["type"] == "instance"
+
+
 def test_registry_loads_all_rules():
     rules = REGISTRY.all()
     ids = {r.rule_id for r in rules}
