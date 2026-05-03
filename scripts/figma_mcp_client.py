@@ -2473,6 +2473,19 @@ def _load_token_index(token_map):
             # semantic-named tokens (bg-*, fg-*, border-*, text-*).
             if not is_semantic:
                 continue
+            # User policy 2026-05-03 (additional): exclude state-specific tokens
+            # (bg-disabled, bg-active, *_hover, *_pressed, *_focused). These
+            # share hex values with hierarchy tokens (e.g. bg-disabled = #f3f4f6
+            # = bg-tertiary) so the matcher must NOT pick them for normal fills.
+            #   -> default state must bind to bg-primary/secondary/tertiary/quaternary
+            #      not bg-disabled/bg-active/etc.
+            lower = (figma_path or name).lower()
+            if any(state in lower for state in (
+                "/bg-disabled", "/bg-active",
+                "_hover", "_pressed", "_focused", "_focus", "_visited",
+                "/bg-primary-solid", "/bg-secondary-solid",
+            )):
+                continue
             color_index.setdefault(rgba, []).append((name, is_semantic))
         elif ttype == "NUMBER":
             if isinstance(value, (int, float)):
