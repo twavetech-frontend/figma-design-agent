@@ -2697,6 +2697,9 @@ def main():
             print("Usage: figma_mcp_client.py assemble <config.json>")
             sys.exit(1)
         cmd_assemble(sys.argv[2])
+    elif cmd == "reference":
+        from reference_lib import cli as _ref_cli
+        sys.exit(_ref_cli(sys.argv[2:]))
     elif cmd == "interactive":
         cmd_interactive()
     else:
