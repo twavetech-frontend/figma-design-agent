@@ -2467,6 +2467,12 @@ def _load_token_index(token_map):
             rgba = _hex_to_rgba_ints(value)
             if rgba is None:
                 continue
+            # User policy 2026-05-03: bind ONLY to semantic tokens.
+            # Primitives (Base/*, Brand/600, Gray .../900, Component colors/*)
+            # are excluded from binding candidates entirely. Designer must use
+            # semantic-named tokens (bg-*, fg-*, border-*, text-*).
+            if not is_semantic:
+                continue
             color_index.setdefault(rgba, []).append((name, is_semantic))
         elif ttype == "NUMBER":
             if isinstance(value, (int, float)):
@@ -2871,32 +2877,50 @@ _BIND_CHUNK = 100
 def _apply_bindings(queues):
     """Issue MCP calls for collected bindings. Returns counts.
 
-    `batch_bind_variables` payload shape (per existing tool):
-        bindings: [{nodeId, property, variableName}, ...]
-    Note: 'property' is the Figma node prop ('fills', 'paddingTop', etc.).
-    Color bindings need to encode the fills index → property uses 'fills.0'.
+    Plugin's `batch_bind_variables` expects:
+        items: [{ nodeId, bindings: { "fills.0": "varName", "paddingTop": "varName" } }]
+    where `bindings` is a property→variableName MAP. Group all bindings for a
+    single node into one item to match this shape (was previously sent as flat
+    list which the plugin silently rejected — succeeded=0 on every call).
     """
+    from collections import defaultdict
     counts = {"colors": 0, "numbers": 0, "textstyles": 0, "effects": 0}
 
-    color_payloads = [
-        {"nodeId": b["nodeId"],
-         "property": f"{b['field']}.{b['index']}",
-         "variableName": b["token_name"]}
-        for b in queues["color_bindings"]
-    ]
-    number_payloads = [
-        {"nodeId": b["nodeId"], "property": b["field"],
-         "variableName": b["token_name"]}
-        for b in queues["number_bindings"]
-    ]
-    bindings = color_payloads + number_payloads
-    for i in range(0, len(bindings), _BIND_CHUNK):
-        chunk = bindings[i:i + _BIND_CHUNK]
+    import re as _re
+    def _clean_token_name(n):
+        # Strip trailing ' (NNN)' — figmaPath includes tier numbers
+        # ('fg-primary (900)') but Figma local variable name doesn't.
+        return _re.sub(r"\s*\(\d+\)\s*$", "", n)
+
+    by_node = defaultdict(dict)
+    for b in queues["color_bindings"]:
+        # Plugin expects 'fills/0' / 'strokes/0' (slash separator), not 'fills.0'
+        by_node[b["nodeId"]][f"{b['field']}/{b['index']}"] = _clean_token_name(b["token_name"])
+        counts["colors"] += 1
+    for b in queues["number_bindings"]:
+        by_node[b["nodeId"]][b["field"]] = _clean_token_name(b["token_name"])
+        counts["numbers"] += 1
+
+    items = [{"nodeId": nid, "bindings": props} for nid, props in by_node.items()]
+    succeeded = 0
+    total = 0
+    for i in range(0, len(items), _BIND_CHUNK):
+        chunk = items[i:i + _BIND_CHUNK]
         if not chunk:
             continue
-        call_tool("batch_bind_variables", {"bindings": chunk}, msg_id=10000 + i)
-    counts["colors"] = len(color_payloads)
-    counts["numbers"] = len(number_payloads)
+        try:
+            r = call_tool("batch_bind_variables", {"items": chunk}, msg_id=10000 + i)
+            txt = r[0].get("text", "") if isinstance(r, list) and r else ""
+            try:
+                d = json.loads(txt)
+                succeeded += d.get("succeeded", 0)
+                total += d.get("total", 0)
+            except Exception:
+                pass
+        except Exception:
+            pass
+    counts["colors_succeeded"] = succeeded
+    counts["colors_total"] = total
 
     if queues["textstyle_bindings"]:
         ts_payload = [
