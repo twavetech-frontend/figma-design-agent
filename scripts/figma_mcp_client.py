@@ -3023,11 +3023,19 @@ def _collect_bindings(nodes, indexes):
         if not nid:
             continue
 
-        # fills
+        # fills — skip if already bound to a variable (Figma's variable
+        # resolution returns the file's current value, which can differ from
+        # TOKEN_MAP's hex; rebinding based on the displayed hex breaks the
+        # original correct binding). User policy 2026-05-04: never override
+        # an existing valid binding on second-pass sweeps.
         for i, fill in enumerate(n.get("fills") or []):
             if not isinstance(fill, dict):
                 continue
             if fill.get("type") != "SOLID":
+                continue
+            # Already bound? Don't touch.
+            bv = fill.get("boundVariables") or {}
+            if isinstance(bv, dict) and bv.get("color"):
                 continue
             rgba = _figma_color_to_rgba_ints(fill.get("color"))
             if rgba is None:
@@ -3042,11 +3050,14 @@ def _collect_bindings(nodes, indexes):
                     {"nodeId": nid, "field": "fills", "index": i, "rgba": rgba}
                 )
 
-        # strokes
+        # strokes — same skip-if-bound logic
         for i, stroke in enumerate(n.get("strokes") or []):
             if not isinstance(stroke, dict):
                 continue
             if stroke.get("type") != "SOLID":
+                continue
+            bv = stroke.get("boundVariables") or {}
+            if isinstance(bv, dict) and bv.get("color"):
                 continue
             rgba = _figma_color_to_rgba_ints(stroke.get("color"))
             if rgba is None:
