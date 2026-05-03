@@ -746,6 +746,17 @@ def cmd_build(blueprint_file: str):
         except Exception as e:
             print(f"\n⚠️ 루트 설정 실패 (무시): {e}")
 
+    # Step E.0: Instance properties / Label text overrides (Rule 2 from invariants 2026-05-04)
+    # Pill / Badge / Button DS 컴포넌트는 텍스트 property가 없어서
+    # `instanceProperties: { Label: "..." }`를 지정해도 적용되지 않음. 빌드 후
+    # 인스턴스 안 첫 TEXT 자식을 찾아 set_text_content로 직접 갱신.
+    # 또한 Boolean/VARIANT/INSTANCE_SWAP 속성은 set_instance_properties로 전달.
+    if root_id and node_map:
+        print("\n🏷️  Instance properties / Label 자동 override 중...")
+        applied = _apply_instance_overrides(blueprint, node_map)
+        if applied:
+            print(f"  → {applied}건 적용")
+
     # Step E: post-fix (2회 실행 — 1회차: FILL 수정 + 배치, 2회차: 레이아웃 안정화 후 최종 배치)
     if root_id:
         print("\n🔧 자동 후처리 실행 중...")
@@ -1893,6 +1904,223 @@ def _match_status_bar_bg_to_nav(tree: dict) -> bool:
         return False
 
 
+def _apply_instance_overrides(blueprint, node_map):
+    """Walk blueprint for any node with type=='instance' + instanceProperties.
+    Two paths:
+      1. `Label` key  → set_text_content on instance's first TEXT descendant
+      2. other keys (Boolean/VARIANT/INSTANCE_SWAP) → set_instance_properties pass-through
+    Resolves nodeId via node_map (build's name→id mapping).
+    Returns count of overrides successfully applied.
+    """
+    overrides = []  # [(nodeId, kind, payload)]
+
+    def walk(node):
+        if isinstance(node, dict):
+            if node.get("type") == "instance":
+                name = node.get("name")
+                ip = node.get("instanceProperties") or {}
+                if name and ip and name in node_map:
+                    nid = node_map[name]
+                    label = ip.get("Label")
+                    if label:
+                        overrides.append((nid, "text", str(label)))
+                    other = {k: v for k, v in ip.items() if k != "Label"}
+                    if other:
+                        overrides.append((nid, "props", other))
+            for c in node.get("children") or []:
+                walk(c)
+        elif isinstance(node, list):
+            for c in node:
+                walk(c)
+
+    walk(blueprint)
+    if not overrides:
+        return 0
+
+    succeeded = 0
+    for nid, kind, payload in overrides:
+        try:
+            if kind == "text":
+                # Fetch instance subtree, find first TEXT descendant
+                r = call_tool("get_node_info", {"nodeId": nid})
+                if not isinstance(r, list) or not r or "Error" in r[0].get("text", "")[:50]:
+                    continue
+                inst = json.loads(r[0]["text"])
+                # Recurse for first TEXT
+                def first_text(n):
+                    if isinstance(n, dict):
+                        if n.get("type") == "TEXT":
+                            return n.get("id")
+                        for c in n.get("children") or []:
+                            t = first_text(c)
+                            if t:
+                                return t
+                    return None
+                tid = first_text(inst)
+                if tid:
+                    call_tool("set_text_content", {"nodeId": tid, "text": payload})
+                    succeeded += 1
+            elif kind == "props":
+                # Pass-through for Boolean / VARIANT / INSTANCE_SWAP
+                call_tool("set_instance_properties", {"nodeId": nid, "properties": payload})
+                succeeded += 1
+        except Exception:
+            pass
+    return succeeded
+
+
+def _auto_bind_semantic_tokens(root_node_id):
+    """Run semantic-token binding sweep on the rendered tree.
+    Wraps _collect_bindings + _apply_bindings into a single auto-step.
+    Honors invariants 4 (semantic only) + 5 (state excluded) — both
+    enforced in _load_token_index, no per-call config needed.
+    """
+    try:
+        token_map = load_token_map()
+        if not token_map:
+            return {"colors_succeeded": 0, "colors_total": 0}
+        indexes = _load_token_index(token_map)
+        r = call_tool("get_nodes_info", {"nodeIds": [root_node_id]})
+        if not isinstance(r, list) or not r or "Error" in r[0].get("text", "")[:50]:
+            return {"colors_succeeded": 0, "colors_total": 0}
+        tree = json.loads(r[0]["text"])[0].get("document") or {}
+        nodes = _flatten_node_tree(tree)
+        queues = _collect_bindings(nodes, indexes)
+        return _apply_bindings(queues)
+    except Exception as e:
+        print(f"  ⚠️ token-bind sweep error (continuing): {e}")
+        return {"colors_succeeded": 0, "colors_total": 0}
+
+
+def _auto_classify_black_texts(root_node_id):
+    """Find TEXT nodes with default-black fill (#000000) AND no bound variable,
+    classify them by ancestor context, and bind to an appropriate semantic
+    token. Workaround for build pipeline bug where $token() in TEXT 'color'
+    field isn't applied.
+
+    Classification rules (priority top-down):
+      • Inside bg-brand-solid ancestor → bg-primary (white)
+      • Inside bg-error-* / bg-warning-* / bg-success-* → matching fg-*
+      • By Korean content patterns → fg-tertiary (메타) / fg-secondary (라벨)
+      • Default → fg-primary
+    """
+    try:
+        # Build var-id → name map
+        rv = call_tool("get_local_variables", {})
+        if not isinstance(rv, list) or not rv:
+            return 0
+        var_id_to_name = {
+            v.get("id"): v.get("name", "")
+            for v in (json.loads(rv[0]["text"]).get("variables") or [])
+        }
+
+        rt = call_tool("get_nodes_info", {"nodeIds": [root_node_id]})
+        if not isinstance(rt, list) or not rt or "Error" in rt[0].get("text", "")[:50]:
+            return 0
+        tree = json.loads(rt[0]["text"])[0].get("document") or {}
+
+        to_bind = []
+
+        def get_bg(node):
+            fills = node.get("fills") or []
+            if not fills or not isinstance(fills[0], dict):
+                return None
+            bv = fills[0].get("boundVariables") or {}
+            cb = bv.get("color") if isinstance(bv, dict) else None
+            if isinstance(cb, dict) and cb.get("id"):
+                return var_id_to_name.get(cb["id"], "")
+            return None
+
+        def classify(text_node, bg_chain):
+            chars = text_node.get("characters", "") or ""
+            # Innermost ancestor bg with content
+            parent_bg = next((b for b in reversed(bg_chain) if b), "") or ""
+            pl = parent_bg.lower()
+            # On brand bg → white
+            if "bg-brand-solid" in pl:
+                return "Colors/Background/bg-primary"
+            if "bg-error-solid" in pl or "fg-error" in pl:
+                return "Colors/Background/bg-primary"
+            if "bg-success-solid" in pl:
+                return "Colors/Background/bg-primary"
+            if "bg-warning-solid" in pl:
+                return "Colors/Background/bg-primary"
+            # On error-secondary (light red) → fg-error-primary text
+            if "bg-error-secondary" in pl or "bg-error-primary" in pl:
+                return "Colors/Foreground/fg-error-primary"
+            if "bg-warning-secondary" in pl or "bg-warning-primary" in pl:
+                return "Colors/Foreground/fg-warning-primary"
+            if "bg-success-secondary" in pl or "bg-success-primary" in pl:
+                return "Colors/Foreground/fg-success-primary"
+            if "bg-brand-primary" in pl or "bg-brand-secondary" in pl:
+                return "Colors/Foreground/fg-brand-primary"
+            # Specific symbols
+            if chars in ("+",):
+                return "Colors/Foreground/fg-success-primary"
+            if chars in ("−", "-"):
+                return "Colors/Foreground/fg-error-primary"
+            # Heuristic by content: short tertiary captions
+            tertiary_hints = (
+                "총 ", "에 보여요", "사용자에게", "전체 보기", "이번 달",
+                "매일매일", "방금 전", "분 전", "시간 전", "어제", "일 전", "주 전",
+            )
+            if any(hint in chars for hint in tertiary_hints):
+                return "Colors/Foreground/fg-tertiary"
+            secondary_hints = ("모은 금액", "납입 예정액", "월 납입", "납입 완료", "남은 납입", "수령 회차", "기간")
+            if any(hint in chars for hint in secondary_hints):
+                return "Colors/Foreground/fg-secondary"
+            # Default
+            return "Colors/Foreground/fg-primary"
+
+        def walk(n, bg_chain):
+            if (n.get("id") or "").startswith("I"):
+                return  # don't touch instance internals
+            own_bg = get_bg(n)
+            new_chain = bg_chain + [own_bg] if own_bg else bg_chain
+            if n.get("type") == "TEXT":
+                fills = n.get("fills") or []
+                if isinstance(fills, list) and fills:
+                    f = fills[0]
+                    if isinstance(f, dict):
+                        color = f.get("color") or {}
+                        bv = f.get("boundVariables") or {}
+                        cb = bv.get("color") if isinstance(bv, dict) else None
+                        bound = isinstance(cb, dict) and cb.get("id")
+                        is_black = (
+                            color.get("r", 1) == 0
+                            and color.get("g", 1) == 0
+                            and color.get("b", 1) == 0
+                        )
+                        if is_black and not bound:
+                            target = classify(n, new_chain)
+                            if target:
+                                to_bind.append({
+                                    "nodeId": n.get("id"),
+                                    "bindings": {"fills/0": target},
+                                })
+            for c in n.get("children") or []:
+                walk(c, new_chain)
+
+        walk(tree, [])
+        if not to_bind:
+            return 0
+
+        succeeded = 0
+        chunk = 50
+        for i in range(0, len(to_bind), chunk):
+            batch = to_bind[i : i + chunk]
+            try:
+                r = call_tool("batch_bind_variables", {"items": batch})
+                d = json.loads(r[0]["text"]) if isinstance(r, list) and r else {}
+                succeeded += d.get("succeeded", 0)
+            except Exception:
+                pass
+        return succeeded
+    except Exception as e:
+        print(f"  ⚠️ black-text classify error (continuing): {e}")
+        return 0
+
+
 def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     """빌드 후 자동 후처리: FILL 사이징, Tab Bar/FAB 배치, 섹션 갭, 텍스트 수정, stroke 정렬.
 
@@ -1953,10 +2181,23 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
         print(f"  → ⚠️ {peek_warns}개 섹션에서 peek 패턴 위반 (카드가 너무 큼 — Blueprint 수정 필요)")
 
     # 8. Status Bar bg 매칭 (CLAUDE.md 규칙 #25)
-    print("\n[8/8] Status Bar bg를 NavBar fill과 매칭 중...")
+    print("\n[8/10] Status Bar bg를 NavBar fill과 매칭 중...")
     sb_matched = _match_status_bar_bg_to_nav(tree)
     if not sb_matched:
         print(f"  → skip (Status Bar 자식 없음 또는 NavBar fill 미지정)")
+
+    # 9. Semantic Token Binding sweep (Rule 4/5 from invariants 2026-05-04)
+    print("\n[9/10] Semantic Token Binding sweep 중...")
+    bind_counts = _auto_bind_semantic_tokens(root_node_id)
+    print(f"  → colors {bind_counts.get('colors_succeeded',0)}/{bind_counts.get('colors_total',0)} bound")
+
+    # 10. Auto-fix black default text colors (Rule 6 from invariants)
+    # build pipeline의 resolve_tokens_in_blueprint가 TEXT 'color'에 있는
+    # $token()을 적용 안 하는 버그 우회. 검정(0,0,0)이고 not-bound인 텍스트를
+    # 부모 컨텍스트에 따라 분류해서 바인딩.
+    print("\n[10/10] 검정 default 텍스트 자동 분류 + binding 중...")
+    text_fixed = _auto_classify_black_texts(root_node_id)
+    print(f"  → {text_fixed} 텍스트 자동 컬러 binding")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
@@ -1967,6 +2208,8 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     print(f"  Stroke INSIDE 수정: {stroke_fixes}건")
     print(f"  Peek 위반 경고: {peek_warns}건")
     print(f"  Status Bar bg 매칭: {'OK' if sb_matched else 'skip'}")
+    print(f"  Semantic bind: {bind_counts.get('colors_succeeded',0)}/{bind_counts.get('colors_total',0)}")
+    print(f"  텍스트 컨텍스트 binding: {text_fixed}건")
     print(f"  루트 높이: {layout_result['root_height']}")
     print(f"{'='*50}\n")
 
@@ -2473,16 +2716,21 @@ def _load_token_index(token_map):
             # semantic-named tokens (bg-*, fg-*, border-*, text-*).
             if not is_semantic:
                 continue
-            # User policy 2026-05-03 (additional): exclude state-specific tokens
-            # (bg-disabled, bg-active, *_hover, *_pressed, *_focused). These
-            # share hex values with hierarchy tokens (e.g. bg-disabled = #f3f4f6
-            # = bg-tertiary) so the matcher must NOT pick them for normal fills.
-            #   -> default state must bind to bg-primary/secondary/tertiary/quaternary
-            #      not bg-disabled/bg-active/etc.
+            # User policy 2026-05-03/04: in DEFAULT state, never bind to
+            # state-specific OR modifier-variant tokens. These share hex with
+            # plain hierarchy tokens (e.g. bg-secondary_subtle = #fcfcfd =
+            # bg-secondary) but encode "subtle / hover / disabled" semantics
+            # which are wrong for a normal-state fill.
+            #   plain only: bg-primary/secondary/tertiary/quaternary
+            #   excluded: any token with state/modifier suffix or special-purpose name
             lower = (figma_path or name).lower()
             if any(state in lower for state in (
+                # state names
                 "/bg-disabled", "/bg-active",
+                # modifier suffixes (apply to bg-* / fg-* / border-* / text-*)
                 "_hover", "_pressed", "_focused", "_focus", "_visited",
+                "_subtle", "_alt", "_on-brand",
+                # inverse / solid (special purpose, never normal default)
                 "/bg-primary-solid", "/bg-secondary-solid",
             )):
                 continue
