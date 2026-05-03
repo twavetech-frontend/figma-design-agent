@@ -599,6 +599,7 @@ def cmd_build(blueprint_file: str):
     # ──── 병렬 실행: 이미지 사전 생성 + 빌드 동시 시작 ────
     # Step A: Blueprint에서 imageGen 스펙을 빌드 전에 추출 (nodeId 불필요)
     image_specs_raw = []
+    pexels_specs_raw = []
 
     def _walk_for_image_specs(node: dict):
         image_gen = node.get("imageGen")
@@ -611,6 +612,14 @@ def cmd_build(blueprint_file: str):
                 "height": image_gen.get("height"),
                 "style": image_gen.get("style"),
             })
+        # New: imageQuery for real-photo via Pexels
+        image_query = node.get("imageQuery")
+        if image_query:
+            pexels_specs_raw.append({
+                "nodeName": node.get("name", ""),
+                "query": image_query if isinstance(image_query, str) else image_query.get("q", ""),
+                "orientation": (image_query.get("orientation") if isinstance(image_query, dict) else None),
+            })
         for child in node.get("children", []):
             _walk_for_image_specs(child)
 
@@ -622,6 +631,13 @@ def cmd_build(blueprint_file: str):
         print(f"\n🎨 이미지 사전 생성 시작 ({len(image_specs_raw)}건 — 빌드와 병렬 실행)")
         executor = ThreadPoolExecutor(max_workers=1)
         pre_gen_future = executor.submit(_pre_generate_images_parallel, image_specs_raw)
+
+    # Step B.2: Pexels 사진 검색을 백그라운드 스레드로 시작
+    pexels_future = None
+    if pexels_specs_raw:
+        print(f"\n📸 Pexels 사진 검색 시작 ({len(pexels_specs_raw)}건)")
+        pexels_executor = ThreadPoolExecutor(max_workers=4)
+        pexels_future = pexels_executor.submit(_fetch_pexels_images_parallel, pexels_specs_raw)
 
     # Step C: 빌드 실행 (이미지 생성과 동시)
     start = time.time()
@@ -758,6 +774,20 @@ def cmd_build(blueprint_file: str):
         print("\n⚠️  nodeMap이 None — 빌드 실패로 사전 생성 이미지 적용 불가")
     elif not image_specs_raw:
         print("\n(imageGen 스펙 없음 — 이미지 생성 건너뜀)")
+
+    # Step F.2: Pexels 사진 검색 완료 대기 + Figma 적용
+    if pexels_future and node_map is not None:
+        print("\n⏳ Pexels 사진 다운로드 완료 대기 중...")
+        pexels_results = pexels_future.result()
+        pexels_executor.shutdown(wait=False)
+        ok = [r for r in pexels_results if "imagePath" in r]
+        if ok:
+            print(f"\n🖼️  Pexels 사진 Figma 적용 ({len(ok)}건)...")
+            _apply_pre_generated_images(pexels_results, node_map)
+    elif pexels_future:
+        pexels_future.cancel()
+        pexels_executor.shutdown(wait=False)
+        print("\n⚠️  nodeMap이 None — Pexels 적용 불가")
 
     # Step G: NavBar 로고 인스턴스 교체
     if node_map and "Logo Placeholder" in node_map:
@@ -1067,6 +1097,84 @@ def _pre_generate_images_parallel(specs: list) -> list:
     ok = sum(1 for r in results if "imagePath" in r)
     fail = sum(1 for r in results if "error" in r)
     print(f"  이미지 사전 생성 — {ok} 성공, {fail} 실패 ({elapsed:.1f}s)")
+    return results
+
+
+_WIKIMEDIA_UA = "figma-design-agent/1.0 (https://github.com/twavetech-frontend/figma-design-agent)"
+
+
+def _fetch_pexels_single(spec: dict, output_dir: str) -> dict:
+    """Search Wikimedia Commons for a single query, download first matching photo.
+
+    Note: function name kept as `_fetch_pexels_*` for compat — actually uses
+    Wikimedia Commons API since Pexels requires auth (401) and Unsplash blocks
+    scraping. Wikimedia is free, no auth, just needs proper User-Agent.
+
+    spec: {nodeName, query}
+    Returns: {nodeName, imagePath, isHero=True} or {nodeName, error}
+    """
+    import urllib.request, urllib.parse
+    name = spec.get("nodeName", "")
+    query = spec.get("query", "")
+    if not query:
+        return {"nodeName": name, "error": "empty query"}
+    api_url = (
+        "https://commons.wikimedia.org/w/api.php?"
+        f"action=query&format=json&generator=search&"
+        f"gsrsearch={urllib.parse.quote(query)}+filetype:bitmap&"
+        f"gsrnamespace=6&gsrlimit=5&"
+        f"prop=imageinfo&iiprop=url&iiurlwidth=600"
+    )
+    try:
+        req = urllib.request.Request(api_url, headers={"User-Agent": _WIKIMEDIA_UA})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read().decode())
+        pages = (data.get("query", {}) or {}).get("pages", {}) or {}
+        # Sort by index to get top match
+        sorted_pages = sorted(pages.values(),
+                              key=lambda p: p.get("index", 999))
+        image_url = None
+        for p in sorted_pages:
+            infos = p.get("imageinfo") or []
+            if not infos: continue
+            url = infos[0].get("thumburl") or infos[0].get("url")
+            if url:
+                image_url = url
+                break
+        if not image_url:
+            return {"nodeName": name, "error": f"no results for '{query}'"}
+        safe = "".join(c if c.isalnum() or c in "_-" else "_" for c in name)
+        ext = ".jpg"
+        if ".png" in image_url.lower(): ext = ".png"
+        local = os.path.join(output_dir, f"wm_{safe}{ext}")
+        req2 = urllib.request.Request(image_url, headers={"User-Agent": _WIKIMEDIA_UA})
+        with urllib.request.urlopen(req2, timeout=30) as r:
+            with open(local, "wb") as f:
+                f.write(r.read())
+        return {"nodeName": name, "imagePath": local, "isHero": True}
+    except Exception as e:
+        return {"nodeName": name, "error": str(e)}
+
+
+def _fetch_pexels_images_parallel(specs: list) -> list:
+    """Fetch all Pexels image queries in parallel."""
+    output_dir = os.path.join(os.path.dirname(__file__), "..", "assets", "pexels")
+    os.makedirs(output_dir, exist_ok=True)
+    results = []
+    start = time.time()
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        futures = {ex.submit(_fetch_pexels_single, spec, output_dir): spec
+                   for spec in specs}
+        for future in as_completed(futures):
+            res = future.result()
+            if "error" in res:
+                print(f"  ❌ Pexels {res['nodeName']}: {res['error'][:80]}")
+            else:
+                print(f"  ✅ Pexels {res['nodeName']}: {os.path.basename(res['imagePath'])}")
+            results.append(res)
+    elapsed = time.time() - start
+    ok = sum(1 for r in results if "imagePath" in r)
+    print(f"  Pexels — {ok}/{len(specs)} ({elapsed:.1f}s)")
     return results
 
 
