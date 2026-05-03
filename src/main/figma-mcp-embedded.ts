@@ -93,6 +93,14 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     type: 'object', properties: {}
   }, async () => cmd('get_remote_components'));
 
+  reg('get_component_key', 'Get componentKey for a COMPONENT or mainComponentKey for an INSTANCE', {
+    type: 'object',
+    properties: {
+      nodeId: { type: 'string', description: 'Node ID (COMPONENT or INSTANCE)' }
+    },
+    required: ['nodeId']
+  }, async (params) => cmd('get_component_key', params));
+
   reg('get_pages', 'Get all pages in the document', {
     type: 'object', properties: {}
   }, async () => cmd('get_pages'));

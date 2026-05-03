@@ -15,6 +15,8 @@ COMPONENT_KEYS = {
     # Brand / chrome
     "Logo":                 "81efeddd245e95f31a2724aa370ee54d3caf93d0",
     "Logo (alt)":           "957912b03baf924a48ef83424ed66f22a4a386a8",  # CLAUDE.md NavBar logo
+    # Mobile system chrome
+    "Status Bar":           "51ddb19de206b67eae2d554b1d20c018feb754f4",  # iPhone Status bar (9:41)
     # Pills
     "Pill sm Brand":        "d0163041d0c710551c31ffd4acaca5ce42f993ac",
     "Pill sm Success":      "e8f010fe720f6742a38c8c8c1c591531fcb5149b",
