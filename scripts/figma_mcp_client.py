@@ -13,6 +13,12 @@ Usage:
     # 3. batch_build_screen (디자인 생성)
     python3 scripts/figma_mcp_client.py build blueprint.json
 
+    # 3a. Blueprint lint (registry 기반 룰)
+    python3 scripts/figma_mcp_client.py lint blueprint.json
+
+    # 3b. 빌드 후 verify (실제 Figma 트리 vs 룰)
+    python3 scripts/figma_mcp_client.py verify <rootNodeId> [blueprint.json]
+
     # 4. DS 변수 바인딩
     python3 scripts/figma_mcp_client.py bind bindings.json
 
@@ -30,6 +36,9 @@ import base64
 import io
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Optional, List, Dict
+
+# Make sibling design_rules package importable (scripts/ on path)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 MCP_URL = "http://localhost:8769/mcp"
 SESSION_FILE = os.path.join(os.path.dirname(__file__), ".mcp_session")
@@ -137,121 +146,10 @@ def _flatten_padding_objects(node: Any) -> Any:
     return node
 
 
-def validate_blueprint(blueprint: dict) -> list:
-    """Validate blueprint JSON before building. Returns list of error/warning strings."""
-    issues = []
-
-    def _check_node(node: dict, path: str = "root"):
-        # Check autoLayout
-        al = node.get("autoLayout")
-        if al:
-            mode = al.get("layoutMode") or al.get("direction")
-            if mode and mode not in ("HORIZONTAL", "VERTICAL"):
-                issues.append(f"ERROR {path}: invalid layoutMode/direction '{mode}' (must be HORIZONTAL or VERTICAL)")
-
-            # Check padding is not an object (should be flat)
-            if "padding" in al and isinstance(al["padding"], dict):
-                issues.append(f"WARN {path}: padding is an object — will be auto-flattened, but prefer paddingTop/Bottom/Left/Right")
-
-            # Check SPACE_BETWEEN + FILL conflict
-            if al.get("primaryAxisAlignItems") == "SPACE_BETWEEN":
-                for child in node.get("children", []):
-                    child_al = child.get("autoLayout", {})
-                    if child.get("layoutSizingHorizontal") == "FILL" or child_al.get("layoutSizingHorizontal") == "FILL":
-                        issues.append(f"WARN {path} → {child.get('name','?')}: SPACE_BETWEEN parent + FILL child = 0px spacing")
-
-        # Check fill/fontColor is not raw hex string
-        for color_key in ("fill", "fontColor", "iconColor", "stroke"):
-            val = node.get(color_key)
-            if isinstance(val, str) and val.startswith("#"):
-                issues.append(f"ERROR {path}: {color_key}='{val}' is hex string — use $token() or {{r,g,b,a}} object")
-
-        # Check font for Korean text
-        text = node.get("text") or node.get("characters")
-        if text and any('\uac00' <= ch <= '\ud7a3' for ch in str(text)):
-            font = node.get("fontFamily") or node.get("fontName", {}).get("family", "")
-            if font and font not in ("Pretendard", ""):
-                issues.append(f"WARN {path}: Korean text with font '{font}' — should use Pretendard")
-
-        # R1: FRAME children of root/sections must be FILL (not HUG)
-        node_type = node.get("type", "frame")
-        is_frame = node_type in ("frame", "FRAME")
-        parent_has_layout = bool(node.get("autoLayout"))
-
-        if is_frame and path != "root":
-            sizing_h = node.get("layoutSizingHorizontal", "")
-            # Frames inside auto-layout parents should be FILL
-            if sizing_h == "HUG" or (sizing_h == "" and parent_has_layout):
-                node_name = node.get("name", "?")
-                # Skip small frames (icons, tags, chips, indicators, dots)
-                w = node.get("width", 999)
-                skip_keywords = ("Tag", "Chip", "Badge", "Dot", "Icon", "Indicator", "Nav Right", "DI1 Left", "DI2 Left", "DI3 Left")
-                _validate_skip_re = re.compile(
-                    r'\b(?:' + '|'.join(re.escape(kw.lower()) for kw in skip_keywords) + r')\b'
-                )
-                is_small = w <= 60
-                is_skip = bool(_validate_skip_re.search(node_name.lower()))
-                # Only warn for section/card-level frames and their direct children
-                depth = path.count("/")
-                if not is_small and not is_skip and depth <= 3:
-                    issues.append(f"WARN {path}: FRAME '{node_name}' has layoutSizingHorizontal='{sizing_h or 'unset'}' — should be FILL")
-
-        # R2: Tab Bar and FAB must have ABSOLUTE positioning note
-        node_name = node.get("name", "")
-        if "Tab Bar" in node_name or "FAB" in node_name:
-            pos = node.get("layoutPositioning", "")
-            if pos != "ABSOLUTE":
-                issues.append(f"WARN {path}: '{node_name}' needs layoutPositioning='ABSOLUTE' (batch_build_screen won't apply it — must be set in post-processing)")
-
-        # R3: Hero/Banner section should have HORIZONTAL carousel wrapper
-        if ("Banner" in node_name or "Hero" in node_name or "Carousel" in node_name):
-            children = node.get("children", [])
-            banner_children = [c for c in children if "Banner" in c.get("name", "") and c.get("type", "frame") in ("frame", "FRAME")]
-            if len(banner_children) >= 2:
-                layout_mode = (node.get("autoLayout", {}).get("layoutMode", "") or
-                               node.get("autoLayout", {}).get("direction", ""))
-                clips = node.get("clipsContent", False)
-                if layout_mode != "HORIZONTAL":
-                    issues.append(f"WARN {path}: Carousel '{node_name}' has {len(banner_children)} banners but layoutMode='{layout_mode}' — should be HORIZONTAL")
-                if not clips:
-                    issues.append(f"WARN {path}: Carousel '{node_name}' needs clipsContent=true to show only first banner")
-
-        # R4: FAB with text should be pill-shaped (width >= 100)
-        if "FAB" in node_name:
-            w = node.get("width", 0)
-            children = node.get("children", [])
-            has_text = any(c.get("type") in ("text", "TEXT") for c in children)
-            if has_text and w < 100:
-                issues.append(f"WARN {path}: FAB has text but width={w} — use pill shape (width >= 100)")
-
-        # R5: CTA/Button frames with text children must have vertical padding
-        # Without padding, HUG sizing collapses height to text-only (~20px instead of ~52px)
-        cta_keywords = ("CTA Button", "CTA", "Button")
-        if is_frame and al and any(kw.lower() in node_name.lower() for kw in cta_keywords):
-            children = node.get("children", [])
-            has_text = any(c.get("type") in ("text", "TEXT") for c in children)
-            pt = al.get("paddingTop", 0)
-            pb = al.get("paddingBottom", 0)
-            if has_text and pt == 0 and pb == 0:
-                issues.append(f"WARN {path}: CTA/Button '{node_name}' has no vertical padding in autoLayout — add paddingTop/Bottom (e.g. 16) for proper height")
-
-        # R6: 소형 아이콘 imageGen에 style="2d" 없으면 경고
-        image_gen = node.get("imageGen")
-        if image_gen and isinstance(image_gen, dict):
-            ig_hero = image_gen.get("isHero", False)
-            ig_w = image_gen.get("width", 120)
-            ig_h = image_gen.get("height", 120)
-            ig_style = (image_gen.get("style") or "").lower()
-            if not ig_hero and max(ig_w, ig_h) <= 32 and ig_style not in ("2d", "tossface"):
-                issues.append(f"WARN {path}: '{node_name}' imageGen {ig_w}x{ig_h} — style='2d' 누락 (자동 보정됨, 명시 권장)")
-
-        # Check children
-        for i, child in enumerate(node.get("children", [])):
-            child_name = child.get("name", f"child[{i}]")
-            _check_node(child, f"{path}/{child_name}")
-
-    _check_node(blueprint)
-    return issues
+# NOTE: validate_blueprint was removed 2026-05-04 — all checks ported into
+# scripts/design_rules/ (S00 schema, R10 layout, R11 typography, R12 imageGen,
+# R13 autoLayout, R20 semantic-only, R21 bg-hierarchy, R22 brand-text,
+# R23 ds-first, R24 status-bar, R25 tab-bar-stroke). Use REGISTRY.run_lint().
 
 
 _resolved_color_log: List[Dict[str, str]] = []
@@ -562,24 +460,27 @@ def cmd_build(blueprint_file: str):
     with open(blueprint_file) as f:
         blueprint = json.load(f)
 
-    # Step 1: Validate blueprint before any processing
-    issues = validate_blueprint(blueprint)
-    errors = [i for i in issues if i.startswith("ERROR")]
-    warns = [i for i in issues if i.startswith("WARN")]
+    # Step 1: L1 schema + L2 lint via registry hard-gate
+    from design_rules import REGISTRY as _RULES, Severity as _Sev
+    blueprint = _RULES.run_inject(blueprint)  # L3 — Status Bar etc.
+    violations = _RULES.run_lint(blueprint)
+    errors = [v for v in violations if v.severity == _Sev.ERROR]
+    warns  = [v for v in violations if v.severity == _Sev.WARN]
+    infos  = [v for v in violations if v.severity == _Sev.INFO]
     if errors:
         print(f"\n{'='*50}")
-        print(f"BLUEPRINT VALIDATION FAILED — {len(errors)} error(s), {len(warns)} warning(s):")
-        for issue in issues:
-            print(f"  {issue}")
+        print(f"LINT FAILED — {len(errors)} error(s), {len(warns)} warning(s):")
+        for v in violations:
+            if v.severity in (_Sev.ERROR, _Sev.WARN):
+                print(f"  {v.format()}")
         print(f"{'='*50}\n")
-        print("Fix errors before building. Use --force to skip validation.")
+        print("Fix errors before building. Use --force to skip lint.")
         if "--force" not in sys.argv:
             return
-    elif warns:
-        print(f"Blueprint validation: {len(warns)} warning(s)")
-        for w in warns:
-            print(f"  {w}")
-
+    elif warns or infos:
+        print(f"Lint: {len(warns)} warning(s), {len(infos)} info")
+        for v in warns[:20]:
+            print(f"  {v.format()}")
     # Step 2: Flatten padding objects in autoLayout before build
     blueprint = _flatten_padding_objects(blueprint)
 
@@ -2213,6 +2114,22 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     print(f"  루트 높이: {layout_result['root_height']}")
     print(f"{'='*50}\n")
 
+    # ── L5 verify — registry-based post-build assertions ──
+    try:
+        from design_rules import REGISTRY as _R, Severity as _S
+        verify_tree = _collect_tree(root_node_id)
+        violations = _R.run_verify(verify_tree, ctx={"blueprint": pre_computed_layout})
+        errs = [v for v in violations if v.severity == _S.ERROR]
+        warns = [v for v in violations if v.severity == _S.WARN]
+        if errs or warns:
+            print(f"VERIFY — {len(errs)} error(s), {len(warns)} warning(s):")
+            for v in violations:
+                print(f"  {v.format()}")
+        else:
+            print(f"VERIFY ✓ all {len([r for r in _R.all() if 'verify' in [p.value for p in r.phases()]])} verify rule(s) passed")
+    except Exception as _ve:
+        print(f"VERIFY skipped (error): {_ve}")
+
 
 def cmd_bind(bindings_file: str):
     """Apply DS variable bindings from a JSON file.
@@ -2593,21 +2510,48 @@ def main():
             sys.exit(1)
         cmd_post_fix(sys.argv[2])
     elif cmd == "validate":
+        # Backward-compat alias — forwards to lint
+        print("[deprecated] 'validate' subcommand → forwarding to 'lint'")
+        sys.argv[1] = "lint"
+        return main()
+    elif cmd == "lint":
+        # New registry-based lint — use this preferentially over `validate`
         if len(sys.argv) < 3:
-            print("Usage: figma_mcp_client.py validate <blueprint.json>")
+            print("Usage: figma_mcp_client.py lint <blueprint.json>")
             sys.exit(1)
+        from design_rules import REGISTRY as _R, Severity as _S
         with open(sys.argv[2]) as f:
             bp = json.load(f)
         bp = _flatten_padding_objects(bp)
-        issues = validate_blueprint(bp)
-        if not issues:
-            print("✓ Blueprint validation passed — no issues found")
-        else:
-            errors = [i for i in issues if i.startswith("ERROR")]
-            warns = [i for i in issues if i.startswith("WARN")]
-            print(f"{'✗' if errors else '⚠'} {len(errors)} error(s), {len(warns)} warning(s):")
-            for issue in issues:
-                print(f"  {issue}")
+        bp = _R.run_inject(bp)  # show post-inject state
+        violations = _R.run_lint(bp)
+        errs = [v for v in violations if v.severity == _S.ERROR]
+        warns = [v for v in violations if v.severity == _S.WARN]
+        infos = [v for v in violations if v.severity == _S.INFO]
+        print(f"Loaded rules: {len(_R.all())}")
+        print(f"{'✗' if errs else '✓'} {len(errs)} error(s), {len(warns)} warning(s), {len(infos)} info")
+        for v in violations:
+            print(f"  {v.format()}")
+        sys.exit(1 if errs else 0)
+    elif cmd == "verify":
+        if len(sys.argv) < 3:
+            print("Usage: figma_mcp_client.py verify <rootNodeId> [blueprint.json]")
+            sys.exit(1)
+        from design_rules import REGISTRY as _R, Severity as _S
+        ensure_session()
+        root_id = sys.argv[2]
+        tree = _collect_tree(root_id)
+        ctx = {}
+        if len(sys.argv) > 3:
+            with open(sys.argv[3]) as f:
+                ctx["blueprint"] = json.load(f)
+        violations = _R.run_verify(tree, ctx)
+        errs = [v for v in violations if v.severity == _S.ERROR]
+        warns = [v for v in violations if v.severity == _S.WARN]
+        print(f"Verify: {len(errs)} error(s), {len(warns)} warning(s)")
+        for v in violations:
+            print(f"  {v.format()}")
+        sys.exit(1 if errs else 0)
     elif cmd == "assemble":
         if len(sys.argv) < 3:
             print("Usage: figma_mcp_client.py assemble <config.json>")
