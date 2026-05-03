@@ -17,7 +17,9 @@ from .base import Phase, Rule, Severity, Violation, register
 
 
 _TOKEN_RE = re.compile(r"^\$token\((.+)\)$")
-_BRAND_BG_NAMES = ("bg-brand-solid", "bg-brand-primary",
+# Only SOLID (saturated) brand bgs require white text — light tints
+# like bg-brand-primary (#f4ecff) are pale and accept normal text colors.
+_BRAND_BG_NAMES = ("bg-brand-solid", "bg-brand-section",
                    "bg-success-solid", "bg-error-solid", "bg-warning-solid")
 _OK_ON_BRAND_TOKENS = (
     "bg-primary",                    # white surface used as text fg
