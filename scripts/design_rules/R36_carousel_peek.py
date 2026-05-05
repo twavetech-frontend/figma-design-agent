@@ -118,14 +118,51 @@ def _is_horizontal_carousel_tree(node: dict) -> bool:
     layout = (node.get("layoutMode") or "")
     if layout != "HORIZONTAL":
         return False
-    return bool(node.get("clipsContent"))
+    if node.get("clipsContent"):
+        return True
+    # Fallback: even when clipsContent flag is not present in the
+    # collected tree (Figma plugin doesn't always echo it back), treat
+    # any HORIZONTAL frame whose total card-width exceeds its own width
+    # as a scroll carousel — it WILL clip its overflowing children at
+    # paint time regardless of the property's reported value.
+    kids = node.get("_children_full") or node.get("children") or []
+    if len(kids) < 2:
+        return False
+    own_w = node.get("width") or 0
+    if not own_w:
+        return False
+    pad_l = node.get("paddingLeft") or 0
+    pad_r = node.get("paddingRight") or 0
+    spacing = node.get("itemSpacing") or 0
+    total = pad_l + pad_r + spacing * (len(kids) - 1)
+    fixed_count = 0
+    for k in kids:
+        w = k.get("width") or 0
+        if not w:
+            return False
+        total += w
+        if k.get("layoutSizingHorizontal") in ("FIXED", None, ""):
+            fixed_count += 1
+    # Need cards to be FIXED-width and total to exceed viewport
+    return total > own_w + 4 and fixed_count >= 2
 
 
 def _abs_x(n: dict) -> Optional[float]:
     bb = n.get("absoluteBoundingBox") if isinstance(n, dict) else None
     if isinstance(bb, dict) and "x" in bb: return float(bb["x"])
-    if isinstance(n, dict) and "x" in n: return float(n["x"])
+    if isinstance(n, dict) and "x" in n and n["x"] is not None:
+        return float(n["x"])
     return None
+
+
+def _compute_card_x(carousel: dict, idx: int) -> float:
+    """When abs x is unavailable, compute the index-based x: paddingLeft +
+    sum of previous card widths + spacing*idx."""
+    pad_l = carousel.get("paddingLeft") or 0
+    spacing = carousel.get("itemSpacing") or 0
+    kids = carousel.get("_children_full") or carousel.get("children") or []
+    prev_total = sum((k.get("width") or 0) for k in kids[:idx])
+    return float(pad_l + prev_total + spacing * idx)
 
 
 def _autofix(tree: dict, ctx: dict) -> int:
@@ -155,14 +192,18 @@ def _autofix(tree: dict, ctx: dict) -> int:
                     pad_l = n.get("paddingLeft") or 0
                     pad_r = n.get("paddingRight") or 0
                     spacing = n.get("itemSpacing") or 0
-                    nav_x = _abs_x(n)
+                    nav_x = _abs_x(n) or 0
                     nav_w = n.get("width") or 0
-                    if nav_x is not None and nav_w:
+                    if nav_w:
+                        # Use abs coords if present, else relative to carousel x=0
                         viewport_right = nav_x + nav_w - pad_r
                         last_card = kids[-1]
                         last_x = _abs_x(last_card)
+                        if last_x is None:
+                            # Index-based fallback
+                            last_x = nav_x + _compute_card_x(n, len(kids) - 1)
                         last_w = widths[-1]
-                        if last_x is not None:
+                        if True:
                             peek = max(0, viewport_right - last_x)
                             if peek < 0.25 * last_w and peek < 60:
                                 # compute target card width

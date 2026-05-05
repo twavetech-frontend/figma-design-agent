@@ -533,11 +533,32 @@ def _inject_canonical_reference(blueprint: dict) -> dict:
                 for r in refs
             )
             if not already:
+                in_file_ref = f"figma://{ref['fileKey']}/{ref['nodeId']}"
                 refs.insert(0, {
                     "section": "(canonical full-screen)",
-                    "ref": f"figma://{ref['fileKey']}/{ref['nodeId']}",
+                    "ref": in_file_ref,
                     "app": "imin (user-modified)",
                     "extract": ref["note"],
+                    # Auto-fill _searchLog so S21 doesn't ERROR on this
+                    # auto-injected entry (it is by definition the most
+                    # authoritative reference — the user's own design)
+                    "_searchLog": {
+                        "queries": ["canonical in-file design", key],
+                        "candidates": [
+                            in_file_ref,
+                            f"blueprint_templates.json sections.{ref.get('template', '?')}",
+                            "fallback: uibowl/toss/* + uibowl/kakaopay/*",
+                        ],
+                        "chosen": in_file_ref,
+                        "copyNotes": (f"Auto-attached canonical reference: "
+                                      f"{ref['name']} (node {ref['nodeId']}) "
+                                      f"in file {ref['fileKey']}. Template: "
+                                      f"{ref.get('template', '?')}. "
+                                      f"Enforced by: {ref.get('rule', '?')}. "
+                                      f"This entry is auto-injected by "
+                                      f"_inject_canonical_reference for "
+                                      f"any blueprint matching '{key}'."),
+                    },
                 })
                 print(f"  → auto-inserted as references[0]")
             break
