@@ -488,6 +488,62 @@ def _ledger_record(blueprint_file: str, root_id: str):
     _ledger_save(ledger)
 
 
+# ── Canonical in-file references (D — pre-build hook) ──────────────────
+# Maps blueprint name keyword → user-approved canonical frame in same Figma file.
+# When a build matches a known screen, the agent + lint are forced to align
+# with the actual user-polished design rather than stale archived blueprints.
+CANONICAL_IN_FILE_REFS = {
+    "imin_home": {
+        "fileKey": "SsgiLsXVMkf0wv8OhRGwks",
+        "nodeId": "17037:3628",
+        "name": "imin_home_v17",
+        "rule": "R31-imin-home-canonical",
+        "template": "blueprint_templates.json → sections.RecommendSectionV17",
+        "note": (
+            "User-approved canonical home design. Recommend Section uses "
+            "bg-secondary card + 161×68 pill progress widget + 3 stepper "
+            "pills + full-width '스테이지 참여하기' brand CTA + "
+            "이율순·금액순·기간순 view-all hint. Brand-purple recommend "
+            "containers from earlier v12 builds are deprecated."
+        ),
+    },
+}
+
+
+def _inject_canonical_reference(blueprint: dict) -> dict:
+    """If blueprint name matches a known canonical screen, attach a
+    `_canonicalReference` marker so downstream rules (R31 etc.) and the
+    agent are aware of the in-file authoritative design. This is a
+    decision-aid — actual structural enforcement still goes through R*
+    design rules in design_rules/.
+    """
+    name = (blueprint.get("rootName") or blueprint.get("name") or "").lower()
+    for key, ref in CANONICAL_IN_FILE_REFS.items():
+        if key in name:
+            blueprint["_canonicalReference"] = ref
+            print(f"\n[canonical-ref] '{key}' detected → {ref['name']} ({ref['nodeId']})")
+            print(f"  Template: {ref['template']}")
+            print(f"  Enforced by: {ref['rule']}")
+            print(f"  Note: {ref['note'][:120]}...")
+
+            # Also auto-augment references[] so S20 sees an in-file ref entry
+            refs = blueprint.setdefault("references", [])
+            already = any(
+                isinstance(r, dict) and r.get("ref", "").startswith(f"figma://{ref['fileKey']}")
+                for r in refs
+            )
+            if not already:
+                refs.insert(0, {
+                    "section": "(canonical full-screen)",
+                    "ref": f"figma://{ref['fileKey']}/{ref['nodeId']}",
+                    "app": "imin (user-modified)",
+                    "extract": ref["note"],
+                })
+                print(f"  → auto-inserted as references[0]")
+            break
+    return blueprint
+
+
 def cmd_build(blueprint_file: str):
     """Build a screen from a blueprint JSON file.
 
@@ -515,6 +571,9 @@ def cmd_build(blueprint_file: str):
 
     with open(blueprint_file) as f:
         blueprint = json.load(f)
+
+    # Step 0: D — auto-inject canonical in-file reference for known screens
+    blueprint = _inject_canonical_reference(blueprint)
 
     # Step 1: L1 schema + L2 lint via registry hard-gate
     from design_rules import REGISTRY as _RULES, Severity as _Sev
@@ -644,6 +703,54 @@ def cmd_build(blueprint_file: str):
     # Clone & Bind 파이프라인: sanitizer가 이미 blueprint를 안전화했으므로
     # TS 레이어의 enhanceBlueprint(자동 enforce)를 스킵 — star-01 fallback 우회 (S2.5)
     skip_enhance = os.environ.get("FIGMA_MCP_SKIP_ENHANCE", "1") != "0"
+
+    # Sanitize letterSpacing/lineHeight: plugin's batch_build_screen accepts only
+    # numbers (sets unit=PIXELS); object form {value, unit:PERCENT} fails Figma
+    # schema validation ("Expected number, received object"). Flatten in-place
+    # right before send (2026-05-05 regression fix).
+    def _flatten_typo(n):
+        if not isinstance(n, dict): return
+        for k in ("letterSpacing", "lineHeight"):
+            v = n.get(k)
+            if isinstance(v, dict) and "value" in v:
+                unit = (v.get("unit") or "PIXELS").upper()
+                val = v.get("value", 0)
+                if unit == "PERCENT":
+                    fs = n.get("fontSize")
+                    n[k] = (float(fs) * float(val) / 100.0) if isinstance(fs, (int, float)) else 0
+                else:
+                    n[k] = float(val)
+        for c in (n.get("children") or []):
+            _flatten_typo(c)
+    _flatten_typo(blueprint)
+
+    # Guard against TS-layer enhanceBlueprint mis-detecting numeric/Korean
+    # texts as emoji-only and converting them to star-01 placeholders. The
+    # bug is in src/main/figma-mcp-embedded.ts isEmojiOnlyText (\p{Emoji}
+    # matches digits 0-9, '#', '*'). Even with skipEnhance=true, the MCP
+    # server may not reload after a build, so guard client-side: prefix any
+    # purely-non-emoji text with U+2060 WORD JOINER (invisible, doesn't
+    # affect rendering). The emoji-strip regex won't match this so the
+    # text is no longer "emoji-only".
+    import re as _re_guard
+    _SAFE_TEXT_RE = _re_guard.compile(
+        r'^[\sA-Za-z0-9가-힯ㄱ-ㅎㅏ-ㅣ.,!?+\-*/#:;()%원만개월뒤내년일주차회·]+$'
+    )
+    _WORD_JOINER = "⁠"
+    def _guard_numeric_text(n):
+        if not isinstance(n, dict): return
+        if (n.get("type") or "").lower() == "text":
+            t = n.get("text") or n.get("characters")
+            if isinstance(t, str) and t.strip() and _SAFE_TEXT_RE.match(t.strip()):
+                if not t.startswith(_WORD_JOINER):
+                    if "text" in n:
+                        n["text"] = _WORD_JOINER + t
+                    if "characters" in n:
+                        n["characters"] = _WORD_JOINER + t
+        for c in (n.get("children") or []):
+            _guard_numeric_text(c)
+    _guard_numeric_text(blueprint)
+
     content = call_tool("batch_build_screen", {"blueprint": blueprint, "skipEnhance": skip_enhance})
     result = parse_content(content)
     build_elapsed = time.time() - start
@@ -1958,6 +2065,10 @@ def _match_status_bar_bg_to_nav(tree: dict) -> bool:
     """Status Bar(children[0])의 fill을 NavBar(children[1])의 fill과 일치시킴.
     CLAUDE.md 규칙 #25 — 상단 시스템 UI와 앱 헤더의 시각적 연결.
 
+    NavBar fill이 변수에 바인딩돼 있으면 Status Bar에도 같은 변수를 바인딩
+    (raw rgba만 복사하면 Step 9 token-binding sweep이 근사 매칭으로 다른
+    토큰을 다시 붙여 색이 어긋남 — 2026-05-05 R30 패치).
+
     반환: True면 매칭 적용됨, False면 skip (대상 없음 or fill 미지정).
     """
     children = tree.get("_children_full", [])
@@ -1965,8 +2076,9 @@ def _match_status_bar_bg_to_nav(tree: dict) -> bool:
         return False
     sb = children[0]
     nav = children[1]
+    sb_id = sb.get("id")
     sb_name = (sb.get("name") or "").lower()
-    if "status" not in sb_name:
+    if "status" not in sb_name or not sb_id:
         return False
     # NavBar의 첫 SOLID fill 추출
     nav_fills = nav.get("fills") or []
@@ -1984,16 +2096,55 @@ def _match_status_bar_bg_to_nav(tree: dict) -> bool:
     if r is None or g is None or b is None:
         return False
     opacity = solid.get("opacity", 1)
+
+    # ── 1단계: raw rgba로 fill 슬롯 보장 (binding은 fills[0] 존재 전제) ──
     try:
         call_tool("set_fill_color", {
-            "nodeId": sb.get("id"),
+            "nodeId": sb_id,
             "r": r, "g": g, "b": b, "a": opacity,
         })
-        print(f"  Status Bar bg → NavBar fill: rgba({r:.3f},{g:.3f},{b:.3f},{opacity:.2f})")
-        return True
     except Exception as e:
         print(f"  ⚠️ Status Bar bg 매칭 실패: {e}")
         return False
+
+    # ── 2단계: NavBar fill이 변수 바인딩이면 같은 변수로 Status Bar도 바인딩 ──
+    bv = solid.get("boundVariables") or {}
+    var_ref = bv.get("color") if isinstance(bv, dict) else None
+    var_id = var_ref.get("id") if isinstance(var_ref, dict) else None
+    bound_name = None
+    if var_id:
+        try:
+            rv = call_tool("get_local_variables", {})
+            if isinstance(rv, list) and rv:
+                vars_list = (json.loads(rv[0].get("text") or "{}").get("variables") or [])
+                for v in vars_list:
+                    if v.get("id") == var_id:
+                        bound_name = v.get("name")
+                        break
+            if bound_name:
+                rb = call_tool("batch_bind_variables", {
+                    "items": [{
+                        "nodeId": sb_id,
+                        "bindings": {"fills/0": bound_name},
+                    }]
+                })
+                ok = False
+                if isinstance(rb, list) and rb:
+                    try:
+                        d = json.loads(rb[0].get("text") or "{}")
+                        ok = d.get("succeeded", 0) > 0
+                    except Exception:
+                        pass
+                if ok:
+                    print(f"  Status Bar bg → NavBar token: {bound_name}")
+                    return True
+                else:
+                    print(f"  ⚠️ Status Bar token bind 0/1 — raw rgba 유지 ({bound_name})")
+        except Exception as e:
+            print(f"  ⚠️ Status Bar token bind 예외 (raw rgba 유지): {e}")
+
+    print(f"  Status Bar bg → NavBar fill (raw): rgba({r:.3f},{g:.3f},{b:.3f},{opacity:.2f})")
+    return True
 
 
 def _enforce_blueprint_layout(blueprint, node_map):
@@ -2341,6 +2492,49 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     sb_matched = _match_status_bar_bg_to_nav(tree)
     if not sb_matched:
         print(f"  → skip (Status Bar 자식 없음 또는 NavBar fill 미지정)")
+
+    # 8.5. R28 carousel-align: 가로 스크롤 carousel 첫 카드 x = 형제 타이틀 x
+    # (사용자 정책 2026-05-05)
+    print("\n[8.5] R28 가로 carousel ↔ 타이틀 좌측 정렬 보정 중...")
+    try:
+        from design_rules import REGISTRY as _R28
+        # 최신 트리 다시 수집 — 위에서 위치 변경 발생했을 수 있음
+        _r28_tree = _collect_tree(root_node_id)
+        rule = next((r for r in _R28._rules.values()
+                     if r.rule_id == "R28-carousel-align"), None)
+        if rule and rule.auto_fix_built_fn:
+            r28_fixes = rule.auto_fix_built_fn(_r28_tree, {}) or 0
+            print(f"  → {r28_fixes}건 정렬")
+    except Exception as e:
+        print(f"  ⚠️ R28 carousel-align 실패 (무시): {e}")
+
+    # 8.6. R35 underline-tab-active: active tab에 brand bottom stroke 강제
+    # (사용자 정책 2026-05-06)
+    print("\n[8.6] R35 underline tab nav active 강제 중...")
+    try:
+        from design_rules import REGISTRY as _R35
+        _r35_tree = _collect_tree(root_node_id)
+        rule = next((r for r in _R35._rules.values()
+                     if r.rule_id == "R35-underline-tab-active"), None)
+        if rule and rule.auto_fix_built_fn:
+            r35_fixes = rule.auto_fix_built_fn(_r35_tree, {}) or 0
+            print(f"  → {r35_fixes}건 underline 적용")
+    except Exception as e:
+        print(f"  ⚠️ R35 underline-tab-active 실패 (무시): {e}")
+
+    # 8.7. R36 carousel-peek: horizontal carousel 마지막 카드 25%+ peek 강제
+    # (사용자 정책 2026-05-06 — v25 stage card scroll 잘림 회귀 fix)
+    print("\n[8.7] R36 carousel last-card peek 강제 중...")
+    try:
+        from design_rules import REGISTRY as _R36
+        _r36_tree = _collect_tree(root_node_id)
+        rule = next((r for r in _R36._rules.values()
+                     if r.rule_id == "R36-carousel-peek"), None)
+        if rule and rule.auto_fix_built_fn:
+            r36_fixes = rule.auto_fix_built_fn(_r36_tree, {}) or 0
+            print(f"  → {r36_fixes}건 카드 폭 조정")
+    except Exception as e:
+        print(f"  ⚠️ R36 carousel-peek 실패 (무시): {e}")
 
     # 9. Semantic Token Binding sweep (Rule 4/5 from invariants 2026-05-04)
     print("\n[9/10] Semantic Token Binding sweep 중...")
@@ -2833,7 +3027,12 @@ _SEMANTIC_PATH_PARTS = ("/Fg/", "/Bg/", "/Border/", "/Text/", "/Background/", "/
 
 def _is_semantic_token(name, figma_path):
     """Heuristic: token is semantic if name contains fg-/bg-/border-/text- after
-    the type prefix, or if figmaPath has those segments."""
+    the type prefix, or if figmaPath has those segments.
+
+    NOTE 2026-05-05: utility-blue-light carve-out REMOVED. User rejected
+    aqua/second-accent. Only true semantic tokens (bg-/fg-/border-/text-)
+    are eligible for binding.
+    """
     lower_name = name.lower()
     for p in _SEMANTIC_PREFIXES:
         if p in lower_name:

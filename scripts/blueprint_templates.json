@@ -2,7 +2,6 @@
   "_description": "디자인 빌드 섹션 템플릿. Claude가 Blueprint 작성 시 이 템플릿의 섹션을 그대로 사용하고, _variables로 표시된 부분만 교체한다. 기존 blueprint_*.json 파일들의 공통 패턴을 추출하여 정규화한 것.",
   "_usage": "Blueprint JSON 작성 시 해당 섹션 템플릿을 복사 → _variables 항목만 PRD에 맞게 교체 → children[]에 삽입",
   "sections": {
-
     "NavBar": {
       "_description": "상단 네비게이션 바. 로고 플레이스홀더 + 우측 아이콘 그룹. 빌드 후 create_component_instance로 로고 교체.",
       "_variables": [
@@ -60,7 +59,6 @@
         ]
       }
     },
-
     "TabBar": {
       "_description": "하단 탭 바. 5개 탭(홈/커뮤니티/스테이지/라운지/나). post-fix에서 ABSOLUTE 배치 + individual stroke 자동 적용.",
       "_variables": [
@@ -114,7 +112,10 @@
                 "type": "text",
                 "text": "홈",
                 "fontSize": 11,
-                "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "SemiBold"
+                },
                 "fontColor": "$token(fg-brand-primary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
@@ -145,7 +146,10 @@
                 "type": "text",
                 "text": "커뮤니티",
                 "fontSize": 11,
-                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
                 "fontColor": "$token(fg-quaternary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
@@ -176,7 +180,10 @@
                 "type": "text",
                 "text": "스테이지",
                 "fontSize": 11,
-                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
                 "fontColor": "$token(fg-quaternary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
@@ -207,7 +214,10 @@
                 "type": "text",
                 "text": "라운지",
                 "fontSize": 11,
-                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
                 "fontColor": "$token(fg-quaternary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
@@ -238,7 +248,10 @@
                 "type": "text",
                 "text": "나",
                 "fontSize": 11,
-                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
                 "fontColor": "$token(fg-quaternary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
@@ -248,7 +261,6 @@
         ]
       }
     },
-
     "FAB": {
       "_description": "플로팅 액션 버튼. pill 형태 (120x44, cornerRadius 22). post-fix에서 ABSOLUTE 배치 자동 적용.",
       "_variables": [
@@ -292,13 +304,15 @@
             "type": "text",
             "text": "마이 월렛",
             "fontSize": 14,
-            "fontName": { "family": "Pretendard", "style": "Bold" },
+            "fontName": {
+              "family": "Pretendard",
+              "style": "Bold"
+            },
             "fontColor": "$token(fg-white)"
           }
         ]
       }
     },
-
     "HeroSection": {
       "_description": "히어로 배너 캐로셀. VERTICAL 래퍼 안에 HORIZONTAL Banner Carousel + Indicator Row. 캐로셀은 clipsContent: true 필수.",
       "_variables": [
@@ -385,7 +399,12 @@
                       "paddingBottom": 4
                     },
                     "cornerRadius": 4,
-                    "fill": { "r": 1, "g": 1, "b": 1, "a": 0.2 },
+                    "fill": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.2
+                    },
                     "layoutSizingHorizontal": "HUG",
                     "children": [
                       {
@@ -393,7 +412,10 @@
                         "type": "text",
                         "text": "EVENT",
                         "fontSize": 11,
-                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
                         "fontColor": "$token(fg-white)"
                       }
                     ]
@@ -403,8 +425,16 @@
                     "type": "text",
                     "text": "{{VARIABLE: 서브 텍스트}}",
                     "fontSize": 14,
-                    "fontName": { "family": "Pretendard", "style": "Medium" },
-                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 0.8 },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    },
+                    "fontColor": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.8
+                    },
                     "width": 160
                   },
                   {
@@ -412,7 +442,10 @@
                     "type": "text",
                     "text": "{{VARIABLE: 메인 제목}}",
                     "fontSize": 22,
-                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    },
                     "fontColor": "$token(fg-white)",
                     "width": 160
                   }
@@ -451,7 +484,12 @@
                       "paddingBottom": 4
                     },
                     "cornerRadius": 4,
-                    "fill": { "r": 1, "g": 1, "b": 1, "a": 0.2 },
+                    "fill": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.2
+                    },
                     "layoutSizingHorizontal": "HUG",
                     "children": [
                       {
@@ -459,7 +497,10 @@
                         "type": "text",
                         "text": "HOT",
                         "fontSize": 11,
-                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
                         "fontColor": "$token(fg-white)"
                       }
                     ]
@@ -469,8 +510,16 @@
                     "type": "text",
                     "text": "{{VARIABLE: 서브 텍스트}}",
                     "fontSize": 14,
-                    "fontName": { "family": "Pretendard", "style": "Medium" },
-                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 0.8 },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    },
+                    "fontColor": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.8
+                    },
                     "width": 160
                   },
                   {
@@ -478,7 +527,10 @@
                     "type": "text",
                     "text": "{{VARIABLE: 메인 제목}}",
                     "fontSize": 22,
-                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    },
                     "fontColor": "$token(fg-white)",
                     "width": 160
                   }
@@ -517,7 +569,12 @@
                       "paddingBottom": 4
                     },
                     "cornerRadius": 4,
-                    "fill": { "r": 1, "g": 1, "b": 1, "a": 0.2 },
+                    "fill": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.2
+                    },
                     "layoutSizingHorizontal": "HUG",
                     "children": [
                       {
@@ -525,7 +582,10 @@
                         "type": "text",
                         "text": "NEW",
                         "fontSize": 11,
-                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
                         "fontColor": "$token(fg-white)"
                       }
                     ]
@@ -535,8 +595,16 @@
                     "type": "text",
                     "text": "{{VARIABLE: 서브 텍스트}}",
                     "fontSize": 14,
-                    "fontName": { "family": "Pretendard", "style": "Medium" },
-                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 0.8 },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    },
+                    "fontColor": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.8
+                    },
                     "width": 160
                   },
                   {
@@ -544,7 +612,10 @@
                     "type": "text",
                     "text": "{{VARIABLE: 메인 제목}}",
                     "fontSize": 22,
-                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    },
                     "fontColor": "$token(fg-white)",
                     "width": 160
                   }
@@ -563,15 +634,35 @@
             },
             "layoutSizingHorizontal": "HUG",
             "children": [
-              { "name": "dot-active", "type": "frame", "width": 8, "height": 8, "cornerRadius": 4, "fill": "$token(fg-brand-primary)" },
-              { "name": "dot-2", "type": "frame", "width": 6, "height": 6, "cornerRadius": 3, "fill": "$token(border-secondary)" },
-              { "name": "dot-3", "type": "frame", "width": 6, "height": 6, "cornerRadius": 3, "fill": "$token(border-secondary)" }
+              {
+                "name": "dot-active",
+                "type": "frame",
+                "width": 8,
+                "height": 8,
+                "cornerRadius": 4,
+                "fill": "$token(fg-brand-primary)"
+              },
+              {
+                "name": "dot-2",
+                "type": "frame",
+                "width": 6,
+                "height": 6,
+                "cornerRadius": 3,
+                "fill": "$token(border-secondary)"
+              },
+              {
+                "name": "dot-3",
+                "type": "frame",
+                "width": 6,
+                "height": 6,
+                "cornerRadius": 3,
+                "fill": "$token(border-secondary)"
+              }
             ]
           }
         ]
       }
     },
-
     "TransactionRibbon": {
       "_description": "거래 실적 리본. 화면 상단 NavBar 아래에 위치. 브랜드 컬러 배경의 한 줄 정보 띠.",
       "_variables": [
@@ -611,12 +702,1283 @@
             "type": "text",
             "text": "{{VARIABLE: 리본 텍스트}}",
             "fontSize": 13,
-            "fontName": { "family": "Pretendard", "style": "Medium" },
+            "fontName": {
+              "family": "Pretendard",
+              "style": "Medium"
+            },
             "fontColor": "$token(fg-brand-primary)"
           }
         ]
       }
+    },
+    "ScheduleSectionV17": {
+      "_description": "v17 imin_home Schedule Section — extracted from node 17037:3674. Replaces v12 wrapped Schedule Card pattern (header inside card, solid brand-purple Today cell). v17 uses no wrapper, header floats with muted typo + 미납 badge, cells use state-tinted bg with matching state text colors (미납=error red bg+text, 오늘=light purple bg + brand purple text + brand chip, 지급/예정=bg-secondary).",
+      "_canonical_source": "imin_home_v17 frame node 17037:3674",
+      "_variables": [
+        "month: 월 표시 (default '5월')",
+        "missedCount: 미납 건수 (default 1)",
+        "cells: 셀 배열 — {date, day, amount, status: 미납|오늘|지급|예정}"
+      ],
+      "template": {
+        "name": "Schedule Section",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "fill": "$token(bg-primary)",
+        "_repetitionAllowed": "v17 schedule cells: ≥5 same-shape state-tinted day cells are intentional",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 12,
+          "paddingTop": 4,
+          "paddingBottom": 18,
+          "paddingLeft": 0,
+          "paddingRight": 0
+        },
+        "children": [
+          {
+            "name": "Schedule Title Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 8,
+              "paddingLeft": 20,
+              "paddingRight": 20
+            },
+            "children": [
+              {
+                "name": "Title Inner",
+                "type": "frame",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "counterAxisAlignItems": "CENTER",
+                  "itemSpacing": 6
+                },
+                "children": [
+                  {
+                    "name": "Schedule Title",
+                    "type": "text",
+                    "text": "이번 달 스케줄",
+                    "fontSize": 18,
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    },
+                    "fontColor": "$token(fg-quaternary)"
+                  },
+                  {
+                    "name": "Missed Count Box",
+                    "type": "frame",
+                    "fill": "$token(bg-error-secondary)",
+                    "cornerRadius": 999,
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "counterAxisAlignItems": "CENTER",
+                      "paddingTop": 2,
+                      "paddingBottom": 2,
+                      "paddingLeft": 8,
+                      "paddingRight": 8
+                    },
+                    "children": [
+                      {
+                        "name": "MissedLabel",
+                        "type": "text",
+                        "text": "미납 1",
+                        "fontSize": 11,
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
+                        "fontColor": "$token(fg-error-primary)"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ScheduleMonth",
+                "type": "text",
+                "text": "5월",
+                "fontSize": 12,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
+                "fontColor": "$token(fg-primary)"
+              }
+            ]
+          },
+          {
+            "name": "Schedule Scroll",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "_repetitionAllowed": "horizontal scroll of state-tinted day cells",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 8,
+              "paddingLeft": 20,
+              "paddingRight": 20
+            },
+            "children": [
+              {
+                "$ref": "_scheduleCell",
+                "status": "미납",
+                "date": "28일 수",
+                "amount": "100,000원",
+                "type": "납입"
+              },
+              {
+                "$ref": "_scheduleCell",
+                "status": "오늘",
+                "date": "4일 목",
+                "amount": "100,000원",
+                "type": "납입"
+              },
+              {
+                "$ref": "_scheduleCell",
+                "status": "지급",
+                "date": "12일 금",
+                "amount": "1,300,000원",
+                "type": "지급"
+              },
+              {
+                "$ref": "_scheduleCell",
+                "status": "예정",
+                "date": "18일 목",
+                "amount": "100,000원",
+                "type": "납입"
+              },
+              {
+                "$ref": "_scheduleCell",
+                "status": "예정",
+                "date": "25일 목",
+                "amount": "300,000원",
+                "type": "납입"
+              }
+            ],
+            "layoutSizingVertical": "HUG"
+          }
+        ]
+      },
+      "_scheduleCell_variants": {
+        "_description": "Per-cell variant tokens. Resolved at template-instantiation by status field.",
+        "미납": {
+          "cellBg": "bg-error-secondary",
+          "textColor": "fg-error-primary",
+          "chipBg": "bg-primary",
+          "chipText": "fg-error-primary"
+        },
+        "오늘": {
+          "cellBg": "bg-brand-primary",
+          "textColor": "fg-brand-primary",
+          "chipBg": "bg-brand-solid",
+          "chipText": "bg-primary"
+        },
+        "지급": {
+          "cellBg": "bg-secondary",
+          "textColor": "fg-primary",
+          "chipBg": "bg-primary",
+          "chipText": "fg-primary"
+        },
+        "예정": {
+          "cellBg": "bg-secondary",
+          "textColor": "fg-primary",
+          "chipBg": "bg-primary",
+          "chipText": "fg-primary"
+        }
+      },
+      "_cell_pattern_note": "Cells: 88×118 FIXED width, sizingV HUG; padding 12 top/bottom; chip(16)+gap(6)+date(13)+gap(6)+amount(34)+gap(6)+type(13)+pad(24)=118"
+    },
+    "_RecommendSectionV17_deprecated": {
+      "_description": "v17 imin_home Recommend Section — extracted 2026-05-05 from canonical design (file=SsgiLsXVMkf0wv8OhRGwks node=17037:3753). Replaces the v12 brand-purple recommend card pattern (rejected by user).",
+      "_canonical_source": "imin_home_v17 frame",
+      "_variables": [
+        "title: section title (default: '주현님을 위한 추천')",
+        "totalAmount: 예상 수령 금액 (default: '총 1,300만원')",
+        "subtext: 회차·납입·기간 요약 (default: '3회차 · 월 100만원 · 13개월')",
+        "rounds, monthly, period: 3 stepper values",
+        "ctaLabel: CTA text (default: '스테이지 참여하기')",
+        "totalCount: 추천 개수 (default: 13)"
+      ],
+      "template": {
+        "name": "Recommend Section",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "fill": "$token(bg-primary)",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 16,
+          "paddingTop": 12,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16
+        },
+        "children": [
+          {
+            "name": "Section Title Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 8,
+              "counterAxisAlignItems": "CENTER"
+            },
+            "children": [
+              {
+                "name": "AccentBar",
+                "type": "rectangle",
+                "width": 3,
+                "height": 18,
+                "fill": "$token(bg-brand-solid)",
+                "cornerRadius": 2
+              },
+              {
+                "name": "Section Title",
+                "type": "text",
+                "fontSize": 16,
+                "text": "주현님을 위한 추천",
+                "fontColor": "$token(fg-primary)",
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Bold"
+                }
+              }
+            ]
+          },
+          {
+            "name": "Recommend Stage Card",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "fill": "$token(bg-secondary)",
+            "cornerRadius": 16,
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 18,
+              "paddingTop": 20,
+              "paddingBottom": 20,
+              "paddingLeft": 20,
+              "paddingRight": 20
+            },
+            "children": [
+              {
+                "name": "Recommend Hero Row",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "itemSpacing": 0,
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "children": [
+                  {
+                    "name": "Hero Text Stack",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "FILL",
+                    "autoLayout": {
+                      "layoutMode": "VERTICAL",
+                      "itemSpacing": 4
+                    },
+                    "children": [
+                      {
+                        "name": "Hero Eyebrow",
+                        "type": "text",
+                        "fontSize": 12,
+                        "text": "예상 수령 금액",
+                        "fontColor": "$token(fg-secondary)",
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Medium"
+                        }
+                      },
+                      {
+                        "name": "Hero Amount",
+                        "type": "text",
+                        "fontSize": 26,
+                        "_comment": "v17: gray '총 1,300만원' is intentionally muted (placeholder/calculated value); becomes fg-primary when user has run real calc",
+                        "text": "총 1,300만원",
+                        "fontColor": "$token(fg-quaternary)",
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        }
+                      },
+                      {
+                        "name": "Hero Subtext",
+                        "type": "text",
+                        "fontSize": 12,
+                        "text": "3회차 · 월 100만원 · 13개월",
+                        "fontColor": "$token(fg-secondary)",
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Medium"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Progress Widget",
+                    "type": "frame",
+                    "width": 161,
+                    "height": 68,
+                    "layoutSizingHorizontal": "FIXED",
+                    "layoutSizingVertical": "FIXED",
+                    "fill": "$token(bg-tertiary)",
+                    "cornerRadius": 32,
+                    "autoLayout": {
+                      "layoutMode": "VERTICAL",
+                      "primaryAxisAlignItems": "CENTER",
+                      "counterAxisAlignItems": "CENTER",
+                      "itemSpacing": 2
+                    },
+                    "children": [
+                      {
+                        "name": "Progress Number",
+                        "type": "text",
+                        "fontSize": 22,
+                        "textAlignHorizontal": "CENTER",
+                        "text": "3",
+                        "fontColor": "$token(fg-primary)",
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        }
+                      },
+                      {
+                        "name": "Progress Label",
+                        "type": "text",
+                        "fontSize": 11,
+                        "textAlignHorizontal": "CENTER",
+                        "text": "회차",
+                        "fontColor": "$token(fg-primary)",
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Medium"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "Steppers Row",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "itemSpacing": 12
+                },
+                "_v17_stepper_pattern": "v17 stepper Row: bg=bg-primary white pill radius=999 / Minus 26x26 bg=bg-section radius=999 with red '−' / value text / Plus 26x26 bg=bg-brand-solid radius=999 with white '+'",
+                "children": [
+                  {
+                    "$ref": "_stepper",
+                    "label": "순번",
+                    "value": "3"
+                  },
+                  {
+                    "$ref": "_stepper",
+                    "label": "월 납입",
+                    "value": "100만원"
+                  },
+                  {
+                    "$ref": "_stepper",
+                    "label": "기간",
+                    "value": "13개월"
+                  }
+                ]
+              },
+              {
+                "name": "Calc Toggle Row",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "itemSpacing": 4,
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "children": [
+                  {
+                    "name": "Calc Toggle Text",
+                    "type": "text",
+                    "fontSize": 12,
+                    "text": "어떻게 계산되나요?",
+                    "fontColor": "$token(fg-primary)",
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    }
+                  },
+                  {
+                    "name": "Calc Toggle Chevron",
+                    "type": "text",
+                    "fontSize": 12,
+                    "text": "›",
+                    "fontColor": "$token(fg-primary)",
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Stage CTA Btn",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "fill": "$token(bg-brand-solid)",
+            "cornerRadius": 999,
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 16,
+              "paddingBottom": 16
+            },
+            "children": [
+              {
+                "name": "Stage CTA Label",
+                "type": "text",
+                "fontSize": 16,
+                "text": "스테이지 참여하기",
+                "fontColor": "$token(bg-primary)",
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Bold"
+                }
+              }
+            ]
+          },
+          {
+            "name": "View All Hint Row",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 12,
+              "paddingTop": 4
+            },
+            "children": [
+              {
+                "name": "h1",
+                "type": "text",
+                "fontSize": 12,
+                "text": "이율순",
+                "fontColor": "$token(fg-primary)",
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                }
+              },
+              {
+                "name": "d1",
+                "type": "text",
+                "fontSize": 12,
+                "text": "·",
+                "fontColor": "$token(fg-secondary)",
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                }
+              },
+              {
+                "name": "h2",
+                "type": "text",
+                "fontSize": 12,
+                "text": "금액순",
+                "fontColor": "$token(fg-primary)",
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                }
+              },
+              {
+                "name": "d2",
+                "type": "text",
+                "fontSize": 12,
+                "text": "·",
+                "fontColor": "$token(fg-secondary)",
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                }
+              },
+              {
+                "name": "h3",
+                "type": "text",
+                "fontSize": 12,
+                "text": "기간순",
+                "fontColor": "$token(fg-secondary)",
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                }
+              },
+              {
+                "name": "d3",
+                "type": "text",
+                "fontSize": 12,
+                "text": "·",
+                "fontColor": "$token(fg-secondary)",
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                }
+              },
+              {
+                "name": "viewAll",
+                "type": "text",
+                "fontSize": 12,
+                "text": "전체 13개 보기 ›",
+                "fontColor": "$token(fg-primary)",
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                }
+              }
+            ],
+            "_repetitionAllowed": "v17 inline sort hint row: 이율순·금액순·기간순·전체보기 — 7 small text+separator nodes are intentional"
+          }
+        ]
+      },
+      "_stepper": {
+        "_description": "v17 stepper unit (label above, [- value +] pill below). Used 3x in Steppers Row.",
+        "name": "Stepper",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 8
+        },
+        "children": [
+          {
+            "name": "Stepper Label",
+            "type": "text",
+            "fontSize": 11,
+            "text": "$LABEL",
+            "fontColor": "$token(fg-secondary)",
+            "fontName": {
+              "family": "Pretendard",
+              "style": "Medium"
+            }
+          },
+          {
+            "name": "Stepper Track",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "fill": "$token(bg-primary)",
+            "cornerRadius": 999,
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "primaryAxisAlignItems": "SPACE_BETWEEN",
+              "counterAxisAlignItems": "CENTER",
+              "paddingTop": 6,
+              "paddingBottom": 6,
+              "paddingLeft": 6,
+              "paddingRight": 6
+            },
+            "children": [
+              {
+                "name": "Minus",
+                "type": "frame",
+                "width": 26,
+                "height": 26,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fill": "$token(bg-secondary)",
+                "cornerRadius": 999,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "children": [
+                  {
+                    "name": "MinusGlyph",
+                    "type": "text",
+                    "fontSize": 14,
+                    "text": "−",
+                    "fontColor": "$token(fg-error-primary)",
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "StepperValue",
+                "type": "text",
+                "fontSize": 13,
+                "text": "$VALUE",
+                "fontColor": "$token(fg-primary)",
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Bold"
+                }
+              },
+              {
+                "name": "Plus",
+                "type": "frame",
+                "width": 26,
+                "height": 26,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fill": "$token(bg-brand-solid)",
+                "cornerRadius": 999,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "children": [
+                  {
+                    "name": "PlusGlyph",
+                    "type": "text",
+                    "fontSize": 14,
+                    "text": "+",
+                    "fontColor": "$token(bg-primary)",
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "_deprecated": "Superseded 2026-05-05 by RecommendSectionV20. Kept for reference only."
+    },
+    "RecommendSectionV20": {
+      "_description": "v20 Recommend Section (2026-05-05) — supersedes V17 bg-secondary pattern. Full brand-purple card with action headline, single big amount, white sub-card containing 3 info rows (받는 순번 read-only, 월 납입 금액 stepper, 기간 stepper), 2 CTAs (white solid + outline). NOTE: this REPLACES the v17 bg-secondary Recommend; the user updated their canonical design.",
+      "_canonical_source": "User-shared design 2026-05-05 (image #4 right)",
+      "_variables": [
+        "userName: 사용자 이름 (default 민지님)",
+        "headline: 액션 헤드라인 (default '1,300,000원 모으기 도전, 지금 시작하면 5번째에 받아요')",
+        "expectedAmount: 예상 수령 금액 (default '1,362,100')",
+        "monthly/period/rate: 월납/기간/이율"
+      ],
+      "template": {
+        "name": "Recommend Section",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "fill": "$token(bg-primary)",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 0,
+          "paddingTop": 12,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "paddingRight": 16
+        },
+        "children": [
+          {
+            "name": "Recommend Brand Card",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "fill": "$token(bg-brand-solid)",
+            "cornerRadius": 24,
+            "autoLayout": {
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 20,
+              "paddingTop": 24,
+              "paddingBottom": 20,
+              "paddingLeft": 20,
+              "paddingRight": 20
+            },
+            "children": [
+              {
+                "name": "Recommend Header Stack",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 16
+                },
+                "children": [
+                  {
+                    "name": "Eyebrow",
+                    "type": "text",
+                    "text": "민지님을 위한 추천",
+                    "fontSize": 13,
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    },
+                    "fontColor": "$token(bg-primary)"
+                  },
+                  {
+                    "name": "Action Headline",
+                    "type": "text",
+                    "text": "1,300,000원 모으기 도전,\n지금 시작하면 5번째에 받아요",
+                    "fontSize": 20,
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    },
+                    "fontColor": "$token(bg-primary)"
+                  }
+                ]
+              },
+              {
+                "name": "Amount Stack",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 4
+                },
+                "children": [
+                  {
+                    "name": "AmountEyebrow",
+                    "type": "text",
+                    "text": "예상 수령 금액 (5회차)",
+                    "fontSize": 13,
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    },
+                    "fontColor": "$token(bg-primary)"
+                  },
+                  {
+                    "name": "AmountRow",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "FILL",
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "counterAxisAlignItems": "BASELINE",
+                      "itemSpacing": 4
+                    },
+                    "children": [
+                      {
+                        "name": "Amount",
+                        "type": "text",
+                        "text": "1,362,100",
+                        "fontSize": 36,
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
+                        "fontColor": "$token(bg-primary)"
+                      },
+                      {
+                        "name": "AmountUnit",
+                        "type": "text",
+                        "text": "원",
+                        "fontSize": 16,
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
+                        "fontColor": "$token(bg-primary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "AmountSub",
+                    "type": "text",
+                    "text": "월 100,000원 · 13개월 · 이율 6.9%",
+                    "fontSize": 12,
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    },
+                    "fontColor": "$token(bg-primary)"
+                  }
+                ]
+              },
+              {
+                "name": "Detail Card",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "fill": "$token(bg-primary)",
+                "cornerRadius": 16,
+                "autoLayout": {
+                  "layoutMode": "VERTICAL",
+                  "itemSpacing": 0,
+                  "paddingTop": 4,
+                  "paddingBottom": 4,
+                  "paddingLeft": 0,
+                  "paddingRight": 0
+                },
+                "children": [
+                  {
+                    "name": "Row 받는 순번",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "FILL",
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "primaryAxisAlignItems": "SPACE_BETWEEN",
+                      "counterAxisAlignItems": "CENTER",
+                      "paddingTop": 16,
+                      "paddingBottom": 16,
+                      "paddingLeft": 20,
+                      "paddingRight": 20
+                    },
+                    "children": [
+                      {
+                        "name": "Row Label 1",
+                        "type": "text",
+                        "text": "받는 순번",
+                        "fontSize": 14,
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Medium"
+                        },
+                        "fontColor": "$token(fg-secondary)"
+                      },
+                      {
+                        "name": "Row Value 1",
+                        "type": "text",
+                        "text": "5회차 / 13",
+                        "fontSize": 14,
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
+                        "fontColor": "$token(fg-primary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Divider 1",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "FILL",
+                    "height": 1,
+                    "fill": "$token(bg-secondary)"
+                  },
+                  {
+                    "$ref": "_detailStepperRow",
+                    "label": "월 납입 금액",
+                    "value": "100,000"
+                  },
+                  {
+                    "name": "Divider 2",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "FILL",
+                    "height": 1,
+                    "fill": "$token(bg-secondary)"
+                  },
+                  {
+                    "$ref": "_detailStepperRow",
+                    "label": "기간",
+                    "value": "13개월"
+                  }
+                ]
+              },
+              {
+                "name": "CTA Row",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "itemSpacing": 8
+                },
+                "children": [
+                  {
+                    "name": "CTA Primary",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "FILL",
+                    "fill": "$token(bg-primary)",
+                    "cornerRadius": 999,
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "primaryAxisAlignItems": "CENTER",
+                      "counterAxisAlignItems": "CENTER",
+                      "itemSpacing": 4,
+                      "paddingTop": 14,
+                      "paddingBottom": 14
+                    },
+                    "children": [
+                      {
+                        "name": "CTA Primary Label",
+                        "type": "text",
+                        "text": "스테이지 참여하기",
+                        "fontSize": 15,
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
+                        "fontColor": "$token(fg-brand-primary)"
+                      },
+                      {
+                        "name": "CTA Primary Arrow",
+                        "type": "text",
+                        "text": "→",
+                        "fontSize": 15,
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
+                        "fontColor": "$token(fg-brand-primary)"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "CTA Secondary",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "FILL",
+                    "cornerRadius": 999,
+                    "_strokeNote": "1.5px white stroke at 40% opacity — applied via post-fix or stroke field",
+                    "stroke": "$token(bg-primary)",
+                    "strokeWeight": 1.5,
+                    "autoLayout": {
+                      "layoutMode": "HORIZONTAL",
+                      "primaryAxisAlignItems": "CENTER",
+                      "counterAxisAlignItems": "CENTER",
+                      "paddingTop": 14,
+                      "paddingBottom": 14
+                    },
+                    "children": [
+                      {
+                        "name": "CTA Secondary Label",
+                        "type": "text",
+                        "text": "맞는 스테이지 찾기",
+                        "fontSize": 15,
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
+                        "fontColor": "$token(bg-primary)"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "Calc Toggle Row",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER",
+                  "itemSpacing": 4
+                },
+                "children": [
+                  {
+                    "name": "InfoIcon",
+                    "type": "icon",
+                    "iconName": "info-circle",
+                    "size": 14,
+                    "iconColor": "$token(bg-primary)"
+                  },
+                  {
+                    "name": "Calc Toggle Text",
+                    "type": "text",
+                    "text": "어떻게 계산되나요?",
+                    "fontSize": 12,
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    },
+                    "fontColor": "$token(bg-primary)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "_detailStepperRow": {
+        "_description": "Detail card row: label left + stepper right (read+write).",
+        "name": "Detail Stepper Row",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "autoLayout": {
+          "layoutMode": "HORIZONTAL",
+          "primaryAxisAlignItems": "SPACE_BETWEEN",
+          "counterAxisAlignItems": "CENTER",
+          "paddingTop": 12,
+          "paddingBottom": 12,
+          "paddingLeft": 20,
+          "paddingRight": 20
+        },
+        "children": [
+          {
+            "name": "Detail Label",
+            "type": "text",
+            "text": "$LABEL",
+            "fontSize": 14,
+            "fontName": {
+              "family": "Pretendard",
+              "style": "Medium"
+            },
+            "fontColor": "$token(fg-secondary)"
+          },
+          {
+            "name": "Detail Stepper",
+            "type": "frame",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "counterAxisAlignItems": "CENTER",
+              "itemSpacing": 12
+            },
+            "children": [
+              {
+                "name": "Minus",
+                "type": "frame",
+                "width": 28,
+                "height": 28,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fill": "$token(bg-secondary)",
+                "cornerRadius": 999,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "children": [
+                  {
+                    "name": "MinusGlyph",
+                    "type": "text",
+                    "text": "−",
+                    "fontSize": 16,
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    },
+                    "fontColor": "$token(fg-primary)"
+                  }
+                ]
+              },
+              {
+                "name": "Detail Value",
+                "type": "text",
+                "text": "$VALUE",
+                "fontSize": 15,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Bold"
+                },
+                "fontColor": "$token(fg-primary)"
+              },
+              {
+                "name": "Plus",
+                "type": "frame",
+                "width": 28,
+                "height": 28,
+                "layoutSizingHorizontal": "FIXED",
+                "layoutSizingVertical": "FIXED",
+                "fill": "$token(bg-secondary)",
+                "cornerRadius": 999,
+                "autoLayout": {
+                  "layoutMode": "HORIZONTAL",
+                  "primaryAxisAlignItems": "CENTER",
+                  "counterAxisAlignItems": "CENTER"
+                },
+                "children": [
+                  {
+                    "name": "PlusGlyph",
+                    "type": "text",
+                    "text": "+",
+                    "fontSize": 16,
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    },
+                    "fontColor": "$token(fg-primary)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "FooterSection": {
+      "_description": "imin_home legal footer — 이용약관 / 개인정보처리방침 / 사업자등록번호 / Copyright. Required by R31 to avoid truncated-looking pages.",
+      "_canonical_source": "imin_home_v22 17090:8188",
+      "_variables": [],
+      "template": {
+        "name": "Footer Section",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "fill": "$token(bg-primary)",
+        "autoLayout": {
+          "layoutMode": "VERTICAL",
+          "paddingLeft": 16,
+          "paddingRight": 16,
+          "paddingTop": 16,
+          "paddingBottom": 24,
+          "itemSpacing": 8
+        },
+        "children": [
+          {
+            "name": "Footer Links 1",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 16,
+              "counterAxisAlignItems": "CENTER"
+            },
+            "children": [
+              {
+                "name": "l1",
+                "type": "text",
+                "text": "이용약관",
+                "fontSize": 11,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Bold"
+                },
+                "fontColor": "$token(fg-primary)"
+              },
+              {
+                "name": "l2",
+                "type": "text",
+                "text": "스테이지이용약관",
+                "fontSize": 11,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Bold"
+                },
+                "fontColor": "$token(fg-primary)"
+              },
+              {
+                "name": "l3",
+                "type": "text",
+                "text": "서비스운영정책",
+                "fontSize": 11,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Bold"
+                },
+                "fontColor": "$token(fg-primary)"
+              }
+            ]
+          },
+          {
+            "name": "Footer Links 2",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 16,
+              "counterAxisAlignItems": "CENTER"
+            },
+            "children": [
+              {
+                "name": "l4",
+                "type": "text",
+                "text": "개인정보처리방침",
+                "fontSize": 11,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Bold"
+                },
+                "fontColor": "$token(fg-primary)"
+              },
+              {
+                "name": "l5",
+                "type": "text",
+                "text": "쇼핑이용약관",
+                "fontSize": 11,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Bold"
+                },
+                "fontColor": "$token(fg-primary)"
+              }
+            ]
+          },
+          {
+            "name": "Spacer",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "height": 8,
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL"
+            }
+          },
+          {
+            "name": "Footer Biz 1",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 16,
+              "counterAxisAlignItems": "CENTER"
+            },
+            "children": [
+              {
+                "name": "b1",
+                "type": "text",
+                "text": "(주)티웨이브 역삼지점",
+                "fontSize": 11,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
+                "fontColor": "$token(fg-secondary)"
+              },
+              {
+                "name": "b2",
+                "type": "text",
+                "text": "사업자등록번호: 291-85-01499",
+                "fontSize": 11,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
+                "fontColor": "$token(fg-tertiary)"
+              }
+            ]
+          },
+          {
+            "name": "Footer Biz 2",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "autoLayout": {
+              "layoutMode": "HORIZONTAL",
+              "itemSpacing": 16,
+              "counterAxisAlignItems": "CENTER"
+            },
+            "children": [
+              {
+                "name": "b3",
+                "type": "text",
+                "text": "대표: 서재준",
+                "fontSize": 11,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
+                "fontColor": "$token(fg-tertiary)"
+              },
+              {
+                "name": "b4",
+                "type": "text",
+                "text": "통신판매신고: 2021-서울강남-05837",
+                "fontSize": 11,
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
+                "fontColor": "$token(fg-tertiary)"
+              }
+            ]
+          },
+          {
+            "name": "Copyright",
+            "type": "text",
+            "text": "Copyright © TWAVE. All Rights Reserved.",
+            "fontSize": 11,
+            "fontName": {
+              "family": "Pretendard",
+              "style": "Medium"
+            },
+            "fontColor": "$token(fg-tertiary)"
+          }
+        ]
+      }
     }
-
   }
 }

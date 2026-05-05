@@ -90,18 +90,27 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 ## 디자인 생성 필수 규칙
 
-### 0. ⚠️ Reference-first — 빌드 전 references[] 필수
-- **모든 새 디자인은 `references/uibowl/`의 실제 polished UI를 참조해서 만든다**
-- 빌드 직전 워크플로우:
-  1. blueprint 작성 (children 구조)
-  2. `python3 scripts/figma_mcp_client.py reference brief <bp.json> --top=3` 실행
-  3. 출력된 추천 reference 이미지를 Read로 직접 보고 (실제 시각 디테일 확인)
-  4. blueprint root에 `references[]` 채워 넣기 (각 항목: `{section, ref, extract}`)
-     - `extract`는 "어떤 시각 요소를 차용했는지" 한 줄 명시
-  5. blueprint의 archetypeData / fill / cornerRadius / effects 등에 reference 내용 반영
-  6. 빌드 — S20 lint가 references[] 누락 시 차단함
-- **Bypass**: trivial 디자인 (2-3 element modal 등)은 `_referencesSkipped: "<사유>"` 명시
-- 보유 reference: toss 24장 + kakaopay 21장 (`reference apps`로 확인)
+### 0. ⚠️ Reference-first — 빌드 전 references[] + _searchLog 필수 (S20 + S21)
+- **모든 새 디자인은 `references/uibowl/`의 실제 polished UI를 검색해서 가장 가까운 화면을 카피한다**
+- 빌드 직전 워크플로우 (절대 스킵 금지, 사용자 명시 지시 2026-05-06):
+  1. 와이어프레임/PRD 분석 → 각 섹션의 패턴 키워드 추출 (예: "보라색 카드 추천 도전", "스케줄 캘린더 미납")
+  2. 각 키워드로 `python3 scripts/figma_mcp_client.py reference search "<키워드>" --top=8` 실행 → 라이브러리 전수 검색
+  3. **상위 후보 ≥3개를 Read tool로 직접 열어 시각 검토**
+  4. 가장 가까운 한 화면 선택 + layout/색상/폰트/간격까지 그대로 카피 (어림짐작 금지)
+  5. blueprint root에 `references[]` 채움 — 각 항목:
+     ```json
+     {"section": "...", "ref": "uibowl/toss/...", "extract": "차용한 시각 요소 한 줄",
+      "_searchLog": {
+        "queries": ["검색어1", "검색어2"],
+        "candidates": ["uibowl/toss/a.png", "uibowl/toss/b.png", "uibowl/kakaopay/c.png"],
+        "chosen": "uibowl/toss/a.png",
+        "copyNotes": "padding 24/20, cornerRadius 24, 36px Bold amount, ... (≥30자)"
+      }}
+     ```
+  6. 빌드 — **S20**이 references[] 누락 시 차단, **S21**이 _searchLog 미흡 시 차단 (candidates ≥3, copyNotes ≥30자, chosen=ref)
+- **Bypass**: trivial 디자인 (2-3 element modal 등)은 `_referencesSkipped: "<사유>"` 명시 — S20/S21 모두 skip
+- 보유 reference: toss 24장 + kakaopay 21장 + heydealer/payhere/socar (`reference apps`로 확인)
+- **in-file canonical reference도 OK**: 같은 file의 이미 빌드된 화면 (예: `in-file 17090:7991`) 을 chosen으로 사용 가능
 
 ### 1. NavBar 로고는 반드시 컴포넌트 인스턴스로 생성
 - 텍스트 노드로 로고를 만들지 말 것
@@ -233,6 +242,22 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - "스크롤 영역이라 정상"으로 넘기지 말 것 — 디자인 프레임에 전체 콘텐츠가 보여야 완료
 - 하나라도 안 보이면 **완료 선언 금지** — 원인 파악 후 수정
 - 체크 순서: PRD 섹션 목록 나열 → 스크린샷에서 각 섹션 존재 확인 → 누락 시 수정
+
+### 21. ⚠️ imin_home은 Footer Section 필수 (R31)
+- imin_home / imin home 패턴 화면은 반드시 Footer Section 포함 (이용약관 / 개인정보처리방침 / 사업자등록번호 / Copyright)
+- `blueprint_templates.json` → sections.FooterSection 사용 권장
+- 누락 시 R31-imin-home-canonical lint ERROR로 build 차단
+- **Why**: Footer 없으면 추천 상품 섹션 바로 아래 Tab Bar floating으로 화면이 cut-off로 보임 (사용자 지적 2026-05-06)
+
+### 22. ⚠️ Horizontal carousel은 마지막 카드 ≥25% peek 강제 (R36)
+- HORIZONTAL frame + clipsContent + 카드 widths 합 > viewport일 때, 마지막 카드는 viewport 우측에서 ≥25% (또는 60px) peek 보여야 함
+- 위반 시 R36-carousel-peek가 lint WARN + post-fix 단계에서 카드 폭 자동 축소 (`max(120, (viewport - paddingL/R - 0.4×lastW - spacing×(n-1)) / n)`)
+- **Why**: v25 Stage Card Scroll 사례 — 카드 200×3 + spacing 12로 세번째 카드 완전 hidden → 사용자 "잘렸다" 인지
+
+### 23. ⚠️ Underline tab nav active 표시 = 2px brand bottom stroke (R35)
+- 라벨-only 상단 tab nav (HORIZONTAL frame + 모든 자식이 단일 TEXT만 가진 frame, parent에 fill/cornerRadius 없음)에서 active 탭은 **2px brand-purple bottom underline** 필수
+- inject 단계에서 자동 적용: 모든 탭 layoutSizingHorizontal=HUG + nav itemSpacing≥16
+- segmented control(R29: parent에 fill+cornerRadius≥16)과 bottom Tab Bar(R23: icon+label per tab)는 자동 제외
 
 ### 20. ⚠️ CTA/Button 프레임 — autoLayout에 paddingTop/Bottom 필수
 - CTA Button, Submit Button 등 **텍스트를 포함한 버튼 프레임**에 `autoLayout` padding 필수

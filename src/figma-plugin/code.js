@@ -888,8 +888,14 @@ async function setStrokeColor(params) {
     throw new Error("Invalid stroke weight - must be a valid number");
   }
 
-  // strokeWeight=0 이면 stroke 완전 제거
-  if (strokeWeightParsed === 0) {
+  // strokeWeight=0 이면 stroke 완전 제거 — 단, individual side weight가
+  // 명시된 경우는 예외 (bottom-only underline 등)
+  var hasIndividualNonZero =
+    (params.strokeTopWeight !== undefined && parseFloat(params.strokeTopWeight) > 0) ||
+    (params.strokeBottomWeight !== undefined && parseFloat(params.strokeBottomWeight) > 0) ||
+    (params.strokeLeftWeight !== undefined && parseFloat(params.strokeLeftWeight) > 0) ||
+    (params.strokeRightWeight !== undefined && parseFloat(params.strokeRightWeight) > 0);
+  if (strokeWeightParsed === 0 && !hasIndividualNonZero) {
     node.strokes = [];
     if ("strokeWeight" in node) node.strokeWeight = 0;
     return { id: node.id, name: node.name, strokes: [], strokeWeight: 0 };

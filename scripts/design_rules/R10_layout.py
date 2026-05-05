@@ -12,9 +12,56 @@ _SKIP_KEYWORDS = ("Tag", "Chip", "Badge", "Dot", "Icon", "Indicator",
 _SKIP_RE = re.compile(r'\b(?:' + '|'.join(re.escape(k.lower()) for k in _SKIP_KEYWORDS) + r')\b')
 
 
+def _walk_with_parent(node: dict, path: str = "root", parent: dict = None):
+    yield node, path, parent
+    for i, child in enumerate(node.get("children") or []):
+        cname = child.get("name", f"child[{i}]")
+        yield from _walk_with_parent(child, f"{path}/{cname}", node)
+
+
+def _is_underline_tab_nav_parent(parent: dict) -> bool:
+    """Mirror R35's _is_tab_nav: bare HORIZONTAL frame whose every child is
+    a frame with single TEXT, no fill on parent, no large cornerRadius.
+    R35 forces those children to HUG horizontally so the underline matches
+    the label width — so we suppress R10's FILL warning there.
+    """
+    if not isinstance(parent, dict):
+        return False
+    layout = parent.get("layoutMode") or (parent.get("autoLayout") or {}).get("layoutMode")
+    if layout != "HORIZONTAL":
+        return False
+    # Skip if parent has fill (segmented control) or pill radius
+    fills = parent.get("fill") or parent.get("fills")
+    cr = parent.get("cornerRadius") or 0
+    try:
+        cr = float(cr)
+    except (TypeError, ValueError):
+        cr = 0
+    if fills or cr >= 16:
+        return False
+    kids = parent.get("children") or []
+    if len(kids) < 2:
+        return False
+    for k in kids:
+        if not isinstance(k, dict): return False
+        if (k.get("type") or "").lower() != "frame": return False
+        # Single TEXT inside (label-only)
+        text_count = 0
+        def _ct(n):
+            nonlocal text_count
+            if (n.get("type") or "").lower() == "text":
+                text_count += 1
+            for c in n.get("children") or []:
+                _ct(c)
+        _ct(k)
+        if text_count != 1:
+            return False
+    return True
+
+
 def _frame_fill_check(bp: dict, ctx: dict) -> Iterable[Violation]:
     """R10.1 — FRAME children of root/sections must be FILL (not HUG)."""
-    for node, path in walk_blueprint(bp):
+    for node, path, parent in _walk_with_parent(bp):
         if path == "root":
             continue
         ntype = node.get("type", "frame")
@@ -22,6 +69,10 @@ def _frame_fill_check(bp: dict, ctx: dict) -> Iterable[Violation]:
             continue
         sizing_h = node.get("layoutSizingHorizontal", "")
         if sizing_h not in ("HUG", ""):
+            continue
+        # R35: underline tab cells are intentionally HUG so the bottom
+        # stroke matches the label width. Skip the warning there.
+        if _is_underline_tab_nav_parent(parent):
             continue
         # Filter out small intrinsic-width elements
         w = node.get("width", 999)

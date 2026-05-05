@@ -50,8 +50,27 @@ def _is_white_or_on_brand(fc) -> bool:
     return bool(tail) and tail in _OK_ON_BRAND_TOKENS
 
 
+def _is_neutral_surface_bg(fill) -> bool:
+    """White / light gray surface that breaks brand-ancestor chain — text on
+    these is never on a brand bg even if a brand ancestor exists higher up."""
+    tail = _token_tail(fill)
+    if not tail:
+        return False
+    return tail in (
+        "bg-primary", "bg-secondary", "bg-tertiary", "bg-quaternary",
+        "bg-secondary-solid", "bg-primary-solid",
+    )
+
+
 def _walk(node: dict, path: str, brand_ancestor: bool, out: List[Violation]):
-    on_brand = brand_ancestor or _is_brand_solid_bg(node.get("fill"))
+    self_fill = node.get("fill")
+    if _is_brand_solid_bg(self_fill):
+        on_brand = True
+    elif _is_neutral_surface_bg(self_fill):
+        # White/grey pill on top of brand resets the chain
+        on_brand = False
+    else:
+        on_brand = brand_ancestor
     if on_brand and node.get("type") in ("text", "TEXT"):
         fc = node.get("fontColor")
         if fc is None:

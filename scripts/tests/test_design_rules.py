@@ -283,10 +283,143 @@ def test_registry_loads_all_rules():
         "R20-semantic-only", "R21-bg-hierarchy", "R22-brand-text-color",
         "R23-ds-first", "R24-status-bar", "R25-tab-bar-stroke",
         "R30-fill-sizing", "R31-tab-bar-items", "R32-zero-width-text",
-        "R33-stroke-alignment", "R34-status-bar-bg", "R40-token-binding",
+        "R33-stroke-alignment", "R34-status-bar-bg",
+        "R35-underline-tab-active", "R36-carousel-peek",
+        "S21-reference-search-log", "R40-token-binding",
     }
     missing = expected - ids
     assert not missing, f"missing rules: {missing}"
+
+
+# ── R35 (Underline Tab Active) ───────────────────────────────────
+
+def _tab_nav_bp(active_has_stroke: bool):
+    active = {
+        "name": "Tab 내 스테이지 (Active)", "type": "frame",
+        "autoLayout": {"layoutMode": "HORIZONTAL"},
+        "children": [{"name": "label", "type": "text",
+                      "characters": "내 스테이지"}],
+    }
+    if active_has_stroke:
+        active["strokeBottomWeight"] = 2
+        active["stroke"] = "$token(fg-brand-primary)"
+    bp = {
+        "name": "Test Root", "type": "frame", "width": 393,
+        "statusBar": True, "_referencesSkipped": "test",
+        "autoLayout": {"layoutMode": "VERTICAL"},
+        "children": [
+            {"name": "Home Tabs", "type": "frame",
+             "layoutMode": "HORIZONTAL",
+             "autoLayout": {"layoutMode": "HORIZONTAL"},
+             "children": [
+                 active,
+                 {"name": "Tab 둘러보기", "type": "frame",
+                  "autoLayout": {"layoutMode": "HORIZONTAL"},
+                  "children": [{"name": "label", "type": "text",
+                                "characters": "둘러보기"}]},
+             ]},
+        ],
+    }
+    return bp
+
+
+def test_r35_lint_warns_when_active_missing_underline():
+    bp = _tab_nav_bp(active_has_stroke=False)
+    vs = REGISTRY.run_lint(bp)
+    warns = [v for v in vs if v.rule_id == "R35-underline-tab-active"]
+    assert warns, "R35 should warn when active tab has no underline"
+
+
+def test_r35_inject_adds_brand_underline_to_active_only():
+    bp = _tab_nav_bp(active_has_stroke=False)
+    bp = REGISTRY.run_inject(bp)
+    home = next(c for c in bp["children"] if c.get("name") == "Home Tabs")
+    active, inactive = home["children"]
+    assert active.get("strokeBottomWeight") == 2
+    assert "brand" in (active.get("stroke") or "").lower()
+    assert (inactive.get("strokeBottomWeight") or 0) == 0
+
+
+def test_r35_lint_silent_after_inject():
+    bp = _tab_nav_bp(active_has_stroke=False)
+    bp = REGISTRY.run_inject(bp)
+    vs = REGISTRY.run_lint(bp)
+    warns = [v for v in vs if v.rule_id == "R35-underline-tab-active"]
+    assert not warns
+
+
+def test_r35_skips_segmented_control():
+    """Segmented control (R29 territory): parent has fill + cornerRadius=999,
+    active child has fill + radius. R35 must not fire."""
+    bp = {
+        "name": "Test Root", "type": "frame", "width": 393,
+        "statusBar": True, "_referencesSkipped": "t",
+        "autoLayout": {"layoutMode": "VERTICAL"},
+        "children": [
+            {"name": "Trade Status Tabs", "type": "frame",
+             "layoutMode": "HORIZONTAL",
+             "autoLayout": {"layoutMode": "HORIZONTAL"},
+             "fill": "$token(bg-tertiary)",
+             "cornerRadius": 999,
+             "children": [
+                 {"name": "Tab 거래 (Active)", "type": "frame",
+                  "fill": "$token(bg-primary)", "cornerRadius": 999,
+                  "autoLayout": {"layoutMode": "HORIZONTAL"},
+                  "children": [{"name": "label", "type": "text",
+                                "characters": "거래"}]},
+                 {"name": "Tab 누적", "type": "frame",
+                  "autoLayout": {"layoutMode": "HORIZONTAL"},
+                  "children": [{"name": "label", "type": "text",
+                                "characters": "누적"}]},
+             ]},
+        ],
+    }
+    vs = REGISTRY.run_lint(bp)
+    warns = [v for v in vs if v.rule_id == "R35-underline-tab-active"]
+    assert not warns, "R35 must not fire on segmented control"
+    bp2 = REGISTRY.run_inject(bp)
+    seg = next(c for c in bp2["children"] if c.get("name") == "Trade Status Tabs")
+    active = seg["children"][0]
+    assert (active.get("strokeBottomWeight") or 0) == 0, \
+        "R35 must not arm underline on segmented control active item"
+
+
+def test_r35_skips_bottom_nav_with_icons():
+    """Bottom Tab Bar items have icon+label (2+ texts? actually icon node
+    is not TEXT but is a frame). Confirm R35 only fires on label-only nav.
+    Here we simulate a tab item with icon (frame) + label (text) — so
+    _count_text_children == 1 still — but the parent name 'Bottom Nav' is
+    not in hints AND no child has (Active). With no Active marker AND no
+    name hint, _is_tab_nav returns False."""
+    bp = {
+        "name": "Test Root", "type": "frame", "width": 393,
+        "statusBar": True, "_referencesSkipped": "t",
+        "autoLayout": {"layoutMode": "VERTICAL"},
+        "children": [
+            {"name": "Bottom Nav", "type": "frame",
+             "layoutMode": "HORIZONTAL",
+             "autoLayout": {"layoutMode": "HORIZONTAL"},
+             "children": [
+                 {"name": "Tab Home", "type": "frame",
+                  "autoLayout": {"layoutMode": "VERTICAL"},
+                  "children": [
+                      {"name": "icon", "type": "frame", "children": []},
+                      {"name": "label", "type": "text",
+                       "characters": "홈"},
+                  ]},
+                 {"name": "Tab Me", "type": "frame",
+                  "autoLayout": {"layoutMode": "VERTICAL"},
+                  "children": [
+                      {"name": "icon", "type": "frame", "children": []},
+                      {"name": "label", "type": "text",
+                       "characters": "나"},
+                  ]},
+             ]},
+        ],
+    }
+    vs = REGISTRY.run_lint(bp)
+    warns = [v for v in vs if v.rule_id == "R35-underline-tab-active"]
+    assert not warns, "R35 must not fire on bottom nav with icons"
 
 
 def test_s20_references_required():
