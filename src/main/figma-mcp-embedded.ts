@@ -692,8 +692,13 @@ Root frame supports: autoLayout, cornerRadius, fill.`, {
     lastBuiltRootId = null;
 
     // ★ Step 1: Enhance blueprint (code-level auto-correction)
+    // Honor caller's skipEnhance=true (project policy 2026-05-03):
+    // figma_mcp_client.py sanitizes blueprints upstream, so the TS-layer
+    // enhanceBlueprint should not run. Prior versions ignored this flag and
+    // the placeholder→star-01 swap fired even on properly-typed text nodes.
     const blueprint = params.blueprint as Record<string, unknown>;
-    const enhanced = enhanceBlueprint(blueprint);
+    const skipEnhance = (params as Record<string, unknown>).skipEnhance === true;
+    const enhanced = skipEnhance ? blueprint : enhanceBlueprint(blueprint);
     // ★ Step 2: Smart Resolution: resolve semantic names → actual keys
     const resolved = await resolveBlueprint(enhanced);
     const resolvedParams = { ...params, blueprint: resolved };
@@ -1881,6 +1886,14 @@ function isEmojiOnlyText(n: Record<string, unknown>): boolean {
   if (n.type !== 'text' || !n.text) return false;
   const text = (n.text as string).trim();
   if (text.length === 0 || text.length > 10) return false;
+  // Project policy 2026-05-05: never treat plain ASCII digits/punct as emoji.
+  // Regex \p{Emoji} matches digits 0-9, '#', '*' as emoji components, which
+  // caused stepper values like "30", "12" to be mis-converted to star-01
+  // placeholders. Reject anything that is purely ASCII digits/punctuation/
+  // letters/spaces/Korean before any emoji-stripping check.
+  if (/^[\sA-Za-z0-9\uAC00-\uD7AF.,!?+\-*/#:;()%\uC6D0\uB9CC\uAC1C\uC6D4\uB4A4\uB0B4\uB144\uC77C\uC8FC]+$/.test(text)) {
+    return false;
+  }
   // Remove emoji, variation selectors, ZWJ, etc. If nothing remains, it's emoji-only
   const stripped = text.replace(/[\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D\u20E3\u{E0061}-\u{E007A}\u{E007F}]/gu, '').trim();
   return stripped.length === 0;
