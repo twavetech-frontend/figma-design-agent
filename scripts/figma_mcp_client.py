@@ -681,25 +681,43 @@ def cmd_build(blueprint_file: str):
     image_specs_raw = []
     pexels_specs_raw = []
 
+    # Track name collisions: same blueprint name used by multiple image
+    # nodes. nodeMap from batch_build_screen is {name: nodeId} so duplicates
+    # collapse to one entry — applying 3 image fills to the same node ID
+    # makes only the last image visible (v27 Lounge regression: Items 1/2
+    # remained grey while Item 3 got the photo). Auto-suffix the duplicate
+    # names so each Image node has a unique nodeMap key.
+    _image_name_count = {}
+
     def _walk_for_image_specs(node: dict):
         image_gen = node.get("imageGen")
-        if image_gen and isinstance(image_gen, dict):
-            image_specs_raw.append({
-                "nodeName": node.get("name", ""),
-                "prompt": image_gen.get("prompt", ""),
-                "isHero": image_gen.get("isHero", False),
-                "width": image_gen.get("width"),
-                "height": image_gen.get("height"),
-                "style": image_gen.get("style"),
-            })
-        # New: imageQuery for real-photo via Pexels
         image_query = node.get("imageQuery")
-        if image_query:
-            pexels_specs_raw.append({
-                "nodeName": node.get("name", ""),
-                "query": image_query if isinstance(image_query, str) else image_query.get("q", ""),
-                "orientation": (image_query.get("orientation") if isinstance(image_query, dict) else None),
-            })
+        if image_gen or image_query:
+            orig_name = node.get("name", "") or "Image"
+            count = _image_name_count.get(orig_name, 0) + 1
+            _image_name_count[orig_name] = count
+            if count > 1:
+                # Rename in-place so the build emits a unique node name
+                unique_name = f"{orig_name}_{count}"
+                node["name"] = unique_name
+            else:
+                unique_name = orig_name
+
+            if image_gen and isinstance(image_gen, dict):
+                image_specs_raw.append({
+                    "nodeName": unique_name,
+                    "prompt": image_gen.get("prompt", ""),
+                    "isHero": image_gen.get("isHero", False),
+                    "width": image_gen.get("width"),
+                    "height": image_gen.get("height"),
+                    "style": image_gen.get("style"),
+                })
+            if image_query:
+                pexels_specs_raw.append({
+                    "nodeName": unique_name,
+                    "query": image_query if isinstance(image_query, str) else image_query.get("q", ""),
+                    "orientation": (image_query.get("orientation") if isinstance(image_query, dict) else None),
+                })
         for child in node.get("children", []):
             _walk_for_image_specs(child)
 
@@ -2297,6 +2315,101 @@ def _apply_instance_overrides(blueprint, node_map):
     return succeeded
 
 
+def _resync_root_after_grow(root_node_id: str):
+    """Recompute root.height = sum(flow children heights) + Tab Bar/FAB
+    height, then move ABSOLUTE Tab Bar/FAB to the new bottom y. Required
+    after R36 V=HUG grows a carousel parent (or any other post-fix that
+    changes flow-child heights), because the original [3/8] tab-bar
+    placement was based on stale heights.
+
+    Idempotent: if everything is already in sync, no calls are issued.
+    """
+    info = call_tool("get_node_info", {"nodeId": root_node_id})
+    if not isinstance(info, list) or not info:
+        return
+    try:
+        root = json.loads(info[0]["text"])
+    except Exception:
+        return
+    if not isinstance(root, dict):
+        return
+    children = root.get("children") or []
+    if not children:
+        return
+    # Refresh each child's height from Figma (root cache may be stale)
+    child_ids = [c.get("id") for c in children if c.get("id")]
+    fresh_heights = {}
+    fresh_pos = {}
+    if child_ids:
+        try:
+            r = call_tool("get_nodes_info", {"nodeIds": child_ids})
+            items = []
+            if isinstance(r, list) and r:
+                items = (json.loads(r[0]["text"]) or [])
+            for it in items:
+                doc = it.get("document") or it
+                cid = doc.get("id")
+                bb = doc.get("absoluteBoundingBox") or {}
+                if cid and bb:
+                    fresh_heights[cid] = bb.get("height", 0)
+                fresh_pos[cid] = doc.get("layoutPositioning")
+        except Exception:
+            pass
+
+    flow_h = 0
+    abs_children = []  # (id, name, height)
+    for c in children:
+        cid = c.get("id")
+        h = fresh_heights.get(cid) or c.get("height") or 0
+        lp = fresh_pos.get(cid) or c.get("layoutPositioning")
+        nm = (c.get("name") or "").lower()
+        is_abs = lp == "ABSOLUTE" or any(kw in nm for kw in
+            ("fab", "tab bar", "tabbar", "bottom nav", "bottomnav"))
+        if is_abs:
+            abs_children.append((cid, c.get("name") or "", h))
+        else:
+            flow_h += h
+
+    abs_h = sum(h for _, _, h in abs_children)
+    new_root_h = int(round(flow_h + abs_h))
+
+    cur_root_h = root.get("absoluteBoundingBox", {}).get("height") or root.get("height") or 0
+    if abs(new_root_h - cur_root_h) > 1:
+        try:
+            call_tool("resize_node", {
+                "nodeId": root_node_id,
+                "width": int(round(root.get("absoluteBoundingBox", {}).get("width") or 390)),
+                "height": new_root_h,
+            })
+            print(f"  root height: {int(cur_root_h)} → {new_root_h}")
+        except Exception as e:
+            print(f"  ⚠️ root resize 실패: {e}")
+
+    # Reposition Tab Bar at bottom = flow_h, FAB above Tab Bar
+    tab_bar = next(((cid, nm, h) for cid, nm, h in abs_children
+                    if "tab bar" in nm.lower() or "tabbar" in nm.lower()
+                    or "bottom nav" in nm.lower() or "bottomnav" in nm.lower()), None)
+    fab = next(((cid, nm, h) for cid, nm, h in abs_children
+                if "fab" in nm.lower()), None)
+    if tab_bar:
+        cid, _, _ = tab_bar
+        try:
+            call_tool("move_node", {"nodeId": cid, "x": 0, "y": int(round(flow_h))})
+            print(f"  Tab Bar y → {int(round(flow_h))}")
+        except Exception as e:
+            print(f"  ⚠️ Tab Bar move 실패: {e}")
+    if fab:
+        cid, _, h = fab
+        # FAB sits above the tab bar with a 16px spacer
+        tb_h = tab_bar[2] if tab_bar else 0
+        fab_y = int(round(flow_h - h - 16))
+        try:
+            call_tool("move_node", {"nodeId": cid, "x": 253, "y": fab_y})
+            print(f"  FAB y → {fab_y}")
+        except Exception as e:
+            print(f"  ⚠️ FAB move 실패: {e}")
+
+
 def _auto_bind_semantic_tokens(root_node_id):
     """Run semantic-token binding sweep on the rendered tree.
     Wraps _collect_bindings + _apply_bindings into a single auto-step.
@@ -2546,6 +2659,7 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     # 8.7. R36 carousel-peek: horizontal carousel 마지막 카드 25%+ peek 강제
     # (사용자 정책 2026-05-06 — v25 stage card scroll 잘림 회귀 fix)
     print("\n[8.7] R36 carousel last-card peek 강제 중...")
+    r36_grew = False
     try:
         from design_rules import REGISTRY as _R36
         _r36_tree = _collect_tree(root_node_id)
@@ -2554,8 +2668,20 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
         if rule and rule.auto_fix_built_fn:
             r36_fixes = rule.auto_fix_built_fn(_r36_tree, {}) or 0
             print(f"  → {r36_fixes}건 카드 폭 조정")
+            r36_grew = r36_fixes > 0
     except Exception as e:
         print(f"  ⚠️ R36 carousel-peek 실패 (무시): {e}")
+
+    # 8.8. root height ↔ children-flow + ABSOLUTE Tab Bar/FAB y 재동기화
+    # (사용자 정책 2026-05-08 — v27 회귀: Stage Tabs Section이 R36 V=HUG로
+    #  44px 늘어났는데 root height(FIXED 2004)와 Tab Bar y가 그대로라
+    #  Footer 마지막 라인이 Tab Bar에 가려지는 overlap 발생.)
+    if r36_grew or True:  # 항상 한 번 — 거의 비용 없음
+        print("\n[8.8] root height ↔ children-flow 재동기화 중...")
+        try:
+            _resync_root_after_grow(root_node_id)
+        except Exception as e:
+            print(f"  ⚠️ root resync 실패 (무시): {e}")
 
     # 9. Semantic Token Binding sweep (Rule 4/5 from invariants 2026-05-04)
     print("\n[9/10] Semantic Token Binding sweep 중...")
