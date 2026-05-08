@@ -167,7 +167,13 @@ def _compute_card_x(carousel: dict, idx: int) -> float:
 
 def _autofix(tree: dict, ctx: dict) -> int:
     """Post-fix: walk built tree, find horizontal carousels with the
-    last-card-hidden problem, and resize children to restore peek."""
+    last-card-hidden problem, and resize children to restore peek.
+
+    Also: for every detected carousel, force the carousel's own
+    layoutSizingVertical to HUG so the parent grows to the tallest
+    child. Without this, a FIXED-height carousel clips card content
+    from the bottom (v27 Stage Card Scroll: 100h FIXED clipped 144h
+    HUG cards by 44px, hiding Progress Track + ProgressLabel)."""
     import importlib, sys
     fmc = sys.modules.get("figma_mcp_client")
     if fmc is None:
@@ -179,12 +185,32 @@ def _autofix(tree: dict, ctx: dict) -> int:
     fixes = 0
     seen = set()
 
+    def _ensure_carousel_hug_v(carousel: dict):
+        """Force HORIZONTAL carousel parent to HUG vertically so it grows
+        to the max child height."""
+        cid = carousel.get("id")
+        if not cid:
+            return
+        if carousel.get("layoutSizingVertical") == "HUG":
+            return
+        try:
+            fmc.call_tool("set_layout_sizing", {
+                "nodeId": cid,
+                "layoutSizingVertical": "HUG",
+            })
+            print(f"  R36 carousel-vfix: '{carousel.get('name')}' V=HUG "
+                  f"(was {carousel.get('layoutSizingVertical')})")
+        except Exception as e:
+            print(f"  ⚠️ R36 carousel V=HUG 실패 ({carousel.get('name')}): {e}")
+
     def _walk(n):
         nonlocal fixes
         if not isinstance(n, dict): return
         if id(n) in seen: return
         seen.add(id(n))
         if _is_horizontal_carousel_tree(n):
+            # Always: ensure parent grows to tallest child (clip-from-bottom fix)
+            _ensure_carousel_hug_v(n)
             kids = n.get("_children_full") or n.get("children") or []
             if len(kids) >= 2 and all(isinstance(k, dict) for k in kids):
                 widths = [k.get("width") or 0 for k in kids]
