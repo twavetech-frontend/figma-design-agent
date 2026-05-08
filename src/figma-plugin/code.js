@@ -138,6 +138,15 @@ async function triggerLayoutReflow(params) {
   if (!root) {
     throw new Error("trigger_reflow: node not found: " + rootId);
   }
+  // Walk parents until we find the node's PAGE so we can switch to it
+  // before mutating selection (selection must be on currentPage).
+  let pageNode = root;
+  while (pageNode && pageNode.type !== "PAGE") {
+    pageNode = pageNode.parent;
+  }
+  if (pageNode && figma.currentPage !== pageNode) {
+    await figma.setCurrentPageAsync(pageNode);
+  }
   const all = [];
   function walk(n) {
     if (!n) return;
