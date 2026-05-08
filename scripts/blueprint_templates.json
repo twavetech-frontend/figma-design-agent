@@ -62,7 +62,7 @@
     "TabBar": {
       "_description": "하단 탭 바. 5개 탭(홈/커뮤니티/스테이지/라운지/나). post-fix에서 ABSOLUTE 배치 + individual stroke 자동 적용.",
       "_variables": [
-        "activeTab: 활성 탭 이름 (활성 탭은 fg-brand-primary + SemiBold, 비활성은 fg-quaternary + Medium)",
+        "activeTab: 활성 탭 이름 (활성 탭은 fg-brand-primary + SemiBold, 비활성은 fg-tertiary + Medium — fg-quaternary는 file mode에 따라 white-ish로 resolve되어 invisible 회귀 발생, 2026-05-08 fix)",
         "tabIcons: 각 탭의 아이콘 이름 (기본: home-line, users-01, coins-stacked-01, building-08, user-01)",
         "tabLabels: 각 탭의 라벨 텍스트 (기본: 홈, 커뮤니티, 스테이지, 라운지, 나)"
       ],
@@ -139,7 +139,7 @@
                 "type": "icon",
                 "iconName": "users-01",
                 "size": 24,
-                "iconColor": "$token(fg-quaternary)"
+                "iconColor": "$token(fg-tertiary)"
               },
               {
                 "name": "tab-comm-label",
@@ -150,7 +150,7 @@
                   "family": "Pretendard",
                   "style": "Medium"
                 },
-                "fontColor": "$token(fg-quaternary)",
+                "fontColor": "$token(fg-tertiary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
               }
@@ -173,7 +173,7 @@
                 "type": "icon",
                 "iconName": "coins-stacked-01",
                 "size": 24,
-                "iconColor": "$token(fg-quaternary)"
+                "iconColor": "$token(fg-tertiary)"
               },
               {
                 "name": "tab-stage-label",
@@ -184,7 +184,7 @@
                   "family": "Pretendard",
                   "style": "Medium"
                 },
-                "fontColor": "$token(fg-quaternary)",
+                "fontColor": "$token(fg-tertiary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
               }
@@ -207,7 +207,7 @@
                 "type": "icon",
                 "iconName": "building-08",
                 "size": 24,
-                "iconColor": "$token(fg-quaternary)"
+                "iconColor": "$token(fg-tertiary)"
               },
               {
                 "name": "tab-lounge-label",
@@ -218,7 +218,7 @@
                   "family": "Pretendard",
                   "style": "Medium"
                 },
-                "fontColor": "$token(fg-quaternary)",
+                "fontColor": "$token(fg-tertiary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
               }
@@ -241,7 +241,7 @@
                 "type": "icon",
                 "iconName": "user-01",
                 "size": 24,
-                "iconColor": "$token(fg-quaternary)"
+                "iconColor": "$token(fg-tertiary)"
               },
               {
                 "name": "tab-me-label",
@@ -252,7 +252,7 @@
                   "family": "Pretendard",
                   "style": "Medium"
                 },
-                "fontColor": "$token(fg-quaternary)",
+                "fontColor": "$token(fg-tertiary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
               }
@@ -765,7 +765,7 @@
                       "family": "Pretendard",
                       "style": "Bold"
                     },
-                    "fontColor": "$token(fg-quaternary)"
+                    "fontColor": "$token(fg-tertiary)"
                   },
                   {
                     "name": "Missed Count Box",
@@ -997,7 +997,7 @@
                         "fontSize": 26,
                         "_comment": "v17: gray '총 1,300만원' is intentionally muted (placeholder/calculated value); becomes fg-primary when user has run real calc",
                         "text": "총 1,300만원",
-                        "fontColor": "$token(fg-quaternary)",
+                        "fontColor": "$token(fg-tertiary)",
                         "fontName": {
                           "family": "Pretendard",
                           "style": "Bold"
