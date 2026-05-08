@@ -741,7 +741,14 @@ def cmd_build(blueprint_file: str):
     start = time.time()
     # Clone & Bind 파이프라인: sanitizer가 이미 blueprint를 안전화했으므로
     # TS 레이어의 enhanceBlueprint(자동 enforce)를 스킵 — star-01 fallback 우회 (S2.5)
-    skip_enhance = os.environ.get("FIGMA_MCP_SKIP_ENHANCE", "1") != "0"
+    # 2026-05-08: default flipped to "0" (run resolveBlueprint).
+    # SKIP_ENHANCE=1 was originally an opt-in to bypass a star-01 fallback
+    # bug, but it also bypassed the type:icon → svg_icon conversion which
+    # is the only path that bakes iconColor into the SVG. Result on v28:
+    # InfoIcon vector strokes rendered with the fallback hex #000000
+    # (figma-mcp-embedded.ts:900). Always enhancing keeps icons colored
+    # correctly. Set FIGMA_MCP_SKIP_ENHANCE=1 to opt back into the old path.
+    skip_enhance = os.environ.get("FIGMA_MCP_SKIP_ENHANCE", "0") != "0"
 
     # Sanitize letterSpacing/lineHeight: plugin's batch_build_screen accepts only
     # numbers (sets unit=PIXELS); object form {value, unit:PERCENT} fails Figma
@@ -3676,7 +3683,18 @@ def _collect_bindings(nodes, indexes):
             "icon" in (n.get("name") or "").lower()
         )
         fill_class = "foreground" if (is_text_node or is_icon_vector) else "background"
-        stroke_class = "foreground" if is_text_node else "border"
+        # Stroke class preference:
+        #   • Text strokes → foreground (rare, but when used)
+        #   • Vector inside an icon frame → foreground (the SVG line color
+        #     is conceptually fg-tertiary / fg-brand-primary, not a frame
+        #     border. Binding to "border-secondary" used to wash out Tab
+        #     Bar inactive icons because that token ≈ #e6e8ea in this
+        #     file's mode — invisible on white.)
+        #   • Frame stroke → border (e.g. card outline, real border).
+        if is_text_node or is_icon_vector:
+            stroke_class = "foreground"
+        else:
+            stroke_class = "border"
 
         # fills — skip if already bound to a variable (Figma's variable
         # resolution returns the file's current value, which can differ from
