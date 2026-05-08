@@ -3181,9 +3181,25 @@ def _load_token_index(token_map):
             })
         # else: list-shaped multi-layer BOXSHADOW values are not yet handled (future)
 
-    # Sort each bucket: semantic first, then alphabetical
+    # Sort each bucket: semantic first, plain hierarchy ahead of special-purpose,
+    # then alphabetical. This ensures bg-secondary wins over bg-brand-section /
+    # bg-field when they collide on the same RGB. (User policy 2026-05-08:
+    # plain semantic-hierarchy tokens are the canonical default in any new build.)
+    _PLAIN_HIERARCHY = (
+        # background plain
+        "bg-primary", "bg-secondary", "bg-tertiary", "bg-quaternary",
+        # foreground plain
+        "fg-primary", "fg-secondary", "fg-tertiary", "fg-quaternary",
+        # text plain
+        "text-primary", "text-secondary", "text-tertiary", "text-quaternary",
+        # border plain
+        "border-primary", "border-secondary", "border-tertiary",
+    )
+    def _is_plain(name):
+        last = name.rsplit("/", 1)[-1].lower()
+        return last in _PLAIN_HIERARCHY
     def _sort_bucket(bucket):
-        return sorted(bucket, key=lambda t: (not t[1], t[0]))
+        return sorted(bucket, key=lambda t: (not t[1], not _is_plain(t[0]), t[0]))
 
     for k in list(color_index.keys()):
         color_index[k] = _sort_bucket(color_index[k])
@@ -3201,16 +3217,63 @@ def _load_token_index(token_map):
 _COLOR_THRESHOLD = 12  # ΔRGB sum, RGB 0-255
 
 
-def _match_color(rgba_tuple, color_index):
+def _token_class(name: str) -> str:
+    """Classify a TOKEN_MAP entry name into 'background' / 'foreground' /
+    'text' / 'border' / 'other'. Used to prefer same-class candidates when
+    binding by RGB (a TEXT fill must never bind to a Colors/Background/* var,
+    and a FRAME bg must never bind to a Colors/Foreground/* var)."""
+    n = (name or "").lower()
+    if "/background/" in n or n.startswith("colors/background"):
+        return "background"
+    if "/foreground/" in n or n.startswith("colors/foreground"):
+        return "foreground"
+    if "/text/" in n or n.startswith("colors/text"):
+        return "text"
+    if "/border/" in n or n.startswith("colors/border"):
+        return "border"
+    return "other"
+
+
+def _match_color(rgba_tuple, color_index, prefer_class: str = None):
     """Return the best-matching token name for an (r,g,b,a) tuple, or None.
 
+    `prefer_class`:
+        "background" — caller is a FRAME fill / RECTANGLE bg → require
+                       Colors/Background/* tokens; reject foreground/text.
+        "foreground" — caller is a TEXT fill or icon vector fill → require
+                       Colors/Foreground/* or Colors/Text/* tokens.
+        "border"     — caller is a stroke → prefer Colors/Border/* then
+                       Colors/Foreground/* (border style line).
+        None         — no class restriction (legacy behavior).
+
+    This prevents the v27 regression where the post-fix sweep bound the
+    "이번 달 스케줄" TEXT to Colors/Background/bg-field (because the same
+    RGB collided with fg-quaternary in TOKEN_MAP), making the title invisible.
+
     Strategy:
-        1. Exact (r,g,b,a) hit → first token in pre-sorted bucket (semantic first).
+        1. Exact (r,g,b,a) hit → first compatible token in pre-sorted bucket.
         2. Otherwise scan all entries with same alpha (±0.05), find lowest
-           ΔRGB that is ≤ _COLOR_THRESHOLD. Tie-break by semantic-first sort.
+           ΔRGB that is ≤ _COLOR_THRESHOLD. Tie-break by class-match >
+           semantic > plain-hierarchy > alphabetical.
     """
+    def _accepts(name: str) -> bool:
+        if not prefer_class:
+            return True
+        c = _token_class(name)
+        if prefer_class == "background":
+            return c == "background"
+        if prefer_class == "foreground":
+            return c in ("foreground", "text")
+        if prefer_class == "border":
+            return c in ("border", "foreground")
+        return True
+
+    # Exact hit — pick first compatible token
     if rgba_tuple in color_index:
-        return color_index[rgba_tuple][0][0]
+        for tok_name, _ in color_index[rgba_tuple]:
+            if _accepts(tok_name):
+                return tok_name
+        # No class match on exact RGB? fall through to fuzzy search
 
     r, g, b, a = rgba_tuple
     best_dist = _COLOR_THRESHOLD + 1
@@ -3222,8 +3285,14 @@ def _match_color(rgba_tuple, color_index):
         dist = abs(cr - r) + abs(cg - g) + abs(cb - b)
         if dist > _COLOR_THRESHOLD:
             continue
-        cand_name, cand_semantic = bucket[0]
-        # Prefer: smaller distance > semantic > alphabetical (already in bucket order)
+        # Pick first class-compatible candidate from bucket
+        cand_name, cand_semantic = (None, False)
+        for tn, sem in bucket:
+            if _accepts(tn):
+                cand_name, cand_semantic = tn, sem
+                break
+        if not cand_name:
+            continue
         better = (
             dist < best_dist
             or (dist == best_dist and cand_semantic and not best_is_semantic)
@@ -3445,6 +3514,18 @@ def _collect_bindings(nodes, indexes):
         if not nid:
             continue
 
+        # Node-type → token-class hint. TEXT fills must bind to fg-* / text-*,
+        # FRAME/RECT fills to bg-*. This blocks the cross-class regressions
+        # where same-RGB collisions matched the wrong family (v27, 2026-05-08).
+        node_type = (n.get("type") or "").upper()
+        is_text_node = node_type in ("TEXT",)
+        # Vector children of icon frames also paint with foreground colors
+        is_icon_vector = node_type in ("VECTOR", "INSTANCE") and (
+            "icon" in (n.get("name") or "").lower()
+        )
+        fill_class = "foreground" if (is_text_node or is_icon_vector) else "background"
+        stroke_class = "foreground" if is_text_node else "border"
+
         # fills — skip if already bound to a variable (Figma's variable
         # resolution returns the file's current value, which can differ from
         # TOKEN_MAP's hex; rebinding based on the displayed hex breaks the
@@ -3462,14 +3543,15 @@ def _collect_bindings(nodes, indexes):
             rgba = _figma_color_to_rgba_ints(fill.get("color"))
             if rgba is None:
                 continue
-            tok = _match_color(rgba, color_idx)
+            tok = _match_color(rgba, color_idx, prefer_class=fill_class)
             if tok:
                 out["color_bindings"].append(
                     {"nodeId": nid, "field": "fills", "index": i, "token_name": tok}
                 )
             else:
                 out["unmapped"]["colors"].append(
-                    {"nodeId": nid, "field": "fills", "index": i, "rgba": rgba}
+                    {"nodeId": nid, "field": "fills", "index": i, "rgba": rgba,
+                     "class": fill_class}
                 )
 
         # strokes — same skip-if-bound logic
@@ -3484,14 +3566,15 @@ def _collect_bindings(nodes, indexes):
             rgba = _figma_color_to_rgba_ints(stroke.get("color"))
             if rgba is None:
                 continue
-            tok = _match_color(rgba, color_idx)
+            tok = _match_color(rgba, color_idx, prefer_class=stroke_class)
             if tok:
                 out["color_bindings"].append(
                     {"nodeId": nid, "field": "strokes", "index": i, "token_name": tok}
                 )
             else:
                 out["unmapped"]["colors"].append(
-                    {"nodeId": nid, "field": "strokes", "index": i, "rgba": rgba}
+                    {"nodeId": nid, "field": "strokes", "index": i, "rgba": rgba,
+                     "class": stroke_class}
                 )
 
         # numbers
