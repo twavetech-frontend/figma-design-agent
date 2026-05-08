@@ -2401,52 +2401,52 @@
   },
   "--colors-background-bgPrimary": {
     "figmaPath": "Colors/Background/bg-primary",
-    "value": "#000000",
+    "value": "#fcfcfd",
     "type": "COLOR"
   },
   "--colors-background-bgTertiary": {
     "figmaPath": "Colors/Background/bg-tertiary",
-    "value": "#18191b",
+    "value": "#e6e8ea",
     "type": "COLOR"
   },
   "--colors-background-bgBrandPrimary": {
     "figmaPath": "Colors/Background/bg-brand-primary",
-    "value": "#340078",
+    "value": "#f4ecff",
     "type": "COLOR"
   },
   "--colors-background-bgErrorSecondary": {
     "figmaPath": "Colors/Background/bg-error-secondary",
-    "value": "#912018",
+    "value": "#fee4e2",
     "type": "COLOR"
   },
   "--colors-background-bgWarningPrimary": {
     "figmaPath": "Colors/Background/bg-warning-primary",
-    "value": "#7a2e0e",
+    "value": "#fffaeb",
     "type": "COLOR"
   },
   "--colors-background-bgWarningSecondary": {
     "figmaPath": "Colors/Background/bg-warning-secondary",
-    "value": "#93370d",
+    "value": "#fef0c7",
     "type": "COLOR"
   },
   "--colors-background-bgSuccessPrimary": {
     "figmaPath": "Colors/Background/bg-success-primary",
-    "value": "#053321",
+    "value": "#ecfdf3",
     "type": "COLOR"
   },
   "--colors-background-bgSuccessSecondary": {
     "figmaPath": "Colors/Background/bg-success-secondary",
-    "value": "#079455",
+    "value": "#dcfae6",
     "type": "COLOR"
   },
   "--colors-background-bgBrandSolid": {
     "figmaPath": "Colors/Background/bg-brand-solid",
-    "value": "#7700ff",
+    "value": "#6a00e0",
     "type": "COLOR"
   },
   "--colors-background-bgSecondarySolid": {
     "figmaPath": "Colors/Background/bg-secondary-solid",
-    "value": "#94979c",
+    "value": "#687079",
     "type": "COLOR"
   },
   "--colors-background-bgErrorSolid": {
@@ -2476,12 +2476,12 @@
   },
   "--colors-background-bgDisabled": {
     "figmaPath": "Colors/Background/bg-disabled",
-    "value": "#22262f",
+    "value": "#f3f4f6",
     "type": "COLOR"
   },
   "--colors-background-bgActive": {
     "figmaPath": "Colors/Background/bg-active",
-    "value": "#22262f",
+    "value": "#f3f4f6",
     "type": "COLOR"
   },
   "--colors-background-bgBrandSolidHover": {
@@ -2491,17 +2491,17 @@
   },
   "--colors-background-bgErrorPrimary": {
     "figmaPath": "Colors/Background/bg-error-primary",
-    "value": "#7a271a",
+    "value": "#fef3f2",
     "type": "COLOR"
   },
   "--colors-background-bgBrandSecondary": {
     "figmaPath": "Colors/Background/bg-brand-secondary",
-    "value": "#5200b0",
+    "value": "#f4ecff",
     "type": "COLOR"
   },
   "--colors-background-bgSecondary": {
     "figmaPath": "Colors/Background/bg-secondary",
-    "value": "#0c0e12",
+    "value": "#f3f4f6",
     "type": "COLOR"
   },
   "--colors-background-bgDisabledSubtle": {
@@ -2511,7 +2511,7 @@
   },
   "--colors-background-bgQuaternary": {
     "figmaPath": "Colors/Background/bg-quaternary",
-    "value": "#22262f",
+    "value": "#d2d6db",
     "type": "COLOR"
   },
   "--colors-background-bgPrimaryAlt": {
@@ -2531,7 +2531,7 @@
   },
   "--colors-background-bgOverlay": {
     "figmaPath": "Colors/Background/bg-overlay",
-    "value": "#373a41",
+    "value": "#111927",
     "type": "COLOR"
   },
   "--colors-background-bgSecondarySubtle": {
@@ -2551,7 +2551,7 @@
   },
   "--colors-background-bgPrimarySolid": {
     "figmaPath": "Colors/Background/bg-primary-solid",
-    "value": "#ececed",
+    "value": "#2c3744",
     "type": "COLOR"
   },
   "--colors-background-bgErrorSolidHover": {
@@ -2561,17 +2561,17 @@
   },
   "--colors-background-bgQuaternaryHover": {
     "figmaPath": "Colors/Background/bg-quaternary-hover",
-    "value": "#373a41",
+    "value": "#d2d6db",
     "type": "COLOR"
   },
   "--colors-background-bgTertiaryHover": {
     "figmaPath": "Colors/Background/bg-tertiary-hover",
-    "value": "#22262f",
+    "value": "#e6e8ea",
     "type": "COLOR"
   },
   "--colors-background-bgErrorSecondaryHover": {
     "figmaPath": "Colors/Background/bg-error-secondary-hover",
-    "value": "#b42318",
+    "value": "#fecdca",
     "type": "COLOR"
   },
   "--colors-background-bgBrandSecondaryHover": {
@@ -2581,32 +2581,32 @@
   },
   "--colors-background-bgField": {
     "figmaPath": "Colors/Background/bg-field",
-    "value": "#22262f",
+    "value": "#f9fafb",
     "type": "COLOR"
   },
   "--colors-foreground-fgSecondary": {
     "figmaPath": "Colors/Foreground/fg-secondary",
-    "value": "#94979c",
+    "value": "#687079",
     "type": "COLOR"
   },
   "--colors-foreground-fgWarningPrimary": {
     "figmaPath": "Colors/Foreground/fg-warning-primary",
-    "value": "#f79009",
+    "value": "#dc6803",
     "type": "COLOR"
   },
   "--colors-foreground-fgSuccessPrimary": {
     "figmaPath": "Colors/Foreground/fg-success-primary",
-    "value": "#17b26a",
+    "value": "#079455",
     "type": "COLOR"
   },
   "--colors-foreground-fgLight": {
     "figmaPath": "Colors/Foreground/fg-light",
-    "value": "#61656c",
+    "value": "#ffffff",
     "type": "COLOR"
   },
   "--colors-foreground-fgSuccessSecondary": {
     "figmaPath": "Colors/Foreground/fg-success-secondary",
-    "value": "#47cd89",
+    "value": "#17b26a",
     "type": "COLOR"
   },
   "--colors-foreground-fgSecondaryHover": {
@@ -2616,12 +2616,12 @@
   },
   "--colors-foreground-fgPrimary": {
     "figmaPath": "Colors/Foreground/fg-primary",
-    "value": "#ececed",
+    "value": "#2c3744",
     "type": "COLOR"
   },
   "--colors-foreground-fgDisabled": {
     "figmaPath": "Colors/Foreground/fg-disabled",
-    "value": "#85888e",
+    "value": "#b1b6be",
     "type": "COLOR"
   },
   "--colors-foreground-fgBrandSecondary": {
@@ -2631,12 +2631,12 @@
   },
   "--colors-foreground-fgBrandPrimary": {
     "figmaPath": "Colors/Foreground/fg-brand-primary",
-    "value": "#e6d4ff",
+    "value": "#6a00e0",
     "type": "COLOR"
   },
   "--colors-foreground-fgQuaternary": {
     "figmaPath": "Colors/Foreground/fg-quaternary",
-    "value": "#22262f",
+    "value": "#f9fafb",
     "type": "COLOR"
   },
   "--colors-foreground-fgQuaternaryHover": {
@@ -2646,7 +2646,7 @@
   },
   "--colors-foreground-fgErrorPrimary": {
     "figmaPath": "Colors/Foreground/fg-error-primary",
-    "value": "#f04438",
+    "value": "#d92d20",
     "type": "COLOR"
   },
   "--colors-foreground-fgDisabledSubtle": {
@@ -2656,17 +2656,17 @@
   },
   "--colors-foreground-fgWarningSecondary": {
     "figmaPath": "Colors/Foreground/fg-warning-secondary",
-    "value": "#fdb022",
+    "value": "#f79009",
     "type": "COLOR"
   },
   "--colors-foreground-fgErrorSecondary": {
     "figmaPath": "Colors/Foreground/fg-error-secondary",
-    "value": "#f97066",
+    "value": "#f04438",
     "type": "COLOR"
   },
   "--colors-foreground-fgTertiary": {
     "figmaPath": "Colors/Foreground/fg-tertiary",
-    "value": "#85888e",
+    "value": "#b1b6be",
     "type": "COLOR"
   },
   "--colors-foreground-fgTertiaryHover": {
@@ -2691,7 +2691,7 @@
   },
   "--colors-foreground-fgDark": {
     "figmaPath": "Colors/Foreground/fg-dark",
-    "value": "#ececed",
+    "value": "#0d121c",
     "type": "COLOR"
   },
   "--colors-effects-shadows-shadowXs": {
