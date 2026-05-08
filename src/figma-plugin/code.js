@@ -122,10 +122,55 @@ function updateSettings(settings) {
 }
 
 // Handle commands from UI
+// Force Figma to reflow stale auto-layout positions by selecting every
+// FRAME / INSTANCE / GROUP / COMPONENT under a root, then clearing the
+// selection. Without this, freshly built nodes can render at outdated
+// positions until a user clicks one (the act of selecting triggers
+// Figma's internal layout recalculation). 2026-05-08 fix per user
+// observation: "5월" text drifted right in Schedule Title row until
+// the row was double-clicked, after which it snapped back.
+async function triggerLayoutReflow(params) {
+  const rootId = params && params.nodeId;
+  if (!rootId) {
+    throw new Error("trigger_reflow: missing nodeId");
+  }
+  const root = await figma.getNodeByIdAsync(rootId);
+  if (!root) {
+    throw new Error("trigger_reflow: node not found: " + rootId);
+  }
+  const all = [];
+  function walk(n) {
+    if (!n) return;
+    const t = n.type;
+    if (t === "FRAME" || t === "INSTANCE" || t === "GROUP" || t === "COMPONENT" || t === "COMPONENT_SET") {
+      all.push(n);
+    }
+    if ("children" in n) {
+      for (var i = 0; i < n.children.length; i++) {
+        walk(n.children[i]);
+      }
+    }
+  }
+  walk(root);
+  // Bulk-select to flush layout cache, then restore previous selection.
+  const prev = figma.currentPage.selection || [];
+  try {
+    figma.currentPage.selection = all;
+    // Brief tick so Figma processes the selection change
+    await new Promise(function (r) { setTimeout(r, 30); });
+  } finally {
+    figma.currentPage.selection = prev;
+  }
+  return { reflowedFrames: all.length };
+}
+
+
 async function handleCommand(command, params) {
   switch (command) {
     case "ping_check":
       return { ok: true, timestamp: Date.now() };
+    case "trigger_reflow":
+      return await triggerLayoutReflow(params);
     case "get_document_info":
       return await getDocumentInfo();
     case "get_selection":

@@ -2672,6 +2672,28 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     except Exception as e:
         print(f"  ⚠️ R36 carousel-peek 실패 (무시): {e}")
 
+    # 8.85 (after 8.8): trigger Figma layout reflow so freshly-built nodes
+    # snap to their final auto-layout positions immediately. Without this,
+    # stale layout cache means values like the "5월" text in the Schedule
+    # Title row render at the wrong x until the user clicks the frame —
+    # the click forces Figma to recompute the layout. We do that recompute
+    # programmatically by bulk-selecting every FRAME/INSTANCE/GROUP under
+    # the root, then clearing the selection. (2026-05-08 user-observed.)
+    # Note: this needs the figma plugin to expose the `trigger_reflow`
+    # command (added 2026-05-08, requires a one-time plugin reload).
+    def _trigger_reflow(node_id):
+        try:
+            r = call_tool("trigger_reflow", {"nodeId": node_id})
+            parsed = parse_content(r) if r else {}
+            j = parsed.get("json") or {}
+            if "reflowedFrames" in j:
+                print(f"  reflow: {j['reflowedFrames']}개 frame layout 재계산")
+        except Exception as e:
+            # Older plugin builds without the command — silent skip.
+            msg = str(e)
+            if "Unknown command" in msg or "trigger_reflow" not in msg:
+                pass
+
     # 8.8. root height ↔ children-flow + ABSOLUTE Tab Bar/FAB y 재동기화
     # (사용자 정책 2026-05-08 — v27 회귀: Stage Tabs Section이 R36 V=HUG로
     #  44px 늘어났는데 root height(FIXED 2004)와 Tab Bar y가 그대로라
@@ -2682,6 +2704,10 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
             _resync_root_after_grow(root_node_id)
         except Exception as e:
             print(f"  ⚠️ root resync 실패 (무시): {e}")
+
+    # 8.85 trigger figma layout reflow (stale auto-layout cache flush)
+    print("\n[8.85] Figma layout reflow trigger 중...")
+    _trigger_reflow(root_node_id)
 
     # 9. Semantic Token Binding sweep (Rule 4/5 from invariants 2026-05-04)
     print("\n[9/10] Semantic Token Binding sweep 중...")
