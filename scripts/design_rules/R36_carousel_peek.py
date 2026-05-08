@@ -128,6 +128,19 @@ def _is_horizontal_carousel_tree(node: dict) -> bool:
     kids = node.get("_children_full") or node.get("children") or []
     if len(kids) < 2:
         return False
+    # Reject text-row patterns (e.g. Stage Tab Row "참여 중인 스테이지 |
+    # 찜한 스테이지" + tiny divider). A real card carousel has no TEXT
+    # children at the top level; labels live inside frame cards. If any
+    # direct child is a TEXT node, this is a label/tab row, not a
+    # carousel — bail before the V=HUG / width-shrink autofix touches it.
+    # (Regression observed 2026-05-08: R36 mis-classified Stage Tab Row,
+    # forced V=HUG + treated tiny divider as "card", flipped the row to
+    # SPACE_BETWEEN visually.)
+    for k in kids:
+        if not isinstance(k, dict):
+            return False
+        if (k.get("type") or "").upper() == "TEXT":
+            return False
     own_w = node.get("width") or 0
     if not own_w:
         return False
