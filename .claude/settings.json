@@ -17,5 +17,9 @@
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "figma-tools"
-  ]
+  ],
+  "env": {
+    "FIGMA_MCP_SKIP_ENHANCE": "1",
+    "FIGMA_MCP_REQUEST_TIMEOUT": "600"
+  }
 }

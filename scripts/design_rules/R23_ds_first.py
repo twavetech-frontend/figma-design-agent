@@ -15,7 +15,10 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from .base import Phase, Rule, Severity, Violation, register, walk_blueprint, walk_tree
-from .ds_catalog import DS_PATTERNS, is_container, resolve_component_key
+from .ds_catalog import (
+    DS_PATTERNS, is_container, resolve_component_key,
+    detect_button_shape, detect_badge_shape, detect_ds_role_structural,
+)
 
 
 # ── L3 inject — name → componentKey auto-swap ───────────────────
@@ -58,19 +61,38 @@ def _inject_node(node: dict) -> int:
     if node.get("componentKey"):
         return 0
     name = node.get("name") or ""
-    if is_container(name):
+    role = key = None
+    text_override = None
+    # 1) name-pattern resolution (legacy path — icons, pills, headers, …)
+    resolved = resolve_component_key(name) if not is_container(name) else None
+    if resolved:
+        role, key = resolved
+        text_override = _extract_instance_text(node, role)
+    else:
+        # 2) structural (shape) detection — buttons / badges / tags / inputs /
+        #    dropdowns / toggles / checkboxes / radios / sliders / progress.
+        #    Only `confident` matches (button/badge/tag, or name-hinted form
+        #    controls) are auto-swapped; shape-only hits are surfaced as WARN
+        #    by _lint instead (no swap — avoids false-positive instances).
+        r = detect_ds_role_structural(node)
+        if r and r[3]:
+            role, key, text_override = r[0], r[1], r[2]
+    if not key:
         return 0
-    resolved = resolve_component_key(name)
-    if not resolved:
-        return 0
-    role, key = resolved
     node["componentKey"] = key
     node["type"] = "instance"
     node["_dsResolvedRole"] = role
-    # Capture text override for post-fix instance text application
-    text_override = _extract_instance_text(node, role)
     if text_override is not None:
         node["_instanceText"] = text_override
+    # DS "Buttons/Button" master ships with leading + trailing icon slots
+    # visible by default ("○ Label ○"). A plain CTA wants text only — turn
+    # them off via the boolean properties (names incl. the #nodeID suffix
+    # are the stable property identifiers).
+    if str(role).startswith("Action Button"):
+        ip = dict(node.get("instanceProperties") or {})
+        ip.setdefault("⬅️ Icon leading#3287:1577", False)
+        ip.setdefault("➡️ Icon trailing#3287:2338", False)
+        node["instanceProperties"] = ip
     # Strip raw children — instances render via main component
     if "children" in node:
         node["_originalChildren"] = node.pop("children")
@@ -96,6 +118,23 @@ def _lint(bp: dict, ctx: dict) -> Iterable[Violation]:
         if node.get("componentKey"):
             continue
         name = node.get("name", "") or ""
+        # Structural DS gate — a frame that *looks like* a DS component but is
+        # a raw FRAME. Buttons = hard ERROR (verified key, inject auto-swaps,
+        # so this only fires if something went wrong). Everything else = WARN
+        # (surfaces the gap without breaking builds; keys not all battle-tested).
+        struct = detect_ds_role_structural(node)
+        if struct:
+            role = struct[0]
+            yield Violation(
+                "R23-ds-raw-component", Severity.WARN, path,
+                f"frame '{name}' is {role}-shaped but is a raw FRAME — should "
+                f"be the DS '{role}' component instance "
+                f"(auto-swap is on for toggle/checkbox/radio/input/slider/"
+                f"progress/dropdown when keyed; buttons WARN-only pending a "
+                f"reliable DS-button sizing pass).",
+                Phase.LINT,
+            )
+            continue
         if is_container(name):
             continue
         for pat, cat in DS_PATTERNS:
@@ -120,6 +159,16 @@ def _verify(tree: dict, ctx: dict) -> Iterable[Violation]:
         if node.get("type") not in ("FRAME",):
             continue
         name = node.get("name") or ""
+        struct = detect_ds_role_structural(node)
+        if struct:
+            role = struct[0]
+            yield Violation(
+                "R23-ds-raw-component", Severity.WARN, path,
+                f"built tree has {role}-shaped FRAME '{name}' — should be a DS "
+                f"'{role}' instance.",
+                Phase.VERIFY,
+            )
+            continue
         if is_container(name):
             continue
         for pat, cat in DS_PATTERNS:

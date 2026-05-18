@@ -247,7 +247,8 @@ def mcp_request(method: str, params: Optional[dict] = None, msg_id: int = 1) -> 
     if sid:
         headers["mcp-session-id"] = sid
 
-    resp = requests.post(MCP_URL, json=payload, headers=headers, timeout=300)
+    resp = requests.post(MCP_URL, json=payload, headers=headers,
+                         timeout=int(os.environ.get("FIGMA_MCP_REQUEST_TIMEOUT", "600")))
 
     # Save session ID from response
     new_sid = resp.headers.get("mcp-session-id")
@@ -741,13 +742,17 @@ def cmd_build(blueprint_file: str):
     start = time.time()
     # Clone & Bind 파이프라인: sanitizer가 이미 blueprint를 안전화했으므로
     # TS 레이어의 enhanceBlueprint(자동 enforce)를 스킵 — star-01 fallback 우회 (S2.5)
-    # 2026-05-08: default flipped to "0" (run resolveBlueprint).
-    # SKIP_ENHANCE=1 was originally an opt-in to bypass a star-01 fallback
-    # bug, but it also bypassed the type:icon → svg_icon conversion which
-    # is the only path that bakes iconColor into the SVG. Result on v28:
-    # InfoIcon vector strokes rendered with the fallback hex #000000
-    # (figma-mcp-embedded.ts:900). Always enhancing keeps icons colored
-    # correctly. Set FIGMA_MCP_SKIP_ENHANCE=1 to opt back into the old path.
+    # 2026-05-08: default flipped to "0" (run resolveBlueprint) because
+    # SKIP_ENHANCE=1 bypasses the type:icon → svg_icon conversion that bakes
+    # iconColor into the SVG → icon vectors fell back to hex #000000 on v28
+    # (figma-mcp-embedded.ts:900).
+    # 2026-05-12: enhance is the main build-time bottleneck on big screens
+    # (300s timeout on 13-section imin_home). cmd_post_fix now runs
+    # _auto_fix_black_icon_colors which re-binds any #000000 icon vector to a
+    # context-appropriate fg token, so SKIP_ENHANCE=1 is safe again *when going
+    # through `build`* (which always post-fixes). Enable via env or .claude/
+    # settings.json: FIGMA_MCP_SKIP_ENHANCE=1. Code default stays "0" for
+    # callers that hit batch_build_screen directly without post-fix.
     skip_enhance = os.environ.get("FIGMA_MCP_SKIP_ENHANCE", "0") != "0"
 
     # Sanitize letterSpacing/lineHeight: plugin's batch_build_screen accepts only
@@ -2569,6 +2574,310 @@ def _auto_classify_black_texts(root_node_id):
         return 0
 
 
+def _auto_fix_black_icon_colors(root_node_id):
+    """Find VECTOR / BOOLEAN_OPERATION nodes (icon glyphs) whose stroke OR fill
+    is default-black (#000000) and not bound to a variable, and rebind to a
+    semantic foreground token chosen from ancestor bg context.
+
+    Why: when FIGMA_MCP_SKIP_ENHANCE=1, the build skips the type:icon→svg_icon
+    conversion that bakes iconColor into the SVG, so icon vectors fall back to
+    hex #000000 (figma-mcp-embedded.ts:900). This post-fix step restores the
+    intended color so SKIP_ENHANCE can be enabled for speed without the v28
+    InfoIcon-goes-black regression.
+    """
+    try:
+        rv = call_tool("get_local_variables", {})
+        if not isinstance(rv, list) or not rv:
+            return 0
+        var_id_to_name = {
+            v.get("id"): v.get("name", "")
+            for v in (json.loads(rv[0]["text"]).get("variables") or [])
+        }
+        rt = call_tool("get_nodes_info", {"nodeIds": [root_node_id]})
+        if not isinstance(rt, list) or not rt or "Error" in rt[0].get("text", "")[:50]:
+            return 0
+        tree = json.loads(rt[0]["text"])[0].get("document") or {}
+
+        def get_bg(node):
+            fills = node.get("fills") or []
+            if not fills or not isinstance(fills[0], dict):
+                return None
+            bv = fills[0].get("boundVariables") or {}
+            cb = bv.get("color") if isinstance(bv, dict) else None
+            if isinstance(cb, dict) and cb.get("id"):
+                return var_id_to_name.get(cb["id"], "")
+            return None
+
+        def pick_token(bg_chain):
+            parent_bg = next((b for b in reversed(bg_chain) if b), "") or ""
+            pl = parent_bg.lower()
+            if ("bg-brand-solid" in pl or "bg-error-solid" in pl
+                    or "bg-warning-solid" in pl or "bg-success-solid" in pl):
+                return "Colors/Background/bg-primary"  # white on solid color
+            if "bg-error-secondary" in pl or "bg-error-primary" in pl:
+                return "Colors/Foreground/fg-error-primary"
+            if "bg-warning-secondary" in pl or "bg-warning-primary" in pl:
+                return "Colors/Foreground/fg-warning-primary"
+            if "bg-success-secondary" in pl or "bg-success-primary" in pl:
+                return "Colors/Foreground/fg-success-primary"
+            if "bg-brand-primary" in pl or "bg-brand-secondary" in pl:
+                return "Colors/Foreground/fg-brand-primary"
+            return "Colors/Foreground/fg-secondary"
+
+        def is_black(paint):
+            if not isinstance(paint, dict):
+                return False
+            c = paint.get("color") or {}
+            bv = paint.get("boundVariables") or {}
+            cb = bv.get("color") if isinstance(bv, dict) else None
+            if isinstance(cb, dict) and cb.get("id"):
+                return False  # already bound
+            return c.get("r", 1) == 0 and c.get("g", 1) == 0 and c.get("b", 1) == 0
+
+        to_bind = []
+
+        def walk(n, bg_chain):
+            nid = n.get("id") or ""
+            if nid.startswith("I"):
+                return  # instance internals — managed by component props
+            own_bg = get_bg(n)
+            new_chain = bg_chain + [own_bg] if own_bg else bg_chain
+            ntype = n.get("type")
+            if ntype in ("VECTOR", "BOOLEAN_OPERATION", "STAR", "LINE", "ELLIPSE", "POLYGON"):
+                bindings = {}
+                strokes = n.get("strokes") or []
+                if isinstance(strokes, list) and strokes and is_black(strokes[0]):
+                    bindings["strokes/0"] = pick_token(new_chain)
+                fills = n.get("fills") or []
+                if isinstance(fills, list) and fills and is_black(fills[0]):
+                    bindings["fills/0"] = pick_token(new_chain)
+                if bindings:
+                    to_bind.append({"nodeId": nid, "bindings": bindings})
+            for c in n.get("children") or []:
+                walk(c, new_chain)
+
+        walk(tree, [])
+        if not to_bind:
+            return 0
+        succeeded = 0
+        for i in range(0, len(to_bind), 50):
+            batch = to_bind[i:i + 50]
+            try:
+                r = call_tool("batch_bind_variables", {"items": batch})
+                d = json.loads(r[0]["text"]) if isinstance(r, list) and r else {}
+                succeeded += d.get("succeeded", 0)
+            except Exception:
+                pass
+        return succeeded
+    except Exception as e:
+        print(f"  ⚠️ black-icon fix error (continuing): {e}")
+        return 0
+
+
+def _fix_tab_bar_icon_colors(root_node_id):
+    """Re-bind bottom Tab Bar icon vectors + labels to the correct semantic
+    tokens: active tab → fg-brand-primary / text-brand-primary, inactive →
+    fg-tertiary. Workaround for the build's type:icon node not applying its
+    `iconColor` (the icon component ships near-white, which the token-bind
+    sweep then maps to fg-quaternary → invisible on the white bar).
+
+    Active tab heuristic: the item whose name contains "(active)", else the
+    first tab item (imin_home 홈). Returns count of binds applied.
+    """
+    try:
+        rt = call_tool("get_nodes_info", {"nodeIds": [root_node_id]})
+        if not isinstance(rt, list) or not rt or "Error" in rt[0].get("text", "")[:50]:
+            return 0
+        tree = json.loads(rt[0]["text"])[0].get("document") or {}
+
+        def find_tab_bar(n):
+            if isinstance(n, dict):
+                nm = (n.get("name") or "").strip().lower()
+                if nm in ("tab bar", "tabbar", "bottom tab bar") and (n.get("type") in ("FRAME", "INSTANCE")):
+                    return n
+                for c in n.get("children") or []:
+                    r = find_tab_bar(c)
+                    if r:
+                        return r
+            return None
+
+        tb = find_tab_bar(tree)
+        if not tb:
+            return 0
+        items = [c for c in (tb.get("children") or []) if isinstance(c, dict) and c.get("type") in ("FRAME", "INSTANCE")]
+        if not items:
+            return 0
+
+        def collect_vectors(n, out):
+            if isinstance(n, dict):
+                if n.get("type") in ("VECTOR", "BOOLEAN_OPERATION", "STAR", "LINE", "ELLIPSE", "POLYGON"):
+                    has_s = bool(n.get("strokes"))
+                    has_f = bool(n.get("fills"))
+                    out.append((n.get("id"), has_s, has_f))
+                for c in n.get("children") or []:
+                    collect_vectors(c, out)
+
+        def first_text_id(n):
+            if isinstance(n, dict):
+                if n.get("type") == "TEXT":
+                    return n.get("id")
+                for c in n.get("children") or []:
+                    t = first_text_id(c)
+                    if t:
+                        return t
+            return None
+
+        # active = name has "(active)", else index 0
+        active_idx = 0
+        for i, it in enumerate(items):
+            if "active" in (it.get("name") or "").lower():
+                active_idx = i
+                break
+
+        binds = []
+        for i, it in enumerate(items):
+            is_active = (i == active_idx)
+            icon_tok = "Colors/Foreground/fg-brand-primary" if is_active else "Colors/Foreground/fg-tertiary"
+            label_tok = "Colors/Text/text-brand-primary" if is_active else "Colors/Foreground/fg-tertiary"
+            vids = []
+            collect_vectors(it, vids)
+            for vid, has_s, has_f in vids:
+                if not vid or str(vid).startswith("I"):
+                    continue
+                b = {}
+                if has_s:
+                    b["strokes/0"] = icon_tok
+                if has_f:
+                    b["fills/0"] = icon_tok
+                if b:
+                    binds.append({"nodeId": vid, "bindings": b})
+            tid = first_text_id(it)
+            if tid and not str(tid).startswith("I"):
+                binds.append({"nodeId": tid, "bindings": {"fills/0": label_tok}})
+        if not binds:
+            return 0
+        succeeded = 0
+        for i in range(0, len(binds), 50):
+            try:
+                r = call_tool("batch_bind_variables", {"items": binds[i:i + 50]})
+                d = json.loads(r[0]["text"]) if isinstance(r, list) and r else {}
+                succeeded += d.get("succeeded", 0)
+            except Exception:
+                pass
+        return succeeded
+    except Exception as e:
+        print(f"  ⚠️ tab-bar icon color fix error (continuing): {e}")
+        return 0
+
+
+# ============================================================
+# DS Text-Style application (post-fix step 9.5)
+# ============================================================
+# Colors / spacing / radius get *variable* bindings in the sweep above, but a
+# TEXT node's typography (font size / weight / line-height / letter-spacing)
+# only conforms to the DS if it carries a DS *text style*. This step walks
+# every TEXT node under the freshly-built root and binds it to the matching
+# DS text style ("Display */Text *" × Regular/Medium/Semibold/Bold), snapping
+# slightly-off fontSizes to the nearest scale step. Idempotent.
+
+_DS_TEXT_SIZE_SCALE = [12, 14, 16, 18, 20, 24, 30, 36, 48, 60, 72]
+_DS_TEXT_SIZE_SNAP_TOL = 3   # px — snap node fontSize to nearest scale step within this
+
+
+def _normalize_ds_weight(style_name):
+    """Figma fontName.style → DS text-style weight bucket (lowercase)."""
+    if not isinstance(style_name, str):
+        return "regular"
+    s = style_name.strip().lower().replace(" ", "").replace("-", "")
+    if s in ("medium",):
+        return "medium"
+    if s in ("semibold", "demibold"):
+        return "semibold"
+    if s in ("bold", "extrabold", "ultrabold", "black", "heavy"):
+        return "bold"
+    # thin / extralight / light / regular / normal / book / unknown → regular
+    return "regular"
+
+
+def _fetch_ds_text_styles():
+    """Return {(sizeInt, weightBucket): styleKey} from the file's text styles."""
+    try:
+        content = call_tool("get_styles", {})
+        data = parse_content(content).get("json") or {}
+    except Exception:
+        return {}
+    out = {}
+    for ts in (data.get("texts") or []):
+        key = ts.get("key")
+        size = ts.get("fontSize")
+        fn = ts.get("fontName") or {}
+        wname = fn.get("style")
+        if not key or not isinstance(size, (int, float)) or not wname:
+            continue
+        out[(int(round(size)), _normalize_ds_weight(wname))] = key
+    return out
+
+
+def _walk_text_nodes(node, acc):
+    if not isinstance(node, dict):
+        return
+    if (node.get("type") or "").upper() == "TEXT":
+        acc.append(node)
+    for c in (node.get("_children_full") or node.get("children") or []):
+        _walk_text_nodes(c, acc)
+
+
+def _apply_ds_text_styles(root_node_id):
+    """Bind every (non-instance-internal) TEXT node under root to its matching
+    DS text style. Returns (applied_count, skipped_count)."""
+    style_map = _fetch_ds_text_styles()
+    if not style_map:
+        return (0, 0)
+    tree = _collect_tree(root_node_id)
+    texts = []
+    _walk_text_nodes(tree, texts)
+    items = []
+    skipped = 0
+    for n in texts:
+        nid = n.get("id")
+        if not nid or ";" in str(nid):
+            # instance-internal text ("I<inst>;<child>") inherits the master's
+            # style — don't override.
+            skipped += 1
+            continue
+        fn = n.get("fontName")
+        size = n.get("fontSize")
+        if not isinstance(fn, dict) or not isinstance(size, (int, float)):
+            # mixed/multi-run typography — can't bind the whole node
+            skipped += 1
+            continue
+        w = _normalize_ds_weight(fn.get("style"))
+        size_i = int(round(size))
+        if (size_i, w) not in style_map:
+            cand = min(_DS_TEXT_SIZE_SCALE, key=lambda s: abs(s - size_i))
+            if abs(cand - size_i) <= _DS_TEXT_SIZE_SNAP_TOL and (cand, w) in style_map:
+                size_i = cand
+            else:
+                skipped += 1
+                continue
+        items.append({"nodeId": nid, "textStyleId": f"S:{style_map[(size_i, w)]},{root_node_id}"})
+    if not items:
+        return (0, skipped)
+    applied = 0
+    for i in range(0, len(items), 100):
+        chunk = items[i:i + 100]
+        try:
+            r = call_tool("batch_set_text_style_id", {"items": chunk}, msg_id=21000 + i)
+            txt = r[0].get("text", "") if isinstance(r, list) and r else ""
+            try:
+                applied += json.loads(txt).get("succeeded", 0)
+            except Exception:
+                applied += len(chunk)
+        except Exception:
+            pass
+    return (applied, skipped)
+
+
 def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     """빌드 후 자동 후처리: FILL 사이징, Tab Bar/FAB 배치, 섹션 갭, 텍스트 수정, stroke 정렬.
 
@@ -2721,6 +3030,15 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     bind_counts = _auto_bind_semantic_tokens(root_node_id)
     print(f"  → colors {bind_counts.get('colors_succeeded',0)}/{bind_counts.get('colors_total',0)} bound")
 
+    # 9.5 Apply DS text styles to every TEXT node (typography parity with DS)
+    print("\n[9.5] DS 텍스트 스타일 적용 중...")
+    try:
+        ts_applied, ts_skipped = _apply_ds_text_styles(root_node_id)
+    except Exception as e:
+        print(f"  ⚠️ 텍스트 스타일 적용 실패 (무시): {e}")
+        ts_applied, ts_skipped = 0, 0
+    print(f"  → {ts_applied} 텍스트 스타일 바인딩 ({ts_skipped} skip)")
+
     # 10. Auto-fix black default text colors (Rule 6 from invariants)
     # build pipeline의 resolve_tokens_in_blueprint가 TEXT 'color'에 있는
     # $token()을 적용 안 하는 버그 우회. 검정(0,0,0)이고 not-bound인 텍스트를
@@ -2728,6 +3046,11 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     print("\n[10/10] 검정 default 텍스트 자동 분류 + binding 중...")
     text_fixed = _auto_classify_black_texts(root_node_id)
     print(f"  → {text_fixed} 텍스트 자동 컬러 binding")
+    icon_fixed = _auto_fix_black_icon_colors(root_node_id)
+    print(f"  → {icon_fixed} 아이콘 vector 검정 fallback 컬러 재바인딩 (SKIP_ENHANCE 보정)")
+    tab_icon_fixed = _fix_tab_bar_icon_colors(root_node_id)
+    if tab_icon_fixed:
+        print(f"  → {tab_icon_fixed} Tab Bar 아이콘/라벨 컬러 재바인딩 (active=brand, 나머지=fg-tertiary)")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
@@ -2739,6 +3062,7 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     print(f"  Peek 위반 경고: {peek_warns}건")
     print(f"  Status Bar bg 매칭: {'OK' if sb_matched else 'skip'}")
     print(f"  Semantic bind: {bind_counts.get('colors_succeeded',0)}/{bind_counts.get('colors_total',0)}")
+    print(f"  DS 텍스트 스타일 바인딩: {ts_applied}건 ({ts_skipped} skip)")
     print(f"  텍스트 컨텍스트 binding: {text_fixed}건")
     print(f"  루트 높이: {layout_result['root_height']}")
     print(f"{'='*50}\n")
@@ -3308,8 +3632,12 @@ def _load_token_index(token_map):
             if any(state in lower for state in (
                 # state names
                 "/bg-disabled", "/bg-active",
-                # modifier suffixes (apply to bg-* / fg-* / border-* / text-*)
+                # modifier suffixes — underscore variant (bg/fg/border/text-*)
                 "_hover", "_pressed", "_focused", "_focus", "_visited",
+                # modifier suffixes — DASH variant (e.g. bg-brand-secondary-hover).
+                # Mobile has no hover; interaction-state tokens must never be a
+                # normal-state fill. User policy 2026-05-12 (explicit, repeated).
+                "-hover", "-pressed", "-focused", "-focus", "-visited", "-disabled",
                 "_subtle", "_alt", "_on-brand",
                 # inverse / solid (special purpose, never normal default)
                 "/bg-primary-solid", "/bg-secondary-solid",

@@ -90,22 +90,40 @@ def _has_detail_card(rec_root: dict) -> bool:
 
 
 def _count_ctas(rec_root: dict) -> int:
-    """V20 has 2 CTAs in a row. Count distinct CTA-like frames."""
+    """V20 has 2 CTAs in a row. Count distinct CTA-like nodes — works whether
+    they're raw frames or DS Action Button instances (R23 inject swaps them,
+    keeping the name + an _instanceText)."""
     count = 0
     for node, _ in walk_blueprint(rec_root):
-        if node.get("type") == "frame":
+        if node.get("type") in ("frame", "instance"):
             nm = (node.get("name") or "").lower()
             if "cta" in nm and ("primary" in nm or "secondary" in nm):
                 count += 1
+            elif str(node.get("_dsResolvedRole") or "").startswith("Action Button"):
+                count += 1
     if count > 0:
         return count
-    # Fallback: count text nodes that look like CTAs
+    # Fallback: count CTA-text nodes (incl. inside _originalChildren stripped
+    # by R23 inject) and _instanceText labels.
     cta_texts = 0
-    for node, _ in walk_blueprint(rec_root):
-        if node.get("type") == "text":
-            t = node.get("characters") or node.get("text") or ""
-            if t.strip() in ("스테이지 참여하기", "맞는 스테이지 찾기"):
-                cta_texts += 1
+    seen = set()
+    _CTAS = ("스테이지 참여하기", "맞는 스테이지 찾기")
+    def _scan(n):
+        nonlocal cta_texts
+        if not isinstance(n, dict):
+            return
+        if n.get("type") == "text":
+            t = (n.get("characters") or n.get("text") or "").strip().lstrip("⁠").strip()
+            if t in _CTAS and t not in seen:
+                seen.add(t); cta_texts += 1
+        it = str(n.get("_instanceText") or "").strip().lstrip("⁠").strip()
+        if it in _CTAS and it not in seen:
+            seen.add(it); cta_texts += 1
+        for c in (n.get("children") or []):
+            _scan(c)
+        for c in (n.get("_originalChildren") or []):
+            _scan(c)
+    _scan(rec_root)
     return cta_texts
 
 
