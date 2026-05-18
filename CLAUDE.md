@@ -47,14 +47,13 @@ npm start       # electron . (이미 빌드된 상태에서)
 - `src/main/settings-store.ts`에서 `getGeminiApiKey()` / `setGeminiApiKey()` 제공
 
 ## Plugin & Build
-- Plugin code: `src/claude_mcp_plugin/code.js` (plain JS, Figma sandbox — no optional chaining `?.`)
+- Plugin code: `src/figma-plugin/code.js` (plain JS, Figma sandbox — no optional chaining `?.`)
 - MCP server: TypeScript, built by `tsup` via `npm run build`
 - `npm run build` → dist/ (CJS + ESM)
-- `npm run build:dxt` → .dxt extension for Claude Desktop → `dxt/` 폴더에 버전 번호 포함 복사
 
 ### Git Commit & Push 규칙
-- 사용자가 커밋+푸시를 요청하면 **반드시 `npm run build:dxt` 실행 후** 커밋
-- 순서: `build:dxt` → git add → git commit → git push
+- 순서: git add → git commit → git push
+- `src/` (MCP 서버/플러그인) 변경 시에만 커밋 전 `npm run build` 실행. `scripts/` (Python 파이프라인)만 변경했으면 빌드 불필요
 
 ## 알려진 이슈
 - DesignPreview 컴포넌트 참조되지만 미구현
