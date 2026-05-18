@@ -5610,7 +5610,7 @@
     "figmaPath": "Focus rings/focus-ring",
     "value": [
       {
-        "color": "#ffffff",
+        "color": "#fcfcfd",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5640,7 +5640,7 @@
         "spread": 0
       },
       {
-        "color": "#ffffff",
+        "color": "#fcfcfd",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5662,7 +5662,7 @@
     "figmaPath": "Focus rings/focus-ring-shadow-xs-skeuomorphic",
     "value": [
       {
-        "color": "#ffffff",
+        "color": "#fcfcfd",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5700,7 +5700,7 @@
         "spread": 0
       },
       {
-        "color": "#ffffff",
+        "color": "#fcfcfd",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5722,7 +5722,7 @@
     "figmaPath": "Focus rings/focus-ring-error",
     "value": [
       {
-        "color": "#ffffff",
+        "color": "#fcfcfd",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5752,7 +5752,7 @@
         "spread": 0
       },
       {
-        "color": "#ffffff",
+        "color": "#fcfcfd",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -5774,7 +5774,7 @@
     "figmaPath": "Focus rings/focus-ring-error-shadow-xs-skeuomorphic",
     "value": [
       {
-        "color": "#ffffff",
+        "color": "#fcfcfd",
         "type": "dropShadow",
         "x": 0,
         "y": 0,
@@ -7685,6 +7685,16 @@
   "--componentColors-alpha-alphaWhite100": {
     "figmaPath": "Component colors/Alpha/alpha-white-100",
     "value": "#0c0e12",
+    "type": "COLOR"
+  },
+  "--componentColors-alpha-alphaBlack20": {
+    "figmaPath": "Component colors/Alpha/alpha-black-20",
+    "value": "#ffffff08",
+    "type": "COLOR"
+  },
+  "--componentColors-alpha-alphaBlack30": {
+    "figmaPath": "Component colors/Alpha/alpha-black-30",
+    "value": "#ffffff0d",
     "type": "COLOR"
   },
   "--fontFamily-fontFamilyDisplay": {

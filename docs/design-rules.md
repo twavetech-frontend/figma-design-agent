@@ -6,6 +6,22 @@
 
 아래 규칙은 **모든 디자인 생성/수정 시** 기본으로 적용한다. 위반하면 QA에서 반드시 실패한다.
 
+### ⚠️ 룰 0: 와이어프레임 1:1 복제 금지 + 컬러 단조로움 금지 (사용자 명시 2026-05-18)
+> 가장 자주 지적받는 품질 문제. 와이어프레임을 입력으로 받아도 결과가 와이어프레임처럼 보이면 실패다.
+
+- **와이어프레임/PRD는 콘텐츠·정보 구조의 source일 뿐, 시각 레이아웃 청사진이 아니다.** 평면 배치(인라인 텍스트 나열, 단색 박스, 균일 카드)를 그대로 옮기지 말 것.
+- **시각 위계 재구성 필수**:
+  - 핵심 수치 → 히어로 크기 (인라인 문장 → 큰 숫자 블록, 28px+ Bold)
+  - 정보 → 카드·통계 미니블록으로 그룹화 (나열 금지)
+  - 반복 요소 → 차등화 (1순위/강조 카드는 보더·그림자·랭크 뱃지로 구분)
+- **컬러 단조로움 금지**: 브랜드 단색 반복 금지. 시맨틱 액센트 2~3색(success 그린·warning 오렌지)을 의미에 맞게 — 태그/뱃지/상태/통계 강조/긍정·부정 지표에 운용.
+- 와이어프레임 = "무엇을", 에이전트 = "어떻게 보여줄지". "와이어프레임이랑 똑같다" 피드백 = 실패.
+
+### ⚠️ 룰 0-B: 매 디자인은 새로 분석 — 이전 블루프린트/생성기 재사용 금지 (사용자 명시 2026-05-18)
+- 디자인 생성 요청 시 이전 폴리시드 블루프린트(`blueprint_*.json`)나 생성기 스크립트(`gen_*.py`)를 그대로 재실행하지 말 것.
+- 같은 와이어프레임이라도 **매번 처음부터 재분석** — 콘텐츠 추출 → reference 검색 → 시각 위계 재구성 → 새 블루프린트 직접 저작.
+- 이전 결과물은 참고만 가능, 복사·재실행 금지.
+
 ### 디자인 생성 전 필수 실행 스텝 (MANDATORY PRE-BUILD)
 > 이 스텝을 건너뛰면 잘못된 색상, 깨진 레이아웃이 생성된다. **스킵 절대 금지.**
 
@@ -59,6 +75,8 @@
     - **베이스라인 원리**: Tab Row의 하단 stroke가 전체 너비 회색 선을 그리고, Active 탭의 2px 언더라인 bar가 그 위에 겹쳐서 brand 컬러로 활성 탭을 표시. Inactive 탭은 `layoutSizingVertical: "FILL"`로 Active 탭과 동일 높이를 유지하여 베이스라인 정렬
     - **절대 금지**: pill 형태(cornerRadius 20 + 배경 fill) 탭을 섹션 내 필터로 사용하는 것. Pill 탭은 상단 네비게이션 전용
 15. **배너형 CTA 카드(아이콘+텍스트+chevron 행)는 padding 16, spacing 16** — 계산기 배너, 프로모션 배너 등 아이콘+텍스트그룹+chevron을 한 줄로 배치하는 카드형 CTA는: `HORIZONTAL`, `SPACE_BETWEEN`, `CENTER`, **padding 16(전방향)**, **itemSpacing 16**, `cornerRadius: 16`. 텍스트 그룹은 반드시 `HUG` (FILL 금지 — rule 8 참조)
+16. **그림자(DROP_SHADOW) 카드는 부모 안에 그림자 여백 확보 (R42 자동 강제)** — 그림자 달린 카드/프레임은 부모 autoLayout 의 padding·itemSpacing 이 그림자 extent(`radius + spread + |offset|`, 보통 ~12px) 이상이어야 한다. 안 그러면 그림자가 인접 섹션의 불투명 배경에 덮여 잘려 보인다. **섹션 래퍼 `paddingBottom: 0` 금지** — 그림자 카드를 담으면 ≥ 그림자 extent. `R42` inject 가 빌드 전 자동 보정 + 조상 `clipsContent` 해제(가로 캐로셀 제외).
+17. **부모와 같은 색으로 채운 레이아웃 래퍼 프레임은 fill 제거 (R43 자동 강제)** — root 가 `bg-primary` 인데 그 위 섹션 래퍼도 `bg-primary` 로 채우면 중복이다. cornerRadius/stroke/effects 없는 순수 레이아웃 프레임은 부모와 같은 색이면 fill 을 넣지 말 것(투명 → 부모 배경이 비침). 카드(cornerRadius·stroke·그림자 중 하나라도 있음)는 독립 표면이므로 같은 색이라도 유지. `R43` inject 가 중복 fill 자동 제거.
 
 ---
 
@@ -259,3 +277,10 @@
 - 바인딩 순서: ① Text Style (`set_text_style_id`) → ② Typography 변수 (fontSize, lineHeight) → ③ Radius 변수 → ④ Color 변수 (fills/0, strokes/0)
 - `set_bound_variables`로 바인딩: fontSize, lineHeight, cornerRadius(topLeftRadius 등), padding, itemSpacing, fills/0, strokes/0
 - `set_text_style_id`로 Text Style 바인딩 (Style ID 형식: `S:{key},{nodeId}`)
+
+### ⚠️ TEXT 컬러는 `Colors/Text/text-*` 에 바인딩 (사용자 정책 2026-05-18)
+- **TEXT 노드의 fill 컬러는 `fg-*`가 아닌 `Colors/Text/text-*` 토큰에 바인딩한다**
+- `text-*`에 해당 컬러가 없으면 `Component colors/Utility/utility-*` 토큰을 fallback으로 사용
+- 아이콘(VECTOR)/프레임 배경/보더는 기존대로 `fg-*` / `bg-*` / `border-*` 사용 — 이 규칙은 **텍스트 컬러 전용**
+- 코드 강제: `figma_mcp_client.py` 의 `_collect_bindings`가 TEXT fill 매칭 결과를 `_remap_text_token`으로 `fg-→text-` 리맵, 미해당 시 `prefer_class="utility"`로 재매칭. `_auto_classify_black_texts`/`_fix_tab_bar_icon_colors`도 text- 반환
+- 기존 빌드 화면 갱신: `python3 scripts/rebind_text_to_text_tokens.py <rootNodeId>` (post-fix sweep은 이미 바인딩된 fill을 스킵하므로 강제 재바인딩 필요)

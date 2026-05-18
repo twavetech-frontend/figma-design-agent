@@ -982,6 +982,15 @@ def cmd_build(blueprint_file: str):
     print(f"전체 완료: {total_elapsed:.1f}s (빌드 {build_elapsed:.1f}s + 후처리 + 이미지)")
     print(f"{'='*50}")
 
+    # Step F: 프론트엔드 핸드오프 JSON 자동 생성 (디자인 완료 후 항상 실행)
+    if root_id:
+        try:
+            from gen_frontend_spec import export_frontend_spec
+            spec_path = export_frontend_spec(root_id)
+            print(f"\n🧩 프론트엔드 레이아웃 스펙 JSON 생성: {spec_path}")
+        except Exception as e:
+            print(f"\n⚠️  프론트엔드 스펙 JSON 생성 실패 (무시): {e}")
+
     # Project rule: blueprint files must be authored fresh per build.
     # Record + auto-delete the source file so reuse is physically prevented.
     if root_id:
@@ -2451,11 +2460,12 @@ def _auto_classify_black_texts(root_node_id):
     token. Workaround for build pipeline bug where $token() in TEXT 'color'
     field isn't applied.
 
-    Classification rules (priority top-down):
-      • Inside bg-brand-solid ancestor → bg-primary (white)
-      • Inside bg-error-* / bg-warning-* / bg-success-* → matching fg-*
-      • By Korean content patterns → fg-tertiary (메타) / fg-secondary (라벨)
-      • Default → fg-primary
+    Classification rules (priority top-down) — all targets are Colors/Text/text-*
+    (user policy 2026-05-18: TEXT colors bind to text-*, never fg-*):
+      • Inside a solid color bg (brand/error/warning/success) → text-white
+      • Inside bg-error-*/warning-*/success-* light → matching text-*-primary
+      • By Korean content patterns → text-tertiary (메타) / text-secondary (라벨)
+      • Default → text-primary
     """
     try:
         # Build var-id → name map
@@ -2485,45 +2495,46 @@ def _auto_classify_black_texts(root_node_id):
             return None
 
         def classify(text_node, bg_chain):
+            # TEXT colors bind to Colors/Text/text-* (user policy 2026-05-18).
             chars = text_node.get("characters", "") or ""
             # Innermost ancestor bg with content
             parent_bg = next((b for b in reversed(bg_chain) if b), "") or ""
             pl = parent_bg.lower()
-            # On brand bg → white
+            # On solid color bg → white text
             if "bg-brand-solid" in pl:
-                return "Colors/Background/bg-primary"
+                return "Colors/Text/text-white"
             if "bg-error-solid" in pl or "fg-error" in pl:
-                return "Colors/Background/bg-primary"
+                return "Colors/Text/text-white"
             if "bg-success-solid" in pl:
-                return "Colors/Background/bg-primary"
+                return "Colors/Text/text-white"
             if "bg-warning-solid" in pl:
-                return "Colors/Background/bg-primary"
-            # On error-secondary (light red) → fg-error-primary text
+                return "Colors/Text/text-white"
+            # On error-secondary (light red) → text-error-primary
             if "bg-error-secondary" in pl or "bg-error-primary" in pl:
-                return "Colors/Foreground/fg-error-primary"
+                return "Colors/Text/text-error-primary"
             if "bg-warning-secondary" in pl or "bg-warning-primary" in pl:
-                return "Colors/Foreground/fg-warning-primary"
+                return "Colors/Text/text-warning-primary"
             if "bg-success-secondary" in pl or "bg-success-primary" in pl:
-                return "Colors/Foreground/fg-success-primary"
+                return "Colors/Text/text-success-primary"
             if "bg-brand-primary" in pl or "bg-brand-secondary" in pl:
-                return "Colors/Foreground/fg-brand-primary"
+                return "Colors/Text/text-brand-primary"
             # Specific symbols
             if chars in ("+",):
-                return "Colors/Foreground/fg-success-primary"
+                return "Colors/Text/text-success-primary"
             if chars in ("−", "-"):
-                return "Colors/Foreground/fg-error-primary"
+                return "Colors/Text/text-error-primary"
             # Heuristic by content: short tertiary captions
             tertiary_hints = (
                 "총 ", "에 보여요", "사용자에게", "전체 보기", "이번 달",
                 "매일매일", "방금 전", "분 전", "시간 전", "어제", "일 전", "주 전",
             )
             if any(hint in chars for hint in tertiary_hints):
-                return "Colors/Foreground/fg-tertiary"
+                return "Colors/Text/text-tertiary"
             secondary_hints = ("모은 금액", "납입 예정액", "월 납입", "납입 완료", "남은 납입", "수령 회차", "기간")
             if any(hint in chars for hint in secondary_hints):
-                return "Colors/Foreground/fg-secondary"
+                return "Colors/Text/text-secondary"
             # Default
-            return "Colors/Foreground/fg-primary"
+            return "Colors/Text/text-primary"
 
         def walk(n, bg_chain):
             if (n.get("id") or "").startswith("I"):
@@ -2738,7 +2749,8 @@ def _fix_tab_bar_icon_colors(root_node_id):
         for i, it in enumerate(items):
             is_active = (i == active_idx)
             icon_tok = "Colors/Foreground/fg-brand-primary" if is_active else "Colors/Foreground/fg-tertiary"
-            label_tok = "Colors/Text/text-brand-primary" if is_active else "Colors/Foreground/fg-tertiary"
+            # TEXT labels bind to Colors/Text/text-* (user policy 2026-05-18); icons stay fg-*.
+            label_tok = "Colors/Text/text-brand-primary" if is_active else "Colors/Text/text-tertiary"
             vids = []
             collect_vectors(it, vids)
             for vid, has_s, has_f in vids:
@@ -3616,11 +3628,14 @@ def _load_token_index(token_map):
             if rgba is None:
                 continue
             # User policy 2026-05-03: bind ONLY to semantic tokens.
-            # Primitives (Base/*, Brand/600, Gray .../900, Component colors/*)
-            # are excluded from binding candidates entirely. Designer must use
-            # semantic-named tokens (bg-*, fg-*, border-*, text-*).
+            # Primitives (Base/*, Brand/600, Gray .../900) are excluded entirely.
+            # Exception (user policy 2026-05-18): Component colors/Utility/* tokens
+            # ARE indexed — as a TEXT-fill fallback tier. They are only ever picked
+            # via prefer_class="utility" (see _match_color._accepts); every other
+            # binding class rejects them, so this cannot affect bg/fg/border binds.
             if not is_semantic:
-                continue
+                if not figma_path.startswith("Component colors/Utility/"):
+                    continue
             # User policy 2026-05-03/04: in DEFAULT state, never bind to
             # state-specific OR modifier-variant tokens. These share hex with
             # plain hierarchy tokens (e.g. bg-secondary_subtle = #fcfcfd =
@@ -3704,12 +3719,50 @@ def _load_token_index(token_map):
 _COLOR_THRESHOLD = 12  # ΔRGB sum, RGB 0-255
 
 
+# User policy 2026-05-18: TEXT-node colors bind to Colors/Text/text-*, never to
+# Colors/Foreground/fg-*. A fg-* token matched for a TEXT fill is remapped to its
+# text-* equivalent via this table. Colors with no text-* equivalent fall back to
+# a Component colors/Utility/* token (resolved by RGB).
+_FG_TO_TEXT_SUFFIX = {
+    "fg-primary": "text-primary",
+    "fg-secondary": "text-secondary",
+    "fg-tertiary": "text-tertiary",
+    "fg-quaternary": "text-quaternary",
+    "fg-brand-primary": "text-brand-primary",
+    "fg-brand-secondary": "text-brand-secondary",
+    "fg-error-primary": "text-error-primary",
+    "fg-warning-primary": "text-warning-primary",
+    "fg-success-primary": "text-success-primary",
+    "fg-disabled": "text-disabled",
+    "fg-white": "text-white",
+}
+
+
+def _remap_text_token(tok):
+    """Remap a TEXT-fill token to the text-* policy (user 2026-05-18).
+    Colors/Foreground/fg-X → Colors/Text/text-Y when an equivalent exists.
+    Already-text tokens pass through. Non-remappable fg-* tokens are returned
+    unchanged so the caller can attempt a Component colors/Utility/* fallback."""
+    if not tok:
+        return tok
+    if tok.startswith("Colors/Text/"):
+        return tok
+    if tok.startswith("Colors/Foreground/"):
+        mapped = _FG_TO_TEXT_SUFFIX.get(tok.rsplit("/", 1)[-1])
+        if mapped:
+            return "Colors/Text/" + mapped
+    return tok
+
+
 def _token_class(name: str) -> str:
     """Classify a TOKEN_MAP entry name into 'background' / 'foreground' /
-    'text' / 'border' / 'other'. Used to prefer same-class candidates when
-    binding by RGB (a TEXT fill must never bind to a Colors/Background/* var,
-    and a FRAME bg must never bind to a Colors/Foreground/* var)."""
+    'text' / 'utility' / 'border' / 'other'. Used to prefer same-class
+    candidates when binding by RGB (a TEXT fill must never bind to a
+    Colors/Background/* var, and a FRAME bg must never bind to a
+    Colors/Foreground/* var)."""
     n = (name or "").lower()
+    if "component colors/utility" in n or "/utility/" in n:
+        return "utility"
     if "/background/" in n or n.startswith("colors/background"):
         return "background"
     if "/foreground/" in n or n.startswith("colors/foreground"):
@@ -3753,6 +3806,8 @@ def _match_color(rgba_tuple, color_index, prefer_class: str = None):
             return c in ("foreground", "text")
         if prefer_class == "border":
             return c in ("border", "foreground")
+        if prefer_class == "utility":
+            return c == "utility"
         return True
 
     # Exact hit — pick first compatible token
@@ -4042,6 +4097,15 @@ def _collect_bindings(nodes, indexes):
             if rgba is None:
                 continue
             tok = _match_color(rgba, color_idx, prefer_class=fill_class)
+            # TEXT-fill colors bind to Colors/Text/text-* (user policy 2026-05-18).
+            # Remap a matched fg-* token to its text-* equivalent; if none exists
+            # (or nothing matched), fall back to Component colors/Utility/*.
+            if is_text_node:
+                tok = _remap_text_token(tok)
+                if tok is None or tok.startswith("Colors/Foreground/"):
+                    util = _match_color(rgba, color_idx, prefer_class="utility")
+                    if util:
+                        tok = util
             if tok:
                 out["color_bindings"].append(
                     {"nodeId": nid, "field": "fills", "index": i, "token_name": tok}

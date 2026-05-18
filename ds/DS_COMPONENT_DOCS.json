@@ -1,6 +1,6 @@
 {
   "source": "https://twavetech-frontend.github.io/design-system-docs",
-  "lastFetched": "2026-05-12T10:07:33.273Z",
+  "lastFetched": "2026-05-18T09:01:51.547Z",
   "foundation": [
     {
       "name": "Colors",
@@ -2889,7 +2889,7 @@
           "name": "title",
           "type": "string",
           "values": [],
-          "default": "&#x27;모�� 제목&#x27;"
+          "default": "&#x27;모달 제목&#x27;"
         },
         {
           "name": "description",

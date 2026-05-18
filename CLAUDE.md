@@ -89,6 +89,22 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 ## 디자인 생성 필수 규칙
 
+### ⚠️⚠️ 0순위. 와이어프레임을 1:1로 베끼지 말 것 + 컬러 단조로움 금지 (2026-05-18 사용자 명시)
+- **와이어프레임/PRD는 "무엇을 담을지"(콘텐츠·정보 구조)의 source이지, 시각 레이아웃의 청사진이 아니다.**
+- 와이어프레임의 평면적 배치(인라인 텍스트 나열, 단색 박스, 균일한 카드)를 그대로 옮기면 결과물이 "디자인"이 아니라 "와이어프레임 복제"가 된다 — **금지**.
+- **반드시 시각 위계를 재구성**한다:
+  - 핵심 수치/정보는 **히어로 크기**로 끌어올린다 (인라인 문장 → 큰 숫자 블록)
+  - 정보는 카드·통계 블록·미니카드로 **그룹화**한다 (나열 금지)
+  - 반복 요소는 **차등화**한다 (랭크/강조/1순위 카드는 보더·그림자·뱃지로 구분)
+- **컬러 단조로움 금지**: 브랜드 단색만 반복하지 말 것. 시맨틱 액센트 **2~3색**(success 그린, warning 오렌지 등)을 의미에 맞게 배치 — 태그·뱃지·상태·통계 강조·긍정/부정 지표에 색을 운용한다.
+- 와이어프레임은 "무엇을", 에이전트(디자이너)는 "어떻게 보여줄지"를 결정한다. 빌드 후 "와이어프레임이랑 똑같다"는 피드백이 나오면 실패다.
+
+### ⚠️⚠️ 0순위-B. 매 디자인은 새로 분석 — 이전 블루프린트/생성기 재사용 금지 (2026-05-18 사용자 명시)
+- **디자인 생성 요청을 받으면 이전에 만든 폴리시드 블루프린트(`blueprint_*.json`)나 생성기 스크립트(`gen_*.py`)를 그대로 재실행하지 말 것.**
+- 같은(또는 비슷한) 와이어프레임이라도 **매번 와이어프레임을 처음부터 다시 분석**한다 — 콘텐츠 구조 추출 → reference 검색 → 시각 위계 재구성 → 새 블루프린트 작성.
+- 이전 결과물은 참고만 가능하며, 복사·재실행은 금지. **블루프린트는 매번 새 파일로 직접 저작**한다.
+- **Why**: 기존 생성기를 재실행하면 분석 단계가 스킵되어 와이어프레임의 새 의도/변경사항이 반영되지 않고, 디자인이 정체된다.
+
 ### 0. ⚠️ Reference-first — 빌드 전 references[] + _searchLog 필수 (S20 + S21)
 - **모든 새 디자인은 `references/uibowl/`의 실제 polished UI를 검색해서 가장 가까운 화면을 카피한다**
 - 빌드 직전 워크플로우 (절대 스킵 금지, 사용자 명시 지시 2026-05-06):
@@ -327,6 +343,27 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 ```
 
 ---
+
+## 화면 → 프론트엔드 JSON 자동 생성 (사용자 명시 2026-05-18)
+
+> **`build` 완료 시 자동 실행** — `cmd_build`의 Step F가 post-fix·이미지 생성 후
+> 프론트엔드 핸드오프 JSON을 항상 생성한다 (`전체 완료` 직후 단계). 별도 요청 불필요.
+> 수동 실행도 가능:
+> ```bash
+> python3 scripts/gen_frontend_spec.py <rootNodeId>
+> ```
+
+- **포맷**: 프레임워크 중립 레이아웃 스펙 — flexbox 기반 노드 트리
+  - `layout`: `direction`(row/column) · `gap` · `padding`[t,r,b,l] · `justify` · `align` · `sizingHorizontal/Vertical`
+  - `style`: `background` · `border` · `borderRadius` · `shadow` · `opacity`
+  - `text`: `content` · `fontSize` · `fontWeight` · `fontFamily` · `color` · `align` · `lineHeight`
+  - React·RN·Vue 어디서든 매핑 가능하도록 특정 프레임워크 종속 금지
+- **색상**: 토큰명 + hex 값을 **둘 다** 표기 — `{"token": "bg-brand-primary", "value": "#F4ECFF"}`
+  - 토큰명은 빌드가 바인딩한 변수(`get_bound_variables`)에서 가져온다 (정답). hex 역추적은 fallback
+  - `value`(hex)가 authoritative — 렌더링된 실제 색상
+- **파일명**: `화면이름_날짜_시간` (예: `stage_reco_2026_0518_20260518_174644.json`)
+- **파일 경로**: `json/` 디렉토리 (없으면 생성)
+- 도구: `scripts/gen_frontend_spec.py` — `get_node_info` 깊이 제한을 컨테이너 재귀 재조회로 보완, 노드별 `get_bound_variables`로 시맨틱 토큰명 확보
 
 ## 상세 문서 (작업 시 필요한 문서만 Read로 로드)
 
