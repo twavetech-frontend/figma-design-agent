@@ -22,8 +22,9 @@ scripts/.mcp_session
 scripts/blueprint_assembled_*.json
 scripts/config_imin_*.json
 
-# Claude Code 로컬 세션
+# Claude Code 로컬 세션·설정
 .claude/projects/
+.claude/settings.local.json
 
 # 로컬 빌드 산출물
 artifacts/
