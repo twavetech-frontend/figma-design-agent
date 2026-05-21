@@ -25,8 +25,27 @@ jobs:
           curl -sL https://raw.githubusercontent.com/twavetech-frontend/design-system/main/tokens.json -o /tmp/ds-build/tokens.json
           curl -sL https://raw.githubusercontent.com/twavetech-frontend/design-system/main/sync-to-agent.js -o /tmp/ds-build/sync-to-agent.mjs
 
+      - name: Patch Dark-mode exclusion filter
+        # 업스트림 필터 includes('dark mode') 는 set 키 "1. Color modes/Dark"
+        # 를 못 걸러 Dark 값이 Light 를 override 한다 → "color modes/dark" 로 교정.
+        # 업스트림이 고쳐지면 grep 가드로 자동 무효화.
+        run: |
+          if grep -q "includes('dark mode')" /tmp/ds-build/sync-to-agent.mjs; then
+            sed -i "s#includes('dark mode')#includes('color modes/dark')#" /tmp/ds-build/sync-to-agent.mjs
+            echo "Patched sync-to-agent.mjs — Dark-mode exclusion filter fixed"
+          fi
+
       - name: Generate DESIGN_TOKENS.md and TOKEN_MAP.json
         run: node /tmp/ds-build/sync-to-agent.mjs --out $GITHUB_WORKSPACE/ds
+
+      - name: Verify Light-mode values
+        run: |
+          BG=$(python3 -c "import json; print(json.load(open('$GITHUB_WORKSPACE/ds/TOKEN_MAP.json'))['--colors-background-bgPrimary']['value'])")
+          if [ "$BG" = "#000000" ]; then
+            echo "ERROR: bg-primary=#000000 — DARK mode regression, patch failed"
+            exit 1
+          fi
+          echo "OK: bg-primary=$BG (Light mode)"
 
       - name: Commit updated tokens
         run: |
