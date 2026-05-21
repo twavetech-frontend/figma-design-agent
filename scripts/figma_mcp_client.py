@@ -608,9 +608,17 @@ def cmd_build(blueprint_file: str):
     try:
         import subprocess
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        yoga_src = os.path.join(project_root, "src", "yoga-cli.ts")
+        yoga_js = os.path.join(project_root, "out", "yoga-cli", "index.js")
+        if os.path.exists(yoga_js):
+            # 빌드 산출물을 node로 직접 실행 — npx 불필요.
+            # Windows에서 ["npx", ...]는 npx.cmd를 못 찾아 WinError 2로 실패하므로 회피.
+            yoga_cmd = ["node", yoga_js]
+        else:
+            # fallback: 소스를 npx tsx로 실행 (Windows는 npx.cmd)
+            npx_bin = "npx.cmd" if os.name == "nt" else "npx"
+            yoga_cmd = [npx_bin, "tsx", os.path.join(project_root, "src", "yoga-cli.ts")]
         proc = subprocess.run(
-            ["npx", "tsx", yoga_src],
+            yoga_cmd,
             input=json.dumps(blueprint),
             capture_output=True, text=True, timeout=10,
             cwd=project_root
