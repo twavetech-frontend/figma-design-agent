@@ -50,6 +50,7 @@ for part in data.get('result',{}).get('content',[]):
 - 텍스트가 잘리지 않는가?
 - 섹션 너비가 화면 전체(393px)를 채우는가?
 - Auto Layout이 의도대로 동작하는가? (HUG vs FILL)
+- **Status Bar가 빌드 자동 삽입된 DS 인스턴스(INSTANCE "Status Bar")인가?** blueprint에 직접 넣었으면 실패 (CLAUDE.md 규칙 1)
 
 **규칙: 스크린샷 없이 다음 단계로 넘어가지 말 것.** 눈으로 확인하지 않은 변경은 문제를 누적시킨다.
 

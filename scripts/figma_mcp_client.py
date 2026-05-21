@@ -31,7 +31,11 @@ import io
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Optional, List, Dict
 
-MCP_URL = "http://localhost:8769/mcp"
+# 127.0.0.1 사용 — localhost는 Windows에서 IPv6(::1) 우선 해석 후 IPv4 폴백이라 호출마다 지연
+MCP_URL = "http://127.0.0.1:8769/mcp"
+# HTTP keep-alive — MCP 호출마다 새 TCP 연결을 열지 않도록 세션 재사용
+# (post-fix는 수백 회 호출 → Windows 연결 생성/해제 오버헤드 누적 방지)
+_http = requests.Session()
 SESSION_FILE = os.path.join(os.path.dirname(__file__), ".mcp_session")
 TOKEN_MAP_FILE = os.path.join(os.path.dirname(__file__), "..", "ds", "TOKEN_MAP.json")
 
@@ -349,7 +353,7 @@ def mcp_request(method: str, params: Optional[dict] = None, msg_id: int = 1) -> 
     if sid:
         headers["mcp-session-id"] = sid
 
-    resp = requests.post(MCP_URL, json=payload, headers=headers, timeout=300)
+    resp = _http.post(MCP_URL, json=payload, headers=headers, timeout=300)
 
     # Save session ID from response
     new_sid = resp.headers.get("mcp-session-id")
@@ -374,7 +378,7 @@ def init_session() -> str:
     headers = {"Content-Type": "application/json"}
     if sid:
         headers["mcp-session-id"] = sid
-    requests.post(MCP_URL, json=payload, headers=headers, timeout=10)
+    _http.post(MCP_URL, json=payload, headers=headers, timeout=10)
 
     return sid
 
@@ -561,6 +565,9 @@ def cmd_build(blueprint_file: str):
 
     with open(blueprint_file) as f:
         blueprint = json.load(f)
+
+    # 자동 바인딩용 원본 보존 ($token() 참조가 살아있는 사본 — resolve 전에 떠둠)
+    original_blueprint = json.loads(json.dumps(blueprint))
 
     # Step 1: Validate blueprint before any processing
     issues = validate_blueprint(blueprint)
@@ -752,6 +759,14 @@ def cmd_build(blueprint_file: str):
         cmd_post_fix(root_id)
     else:
         print("⚠️  rootId를 찾을 수 없어 post-fix를 건너뜁니다.")
+
+    # Step E.5: DS 변수 자동 바인딩 (색상·타이포) — $token() blueprint 기반
+    if root_id:
+        print("\n🔗 DS 변수 자동 바인딩 중...")
+        try:
+            auto_bind_design(root_id, original_blueprint)
+        except Exception as e:
+            print(f"  [auto-bind] 실패 (무시하고 계속): {e}")
 
     # Step F: 이미지 사전 생성 완료 대기 + Figma 적용
     if pre_gen_future and node_map is not None:
@@ -1120,7 +1135,50 @@ def _apply_pre_generated_images(pre_results: list, node_map: dict):
 
 
 def _collect_tree(node_id: str, depth: int = 0, max_depth: int = 6) -> dict:
-    """노드 트리를 재귀적으로 수집 (최대 depth 6).
+    """노드 트리 수집 — get_nodes_info(복수)로 전체 재귀 트리를 1콜에 받는다.
+
+    get_node_info는 트리를 ~43노드에서 잘라서 반환하므로 사용 금지. get_nodes_info는
+    풀 리치 재귀 트리를 한 번에 반환 → per-node 재호출 제거 (post-fix 수백 콜 → 1콜).
+    absoluteBoundingBox(절대좌표)를 부모 기준 상대좌표로 변환해 기존 동작과 호환.
+    실패 시 legacy(per-node get_node_info)로 폴백.
+    """
+    try:
+        content = call_tool("get_nodes_info", {"nodeIds": [node_id]})
+        items = parse_content(content).get("json")
+        root = None
+        if isinstance(items, list) and items:
+            root = items[0].get("document") or items[0]
+        elif isinstance(items, dict):
+            root = items.get("document") or items
+    except Exception:
+        root = None
+
+    if not root or not root.get("id"):
+        return _collect_tree_legacy(node_id, depth, max_depth)
+
+    def _norm(n: dict, parent_abb: Optional[dict], d: int) -> dict:
+        abb = n.get("absoluteBoundingBox") or {}
+        if abb:
+            if "width" in abb:
+                n["width"] = abb["width"]
+            if "height" in abb:
+                n["height"] = abb["height"]
+            # 절대좌표 → 부모 기준 상대좌표 (get_node_info의 x/y와 동일 의미)
+            if parent_abb:
+                n["x"] = abb.get("x", 0) - parent_abb.get("x", 0)
+                n["y"] = abb.get("y", 0) - parent_abb.get("y", 0)
+            else:
+                n["x"] = abb.get("x", 0)
+                n["y"] = abb.get("y", 0)
+        kids = n.get("children", []) if d < max_depth else []
+        n["_children_full"] = [_norm(c, abb, d + 1) for c in kids if isinstance(c, dict)]
+        return n
+
+    return _norm(root, None, depth)
+
+
+def _collect_tree_legacy(node_id: str, depth: int = 0, max_depth: int = 6) -> dict:
+    """[폴백] 노드 트리를 재귀적으로 수집 (최대 depth 6).
 
     get_node_info로 노드 정보를 가져오고, children의 각 id에 대해 재귀 호출.
     get_node_info 실패 시 get_nodes_info를 fallback으로 사용.
@@ -1158,7 +1216,7 @@ def _collect_tree(node_id: str, depth: int = 0, max_depth: int = 6) -> dict:
         for child in children:
             child_id = child.get("id") if isinstance(child, dict) else child
             if child_id:
-                child_node = _collect_tree(str(child_id), depth + 1, max_depth)
+                child_node = _collect_tree_legacy(str(child_id), depth + 1, max_depth)
                 children_full.append(child_node)
 
     node["_children_full"] = children_full
@@ -1735,6 +1793,146 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     print(f"{'='*50}\n")
 
 
+# ── 자동 변수 바인딩 (cmd_build에 내장 — $token() blueprint → DS 변수) ──
+
+def _token_to_figma_path(token_name: str) -> Optional[str]:
+    """$token() 이름 → 변수 바인딩용 전체 figmaPath."""
+    tm = load_token_map()
+    info = tm.get(token_name)
+    if info and info.get("figmaPath"):
+        return info["figmaPath"]
+    for path, info_item in tm.items():
+        fp = info_item.get("figmaPath", path)
+        seg = fp.rsplit("/", 1)[-1] if "/" in fp else fp
+        if seg == token_name or seg.startswith(token_name + " ") or seg.startswith(token_name + "_"):
+            return fp
+    return None
+
+
+_fontsize_map_cache: Optional[Dict[float, str]] = None
+
+def _load_fontsize_map() -> Dict[float, str]:
+    """fontSize 값 → figmaPath (예: 16.0 → 'fontSize/2')."""
+    global _fontsize_map_cache
+    if _fontsize_map_cache is not None:
+        return _fontsize_map_cache
+    out: Dict[float, str] = {}
+    for k, v in load_token_map().items():
+        if v.get("type") == "FONTSIZES":
+            try:
+                out[float(v["value"])] = v.get("figmaPath", k)
+            except (ValueError, TypeError, KeyError):
+                pass
+    _fontsize_map_cache = out
+    return out
+
+
+def _collect_bindings(bp_node: Any, built_node: Any, out: list, by_name: bool = False):
+    """원본 blueprint + 빌드된 트리를 구조로 병렬 walk하며 변수 바인딩을 수집.
+
+    bp_node: 원본 blueprint 노드 ($token() 참조 유지본)
+    built_node: get_node_info 노드 (실제 'id' 보유)
+    by_name=True: 루트 직계 자식은 이름으로 매칭 (Status Bar/로고 교체로 인덱스가 밀릴 수 있음)
+    """
+    if not isinstance(bp_node, dict) or not isinstance(built_node, dict):
+        return
+    node_id = built_node.get("id")
+    binds: Dict[str, str] = {}
+    # 색상: fill/stroke/fontColor/iconColor → fills/0 · strokes/0
+    for field, prop in (("fill", "fills/0"), ("stroke", "strokes/0"),
+                        ("fontColor", "fills/0"), ("iconColor", "fills/0")):
+        val = bp_node.get(field)
+        if isinstance(val, str) and val.startswith("$token(") and val.endswith(")"):
+            tname = val[7:-1]
+            # 텍스트 색상은 반드시 Colors/Text/text-* 토큰 — fg-* 가 오면 text-* 로 자동 교정
+            if field == "fontColor" and tname.startswith("fg-"):
+                cand = "text-" + tname[3:]
+                if _token_to_figma_path(cand):
+                    tname = cand
+            fp = _token_to_figma_path(tname)
+            if fp:
+                binds[prop] = fp
+    # 타이포: fontSize → fontSize/k 변수
+    fs = bp_node.get("fontSize")
+    if isinstance(fs, (int, float)):
+        fp = _load_fontsize_map().get(float(fs))
+        if fp:
+            binds["fontSize"] = fp
+    if node_id and binds:
+        out.append({"nodeId": node_id, "bindings": binds})
+    # 자식 재귀
+    bp_children = bp_node.get("children") or []
+    built_children = built_node.get("children") or []
+    if by_name:
+        buckets: Dict[str, list] = {}
+        for bc in built_children:
+            buckets.setdefault(bc.get("name"), []).append(bc)
+        used: Dict[str, int] = {}
+        for bpc in bp_children:
+            nm = bpc.get("name")
+            lst = buckets.get(nm, [])
+            k = used.get(nm, 0)
+            if k < len(lst):
+                _collect_bindings(bpc, lst[k], out, by_name=False)
+                used[nm] = k + 1
+    else:
+        for i, bpc in enumerate(bp_children):
+            if i < len(built_children):
+                _collect_bindings(bpc, built_children[i], out, by_name=False)
+
+
+def auto_bind_design(root_id: str, original_blueprint: dict) -> int:
+    """빌드 직후 DS 변수(색상·타이포)를 자동 바인딩. cmd_build에서 자동 호출.
+
+    원본 blueprint($token() 참조)와 빌드된 노드 트리(실제 ID)를 구조로 1:1 매칭하여
+    set_bound_variables를 적용한다 — 별도 bindings.json 수작업 불필요.
+    """
+    # get_nodes_info(복수)는 전체 재귀 트리를 1콜로 반환 — get_node_info는 트리를 잘라서 반환하므로 사용 금지
+    try:
+        content = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(content).get("json")
+        built = None
+        if isinstance(items, list) and items:
+            built = items[0].get("document") or items[0]
+        elif isinstance(items, dict):
+            built = items.get("document") or items
+    except Exception as e:
+        print(f"  [auto-bind] 빌드 트리 조회 실패 — 바인딩 건너뜀: {e}")
+        return 0
+    if not built or not built.get("id"):
+        print("  [auto-bind] 빌드 트리 없음 — 바인딩 건너뜀")
+        return 0
+
+    bindings: list = []
+    _collect_bindings(original_blueprint, built, bindings, by_name=True)
+    if not bindings:
+        print("  [auto-bind] 바인딩할 $token() 토큰 없음")
+        return 0
+
+    print(f"  [auto-bind] DS 변수 바인딩 {len(bindings)}개 노드 적용 중...")
+    ok = fail = 0
+    for i, item in enumerate(bindings):
+        try:
+            call_tool("set_bound_variables",
+                      {"nodeId": item["nodeId"], "bindings": item["bindings"]},
+                      msg_id=i + 1)
+            ok += 1
+        except Exception as e:
+            fail += 1
+            if fail <= 3:
+                print(f"    FAIL {item['nodeId']}: {e}")
+    print(f"  [auto-bind] 완료 — {ok}개 노드 성공, {fail}개 실패")
+    return ok
+
+
+def cmd_auto_bind(root_node_id: str, blueprint_file: str):
+    """기존에 빌드된 디자인에 DS 변수 자동 바인딩 (standalone — 테스트/재적용용)."""
+    ensure_session()
+    with open(blueprint_file, encoding="utf-8") as f:
+        blueprint = json.load(f)
+    auto_bind_design(root_node_id, blueprint)
+
+
 def cmd_bind(bindings_file: str):
     """Apply DS variable bindings from a JSON file.
 
@@ -2103,6 +2301,11 @@ def main():
             print("Usage: figma_mcp_client.py bind <bindings.json>")
             sys.exit(1)
         cmd_bind(sys.argv[2])
+    elif cmd == "auto-bind":
+        if len(sys.argv) < 4:
+            print("Usage: figma_mcp_client.py auto-bind <rootNodeId> <blueprint.json>")
+            sys.exit(1)
+        cmd_auto_bind(sys.argv[2], sys.argv[3])
     elif cmd == "bind-text-styles":
         if len(sys.argv) < 3:
             print("Usage: figma_mcp_client.py bind-text-styles <styles.json>")

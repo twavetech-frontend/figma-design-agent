@@ -27,3 +27,7 @@ scripts/config_imin_*.json
 
 # 로컬 빌드 산출물
 artifacts/
+
+# Python
+__pycache__/
+scripts/.python-path

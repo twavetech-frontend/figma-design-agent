@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "package": "electron-builder",
     "bridge": "node out/bridge/index.js",
+    "setup:windows": "powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1",
     "postinstall": "node scripts/patch-hono-mcp.js",
     "test": "vitest run",
     "test:watch": "vitest"

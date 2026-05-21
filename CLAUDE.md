@@ -10,6 +10,56 @@
 ## 프로젝트 개요
 AI 기반 Figma 디자인 생성 데스크톱 앱: Electron + React + Anthropic SDK
 
+## ⚠️ "디자인 생성 준비" 자동 트리거 (새 Windows 사용자)
+
+> **새 Windows 사용자가 레포를 클론한 뒤 "디자인 생성 준비"(또는 "환경 준비", "준비해줘"
+> 등 유사 표현)라고 하면 — 아래 절차를 질문 없이 처음부터 끝까지 자동 실행한다.**
+>
+> 새 Windows 머신은 Python·Node·의존성이 하나도 없다고 가정한다. 모든 설치는 winget
+> 비대화식(silent)이므로 — **설치 방식·winget 사용 여부·버전 업그레이드 동의 등을 사용자에게
+> 묻지 말 것.** 멈추지 말고 그냥 끝까지 진행한다. (이번 세션처럼 도구를 일일이 묻지 않는다.)
+
+### 자동 실행 절차
+1. **환경 설정** — 다음을 직접 실행한다(⚠️ `npm run ...`이 아니다 — 새 머신엔 npm조차 없음):
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1
+   ```
+   멱등 스크립트가 Python·Python 패키지·`PYTHONUTF8`·Node LTS·npm 의존성·sharp·빌드를
+   한 번에 처리한다(없으면 winget 설치, 있으면 빠르게 통과). 출력의 `[OK]` 7줄 확인.
+   도중에 멈추거나 사용자에게 묻지 말 것.
+2. **브리지 기동** — `npm run bridge`를 백그라운드로 실행. 로그에
+   `[FigmaWS] Server listening on port 8767` + `[MCP] HTTP server listening`이 뜨면 OK.
+3. **MCP 접속 검증** — `figma_mcp_client.py init` 실행(아래 "함정"의 전체 경로 + `PYTHONUTF8=1`).
+   `Ready.` + 실제 세션 ID가 나오면 OK (`Session initialized: None`이면 실패 → 브리지/패치 점검).
+4. **플러그인 연결 확인** — 브리지 로그에 `Figma: connected`가 있으면 완료. 없으면 사용자에게
+   *"Figma 데스크톱 앱에서 플러그인을 실행해 주세요"* 안내 (플러그인 실행은 자동화 불가 — 유일한 수동 단계).
+5. **완료 보고** — 준비 완료를 알리고, 디자인할 화면의 PRD/요구사항을 요청한다.
+
+### 멈춰서 사용자에게 보고해도 되는 경우 (이때만)
+- winget 자체가 없음 → Microsoft Store "앱 설치 관리자"(App Installer) 설치 안내
+- `setup-windows.ps1`이 에러로 종료 → 에러 원문과 함께 보고
+- 그 외에는 멈추지 말고 끝까지 자동 진행한다
+
+### setup-windows.ps1이 처리하는 항목 (멱등)
+1. **Python 3.12** (winget) — `figma_mcp_client.py` 실행용
+2. **Python 패키지** — `requests`, `Pillow` (`-InstallRembg` 옵션 시 `rembg` 추가)
+3. **`PYTHONUTF8=1`** 사용자 환경변수 — 없으면 한글 출력이 cp949 `UnicodeEncodeError`
+4. **Node.js LTS** (winget) — Vite 6는 Node 18+ 필수 (구버전이면 자동 업그레이드)
+5. **npm 의존성** — `.npmrc`의 `legacy-peer-deps=true` (zod peer 충돌 회피)
+6. **sharp 네이티브 모듈** — `@img/sharp-win32-x64` 플랫폼 패키지
+7. **빌드** — `npm run build` → `out/`
+
+> npm이 이미 있으면 `npm run setup:windows`로도 실행 가능. rembg 포함:
+> `powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1 -InstallRembg`
+
+### Windows 함정 (스크립트가 처리하지만 참고)
+- PATH의 `python3`/`python`은 Microsoft Store 별칭 stub — **실제 Python은 `%LOCALAPPDATA%\Programs\Python\Python3xx\python.exe`**. `figma_mcp_client.py` 호출 시 이 전체 경로 + `PYTHONUTF8=1` 환경변수 사용
+- winget 설치 직후 같은 셸 세션은 PATH가 갱신 안 됨 — `node`/`npm`이 안 잡히면 `C:\Program Files\nodejs\` 전체 경로 사용
+- 빌드 산출물은 `out/` (main/preload/bridge = CJS, renderer = Vite 번들)
+- 브리지: `npm run bridge` — Electron 없이 WS 8767 + HTTP MCP 8769 동시 기동. Python 워크플로우는 이것만 있으면 됨
+- `@hono/mcp` 패치: `npm install`의 postinstall이 `scripts/patch-hono-mcp.js`로 Accept 헤더 검사 제거 (없으면 MCP 호출이 406 에러). 패치 실패 로그가 보이면 `@hono/mcp` 버전 변경 — 스크립트 갱신 필요
+- `scripts/*.ps1`은 **UTF-8 BOM 필수** — PowerShell 5.1은 BOM 없으면 cp949로 읽어 한글 파싱이 깨짐
+
 ## 빌드 & 실행
 ```bash
 npm run dev     # 빌드 + electron 실행
@@ -49,12 +99,12 @@ npm start       # electron . (이미 빌드된 상태에서)
 ## Plugin & Build
 - Plugin code: `src/claude_mcp_plugin/code.js` (plain JS, Figma sandbox — no optional chaining `?.`)
 - MCP server: TypeScript, built by `tsup` via `npm run build`
-- `npm run build` → dist/ (CJS + ESM)
-- `npm run build:dxt` → .dxt extension for Claude Desktop → `dxt/` 폴더에 버전 번호 포함 복사
+- `npm run build` → out/ (main/preload/bridge = CJS, renderer = Vite 번들)
+- 배포용 앱 패키지: `npm run package` (electron-builder)
 
 ### Git Commit & Push 규칙
-- 사용자가 커밋+푸시를 요청하면 **반드시 `npm run build:dxt` 실행 후** 커밋
-- 순서: `build:dxt` → git add → git commit → git push
+- `src/` 코드 변경이 포함된 커밋은 **`npm run build`로 빌드 검증 후** 커밋 (docs/ds/scripts만 변경 시 생략 가능)
+- 순서: (필요 시 `npm run build`) → git add → git commit → git push
 
 ## 알려진 이슈
 - DesignPreview 컴포넌트 참조되지만 미구현
@@ -78,7 +128,8 @@ python3 scripts/figma_mcp_client.py assemble scripts/my_config.json
 # 3. 빌드 (+ 자동 post-fix + 자동 이미지 생성)
 python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
-# 4. 로고 인스턴스 교체 (NavBar Logo Placeholder → 실제 로고)
+# 4. Status Bar·로고는 빌드가 자동 처리 (규칙 1) — blueprint에 넣지 않으면
+#    batch_build_screen이 DS Status Bar 자동 삽입, cmd_build가 로고 자동 교체
 # 5. 스크린샷 QA
 ```
 
@@ -90,10 +141,13 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 ## 디자인 생성 필수 규칙
 
-### 1. NavBar 로고는 반드시 컴포넌트 인스턴스로 생성
-- 텍스트 노드로 로고를 만들지 말 것
-- `create_component_instance(componentKey="957912b03baf924a48ef83424ed66f22a4a386a8")` → `insert_child`로 NavBar에 삽입
-- `clone_node`로 마스터 컴포넌트를 복제하면 마스터가 복제됨 — 반드시 `create_component_instance` 사용
+### 1. ⚠️ Status Bar는 blueprint에 넣지 말 것 — 빌드가 DS Status Bar를 자동 삽입
+- **Status Bar를 텍스트/프레임으로 직접 그리거나 blueprint 노드로 넣지 말 것.**
+- `batch_build_screen`은 blueprint root.children에 status bar 노드가 **없으면 DS "Status Bar" 인스턴스를 루트 첫 자식으로 자동 삽입**한다. blueprint에 "Status Bar" 같은 노드를 넣으면 빌드가 그걸 그대로 써서 직접 그린 status bar가 박힌다(= 버그).
+- **규칙: blueprint root.children에 status bar를 절대 포함하지 않는다.** 빌드가 알아서 DS 인스턴스를 넣는다.
+- **로고**: NavBar에 `"Logo Placeholder"` 프레임(80×32)을 넣으면 `cmd_build`가 DS 로고 인스턴스로 자동 교체한다(Step G). 텍스트로 로고를 그리지 말 것.
+- **빌드 후 검증**: 루트 첫 자식이 INSTANCE `"Status Bar"`인지 확인.
+- 참고: "Styles" 페이지(`276:1882`)에 마스터 인스턴스가 있다 — Status Bar `279:4758`, 로고 `279:4757`. 자동 삽입이 안 되는 특수 상황에서만 `clone_node`(인스턴스는 clone해도 인스턴스 유지) 후 `insert_child`로 수동 삽입.
 
 ### 2. 색상 다양성 — 브랜드 컬러만 사용 금지
 - CTA/강조에 브랜드 컬러(`bg-brand-solid`)만 반복 사용하면 단조로워짐

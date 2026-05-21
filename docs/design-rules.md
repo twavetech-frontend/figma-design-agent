@@ -15,12 +15,17 @@
 > **블루프린트 JSON에 RGBA 값을 직접 넣지 마라.** 토큰 이름으로 참조하면 빌드 시 TOKEN_MAP.json에서 최신값으로 자동 resolve된다.
 
 - **사용법**: `fill`, `fontColor`, `iconColor`, `stroke` 등 컬러 필드에 `"$token(토큰이름)"` 사용
+- ⚠️ **컬러 필드별 토큰 컬렉션 (필수 — 위반하면 바인딩이 잘못된 변수로 연결됨)**:
+  - **`fontColor` (텍스트 색상)** → 반드시 `Colors/Text/`의 **`text-*`** 토큰 (`text-primary`, `text-secondary`, `text-tertiary`, `text-brand-primary`, `text-success-primary` 등). **`fg-*` 절대 금지**
+  - **`iconColor` (아이콘 색상)** → `Colors/Foreground/`의 **`fg-*`** 토큰
+  - **`fill` (배경)** → `Colors/Background/`의 **`bg-*`** 토큰
+  - **`stroke` (보더)** → `Colors/Border/`의 **`border-*`** 토큰
 - **예시**:
   ```json
   {"fill": "$token(bg-brand-solid)"}
-  {"fontColor": "$token(fg-brand-primary)"}
-  {"fill": "$token(bg-brand-section)"}
+  {"fontColor": "$token(text-brand-primary)"}
   {"iconColor": "$token(fg-primary)"}
+  {"stroke": "$token(border-secondary)"}
   {"fill": {"r": 1, "g": 1, "b": 1, "a": 1}}   ← 흰색/검정 등 기본색만 직접 RGBA 허용
   ```
 - **resolve 흐름**: `figma_mcp_client.py build` 실행 → `$token()` 발견 → `TOKEN_MAP.json`에서 hex 조회 → RGBA 변환 → 빌드
@@ -67,7 +72,14 @@
 - **인스턴스를 만들려면 반드시 `create_component_instance(componentKey)`를 사용** → `insert_child`로 원하는 부모에 배치
 - `clone_node`는 **인스턴스 노드를 복제**할 때만 사용 가능 (인스턴스를 clone하면 인스턴스가 복제됨)
 - 마스터 컴포넌트의 key는 `get_local_components`로 조회 가능
-- Status Bar 등 이미 인스턴스인 노드(`1:3448`)는 `clone_node`로 복제해도 인스턴스가 유지됨
+- Status Bar 등 이미 인스턴스인 노드는 `clone_node`로 복제해도 인스턴스가 유지됨
+
+## ⚠️ Status Bar는 blueprint에 넣지 말 것 — 빌드가 자동 삽입
+- **Status Bar를 텍스트/프레임으로 직접 그리거나 blueprint에 노드로 넣지 말 것.**
+- `batch_build_screen`은 blueprint에 status bar 노드가 없으면 **DS "Status Bar" 인스턴스를 루트 첫 자식으로 자동 삽입**한다. blueprint에 status bar를 넣으면 빌드가 그걸 사용 → 직접 그린 게 박힘(= 버그).
+- 로고: NavBar에 `"Logo Placeholder"` 프레임을 넣으면 `cmd_build`가 DS 로고 인스턴스로 자동 교체(Step G).
+- "Styles" 페이지(`276:1882`)에 마스터 인스턴스 존재 — Status Bar `279:4758`, 로고 `279:4757` (자동 삽입이 안 되는 특수 상황에서만 `clone_node`로 수동 삽입)
+- 자세한 내용은 CLAUDE.md "디자인 생성 필수 규칙 1" 참조
 
 ## Root Frame
 - 루트 프레임(스크린)은 **Auto Layout을 사용하지 않는다** — 자식 요소는 절대 좌표로 배치
