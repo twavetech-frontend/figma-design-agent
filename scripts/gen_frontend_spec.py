@@ -118,8 +118,22 @@ def fetch(node_id):
     for it in c:
         if it.get('type') == 'text':
             t = it['text']
+            # get_node_info 단수형은 일부 노드에서 "Cannot unwrap symbol"
+            # 직렬화 버그를 낸다 → get_nodes_info(복수형)로 폴백.
+            if 'unwrap symbol' in t or t.startswith('Error:'):
+                break
             try:
                 return json.loads(t[t.index('{'):])
+            except Exception:
+                pass
+    c = f.call_tool('get_nodes_info', {'nodeIds': [node_id]})
+    for it in c:
+        if it.get('type') == 'text':
+            t = it['text']
+            try:
+                arr = json.loads(t[t.index('['):])
+                if isinstance(arr, list) and arr:
+                    return arr[0].get('document') or arr[0]
             except Exception:
                 pass
     return None
