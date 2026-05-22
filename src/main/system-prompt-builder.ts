@@ -387,16 +387,13 @@ blueprint 생성 전에 아래 4가지를 반드시 내부적으로 결정하라
 - **개별 도구로 화면 만들기 절대 금지** — create_frame, create_text 등을 반복 호출하여 화면을 조립하지 마라. 반드시 batch_build_screen을 사용하라.
 - **DS 조회 금지** — batch_ds_lookup 호출하지 마라. batch_build_screen이 component/variant/icon 이름을 자동 해결한다. 조회는 턴과 시간만 낭비.
 - **텍스트에 layoutSizingHorizontal: "FILL" 누락 금지** — 세로 글씨 버그 발생.
-- **이모지/텍스트로 이미지 대체 금지** — rectangle placeholder 배치 후 generate_image 사용.
-- **히어로 배너에 isHero: true 누락 금지** — generate_image 호출 시 반드시 isHero: true 설정.
-- **히어로 이미지 타겟 규칙** — Hero Section 안에 Banner Card 프레임이 있으면 Banner Card의 nodeId를 generate_image에 전달. Banner Card가 없으면 Hero Section 자체의 nodeId 전달. 프레임 안에 별도 rectangle을 만들어서 이미지를 넣지 마라!
 - **히어로 배너 정사각형 금지** — 히어로 배너는 반드시 가로가 넓은 직사각형 (393 × 160~220px). 정사각형(1:1)으로 만들지 마라!
 - **텍스트 프레임에 불투명 fill 절대 금지** — 텍스트를 감싸는 프레임에 흰색이나 컬러 fill을 넣지 마라. 특히 히어로 섹션 위 텍스트 프레임에 fill을 넣으면 이미지가 가려진다. 텍스트 프레임은 항상 fill 없음(투명).
 
 ## Workflow (MANDATORY — 섹션별 단계적 생성)
 
 ⚠️ **턴 예산: 최대 40턴. 효율적으로 작업하라.**
-⚠️ **"완성", "완벽", "완료" 선언은 Step 4 최종 검증 통과 후에만 가능!**
+⚠️ **"완성", "완벽", "완료" 선언은 Step 3 최종 검증 통과 후에만 가능!**
 
 ### Step 1: Plan (1턴)
 - 화면 전체 구조 결정. 섹션 목록을 위→아래 순서로 작성.
@@ -421,20 +418,14 @@ blueprint 생성 전에 아래 4가지를 반드시 내부적으로 결정하라
   1. 하단 고정 요소 추가
   2. 전체 스크린샷 검증
 
-### Step 3: 이미지 생성 제안
-초기 빌드에서는 이미지를 생성하지 않는다. 히어로 배너 등 이미지 영역은 적절한 배경색으로 배치.
-빌드 완료 후, 히어로 배너·배경 그래픽·일러스트 등 이미지가 필요한 영역이 있으면 사용자에게 **반드시** 물어보라:
-- "히어로 영역에 AI 이미지를 생성할까요?" 등 구체적 영역을 명시하여 질문
-- 사용자가 동의하면 generate_image 호출, 거절하면 건너뛰기
-
-### Step 4: 최종 QA + 완료 선언
+### Step 3: 최종 QA + 완료 선언
 - 전체 화면 스크린샷으로 QA 체크리스트 검증:
   - [ ] Status Bar가 프레임 상단에 정상 위치하는가?
   - [ ] 모든 텍스트가 가로로 정상 표시되는가? (세로 글씨 없음)
   - [ ] 모든 컴포넌트 인스턴스가 정상 렌더링되었는가?
   - [ ] 텍스트 내용이 의도한 대로인가?
   - [ ] 레이아웃 겹침이나 잘림이 없는가?
-- 전체 통과 확인 후 "완료" 선언. 이미지는 사용자 요청 시 추가 가능함을 안내.
+- 전체 통과 확인 후 "완료" 선언.
 
 ## Batch Tools
 | Tool | Use for |
@@ -442,60 +433,7 @@ blueprint 생성 전에 아래 4가지를 반드시 내부적으로 결정하라
 | \`batch_build_screen\` | 화면 생성 (PRIMARY — 자동 스크린샷 포함). parentId를 지정하면 기존 프레임에 섹션 추가 |
 | \`set_text_content\` | 빌드 후 개별 텍스트 수정 |
 | \`set_multiple_text_contents\` | 빌드 후 다수 텍스트 일괄 수정 |
-| \`generate_image\` | AI 이미지 생성 + Figma 노드에 적용 |
 | \`export_node_as_image\` | 수정 후 재검증 스크린샷 |
-
-## 🖼️ 이미지 생성 규칙 (사용자 요청 시 실행)
-
-### 아이콘/오브젝트 (isHero=false, 기본값)
-\`\`\`
-generate_image({ prompt: "minimal gift box icon, warm purple and gold colors, simple rounded shape", nodeId: "<nodeId>", width: 120, height: 120 })
-\`\`\`
-- 기본 스타일: orthographic view, matte clay material, NOT too glossy, Toss-style 3D
-- prompt에 구체적인 형태/색상/분위기를 명시. "illustration" 같은 모호한 표현 지양.
-- 배경 자동 제거됨
-
-### ⚠️ 히어로 배너 이미지 (isHero=true 필수!)
-
-**3-Layer 구조:**
-\`\`\`
-┌─────────────────────────────────┐
-│  Hero Section Frame (Figma)     │
-│  ┌─ Image (= Frame 전체 크기) ─┐│
-│  │  ┌─────────┬───────────┐    ││
-│  │  │ 좌 60%  │ 우 40%    │    ││
-│  │  │ 빈 배경 │ Graphic   │    ││
-│  │  │ (텍스트 │ Area      │    ││
-│  │  │  공간)  │ (오브젝트)│    ││
-│  │  └─────────┴───────────┘    ││
-│  └─────────────────────────────┘│
-│  Text (Figma 레이어, 좌측 배치) │
-└─────────────────────────────────┘
-\`\`\`
-- **Image = Hero Section Frame 전체 크기** (fill로 채움)
-- **Graphic Area = 우측 40%에만 집중** (오브젝트/일러스트)
-- **좌측 60% = 빈 배경** (단색/그라데이션) → Figma에서 텍스트 오버레이 영역
-
-\`\`\`
-generate_image({
-  prompt: "a single cute matte clay gift box, soft blue gradient background",
-  nodeId: "<히어로 섹션 프레임의 nodeId>",
-  isHero: true
-})
-\`\`\`
-**isHero: true 설정 시 자동으로:**
-- ✅ Figma 노드 크기 자동 감지 (width/height 생략 가능)
-- ✅ 이미지가 프레임 전체를 채움 (배경으로 작동)
-- ✅ 배경 유지 (투명 아님)
-- ✅ 그래픽 요소 우측 40%에 배치, 좌측 60%는 빈 배경
-- ✅ 배경 제거(rembg) 건너뜀
-
-**⛔ 히어로 이미지 절대 규칙:**
-1. **isHero: true 필수** — 빼먹으면 배경 투명 + 크기 틀어짐
-2. **nodeId = 히어로 섹션 프레임 자체** — ⛔ 별도 이미지 컨테이너 금지!
-3. **width/height 생략** — 시스템이 Figma 노드 크기를 자동 감지
-4. **prompt에 오브젝트 최대 2개만** — ⛔ 3개 이상 나열 금지!
-5. **배경은 단색/그라데이션** — 좌측 텍스트 가독성 확보
 `;
 
 
@@ -513,7 +451,6 @@ async function loadDesignRules(projectRoot: string): Promise<string | null> {
       'INSTANCE_SWAP Guide',
       'Design Rules',
       '디자인 완료 QA 절대 규칙',
-      'AI 이미지 생성',
     ];
 
     const extracted: string[] = [];
@@ -693,47 +630,12 @@ batch_build_screen 결과에 스크린샷이 자동 포함됨 — export_node_as
 - 개별 도구(create_frame 등) 반복 호출 금지 → batch_build_screen 사용
 - DS 조회 금지 → batch_ds_lookup 절대 호출하지 마라
 - 텍스트에 layoutSizingHorizontal: "FILL" 누락 금지
-- 이모지/텍스트로 이미지 대체 금지
 - **텍스트 프레임에 불투명 fill 절대 금지**
 - **히어로 배너 정사각형 금지** — 반드시 393 × 160~220px 가로형 직사각형
-- **히어로 배너에 isHero: true 누락 금지**
-- **히어로 이미지 타겟 규칙** — Banner Card 있으면 Banner Card nodeId, 없으면 Hero Section nodeId 전달. 별도 rectangle 컨테이너 생성 금지
-- **히어로 배너 prompt에 오브젝트 3개 이상 나열 금지** — 핵심 1~2개만
-
-## 🖼️ 히어로 배너 이미지 규칙 (isHero: true 필수!)
-
-### 구조 (3-Layer Model)
-\`\`\`
-┌─────────────────────────────────┐
-│  Hero Section Frame (Figma)     │
-│  ┌─ Image (= Frame 전체 크기) ─┐│
-│  │  ┌─────────┬───────────┐    ││
-│  │  │ 좌 60%  │ 우 40%    │    ││
-│  │  │ 빈 배경 │ Graphic   │    ││
-│  │  │ (텍스트 │ Area      │    ││
-│  │  │  공간)  │ (오브젝트)│    ││
-│  │  └─────────┴───────────┘    ││
-│  └─────────────────────────────┘│
-│  Text (Figma 레이어, 좌측 배치) │
-└─────────────────────────────────┘
-\`\`\`
-- **Image 크기 = Hero Section Frame 크기** (전체를 채우는 배경 이미지)
-- **Graphic Area는 우측 40%에만 집중** — 오브젝트/일러스트가 우측에 배치됨
-- **좌측 60%는 빈 배경** (단색 또는 그라데이션) — Figma에서 텍스트를 오버레이하는 영역
-
-### 호출 방법
-\`\`\`
-generate_image({ prompt: "a single cute matte clay gift box, soft purple gradient background", nodeId: "<Banner Card nodeId 또는 히어로 섹션 nodeId>", isHero: true })
-\`\`\`
-1. **isHero: true 필수** — 빼먹으면 배경 투명 + 크기 틀어짐
-2. **nodeId = Banner Card (있으면) 또는 Hero Section (없으면)** — ⛔ 별도 rectangle 컨테이너 금지
-3. **width/height 생략** — 시스템이 Figma 노드 크기 자동 감지
-4. **prompt에 오브젝트 최대 2개만** — 핵심 1~2개만. ⛔ 다수 나열 금지!
-5. **배경은 단색/그라데이션** — 좌측 텍스트 가독성 확보
 
 ## Workflow (MANDATORY — 섹션별 단계적 생성)
 
-⚠️ **"완성"/"완벽"/"완료" 선언은 Step 4 최종 검증 후에만 가능!**
+⚠️ **"완성"/"완벽"/"완료" 선언은 Step 3 최종 검증 후에만 가능!**
 
 ### Step 1: Plan (1턴)
 화면 전체 구조 결정. 섹션 목록을 위→아래 순서로 작성.
@@ -746,13 +648,7 @@ generate_image({ prompt: "a single cute matte clay gift box, soft purple gradien
 **이후 섹션**: batch_build_screen의 parentId로 루트 프레임 ID 지정, 해당 섹션만 추가. 스크린샷 검증.
 **마지막 섹션**: Tab Bar / Bottom Area 추가 + 전체 스크린샷 검증.
 
-### Step 3: 이미지 생성 제안
-초기 빌드에서는 이미지를 생성하지 않는다. 히어로 배너 등 이미지 영역은 적절한 배경색으로 배치.
-빌드 완료 후, 히어로 배너·배경 그래픽·일러스트 등 이미지가 필요한 영역이 있으면 사용자에게 **반드시** 물어보라:
-- "히어로 영역에 AI 이미지를 생성할까요?" 등 구체적 영역을 명시하여 질문
-- 사용자가 동의하면 generate_image 호출, 거절하면 건너뛰기
-
-### Step 4: 최종 QA + 완료 선언
+### Step 3: 최종 QA + 완료 선언
 전체 화면 스크린샷으로 QA 체크리스트 검증 후 "완료" 선언.
 
 batch_build_screen은 parentId 없으면 자동으로 이전 프레임을 삭제합니다. parentId 지정 시 기존 프레임에 섹션을 추가합니다.

@@ -17,9 +17,8 @@ import { buildToolRegistry } from './figma-mcp-embedded';
 import { registerDSLookupTools } from './ds-lookup-tools';
 import { AgentOrchestrator } from './agent-orchestrator';
 import { McpHttpServer } from './mcp-http-server';
-import { ImageGenerator } from './image-generator';
 
-import { getGeminiApiKey, setGeminiApiKey, getAnthropicApiKey, getDirectApiKey, setAnthropicApiKey } from './settings-store';
+import { getAnthropicApiKey, getDirectApiKey, setAnthropicApiKey } from './settings-store';
 import { setProjectRoot, getDesignTokens, getVariants, syncComponentDocs } from '../shared/ds-data';
 import { IPC_CHANNELS } from '../shared/types';
 import type { FigmaConnectionState, ClaudeCodeStatus } from '../shared/types';
@@ -47,7 +46,6 @@ process.on('unhandledRejection', (reason) => {
 const WS_PORT = 8767;
 // Project root: out/main/ → ../../ → project root
 const PROJECT_ROOT = join(__dirname, '..', '..');
-const ASSETS_DIR = join(PROJECT_ROOT, 'assets', 'generated');
 
 // ============================================================
 // Global instances
@@ -57,7 +55,6 @@ let mainWindow: BrowserWindow | null = null;
 let figmaWS: FigmaWSServer;
 let orchestrator: AgentOrchestrator | null = null;
 let mcpServer: McpHttpServer;
-let imageGenerator: ImageGenerator;
 
 // Cached Claude Code status
 let claudeCodeStatusCache: ClaudeCodeStatus | null = null;
@@ -110,72 +107,6 @@ app.whenReady().then(async () => {
   // Build tool registry
   const tools = buildToolRegistry(figmaWS);
   registerDSLookupTools(tools);
-
-  // Initialize image generator with saved API key
-  imageGenerator = new ImageGenerator(ASSETS_DIR, getGeminiApiKey());
-
-  // Register generate_image tool (Gemini API → base64 → set_image_fill)
-  tools.set('generate_image', {
-    name: 'generate_image',
-    description: 'Generate an image using Gemini AI and apply it as fill to a Figma node. For hero/banner: set isHero=true. If a Banner Card frame exists inside the Hero Section, pass the BANNER CARD nodeId (not the Hero Section). If no Banner Card exists, pass the Hero Section nodeId. For icons: isHero=false (default), removes background.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        prompt: { type: 'string', description: 'Image description (e.g. "minimal app logo, letter M, purple gradient")' },
-        nodeId: { type: 'string', description: 'Figma node ID to apply the image fill to. For hero banners: pass Banner Card nodeId if it exists inside Hero Section, otherwise pass Hero Section nodeId.' },
-        isHero: { type: 'boolean', description: 'Set true for hero/banner images. Auto-detects node size from Figma, keeps solid background, forces graphics to right side. Default: false.' },
-        width: { type: 'number', description: 'Target width in Figma pixels. Ignored when isHero=true (auto-detected from node). Default: 120.' },
-        height: { type: 'number', description: 'Target height in Figma pixels. Ignored when isHero=true (auto-detected from node). Default: 120.' },
-        style: { type: 'string', description: 'Optional style override' },
-      },
-      required: ['prompt', 'nodeId'],
-    },
-    handler: async (params) => {
-      const prompt = params.prompt as string;
-      let targetNodeId = params.nodeId as string;
-      const isHero = (params.isHero as boolean) || false;
-      const style = params.style as string | undefined;
-
-      let width = (params.width as number) || 120;
-      let height = (params.height as number) || 120;
-
-      // Hero mode: auto-detect node dimensions from the specified nodeId (no auto-escalation)
-      if (isHero) {
-        try {
-          const nodeInfo = await figmaWS.sendCommand('get_node_info', { nodeId: targetNodeId }) as Record<string, unknown>;
-          const nodeWidth = nodeInfo.width as number;
-          const nodeHeight = nodeInfo.height as number;
-
-          if (nodeWidth && nodeHeight) {
-            width = Math.round(nodeWidth);
-            height = Math.round(nodeHeight);
-            console.log(`[Main] Hero mode: target ${targetNodeId}, size ${width}x${height}`);
-          }
-        } catch (e) {
-          console.warn('[Main] Failed to get node size for hero, using provided dimensions:', e);
-        }
-      }
-
-      // Generate image via Gemini
-      const result = await imageGenerator.generate({
-        prompt,
-        figmaWidth: width,
-        figmaHeight: height,
-        style,
-        isHero,
-        outputName: `gen_${Date.now()}`,
-      });
-
-      // Apply as image fill to the target node
-      await figmaWS.sendCommand('set_image_fill', {
-        nodeId: targetNodeId,
-        imageData: result.base64,
-        scaleMode: 'FILL',
-      });
-
-      return { success: true, nodeId: targetNodeId, width: result.width, height: result.height, mode: isHero ? 'hero' : 'icon' };
-    },
-  });
 
   console.log(`[Main] Registered ${tools.size} tools`);
 
@@ -390,7 +321,6 @@ function setupIPC(tools: Map<string, import('../shared/types').ToolDefinition>):
         useAgentSdk: !!useAgentSdk,
         apiKey: usePipeline ? directApiKey : (useAgentSdk ? undefined : fullApiKey),
         figmaWS,
-        imageGenerator,
       });
 
       // Forward events to renderer
@@ -536,22 +466,4 @@ function setupIPC(tools: Map<string, import('../shared/types').ToolDefinition>):
     shell.openExternal(url);
   });
 
-  // --- Settings ---
-
-  ipcMain.handle(IPC_CHANNELS.SETTINGS_GET_GEMINI_KEY, async () => {
-    const key = getGeminiApiKey();
-    if (!key) return { hasKey: false, maskedKey: '' };
-    const masked = key.slice(0, 4) + '...' + key.slice(-4);
-    return { hasKey: true, maskedKey: masked };
-  });
-
-  ipcMain.handle(IPC_CHANNELS.SETTINGS_SET_GEMINI_KEY, async (_event, key: string) => {
-    try {
-      setGeminiApiKey(key);
-      imageGenerator.setApiKey(key);
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  });
 }

@@ -18,15 +18,6 @@ export function SettingsPanel({ figmaStatus }: Props) {
   const [claudeError, setClaudeError] = useState('');
   const [claudeLoading, setClaudeLoading] = useState(false);
 
-  // Gemini API
-  const [geminiStatus, setGeminiStatus] = useState<{ hasKey: boolean; maskedKey: string }>({
-    hasKey: false,
-    maskedKey: '',
-  });
-  const [geminiInput, setGeminiInput] = useState('');
-  const [savingGemini, setSavingGemini] = useState(false);
-  const [geminiMessage, setGeminiMessage] = useState<{ text: string; ok: boolean } | null>(null);
-
   useEffect(() => {
     if (!open) return;
 
@@ -50,8 +41,6 @@ export function SettingsPanel({ figmaStatus }: Props) {
         });
       }
     });
-
-    window.electronAPI?.getGeminiKey().then(setGeminiStatus);
   }, [open]);
 
   const handleClaudeLogin = async () => {
@@ -104,27 +93,6 @@ export function SettingsPanel({ figmaStatus }: Props) {
       setClaudeError(String(err));
     } finally {
       setClaudeLoading(false);
-    }
-  };
-
-  const handleSaveGemini = async () => {
-    if (!geminiInput.trim() || savingGemini) return;
-    setSavingGemini(true);
-    setGeminiMessage(null);
-    try {
-      const result = await window.electronAPI?.setGeminiKey(geminiInput.trim());
-      if (result?.success) {
-        setGeminiMessage({ text: 'Saved', ok: true });
-        const k = geminiInput.trim();
-        setGeminiStatus({ hasKey: true, maskedKey: k.slice(0, 4) + '...' + k.slice(-4) });
-        setGeminiInput('');
-      } else {
-        setGeminiMessage({ text: result?.error || 'Failed', ok: false });
-      }
-    } catch (err) {
-      setGeminiMessage({ text: String(err), ok: false });
-    } finally {
-      setSavingGemini(false);
     }
   };
 
@@ -278,61 +246,6 @@ export function SettingsPanel({ figmaStatus }: Props) {
                 )}
               </div>
             )}
-
-            {/* Section: Image Generation */}
-            <div style={{ ...styles.sectionLabel, marginTop: '16px' }}>Image Generation</div>
-
-            {/* Gemini Card */}
-            <div style={{
-              ...styles.card,
-              borderColor: geminiStatus.hasKey ? '#1a472a' : '#3d3520',
-              marginTop: '4px',
-            }}>
-              <div style={styles.cardIcon}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke={geminiStatus.hasKey ? '#4285f4' : '#666'} strokeWidth="2"/>
-                  <path d="M12 2C7 8 7 16 12 22C17 16 17 8 12 2Z" fill={geminiStatus.hasKey ? '#4285f4' : '#666'} opacity="0.6"/>
-                </svg>
-              </div>
-              <div style={styles.cardContent}>
-                <div style={styles.cardName}>Google Gemini (Image Gen)</div>
-                <div style={styles.cardStatus}>
-                  <span style={{
-                    ...styles.statusDot,
-                    background: geminiStatus.hasKey ? '#22c55e' : '#fbbf24',
-                  }} />
-                  {geminiStatus.hasKey
-                    ? `Connected (${geminiStatus.maskedKey})`
-                    : 'API key not set (optional)'}
-                </div>
-              </div>
-            </div>
-
-            <div style={styles.inputSection}>
-              <label style={styles.inputLabel}>Gemini API Key</label>
-              <div style={styles.inputRow}>
-                <input
-                  style={styles.input}
-                  type="password"
-                  value={geminiInput}
-                  onChange={(e) => setGeminiInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSaveGemini()}
-                  placeholder={geminiStatus.hasKey ? 'Enter new key...' : 'Enter API key...'}
-                />
-                <button
-                  style={styles.saveButton}
-                  onClick={handleSaveGemini}
-                  disabled={!geminiInput.trim() || savingGemini}
-                >
-                  {savingGemini ? '...' : 'Save'}
-                </button>
-              </div>
-              {geminiMessage && (
-                <div style={{ fontSize: '11px', marginTop: '4px', color: geminiMessage.ok ? '#22c55e' : '#ef4444' }}>
-                  {geminiMessage.text}
-                </div>
-              )}
-            </div>
 
             {/* Section: Connections */}
             <div style={{ ...styles.sectionLabel, marginTop: '16px' }}>Connections</div>

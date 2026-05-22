@@ -40,10 +40,6 @@ export interface ElectronAPI {
   // Pipeline
   onPipelineStep: (callback: (event: PipelineStepEvent) => void) => () => void;
 
-  // Settings
-  getGeminiKey: () => Promise<{ hasKey: boolean; maskedKey: string }>;
-  setGeminiKey: (key: string) => Promise<{ success: boolean; error?: string }>;
-
   // App
   onError: (callback: (error: string) => void) => () => void;
   onInputModeChange: (callback: (mode: string) => void) => () => void;
@@ -120,14 +116,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = (_: unknown, event: PipelineStepEvent) => callback(event);
     ipcRenderer.on(IPC_CHANNELS.PIPELINE_STEP, handler);
     return () => { ipcRenderer.removeListener(IPC_CHANNELS.PIPELINE_STEP, handler); };
-  },
-
-  // Settings
-  getGeminiKey: () => {
-    return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_GEMINI_KEY);
-  },
-  setGeminiKey: (key: string) => {
-    return ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET_GEMINI_KEY, key);
   },
 
   // App

@@ -12,7 +12,6 @@ import { join, dirname } from 'path';
 import { homedir } from 'os';
 
 interface SettingsData {
-  geminiApiKey?: string;
   anthropicApiKey?: string;
 }
 
@@ -38,16 +37,6 @@ function readSettings(): SettingsData {
 function writeSettings(data: SettingsData): void {
   mkdirSync(dirname(settingsPath), { recursive: true });
   writeFileSync(settingsPath, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-export function getGeminiApiKey(): string {
-  return readSettings().geminiApiKey || '';
-}
-
-export function setGeminiApiKey(key: string): void {
-  const data = readSettings();
-  data.geminiApiKey = key;
-  writeSettings(data);
 }
 
 export function getAnthropicApiKey(): string {

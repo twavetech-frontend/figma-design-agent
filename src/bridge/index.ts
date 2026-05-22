@@ -15,8 +15,6 @@ import { FigmaWSServer } from '../main/figma-ws-server';
 import { buildToolRegistry } from '../main/figma-mcp-embedded';
 import { registerDSLookupTools } from '../main/ds-lookup-tools';
 import { McpHttpServer } from '../main/mcp-http-server';
-import { ImageGenerator } from '../main/image-generator';
-import { getGeminiApiKey } from '../main/settings-store';
 import { setProjectRoot, syncTokensFull, syncComponentDocs } from '../shared/ds-data';
 
 // ============================================================
@@ -26,7 +24,6 @@ import { setProjectRoot, syncTokensFull, syncComponentDocs } from '../shared/ds-
 const WS_PORT = 8767;
 // Project root: out/bridge/ → ../../ → project root
 const PROJECT_ROOT = join(__dirname, '..', '..');
-const ASSETS_DIR = join(PROJECT_ROOT, 'assets', 'generated');
 
 // ============================================================
 // Error handlers
@@ -65,82 +62,6 @@ async function main() {
   // 2. Build tool registry (58+ Figma tools)
   const tools = buildToolRegistry(figmaWS);
   registerDSLookupTools(tools);
-
-  // 3. Initialize image generator
-  const imageGenerator = new ImageGenerator(ASSETS_DIR, getGeminiApiKey());
-
-  // Register generate_image tool
-  tools.set('generate_image', {
-    name: 'generate_image',
-    description: 'Generate an image using Gemini AI and apply it as fill to a Figma node. For hero/banner: set isHero=true and pass the HERO SECTION FRAME nodeId (NOT a child rectangle). The image fills the entire frame as background. For icons: isHero=false (default), removes background.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        prompt: { type: 'string', description: 'Image description' },
-        nodeId: { type: 'string', description: 'Figma node ID to apply the image fill to' },
-        isHero: { type: 'boolean', description: 'Set true for hero/banner images. Default: false.' },
-        width: { type: 'number', description: 'Target width in px. Default: 120.' },
-        height: { type: 'number', description: 'Target height in px. Default: 120.' },
-        style: { type: 'string', description: 'Optional style override' },
-      },
-      required: ['prompt', 'nodeId'],
-    },
-    handler: async (params) => {
-      const prompt = params.prompt as string;
-      let targetNodeId = params.nodeId as string;
-      const isHero = (params.isHero as boolean) || false;
-      const style = params.style as string | undefined;
-      let width = (params.width as number) || 120;
-      let height = (params.height as number) || 120;
-
-      if (isHero) {
-        const MIN_HERO_SIZE = 200;
-        try {
-          const nodeInfo = await figmaWS.sendCommand('get_node_info', { nodeId: targetNodeId }) as Record<string, unknown>;
-          let nodeWidth = nodeInfo.width as number;
-          let nodeHeight = nodeInfo.height as number;
-
-          if (nodeWidth && nodeHeight && (nodeWidth < MIN_HERO_SIZE || nodeHeight < MIN_HERO_SIZE)) {
-            const parentId = nodeInfo.parentId as string;
-            if (parentId) {
-              const parentInfo = await figmaWS.sendCommand('get_node_info', { nodeId: parentId }) as Record<string, unknown>;
-              const parentWidth = parentInfo.width as number;
-              const parentHeight = parentInfo.height as number;
-              if (parentWidth && parentHeight && parentWidth >= MIN_HERO_SIZE) {
-                targetNodeId = parentId;
-                nodeWidth = parentWidth;
-                nodeHeight = parentHeight;
-              }
-            }
-          }
-
-          if (nodeWidth && nodeHeight) {
-            width = Math.round(nodeWidth);
-            height = Math.round(nodeHeight);
-          }
-        } catch (e) {
-          console.warn('[Bridge] Failed to get node size for hero:', e);
-        }
-      }
-
-      const result = await imageGenerator.generate({
-        prompt,
-        figmaWidth: width,
-        figmaHeight: height,
-        style,
-        isHero,
-        outputName: `gen_${Date.now()}`,
-      });
-
-      await figmaWS.sendCommand('set_image_fill', {
-        nodeId: targetNodeId,
-        imageData: result.base64,
-        scaleMode: isHero ? 'FILL' : 'FIT',
-      });
-
-      return { success: true, nodeId: targetNodeId, width: result.width, height: result.height, mode: isHero ? 'hero' : 'icon' };
-    },
-  });
 
   console.log(`[Bridge] Registered ${tools.size} tools`);
 

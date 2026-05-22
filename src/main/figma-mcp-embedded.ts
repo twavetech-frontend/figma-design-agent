@@ -1748,7 +1748,7 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
       }
     }
 
-    // ── 6. Hero section: padding + height + imageGenHint ──
+    // ── 6. Hero section: padding + height ──
     if (isHeroSection(n)) {
       // 6a. 좌우 패딩 강제 (Content 영역과 일관성)
       const al = n.autoLayout as Record<string, unknown> | undefined;
@@ -1771,28 +1771,6 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
         n.height = 200;
         console.log(`[enforce] Hero "${n.name}" height forced: 200`);
         stats.structure++;
-      }
-
-      // 6c. imageGenHint 자동 추가 — Banner Card 자식이 있으면 그곳에, 없으면 Hero Section에
-      if (!n.imageGenHint) {
-        const heroText = collectAllText(n);
-        const hint = {
-          prompt: `soft gradient background with abstract shapes, modern minimal style, matching the theme: ${heroText.slice(0, 60)}`,
-          isHero: true,
-        };
-        // Banner Card 탐색: 자식 중 'banner' 또는 'card' 이름을 가진 프레임
-        const children = (n.children as Record<string, unknown>[] | undefined) || [];
-        const bannerCard = children.find(c => {
-          const cName = ((c.name as string) || '').toLowerCase();
-          return c.type === 'frame' && (cName.includes('banner') || cName.includes('card'));
-        });
-        if (bannerCard && !bannerCard.imageGenHint) {
-          bannerCard.imageGenHint = hint;
-          console.log(`[enforce] Added imageGenHint to Banner Card "${bannerCard.name}" (inside hero "${n.name}")`);
-        } else if (!bannerCard) {
-          n.imageGenHint = hint;
-          console.log(`[enforce] Added imageGenHint to hero section "${n.name}" (no Banner Card found)`);
-        }
       }
     }
 
@@ -2073,18 +2051,6 @@ function getContextText(n: Record<string, unknown>, parent?: Record<string, unkn
   }
   // Parent name
   if (parent?.name) parts.push(parent.name as string);
-  return parts.join(' ');
-}
-
-function collectAllText(n: Record<string, unknown>): string {
-  const parts: string[] = [];
-  if (n.type === 'text' && n.text) parts.push(n.text as string);
-  if (n.name) parts.push(n.name as string);
-  if (Array.isArray(n.children)) {
-    for (const child of n.children as Record<string, unknown>[]) {
-      parts.push(collectAllText(child));
-    }
-  }
   return parts.join(' ');
 }
 

@@ -279,7 +279,7 @@ def test_registry_loads_all_rules():
     expected = {
         "S00-schema", "S20-references-required",
         "R05-archetype-inject",
-        "R10-layout", "R11-typography", "R12-image-gen", "R13-auto-layout",
+        "R10-layout", "R11-typography", "R13-auto-layout",
         "R20-semantic-only", "R21-bg-hierarchy", "R22-brand-text-color",
         "R23-ds-first", "R24-status-bar", "R25-tab-bar-stroke",
         "R30-fill-sizing", "R31-tab-bar-items", "R32-zero-width-text",

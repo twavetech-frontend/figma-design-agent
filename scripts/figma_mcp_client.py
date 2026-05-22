@@ -33,7 +33,6 @@ import time
 import re
 import requests
 import base64
-import io
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Optional, List, Dict
 
@@ -147,7 +146,7 @@ def _flatten_padding_objects(node: Any) -> Any:
 
 
 # NOTE: validate_blueprint was removed 2026-05-04 — all checks ported into
-# scripts/design_rules/ (S00 schema, R10 layout, R11 typography, R12 imageGen,
+# scripts/design_rules/ (S00 schema, R10 layout, R11 typography,
 # R13 autoLayout, R20 semantic-only, R21 bg-hierarchy, R22 brand-text,
 # R23 ds-first, R24 status-bar, R25 tab-bar-stroke). Use REGISTRY.run_lint().
 
@@ -677,9 +676,8 @@ def cmd_build(blueprint_file: str):
     except Exception as e:
         print(f"[SIM] 시뮬레이션 실패 (무시하고 계속): {e}")
 
-    # ──── 병렬 실행: 이미지 사전 생성 + 빌드 동시 시작 ────
-    # Step A: Blueprint에서 imageGen 스펙을 빌드 전에 추출 (nodeId 불필요)
-    image_specs_raw = []
+    # ──── 병렬 실행: Pexels 사진 검색 + 빌드 동시 시작 ────
+    # Step A: Blueprint에서 imageQuery 스펙을 빌드 전에 추출 (nodeId 불필요)
     pexels_specs_raw = []
 
     # Track name collisions: same blueprint name used by multiple image
@@ -691,9 +689,8 @@ def cmd_build(blueprint_file: str):
     _image_name_count = {}
 
     def _walk_for_image_specs(node: dict):
-        image_gen = node.get("imageGen")
         image_query = node.get("imageQuery")
-        if image_gen or image_query:
+        if image_query:
             orig_name = node.get("name", "") or "Image"
             count = _image_name_count.get(orig_name, 0) + 1
             _image_name_count[orig_name] = count
@@ -704,41 +701,24 @@ def cmd_build(blueprint_file: str):
             else:
                 unique_name = orig_name
 
-            if image_gen and isinstance(image_gen, dict):
-                image_specs_raw.append({
-                    "nodeName": unique_name,
-                    "prompt": image_gen.get("prompt", ""),
-                    "isHero": image_gen.get("isHero", False),
-                    "width": image_gen.get("width"),
-                    "height": image_gen.get("height"),
-                    "style": image_gen.get("style"),
-                })
-            if image_query:
-                pexels_specs_raw.append({
-                    "nodeName": unique_name,
-                    "query": image_query if isinstance(image_query, str) else image_query.get("q", ""),
-                    "orientation": (image_query.get("orientation") if isinstance(image_query, dict) else None),
-                })
+            pexels_specs_raw.append({
+                "nodeName": unique_name,
+                "query": image_query if isinstance(image_query, str) else image_query.get("q", ""),
+                "orientation": (image_query.get("orientation") if isinstance(image_query, dict) else None),
+            })
         for child in node.get("children", []):
             _walk_for_image_specs(child)
 
     _walk_for_image_specs(blueprint)
 
-    # Step B: 이미지 사전 생성을 백그라운드 스레드로 시작
-    pre_gen_future = None
-    if image_specs_raw:
-        print(f"\n🎨 이미지 사전 생성 시작 ({len(image_specs_raw)}건 — 빌드와 병렬 실행)")
-        executor = ThreadPoolExecutor(max_workers=1)
-        pre_gen_future = executor.submit(_pre_generate_images_parallel, image_specs_raw)
-
-    # Step B.2: Pexels 사진 검색을 백그라운드 스레드로 시작
+    # Step B: Pexels 사진 검색을 백그라운드 스레드로 시작
     pexels_future = None
     if pexels_specs_raw:
         print(f"\n📸 Pexels 사진 검색 시작 ({len(pexels_specs_raw)}건)")
         pexels_executor = ThreadPoolExecutor(max_workers=4)
         pexels_future = pexels_executor.submit(_fetch_pexels_images_parallel, pexels_specs_raw)
 
-    # Step C: 빌드 실행 (이미지 생성과 동시)
+    # Step C: 빌드 실행 (사진 검색과 동시)
     start = time.time()
     # Clone & Bind 파이프라인: sanitizer가 이미 blueprint를 안전화했으므로
     # TS 레이어의 enhanceBlueprint(자동 enforce)를 스킵 — star-01 fallback 우회 (S2.5)
@@ -913,26 +893,6 @@ def cmd_build(blueprint_file: str):
     else:
         print("⚠️  rootId를 찾을 수 없어 post-fix를 건너뜁니다.")
 
-    # Step F: 이미지 사전 생성 완료 대기 + Figma 적용
-    if pre_gen_future and node_map is not None:
-        print("\n⏳ 이미지 사전 생성 완료 대기 중...")
-        pre_results = pre_gen_future.result()  # 이미 완료됐으면 즉시 반환
-        executor.shutdown(wait=False)
-
-        ok_results = [r for r in pre_results if "imagePath" in r]
-        if ok_results:
-            print(f"\n🖼️  이미지 Figma 적용 ({len(ok_results)}건)...")
-            _apply_pre_generated_images(pre_results, node_map)
-        else:
-            print("\n  이미지 사전 생성 결과 없음")
-    elif pre_gen_future:
-        # node_map이 None (빌드 실패)이어서 적용 불가
-        pre_gen_future.cancel()
-        executor.shutdown(wait=False)
-        print("\n⚠️  nodeMap이 None — 빌드 실패로 사전 생성 이미지 적용 불가")
-    elif not image_specs_raw:
-        print("\n(imageGen 스펙 없음 — 이미지 생성 건너뜀)")
-
     # Step F.2: Pexels 사진 검색 완료 대기 + Figma 적용
     if pexels_future and node_map is not None:
         print("\n⏳ Pexels 사진 다운로드 완료 대기 중...")
@@ -979,7 +939,7 @@ def cmd_build(blueprint_file: str):
 
     total_elapsed = time.time() - start
     print(f"\n{'='*50}")
-    print(f"전체 완료: {total_elapsed:.1f}s (빌드 {build_elapsed:.1f}s + 후처리 + 이미지)")
+    print(f"전체 완료: {total_elapsed:.1f}s (빌드 {build_elapsed:.1f}s + 후처리)")
     print(f"{'='*50}")
 
     # Step F: 프론트엔드 핸드오프 JSON 자동 생성 (디자인 완료 후 항상 실행)
@@ -1002,269 +962,6 @@ def cmd_build(blueprint_file: str):
                 print("    (project rule: write a fresh blueprint for each build)")
         except Exception as e:
             print(f"\n⚠️  Blueprint cleanup failed: {e}")
-
-
-def _extract_image_specs(blueprint: dict, node_map: dict) -> list:
-    """Blueprint에서 imageGen 스펙을 추출하고, nodeMap으로 실제 nodeId를 매핑.
-
-    Blueprint 노드에 imageGen 필드가 있으면:
-    {
-        "name": "Banner Card 1",
-        "imageGen": {
-            "prompt": "3D coins floating...",
-            "isHero": true,
-            "style": "yanolja-3d"  // optional
-        }
-    }
-
-    Returns: [{"nodeId": "85:1502", "prompt": "...", "isHero": true, "style": "..."}, ...]
-    """
-    specs = []
-
-    def _walk(node: dict):
-        name = node.get("name", "")
-        image_gen = node.get("imageGen")
-        if image_gen and isinstance(image_gen, dict):
-            # nodeMap에서 실제 nodeId 찾기
-            node_id = node_map.get(name)
-            if node_id:
-                spec = {
-                    "nodeId": node_id,
-                    "nodeName": name,
-                    "prompt": image_gen.get("prompt", ""),
-                    "isHero": image_gen.get("isHero", False),
-                    "width": image_gen.get("width"),
-                    "height": image_gen.get("height"),
-                    "style": image_gen.get("style"),
-                }
-                specs.append(spec)
-            else:
-                print(f"  ⚠️ imageGen 노드 '{name}'의 nodeId를 nodeMap에서 찾을 수 없음")
-
-        for child in node.get("children", []):
-            _walk(child)
-
-    _walk(blueprint)
-    return specs
-
-
-def _generate_images(specs: list):
-    """generate_image MCP 도구로 이미지 생성 + Figma 노드에 적용. (기존 순차 방식)"""
-    start = time.time()
-    success = 0
-    fail = 0
-
-    for i, spec in enumerate(specs):
-        node_name = spec["nodeName"]
-        node_id = spec["nodeId"]
-        prompt = spec["prompt"]
-        is_hero = spec.get("isHero", False)
-
-        print(f"  [{i+1}/{len(specs)}] {node_name} ({'hero' if is_hero else 'icon'})...")
-
-        params = {
-            "prompt": prompt,
-            "nodeId": node_id,
-            "isHero": is_hero,
-        }
-        if spec.get("width"):
-            params["width"] = spec["width"]
-        if spec.get("height"):
-            params["height"] = spec["height"]
-        if spec.get("style"):
-            params["style"] = spec["style"]
-
-        try:
-            content = call_tool("generate_image", params)
-            result = parse_content(content)
-            if result["json"] and result["json"].get("success"):
-                print(f"    ✅ 완료 ({result['json'].get('width')}x{result['json'].get('height')})")
-                success += 1
-            else:
-                print(f"    ❌ 실패: {result.get('texts', ['unknown error'])}")
-                fail += 1
-        except Exception as e:
-            print(f"    ❌ 에러: {e}")
-            fail += 1
-
-    elapsed = time.time() - start
-    print(f"\n  이미지 생성 완료 — {success} 성공, {fail} 실패 ({elapsed:.1f}s)")
-
-
-# ─── 병렬 이미지 사전 생성 (빌드와 동시 실행) ───────────────────────────
-
-GEMINI_MODEL = "gemini-3-pro-image-preview"
-GEMINI_ENDPOINT = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-
-DEFAULT_3D_STYLE = "Cinema4D, Octane render, soft diffused studio lighting, front view, orthographic projection, matte clay-like material with subtle specular, warm gentle shadows, simple symbolic forms, rounded friendly shapes, transparent background, clean minimal, high quality"
-TOSSFACE_2D_STYLE = "Tossface emoji style: completely flat 2D, NO gradients, NO shadows, NO outlines, NO 3D effects, NO perspective, simple geometric rounded shapes, 2-3 solid bright colors only, minimal detail, like a simplified emoji icon, clean vector look, transparent background"
-
-def _get_gemini_api_key() -> str:
-    """Electron 앱 설정에서 Gemini API 키를 로드."""
-    settings_path = os.path.expanduser(
-        "~/Library/Application Support/figma-design-agent/settings.json"
-    )
-    try:
-        with open(settings_path) as f:
-            return json.load(f).get("geminiApiKey", "")
-    except FileNotFoundError:
-        return ""
-
-
-def _find_reference_images(prompt: str, is_2d: bool) -> list:
-    """프롬프트와 스타일에 맞는 레퍼런스 이미지를 자동 탐색."""
-    ref_dir = os.path.join(os.path.dirname(__file__), "..", "assets", "reference-images")
-    refs = []
-    subdir = "2d" if is_2d else "icon"
-    target_dir = os.path.join(ref_dir, subdir)
-    if os.path.isdir(target_dir):
-        for fname in os.listdir(target_dir):
-            if fname.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
-                refs.append(os.path.join(target_dir, fname))
-                if len(refs) >= 2:
-                    break
-    return refs
-
-
-def _pre_generate_single(spec: dict, api_key: str, output_dir: str) -> dict:
-    """단일 이미지를 Gemini API로 사전 생성 (nodeId 불필요).
-
-    Returns: {"nodeName": str, "imagePath": str, "isHero": bool} or {"nodeName": str, "error": str}
-    """
-    node_name = spec["nodeName"]
-    prompt = spec["prompt"]
-    is_hero = spec.get("isHero", False)
-    explicit_2d = (spec.get("style") or "").lower() in ("2d", "tossface")
-    # 소형 아이콘(≤32px)은 자동으로 2D — style 누락해도 안전
-    size = max(spec.get("width") or 120, spec.get("height") or 120)
-    is_2d = explicit_2d or (not is_hero and size <= 32)
-    style = TOSSFACE_2D_STYLE if is_2d else (spec.get("style") or DEFAULT_3D_STYLE)
-
-    # 프롬프트 구성
-    if is_hero:
-        mode_instructions = (
-            "IMPORTANT: Keep the background. "
-            "All graphic elements MUST be on the RIGHT SIDE. "
-            "The LEFT 60% must be empty for text overlay. "
-            "NO MORE THAN 2-3 simple objects total."
-        )
-    else:
-        mode_instructions = "IMPORTANT: transparent background (PNG with alpha)."
-
-    full_prompt = f"{prompt}. Style: {style}. {mode_instructions} High quality."
-
-    # 레퍼런스 이미지
-    parts = []
-    for ref_path in _find_reference_images(prompt, is_2d):
-        try:
-            with open(ref_path, "rb") as f:
-                ref_b64 = base64.b64encode(f.read()).decode()
-            parts.append({"inlineData": {"mimeType": "image/png", "data": ref_b64}})
-        except Exception:
-            pass
-
-    parts.append({"text": full_prompt})
-
-    # Gemini API 호출
-    try:
-        resp = requests.post(
-            f"{GEMINI_ENDPOINT}?key={api_key}",
-            json={
-                "contents": [{"parts": parts}],
-                "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]},
-            },
-            timeout=180,
-        )
-        data = resp.json()
-
-        if "candidates" not in data:
-            return {"nodeName": node_name, "error": f"Gemini 응답 없음: {str(data)[:200]}"}
-
-        # 이미지 추출
-        img_b64 = None
-        for part in data["candidates"][0]["content"]["parts"]:
-            if "inlineData" in part:
-                img_b64 = part["inlineData"]["data"]
-                break
-
-        if not img_b64:
-            return {"nodeName": node_name, "error": "응답에 이미지 없음"}
-
-        raw_data = base64.b64decode(img_b64)
-        safe_name = node_name.replace(" ", "_").replace("/", "_")
-        raw_path = os.path.join(output_dir, f"{safe_name}_raw.png")
-        with open(raw_path, "wb") as f:
-            f.write(raw_data)
-
-        if is_hero:
-            # 히어로: 배경 유지, 리사이즈만
-            final_path = os.path.join(output_dir, f"{safe_name}.png")
-            from PIL import Image as PILImage
-            img = PILImage.open(io.BytesIO(raw_data))
-            img.save(final_path)
-            return {"nodeName": node_name, "imagePath": final_path, "isHero": True}
-        else:
-            # 아이콘: rembg 배경 제거 + 정사각형 크롭
-            from rembg import remove
-            from PIL import Image as PILImage
-            input_img = PILImage.open(io.BytesIO(raw_data))
-            output_img = remove(input_img)
-
-            # 정사각형 중앙 크롭
-            w, h = output_img.size
-            s = min(w, h)
-            left = (w - s) // 2
-            top = (h - s) // 2
-            output_img = output_img.crop((left, top, left + s, top + s))
-            output_img = output_img.resize((120, 120), PILImage.LANCZOS)
-
-            final_path = os.path.join(output_dir, f"{safe_name}.png")
-            output_img.save(final_path)
-            return {"nodeName": node_name, "imagePath": final_path, "isHero": False}
-
-    except Exception as e:
-        return {"nodeName": node_name, "error": str(e)}
-
-
-def _pre_generate_images_parallel(specs: list) -> list:
-    """Blueprint의 imageGen 스펙들을 병렬로 사전 생성.
-
-    빌드 전에 호출되어 빌드와 동시에 실행됨.
-    nodeId 없이 이미지만 생성하여 로컬 파일로 저장.
-
-    Returns: [{"nodeName": str, "imagePath": str, "isHero": bool}, ...]
-    """
-    api_key = _get_gemini_api_key()
-    if not api_key:
-        print("  ⚠️ Gemini API 키 미설정 — 이미지 사전 생성 건너뜀")
-        return []
-
-    output_dir = os.path.join(os.path.dirname(__file__), "..", "assets", "generated")
-    os.makedirs(output_dir, exist_ok=True)
-
-    results = []
-    start = time.time()
-
-    # 최대 3개 병렬 (Gemini API rate limit 고려)
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = {
-            executor.submit(_pre_generate_single, spec, api_key, output_dir): spec
-            for spec in specs
-        }
-        for future in as_completed(futures):
-            spec = futures[future]
-            result = future.result()
-            if "error" in result:
-                print(f"  ❌ {result['nodeName']}: {result['error'][:100]}")
-            else:
-                print(f"  ✅ {result['nodeName']}: {result['imagePath']}")
-            results.append(result)
-
-    elapsed = time.time() - start
-    ok = sum(1 for r in results if "imagePath" in r)
-    fail = sum(1 for r in results if "error" in r)
-    print(f"  이미지 사전 생성 — {ok} 성공, {fail} 실패 ({elapsed:.1f}s)")
-    return results
 
 
 _WIKIMEDIA_UA = "figma-design-agent/1.0 (https://github.com/twavetech-frontend/figma-design-agent)"
@@ -1346,9 +1043,9 @@ def _fetch_pexels_images_parallel(specs: list) -> list:
 
 
 def _apply_pre_generated_images(pre_results: list, node_map: dict):
-    """사전 생성된 이미지를 nodeMap 기반으로 Figma에 적용.
+    """다운로드한 이미지를 nodeMap 기반으로 Figma에 적용.
 
-    pre_results: _pre_generate_images_parallel의 결과
+    pre_results: _fetch_pexels_images_parallel의 결과
     node_map: batch_build_screen이 반환한 {name: nodeId} 매핑
     """
     success = 0
@@ -3387,11 +3084,6 @@ def _apply_template_vars(node: dict, vars_dict: dict, section_name: str) -> dict
                     card = cards[i]
                     if banner_vars.get("fill"):
                         card["fill"] = banner_vars["fill"]
-                    if banner_vars.get("imagePrompt"):
-                        card["imageGen"] = {
-                            "prompt": banner_vars["imagePrompt"],
-                            "isHero": True
-                        }
                     # 카드 내부 텍스트 치환
                     for text_node in card.get("children", []):
                         children_of = text_node.get("children", [])

@@ -66,21 +66,6 @@ python3 scripts/figma_mcp_client.py bind scripts/my_bindings.json
 python3 scripts/figma_mcp_client.py call export_node_as_image '{"nodeId":"ROOT_ID","format":"PNG","scale":1}'
 ```
 
-## 이미지 생성 병렬화 (자동 — build 명령에 내장)
-`build` 명령 실행 시 **imageGen 스펙이 있으면 자동으로 빌드와 이미지 생성을 병렬 실행**:
-
-```
-[Blueprint 작성] → [빌드 시작] ────────────────────→ [빌드 완료] → [post-fix] → [이미지 적용] → [QA]
-                    ↓ 동시에 (백그라운드 스레드)          ↑
-                   [Gemini 이미지 사전 생성 (3병렬)] ────┘ (대기 후 nodeMap으로 적용)
-```
-
-- **자동 실행**: Blueprint에 `imageGen` 필드가 있으면 `cmd_build`가 자동으로 병렬 처리
-- **별도 설정 불필요**: `build` 한 번으로 빌드 + post-fix + 이미지 생성/적용 모두 완료
-- **병렬도**: Gemini API rate limit 고려하여 최대 3개 동시 생성
-- **파이프라인**: Gemini API → rembg 배경 제거 → 정사각형 크롭 → 120px 리사이즈 → `set_image_fill`
-- **수동 병렬화도 가능**: Agent 도구의 `run_in_background: true`로 추가 이미지 생성 가능
-
 ## 템플릿 기반 Blueprint 조립 (`assemble` 명령)
 고정 섹션(NavBar, TabBar, FAB, Hero, Ribbon)을 템플릿에서 자동 조립하여 Blueprint 작성 시간을 대폭 단축.
 
@@ -101,8 +86,8 @@ python3 scripts/figma_mcp_client.py assemble scripts/my_config.json
     "TransactionRibbon": {"text": "누적 거래 5,000,000건"},
     "HeroSection": {
       "banners": [
-        {"tag": "HOT", "title": "이벤트 제목", "imagePrompt": "3D coins..."},
-        {"tag": "NEW", "title": "두번째 배너", "imagePrompt": "3D gift..."}
+        {"tag": "HOT", "title": "이벤트 제목"},
+        {"tag": "NEW", "title": "두번째 배너"}
       ]
     },
     "TabBar": {"activeTab": "홈"}

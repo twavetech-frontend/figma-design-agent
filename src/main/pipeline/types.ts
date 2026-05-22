@@ -6,15 +6,6 @@
 // Blueprint — LLM이 생성하는 디자인 설계도
 // ============================================================
 
-export interface ImageGenHint {
-  /** 이미지 생성 프롬프트 */
-  prompt: string;
-  /** 히어로 배너 여부 (true면 배경 유지, 전체 프레임 채움) */
-  isHero?: boolean;
-  /** 선택적 스타일 오버라이드 */
-  style?: string;
-}
-
 export interface BlueprintNode {
   type: 'frame' | 'text' | 'rectangle' | 'ellipse' | 'instance' | 'clone' | 'icon';
   name?: string;
@@ -23,8 +14,6 @@ export interface BlueprintNode {
   width?: number;
   height?: number;
   children?: BlueprintNode[];
-  /** 이미지 생성 힌트 — 파이프라인 Step 4에서 추출 */
-  imageGenHint?: ImageGenHint;
   /** 기타 모든 Figma 속성 (fill, autoLayout, fontSize, etc.) */
   [key: string]: unknown;
 }
@@ -97,7 +86,7 @@ export interface BuildResult {
 // Pipeline State & Events
 // ============================================================
 
-export type PipelineStepName = 'blueprint' | 'resolve' | 'build' | 'image' | 'variables' | 'qa' | 'fix';
+export type PipelineStepName = 'blueprint' | 'resolve' | 'build' | 'variables' | 'qa' | 'fix';
 export type PipelineStepStatus = 'pending' | 'running' | 'done' | 'error' | 'skipped';
 
 export interface PipelineStepState {

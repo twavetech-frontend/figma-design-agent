@@ -84,10 +84,6 @@ export const IPC_CHANNELS = {
   DS_TOKENS_RESULT: 'ds:tokens-result',
   DS_CACHE_STATUS: 'ds:cache-status',
 
-  // Settings
-  SETTINGS_GET_GEMINI_KEY: 'settings:get-gemini-key',
-  SETTINGS_SET_GEMINI_KEY: 'settings:set-gemini-key',
-
   // Claude Code
   CLAUDE_CODE_STATUS: 'claude:code-status',
   CLAUDE_CODE_LOGIN: 'claude:code-login',

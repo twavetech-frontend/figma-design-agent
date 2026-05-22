@@ -44,17 +44,6 @@ export interface OrchestratorConfig {
   apiKey?: string;
   /** Figma WebSocket 서버 인스턴스 (파이프라인용) */
   figmaWS?: { sendCommand: (command: string, params?: Record<string, unknown>, timeout?: number) => Promise<unknown> };
-  /** 이미지 생성기 (파이프라인용) */
-  imageGenerator?: {
-    generate: (request: {
-      prompt: string;
-      figmaWidth: number;
-      figmaHeight: number;
-      style?: string;
-      isHero?: boolean;
-      outputName: string;
-    }) => Promise<{ base64: string; width: number; height: number }>;
-  };
 }
 
 export class AgentOrchestrator extends EventEmitter {
@@ -88,13 +77,12 @@ export class AgentOrchestrator extends EventEmitter {
     this.apiKey = config.apiKey;
 
     // 파이프라인 초기화 (Direct API 모드 + figmaWS 제공 시)
-    if (!config.useAgentSdk && config.apiKey && config.figmaWS && config.imageGenerator) {
+    if (!config.useAgentSdk && config.apiKey && config.figmaWS) {
       this.pipeline = new PipelineOrchestrator({
         tools: config.tools,
         projectRoot: config.projectRoot,
         apiKey: config.apiKey,
         figmaWS: config.figmaWS,
-        imageGenerator: config.imageGenerator,
       });
 
       // 파이프라인 이벤트 전달

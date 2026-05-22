@@ -7,10 +7,9 @@
  * Step 1: Blueprint (LLM) — 사용자 메시지 → JSON blueprint
  * Step 2: Name Resolution (코드) — 시맨틱 이름 → 실제 키
  * Step 3: Figma Build (Plugin) — blueprint → Figma 노드
- * Step 4: Image Generation (Gemini) — imageGenHint → 이미지
- * Step 5: Variable Binding (코드) — DS 토큰 바인딩
- * Step 6: QA Review (LLM) — 스크린샷 기반 검증
- * Step 7: Fix (LLM, 조건부) — QA 이슈 수정
+ * Step 4: Variable Binding (코드) — DS 토큰 바인딩
+ * Step 5: QA Review (LLM) — 스크린샷 기반 검증
+ * Step 6: Fix (LLM, 조건부) — QA 이슈 수정
  */
 
 import { EventEmitter } from 'events';
@@ -20,8 +19,6 @@ import { processAttachmentText } from '../rtf-stripper';
 import { callLLMWithTool } from './llm-caller';
 import type {
   BlueprintResult,
-  BlueprintNode,
-  ImageGenHint,
   BuildResult,
   QAResult,
   FixResult,
@@ -46,17 +43,6 @@ export interface PipelineConfig {
   apiKey: string;
   /** Figma WebSocket 서버 인스턴스 (스크린샷 등 직접 호출용) */
   figmaWS: { sendCommand: (command: string, params?: Record<string, unknown>, timeout?: number) => Promise<unknown> };
-  /** 이미지 생성기 */
-  imageGenerator: {
-    generate: (request: {
-      prompt: string;
-      figmaWidth: number;
-      figmaHeight: number;
-      style?: string;
-      isHero?: boolean;
-      outputName: string;
-    }) => Promise<{ base64: string; width: number; height: number }>;
-  };
 }
 
 export class PipelineOrchestrator extends EventEmitter {
@@ -141,7 +127,7 @@ export class PipelineOrchestrator extends EventEmitter {
   async runPipeline(userMessage: string, signal?: AbortSignal, attachments?: AttachmentData[]): Promise<PipelineResult> {
     const startTime = Date.now();
     const stepDurations: Record<PipelineStepName, number> = {
-      blueprint: 0, resolve: 0, build: 0, image: 0, variables: 0, qa: 0, fix: 0,
+      blueprint: 0, resolve: 0, build: 0, variables: 0, qa: 0, fix: 0,
     };
 
     try {
@@ -171,30 +157,27 @@ export class PipelineOrchestrator extends EventEmitter {
       this.lastBlueprint = blueprint;
       this.emitStep(3, 'build', 'done', `${buildResult.totalNodes}개 노드, ${stepDurations.build}ms`);
 
-      // ── Step 4: Image Generation — 초기 빌드 시 건너뜀 (사용자 요청 시 생성) ──
-      this.emitStep(4, 'image', 'skipped', '사용자 요청 시 생성');
-
-      // ── Step 5: Variable Binding (코드) ──
-      this.emitStep(5, 'variables', 'skipped', '추후 구현');
+      // ── Step 4: Variable Binding (코드) ──
+      this.emitStep(4, 'variables', 'skipped', '추후 구현');
       // TODO: DS 토큰 바인딩 자동화
 
-      // ── Step 6: QA Review (LLM) ──
-      this.emitStep(6, 'qa', 'running', '스크린샷 기반 QA 검증 중...');
+      // ── Step 5: QA Review (LLM) ──
+      this.emitStep(5, 'qa', 'running', '스크린샷 기반 QA 검증 중...');
       const t6 = Date.now();
       const screenshot = await this.captureScreenshot(buildResult.rootId);
       const qaResult = await this.runQA(screenshot, blueprint, signal);
       stepDurations.qa = Date.now() - t6;
-      this.emitStep(6, 'qa', 'done', qaResult.passed ? 'PASS' : `${qaResult.issues.length}개 이슈, ${stepDurations.qa}ms`);
+      this.emitStep(5, 'qa', 'done', qaResult.passed ? 'PASS' : `${qaResult.issues.length}개 이슈, ${stepDurations.qa}ms`);
 
-      // ── Step 7: Fix (조건부, 최대 2회) ──
+      // ── Step 6: Fix (조건부, 최대 2회) ──
       if (!qaResult.passed && qaResult.issues.length > 0) {
-        this.emitStep(7, 'fix', 'running', `${qaResult.issues.length}개 이슈 수정 중...`);
+        this.emitStep(6, 'fix', 'running', `${qaResult.issues.length}개 이슈 수정 중...`);
         const t7 = Date.now();
         await this.applyFixes(qaResult, buildResult, signal);
         stepDurations.fix = Date.now() - t7;
-        this.emitStep(7, 'fix', 'done', `${stepDurations.fix}ms`);
+        this.emitStep(6, 'fix', 'done', `${stepDurations.fix}ms`);
       } else {
-        this.emitStep(7, 'fix', 'skipped', 'QA 통과');
+        this.emitStep(6, 'fix', 'skipped', 'QA 통과');
       }
 
       const totalDuration = Date.now() - startTime;
@@ -238,7 +221,6 @@ IMPORTANT RULES:
 - Root frame: 393 x 852 px (iPhone 16), white fill, autoLayout VERTICAL
 - Use statusBar: true on root frame
 - Use semantic names: component/variant for instances, name for icons
-- Do NOT add imageGenHint — image generation is handled separately on user request
 - All text MUST have layoutSizingHorizontal: "FILL"
 - Font: always "Pretendard"
 - clipsContent: false on root and content frames
@@ -260,7 +242,6 @@ VISUAL QUALITY STANDARDS:
 - ⛔ Stroke-only cards (always use fill, not just border)
 - ⛔ All icon backgrounds same color (use different tint per category)
 - ⛔ Tab bar without real icons — 탭바에 rectangle 넣지 마라, 반드시 type:"icon" 사용
-- ⛔ Do NOT include imageGenHint — images are generated only when user explicitly requests
 
 GOOD EXAMPLE — List item with icon background:
 {"type":"frame","name":"List Item","layoutSizingHorizontal":"FILL","autoLayout":{"layoutMode":"HORIZONTAL","itemSpacing":14,"paddingVertical":14,"counterAxisAlignItems":"CENTER"},"children":[{"type":"frame","name":"Icon BG","width":44,"height":44,"cornerRadius":12,"fill":{"r":1,"g":0.94,"b":0.92},"autoLayout":{"layoutMode":"VERTICAL","primaryAxisAlignItems":"CENTER","counterAxisAlignItems":"CENTER"},"children":[{"type":"icon","name":"gift-01","size":24}]},{"type":"frame","name":"Text Group","layoutSizingHorizontal":"FILL","autoLayout":{"layoutMode":"VERTICAL","itemSpacing":2},"children":[{"type":"text","text":"쇼핑 적립","fontSize":16,"fontWeight":500,"fontFamily":"Pretendard","fontColor":{"r":0.12,"g":0.12,"b":0.14},"layoutSizingHorizontal":"FILL"},{"type":"text","text":"구매 금액의 1% 적립","fontSize":13,"fontWeight":400,"fontFamily":"Pretendard","fontColor":{"r":0.45,"g":0.47,"b":0.5},"layoutSizingHorizontal":"FILL"}]},{"type":"icon","name":"chevron-right","size":20}]}
@@ -379,96 +360,7 @@ Return the blueprint through the submit_blueprint tool.`;
   }
 
   // ============================================================
-  // Step 4: Image Generation
-  // ============================================================
-
-  private extractImageHints(
-    node: BlueprintNode,
-    buildResult: BuildResult,
-    parentPath: string = '',
-  ): Array<{ hint: ImageGenHint; nodeName: string; nodePath: string }> {
-    const hints: Array<{ hint: ImageGenHint; nodeName: string; nodePath: string }> = [];
-    const currentPath = parentPath ? `${parentPath}/${node.name || ''}` : (node.name || 'root');
-
-    if (node.imageGenHint) {
-      hints.push({
-        hint: node.imageGenHint,
-        nodeName: node.name || 'unnamed',
-        nodePath: currentPath,
-      });
-    }
-
-    if (node.children) {
-      for (const child of node.children) {
-        hints.push(...this.extractImageHints(child, buildResult, currentPath));
-      }
-    }
-
-    return hints;
-  }
-
-  private async generateImages(
-    hints: Array<{ hint: ImageGenHint; nodeName: string; nodePath: string }>,
-    buildResult: BuildResult,
-    signal?: AbortSignal,
-  ): Promise<void> {
-    const { figmaWS, imageGenerator } = this.config;
-
-    // Generate all images in parallel
-    const promises = hints.map(async ({ hint, nodeName }) => {
-      if (signal?.aborted) return;
-
-      // Find the nodeId from buildResult's nodeMap
-      const nodeId = buildResult.nodeMap[nodeName];
-      if (!nodeId) {
-        console.warn(`[Pipeline] Image hint: node "${nodeName}" not found in nodeMap`);
-        return;
-      }
-
-      let width = 120;
-      let height = 120;
-
-      // Hero mode: auto-detect node dimensions
-      if (hint.isHero) {
-        try {
-          const nodeInfo = await figmaWS.sendCommand('get_node_info', { nodeId }) as Record<string, unknown>;
-          if (nodeInfo.width && nodeInfo.height) {
-            width = Math.round(nodeInfo.width as number);
-            height = Math.round(nodeInfo.height as number);
-          }
-        } catch (e) {
-          console.warn(`[Pipeline] Failed to get node size for ${nodeId}:`, e);
-        }
-      }
-
-      try {
-        const result = await imageGenerator.generate({
-          prompt: hint.prompt,
-          figmaWidth: width,
-          figmaHeight: height,
-          style: hint.style,
-          isHero: hint.isHero,
-          outputName: `gen_${Date.now()}_${nodeName.replace(/\s+/g, '_')}`,
-        });
-
-        // Apply as image fill
-        await figmaWS.sendCommand('set_image_fill', {
-          nodeId,
-          imageData: result.base64,
-          scaleMode: 'FILL',
-        });
-
-        console.log(`[Pipeline] Image generated for "${nodeName}": ${result.width}x${result.height}`);
-      } catch (e) {
-        console.error(`[Pipeline] Image generation failed for "${nodeName}":`, e);
-      }
-    });
-
-    await Promise.all(promises);
-  }
-
-  // ============================================================
-  // Step 6: QA Review (LLM)
+  // Step 5: QA Review (LLM)
   // ============================================================
 
   private async captureScreenshot(rootId: string): Promise<string> {
@@ -501,13 +393,11 @@ Blueprint summary: ${blueprint.designSummary}
 
 Check for:
 1. Status Bar presence and positioning
-2. Hero banner image applied (not blank/white)
-3. All text readable (not vertical, not clipped)
-4. Component instances rendered correctly
-5. Layout alignment (no overlapping, no clipping)
-6. Image areas have actual images (not empty placeholders)
-7. Text content matches intent (not lorem ipsum unless intended)
-8. Spacing and padding consistency
+2. All text readable (not vertical, not clipped)
+3. Component instances rendered correctly
+4. Layout alignment (no overlapping, no clipping)
+5. Text content matches intent (not lorem ipsum unless intended)
+6. Spacing and padding consistency
 
 Return your findings through the submit_qa tool.`;
 
@@ -656,7 +546,7 @@ ${JSON.stringify(buildResult.nodeMap, null, 2)}
 User request: ${userMessage}
 
 Generate tool call patches to fulfill the user's modification request.
-Available tools: set_text_content, set_multiple_text_contents, set_fill_color, set_stroke_color, set_corner_radius, resize_node, move_node, set_auto_layout, set_layout_sizing, set_text_properties, set_font_size, set_font_weight, set_image_fill, delete_node, set_effects, generate_image.`;
+Available tools: set_text_content, set_multiple_text_contents, set_fill_color, set_stroke_color, set_corner_radius, resize_node, move_node, set_auto_layout, set_layout_sizing, set_text_properties, set_font_size, set_font_weight, set_image_fill, delete_node, set_effects.`;
 
     const fixResult = await callLLMWithTool<FixResult>({
       client,

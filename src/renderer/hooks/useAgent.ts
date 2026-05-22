@@ -23,8 +23,6 @@ declare global {
       openExternal: (url: string) => void;
       onDSCacheStatus: (callback: (status: DSCacheStatus) => void) => () => void;
       onPipelineStep: (callback: (event: PipelineStepEvent) => void) => () => void;
-      getGeminiKey: () => Promise<{ hasKey: boolean; maskedKey: string }>;
-      setGeminiKey: (key: string) => Promise<{ success: boolean; error?: string }>;
       onError: (callback: (error: string) => void) => () => void;
     };
   }
