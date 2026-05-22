@@ -65,11 +65,11 @@ async function main() {
 
   console.log(`[Bridge] Registered ${tools.size} tools`);
 
-  // 4. Start MCP HTTP server
-  const mcpServer = new McpHttpServer(tools);
+  // 3. Start MCP HTTP server
+  const mcpServer = new McpHttpServer(tools, () => figmaWS.inputMode);
   await mcpServer.start();
 
-  // 5. Log connection events + sync component docs from GitHub Pages
+  // 4. Log connection events + sync component docs from GitHub Pages
   figmaWS.on('connection-change', (state) => {
     console.log(`[Bridge] Figma: ${state.status}${state.channel ? ` (channel: ${state.channel})` : ''}`);
 
@@ -93,7 +93,7 @@ async function main() {
 
   console.log('[Bridge] Ready. Waiting for Figma plugin connection...');
 
-  // 6. Graceful shutdown
+  // 5. Graceful shutdown
   const shutdown = async () => {
     console.log('\n[Bridge] Shutting down...');
     mcpServer.stop();

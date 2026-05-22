@@ -1,0 +1,343 @@
+{
+  "name": "스테이지 추천",
+  "width": 393,
+  "fill": "$token(bg-primary)",
+  "autoLayout": { "layoutMode": "VERTICAL", "itemSpacing": 0 },
+  "_comment": "Status Bar는 blueprint에 넣지 않음 — 빌드 후 Styles 페이지 279:4758 복제 (CLAUDE.md 규칙 1)",
+  "children": [
+    {
+      "type": "frame", "name": "Header", "layoutSizingHorizontal": "FILL", "width": 393,
+      "autoLayout": { "layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 14, "paddingLeft": 20, "paddingRight": 20, "itemSpacing": 12, "primaryAxisAlignItems": "MIN", "counterAxisAlignItems": "CENTER" },
+      "children": [
+        {
+          "type": "frame", "name": "Dropdown", "layoutSizingHorizontal": "FILL", "width": 317,
+          "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 4, "counterAxisAlignItems": "CENTER" },
+          "children": [
+            { "type": "text", "name": "Dropdown Text", "text": "한 달에 약 100만원 13개월 모으기", "fontSize": 16, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-primary)" },
+            { "type": "icon", "name": "Dropdown Icon", "iconName": "chevron-down", "size": 20, "iconColor": "$token(fg-primary)" }
+          ]
+        },
+        { "type": "icon", "name": "Search Icon", "iconName": "search-lg", "size": 24, "iconColor": "$token(fg-primary)" }
+      ]
+    },
+    {
+      "type": "frame", "name": "Recommendation List", "layoutSizingHorizontal": "FILL", "width": 393,
+      "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 16, "paddingBottom": 24, "paddingLeft": 20, "paddingRight": 20, "itemSpacing": 14 },
+      "children": [
+        {
+          "type": "frame", "name": "Recommendation Card 1", "layoutSizingHorizontal": "FILL", "width": 353,
+          "fill": "$token(bg-primary)", "stroke": "$token(border-secondary)", "strokeWeight": 1, "cornerRadius": 16,
+          "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 20, "paddingBottom": 20, "paddingLeft": 20, "paddingRight": 20, "itemSpacing": 16 },
+          "children": [
+            { "type": "text", "name": "Card Label", "text": "추천 #1", "fontSize": 13, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" },
+            {
+              "type": "frame", "name": "Result Group", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "VERTICAL", "itemSpacing": 3 },
+              "children": [
+                { "type": "text", "name": "Result Date", "text": "27년 12월 25일에", "fontSize": 14, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                {
+                  "type": "frame", "name": "Result Amount Row", "layoutSizingHorizontal": "FILL", "width": 313,
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 3, "counterAxisAlignItems": "CENTER" },
+                  "children": [
+                    { "type": "text", "name": "Amount", "text": "19,974,790원", "fontSize": 22, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" },
+                    { "type": "text", "name": "Receive Suffix", "text": "받아요", "fontSize": 22, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-primary)" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame", "name": "Timeline Row", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 12, "primaryAxisAlignItems": "MIN", "counterAxisAlignItems": "CENTER" },
+              "children": [
+                {
+                  "type": "frame", "name": "Progress Track", "layoutSizingHorizontal": "FILL", "width": 231, "height": 6,
+                  "fill": "$token(border-secondary)", "cornerRadius": 3,
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 0 },
+                  "children": [
+                    { "type": "frame", "name": "Progress Fill", "width": 165, "height": 6, "fill": "$token(bg-brand-solid)", "cornerRadius": 3 }
+                  ]
+                },
+                {
+                  "type": "frame", "name": "Round Badge", "layoutSizingHorizontal": "HUG",
+                  "fill": "$token(bg-brand-primary)", "cornerRadius": 8,
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "paddingTop": 5, "paddingBottom": 5, "paddingLeft": 10, "paddingRight": 10 },
+                  "children": [
+                    { "type": "text", "name": "Round Text", "text": "13회 이상", "fontSize": 12, "fontWeight": 600, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame", "name": "Stats Row", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 10 },
+              "children": [
+                {
+                  "type": "frame", "name": "Stat Box Monthly", "layoutSizingHorizontal": "FILL", "width": 151,
+                  "fill": "$token(bg-secondary)", "cornerRadius": 10,
+                  "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 12, "paddingBottom": 12, "paddingLeft": 14, "paddingRight": 14, "itemSpacing": 4 },
+                  "children": [
+                    { "type": "text", "name": "Stat Label", "text": "매월 납입", "fontSize": 12, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                    { "type": "text", "name": "Stat Value", "text": "1,474,624원", "fontSize": 15, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-primary)" }
+                  ]
+                },
+                {
+                  "type": "frame", "name": "Stat Box Interest", "layoutSizingHorizontal": "FILL", "width": 151,
+                  "fill": "$token(bg-secondary)", "cornerRadius": 10,
+                  "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 12, "paddingBottom": 12, "paddingLeft": 14, "paddingRight": 14, "itemSpacing": 4 },
+                  "children": [
+                    { "type": "text", "name": "Stat Label", "text": "총 이자 수익", "fontSize": 12, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                    { "type": "text", "name": "Stat Value", "text": "+4,604,678원", "fontSize": 15, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-success-primary)" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame", "name": "Reserve Row", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 8, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER" },
+              "children": [
+                { "type": "text", "name": "Reserve Label", "text": "추가 예약", "fontSize": 13, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                {
+                  "type": "frame", "name": "Chip Group", "layoutSizingHorizontal": "HUG",
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 6, "counterAxisAlignItems": "CENTER" },
+                  "children": [
+                    {
+                      "type": "frame", "name": "Chip 1", "layoutSizingHorizontal": "HUG", "fill": "$token(bg-brand-primary)", "cornerRadius": 6,
+                      "autoLayout": { "layoutMode": "HORIZONTAL", "paddingTop": 4, "paddingBottom": 4, "paddingLeft": 10, "paddingRight": 10 },
+                      "children": [ { "type": "text", "name": "Chip Text", "text": "50,000P", "fontSize": 12, "fontWeight": 600, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" } ]
+                    },
+                    {
+                      "type": "frame", "name": "Chip 2", "layoutSizingHorizontal": "HUG", "fill": "$token(bg-brand-primary)", "cornerRadius": 6,
+                      "autoLayout": { "layoutMode": "HORIZONTAL", "paddingTop": 4, "paddingBottom": 4, "paddingLeft": 10, "paddingRight": 10 },
+                      "children": [ { "type": "text", "name": "Chip Text", "text": "10만P", "fontSize": 12, "fontWeight": 600, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" } ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame", "name": "Recommendation Card 2", "layoutSizingHorizontal": "FILL", "width": 353,
+          "fill": "$token(bg-primary)", "stroke": "$token(border-secondary)", "strokeWeight": 1, "cornerRadius": 16,
+          "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 20, "paddingBottom": 20, "paddingLeft": 20, "paddingRight": 20, "itemSpacing": 16 },
+          "children": [
+            { "type": "text", "name": "Card Label", "text": "추천 #2", "fontSize": 13, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" },
+            {
+              "type": "frame", "name": "Result Group", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "VERTICAL", "itemSpacing": 3 },
+              "children": [
+                { "type": "text", "name": "Result Date", "text": "26년 12월 25일에", "fontSize": 14, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                {
+                  "type": "frame", "name": "Result Amount Row", "layoutSizingHorizontal": "FILL", "width": 313,
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 3, "counterAxisAlignItems": "CENTER" },
+                  "children": [
+                    { "type": "text", "name": "Amount", "text": "493,500원", "fontSize": 22, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" },
+                    { "type": "text", "name": "Receive Suffix", "text": "받아요", "fontSize": 22, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-primary)" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame", "name": "Timeline Row", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 12, "primaryAxisAlignItems": "MIN", "counterAxisAlignItems": "CENTER" },
+              "children": [
+                {
+                  "type": "frame", "name": "Progress Track", "layoutSizingHorizontal": "FILL", "width": 231, "height": 6,
+                  "fill": "$token(border-secondary)", "cornerRadius": 3,
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 0 },
+                  "children": [
+                    { "type": "frame", "name": "Progress Fill", "width": 115, "height": 6, "fill": "$token(bg-brand-solid)", "cornerRadius": 3 }
+                  ]
+                },
+                {
+                  "type": "frame", "name": "Round Badge", "layoutSizingHorizontal": "HUG",
+                  "fill": "$token(bg-brand-primary)", "cornerRadius": 8,
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "paddingTop": 5, "paddingBottom": 5, "paddingLeft": 10, "paddingRight": 10 },
+                  "children": [
+                    { "type": "text", "name": "Round Text", "text": "12회 이상", "fontSize": 12, "fontWeight": 600, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame", "name": "Stats Row", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 10 },
+              "children": [
+                {
+                  "type": "frame", "name": "Stat Box Monthly", "layoutSizingHorizontal": "FILL", "width": 151,
+                  "fill": "$token(bg-secondary)", "cornerRadius": 10,
+                  "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 12, "paddingBottom": 12, "paddingLeft": 14, "paddingRight": 14, "itemSpacing": 4 },
+                  "children": [
+                    { "type": "text", "name": "Stat Label", "text": "매월 납입", "fontSize": 12, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                    { "type": "text", "name": "Stat Value", "text": "103,229원", "fontSize": 15, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-primary)" }
+                  ]
+                },
+                {
+                  "type": "frame", "name": "Stat Box Interest", "layoutSizingHorizontal": "FILL", "width": 151,
+                  "fill": "$token(bg-secondary)", "cornerRadius": 10,
+                  "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 12, "paddingBottom": 12, "paddingLeft": 14, "paddingRight": 14, "itemSpacing": 4 },
+                  "children": [
+                    { "type": "text", "name": "Stat Label", "text": "총 이자 비용", "fontSize": 12, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                    { "type": "text", "name": "Stat Value", "text": "22,630원", "fontSize": 15, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-primary)" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame", "name": "Reserve Row", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 8, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER" },
+              "children": [
+                { "type": "text", "name": "Reserve Label", "text": "추가 예약", "fontSize": 13, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                {
+                  "type": "frame", "name": "Chip Group", "layoutSizingHorizontal": "HUG",
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 6, "counterAxisAlignItems": "CENTER" },
+                  "children": [
+                    {
+                      "type": "frame", "name": "Chip 1", "layoutSizingHorizontal": "HUG", "fill": "$token(bg-brand-primary)", "cornerRadius": 6,
+                      "autoLayout": { "layoutMode": "HORIZONTAL", "paddingTop": 4, "paddingBottom": 4, "paddingLeft": 10, "paddingRight": 10 },
+                      "children": [ { "type": "text", "name": "Chip Text", "text": "50,000P", "fontSize": 12, "fontWeight": 600, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" } ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame", "name": "Recommendation Card 3", "layoutSizingHorizontal": "FILL", "width": 353,
+          "fill": "$token(bg-primary)", "stroke": "$token(border-secondary)", "strokeWeight": 1, "cornerRadius": 16,
+          "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 20, "paddingBottom": 20, "paddingLeft": 20, "paddingRight": 20, "itemSpacing": 16 },
+          "children": [
+            { "type": "text", "name": "Card Label", "text": "추천 #3", "fontSize": 13, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" },
+            {
+              "type": "frame", "name": "Result Group", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "VERTICAL", "itemSpacing": 3 },
+              "children": [
+                { "type": "text", "name": "Result Date", "text": "29년 2월 25일에", "fontSize": 14, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                {
+                  "type": "frame", "name": "Result Amount Row", "layoutSizingHorizontal": "FILL", "width": 313,
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 3, "counterAxisAlignItems": "CENTER" },
+                  "children": [
+                    { "type": "text", "name": "Amount", "text": "500,000원", "fontSize": 22, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" },
+                    { "type": "text", "name": "Receive Suffix", "text": "받아요", "fontSize": 22, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-primary)" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame", "name": "Timeline Row", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 12, "primaryAxisAlignItems": "MIN", "counterAxisAlignItems": "CENTER" },
+              "children": [
+                {
+                  "type": "frame", "name": "Progress Track", "layoutSizingHorizontal": "FILL", "width": 231, "height": 6,
+                  "fill": "$token(border-secondary)", "cornerRadius": 3,
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 0 },
+                  "children": [
+                    { "type": "frame", "name": "Progress Fill", "width": 58, "height": 6, "fill": "$token(bg-brand-solid)", "cornerRadius": 3 }
+                  ]
+                },
+                {
+                  "type": "frame", "name": "Round Badge", "layoutSizingHorizontal": "HUG",
+                  "fill": "$token(bg-brand-primary)", "cornerRadius": 8,
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "paddingTop": 5, "paddingBottom": 5, "paddingLeft": 10, "paddingRight": 10 },
+                  "children": [
+                    { "type": "text", "name": "Round Text", "text": "3회 이상", "fontSize": 12, "fontWeight": 600, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame", "name": "Stats Row", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 10 },
+              "children": [
+                {
+                  "type": "frame", "name": "Stat Box Monthly", "layoutSizingHorizontal": "FILL", "width": 151,
+                  "fill": "$token(bg-secondary)", "cornerRadius": 10,
+                  "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 12, "paddingBottom": 12, "paddingLeft": 14, "paddingRight": 14, "itemSpacing": 4 },
+                  "children": [
+                    { "type": "text", "name": "Stat Label", "text": "매월 납입", "fontSize": 12, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                    { "type": "text", "name": "Stat Value", "text": "165,000원", "fontSize": 15, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-primary)" }
+                  ]
+                },
+                {
+                  "type": "frame", "name": "Stat Box Interest", "layoutSizingHorizontal": "FILL", "width": 151,
+                  "fill": "$token(bg-secondary)", "cornerRadius": 10,
+                  "autoLayout": { "layoutMode": "VERTICAL", "paddingTop": 12, "paddingBottom": 12, "paddingLeft": 14, "paddingRight": 14, "itemSpacing": 4 },
+                  "children": [
+                    { "type": "text", "name": "Stat Label", "text": "총 이자 수익", "fontSize": 12, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                    { "type": "text", "name": "Stat Value", "text": "+12,400원", "fontSize": 15, "fontWeight": 700, "fontFamily": "Pretendard", "fontColor": "$token(text-success-primary)" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame", "name": "Reserve Row", "layoutSizingHorizontal": "FILL", "width": 313,
+              "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 8, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER" },
+              "children": [
+                { "type": "text", "name": "Reserve Label", "text": "추가 예약", "fontSize": 13, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-secondary)" },
+                {
+                  "type": "frame", "name": "Chip Group", "layoutSizingHorizontal": "HUG",
+                  "autoLayout": { "layoutMode": "HORIZONTAL", "itemSpacing": 6, "counterAxisAlignItems": "CENTER" },
+                  "children": [
+                    {
+                      "type": "frame", "name": "Chip 1", "layoutSizingHorizontal": "HUG", "fill": "$token(bg-brand-primary)", "cornerRadius": 6,
+                      "autoLayout": { "layoutMode": "HORIZONTAL", "paddingTop": 4, "paddingBottom": 4, "paddingLeft": 10, "paddingRight": 10 },
+                      "children": [ { "type": "text", "name": "Chip Text", "text": "30,000P", "fontSize": 12, "fontWeight": 600, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)" } ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame", "name": "Tab Bar", "layoutSizingHorizontal": "FILL", "width": 393, "height": 73,
+      "fill": "$token(bg-primary)",
+      "autoLayout": { "layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER", "paddingTop": 8, "paddingBottom": 24, "paddingLeft": 0, "paddingRight": 0 },
+      "children": [
+        {
+          "type": "frame", "name": "Tab Home", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "FILL",
+          "autoLayout": { "layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "itemSpacing": 4 },
+          "children": [
+            { "type": "icon", "name": "tab-home-icon", "iconName": "home-line", "size": 24, "iconColor": "$token(fg-tertiary)" },
+            { "type": "text", "name": "tab-home-label", "text": "홈", "fontSize": 11, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL" }
+          ]
+        },
+        {
+          "type": "frame", "name": "Tab Community", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "FILL",
+          "autoLayout": { "layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "itemSpacing": 4 },
+          "children": [
+            { "type": "icon", "name": "tab-comm-icon", "iconName": "users-01", "size": 24, "iconColor": "$token(fg-tertiary)" },
+            { "type": "text", "name": "tab-comm-label", "text": "커뮤니티", "fontSize": 11, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL" }
+          ]
+        },
+        {
+          "type": "frame", "name": "Tab Stage", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "FILL",
+          "autoLayout": { "layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "itemSpacing": 4 },
+          "children": [
+            { "type": "icon", "name": "tab-stage-icon", "iconName": "coins-stacked-01", "size": 24, "iconColor": "$token(fg-brand-primary)" },
+            { "type": "text", "name": "tab-stage-label", "text": "스테이지", "fontSize": 11, "fontWeight": 600, "fontFamily": "Pretendard", "fontColor": "$token(text-brand-primary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL" }
+          ]
+        },
+        {
+          "type": "frame", "name": "Tab Lounge", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "FILL",
+          "autoLayout": { "layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "itemSpacing": 4 },
+          "children": [
+            { "type": "icon", "name": "tab-lounge-icon", "iconName": "building-08", "size": 24, "iconColor": "$token(fg-tertiary)" },
+            { "type": "text", "name": "tab-lounge-label", "text": "라운지", "fontSize": 11, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL" }
+          ]
+        },
+        {
+          "type": "frame", "name": "Tab Me", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "FILL",
+          "autoLayout": { "layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "itemSpacing": 4 },
+          "children": [
+            { "type": "icon", "name": "tab-me-icon", "iconName": "user-01", "size": 24, "iconColor": "$token(fg-tertiary)" },
+            { "type": "text", "name": "tab-me-label", "text": "나", "fontSize": 11, "fontWeight": 500, "fontFamily": "Pretendard", "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL" }
+          ]
+        }
+      ]
+    }
+  ]
+}

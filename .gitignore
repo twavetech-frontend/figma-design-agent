@@ -6,9 +6,6 @@ release/
 *.app
 
 # Generated images
-assets/generated/
-assets/.DS_Store
-assets/reference-images/.DS_Store
 
 # DS sync state
 ds/.last_sync_sha
@@ -22,8 +19,13 @@ scripts/.mcp_session
 scripts/blueprint_assembled_*.json
 scripts/config_imin_*.json
 
-# Claude Code 로컬 세션
+# Claude Code 로컬 세션·설정
 .claude/projects/
+.claude/settings.local.json
 
 # 로컬 빌드 산출물
 artifacts/
+
+# Python
+__pycache__/
+scripts/.python-path

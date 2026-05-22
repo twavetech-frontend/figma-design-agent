@@ -2,8 +2,6 @@ import { defineConfig } from 'tsup'
 
 export default defineConfig({
   entry: {
-    'main/index': 'src/main/index.ts',
-    'preload/index': 'src/preload/index.ts',
     'bridge/index': 'src/bridge/index.ts',
     'yoga-cli/index': 'src/yoga-cli.ts',
   },
@@ -17,9 +15,7 @@ export default defineConfig({
   dts: false,
   // Externalize native/Node modules that can't be bundled
   external: [
-    'electron',
     'ws',
-    'sharp',
     'bufferutil',
     'utf-8-validate',
     'yoga-layout',

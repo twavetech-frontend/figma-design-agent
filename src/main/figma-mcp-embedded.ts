@@ -93,14 +93,6 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     type: 'object', properties: {}
   }, async () => cmd('get_remote_components'));
 
-  reg('get_component_key', 'Get componentKey for a COMPONENT or mainComponentKey for an INSTANCE', {
-    type: 'object',
-    properties: {
-      nodeId: { type: 'string', description: 'Node ID (COMPONENT or INSTANCE)' }
-    },
-    required: ['nodeId']
-  }, async (params) => cmd('get_component_key', params));
-
   reg('get_pages', 'Get all pages in the document', {
     type: 'object', properties: {}
   }, async () => cmd('get_pages'));
@@ -565,7 +557,22 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
       bindings: { type: 'object' }
     },
     required: ['nodeId', 'bindings']
-  }, async (params) => cmd('set_bound_variables', params));
+  }, async (params) => {
+    // ⚠️ 시스템 규칙: '-alt' / '_alt' 변형 토큰 금지 — 기본 토큰 경로로 정규화
+    const bindings = params.bindings as Record<string, unknown> | undefined;
+    if (bindings && typeof bindings === 'object') {
+      for (const [key, val] of Object.entries(bindings)) {
+        if (typeof val === 'string') {
+          const stripped = val.replace(/[-_ ]alt$/i, '');
+          if (stripped !== val) {
+            console.log(`[enforce] '-alt' 토큰 금지: bindings.${key} "${val}" → "${stripped}"`);
+            bindings[key] = stripped;
+          }
+        }
+      }
+    }
+    return cmd('set_bound_variables', params);
+  });
 
   reg('set_image_fill', 'Set image fill on a node. imageData must be base64-encoded PNG/JPEG. URL is NOT supported.', {
     type: 'object',
@@ -692,13 +699,8 @@ Root frame supports: autoLayout, cornerRadius, fill.`, {
     lastBuiltRootId = null;
 
     // ★ Step 1: Enhance blueprint (code-level auto-correction)
-    // Honor caller's skipEnhance=true (project policy 2026-05-03):
-    // figma_mcp_client.py sanitizes blueprints upstream, so the TS-layer
-    // enhanceBlueprint should not run. Prior versions ignored this flag and
-    // the placeholder→star-01 swap fired even on properly-typed text nodes.
     const blueprint = params.blueprint as Record<string, unknown>;
-    const skipEnhance = (params as Record<string, unknown>).skipEnhance === true;
-    const enhanced = skipEnhance ? blueprint : enhanceBlueprint(blueprint);
+    const enhanced = enhanceBlueprint(blueprint);
     // ★ Step 2: Smart Resolution: resolve semantic names → actual keys
     const resolved = await resolveBlueprint(enhanced);
     const resolvedParams = { ...params, blueprint: resolved };
@@ -1417,10 +1419,20 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
         console.log('[enforce] Root frame autoLayout forced: VERTICAL');
         stats.structure++;
       }
-      if (!root.fill) {
-        root.fill = { r: 1, g: 1, b: 1, a: 1 };
-        console.log('[enforce] Root frame fill forced: white');
-        stats.structure++;
+      // ⚠️ 시스템 규칙: 루트 프레임 배경은 반드시 bg-primary (#fcfcfd).
+      // bg-secondary(회색) 등 다른 값이 와도 무조건 교정한다.
+      {
+        const BG_PRIMARY = { r: 0.988, g: 0.988, b: 0.992, a: 1 };
+        const rf = root.fill as Record<string, number> | undefined;
+        const isBgPrimary = !!rf && typeof rf === 'object' &&
+          Math.abs((rf.r ?? 0) - BG_PRIMARY.r) < 0.02 &&
+          Math.abs((rf.g ?? 0) - BG_PRIMARY.g) < 0.02 &&
+          Math.abs((rf.b ?? 0) - BG_PRIMARY.b) < 0.02;
+        if (!isBgPrimary) {
+          console.log(`[enforce] Root frame fill forced to bg-primary (was ${JSON.stringify(root.fill)})`);
+          root.fill = { ...BG_PRIMARY };
+          stats.structure++;
+        }
       }
       if (root.clipsContent === undefined) {
         root.clipsContent = true;
@@ -1748,9 +1760,8 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
       }
     }
 
-    // ── 6. Hero section: padding + height ──
+    // ── 6. Hero section: padding + height enforce (이미지 자동생성 hint는 제거됨) ──
     if (isHeroSection(n)) {
-      // 6a. 좌우 패딩 강제 (Content 영역과 일관성)
       const al = n.autoLayout as Record<string, unknown> | undefined;
       if (al) {
         if (!al.paddingLeft && !al.paddingRight) {
@@ -1760,13 +1771,10 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
           stats.structure++;
         }
       } else if (!n.padding) {
-        // autoLayout 없는 경우 padding 배열로 설정
-        n.padding = [20, 24, 20, 24]; // top, right, bottom, left
+        n.padding = [20, 24, 20, 24];
         console.log(`[enforce] Hero "${n.name}" padding array forced: [20, 24, 20, 24]`);
         stats.structure++;
       }
-
-      // 6b. 높이 200px 강제
       if (!n.height || (n.height as number) < 180 || (n.height as number) > 220) {
         n.height = 200;
         console.log(`[enforce] Hero "${n.name}" height forced: 200`);
@@ -1864,14 +1872,10 @@ function isEmojiOnlyText(n: Record<string, unknown>): boolean {
   if (n.type !== 'text' || !n.text) return false;
   const text = (n.text as string).trim();
   if (text.length === 0 || text.length > 10) return false;
-  // Project policy 2026-05-05: never treat plain ASCII digits/punct as emoji.
-  // Regex \p{Emoji} matches digits 0-9, '#', '*' as emoji components, which
-  // caused stepper values like "30", "12" to be mis-converted to star-01
-  // placeholders. Reject anything that is purely ASCII digits/punctuation/
-  // letters/spaces/Korean before any emoji-stripping check.
-  if (/^[\sA-Za-z0-9\uAC00-\uD7AF.,!?+\-*/#:;()%\uC6D0\uB9CC\uAC1C\uC6D4\uB4A4\uB0B4\uB144\uC77C\uC8FC]+$/.test(text)) {
-    return false;
-  }
+  // \u26A0\uFE0F \p{Emoji}\uB294 \uC22B\uC790(0-9)\u00B7#\u00B7* \uB3C4 \uB9E4\uCE6D\uD55C\uB2E4 \u2014 \uAE00\uC790/\uC22B\uC790\uAC00 \uD558\uB098\uB77C\uB3C4 \uC788\uC73C\uBA74 \uC774\uBAA8\uC9C0 \uC544\uB2D8.
+  // \uC774 \uAC00\uB4DC\uAC00 \uC5C6\uC73C\uBA74 "5" \uAC19\uC740 \uC22B\uC790 \uD14D\uC2A4\uD2B8(\uC2A4\uD14C\uD37C \uAC12 \uB4F1)\uAC00 \uC774\uBAA8\uC9C0\uB85C \uC624\uC778\uB418\uC5B4
+  // star-01 \uC544\uC774\uCF58\uC73C\uB85C \uBCC0\uD658\uB418\uB294 \uBC84\uADF8\uAC00 \uBC1C\uC0DD\uD55C\uB2E4.
+  if (/[\p{L}\p{N}]/u.test(text)) return false;
   // Remove emoji, variation selectors, ZWJ, etc. If nothing remains, it's emoji-only
   const stripped = text.replace(/[\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D\u20E3\u{E0061}-\u{E007A}\u{E007F}]/gu, '').trim();
   return stripped.length === 0;
@@ -2021,8 +2025,8 @@ function isHeroSection(n: Record<string, unknown>): boolean {
     typeof width === 'number' && width >= 300 &&
     typeof height === 'number' && height >= 120 && height <= 280;
   const isHeroNamed = name.includes('hero') || name.includes('banner') || name.includes('히어로') || name.includes('배너');
-  const hasDarkFill = n.fill && typeof n.fill === 'object' &&
-    (n.fill as Record<string, number>).r < 0.3;
+  const hasDarkFill = !!(n.fill && typeof n.fill === 'object' &&
+    (n.fill as Record<string, number>).r < 0.3);
 
   return isLargeFrame && (isHeroNamed || hasDarkFill);
 }
