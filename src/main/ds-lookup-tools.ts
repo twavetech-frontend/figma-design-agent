@@ -215,7 +215,7 @@ Use this when you need to know which variants/props a DS component supports befo
 
       const matches = searchIn.filter((c) => {
         if (c.name.toLowerCase().includes(query)) return true;
-        const fcn = c.figmaComponentName;
+        const fcn: unknown = c.figmaComponentName;
         if (typeof fcn === 'string') return fcn.toLowerCase().includes(query);
         if (Array.isArray(fcn)) return fcn.some((n: string) => typeof n === 'string' && n.toLowerCase().includes(query));
         return false;

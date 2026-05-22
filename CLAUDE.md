@@ -10,34 +10,43 @@
 ## 프로젝트 개요
 AI 기반 Figma 디자인 생성 데스크톱 앱: Electron + React + Anthropic SDK
 
-## ⚠️ "디자인 생성 준비" 자동 트리거 (새 Windows 사용자)
+## ⚠️ "디자인 생성 준비" 자동 트리거 (새 사용자 — Windows / macOS)
 
-> **새 Windows 사용자가 레포를 클론한 뒤 "디자인 생성 준비"(또는 "환경 준비", "준비해줘"
+> **새 사용자가 레포를 클론한 뒤 "디자인 생성 준비"(또는 "환경 준비", "준비해줘"
 > 등 유사 표현)라고 하면 — 아래 절차를 질문 없이 처음부터 끝까지 자동 실행한다.**
 >
-> 새 Windows 머신은 Python·Node·의존성이 하나도 없다고 가정한다. 모든 설치는 winget
-> 비대화식(silent)이므로 — **설치 방식·winget 사용 여부·버전 업그레이드 동의 등을 사용자에게
-> 묻지 말 것.** 멈추지 말고 그냥 끝까지 진행한다. (이번 세션처럼 도구를 일일이 묻지 않는다.)
+> OS는 `uname` 또는 환경 정보로 자동 판단한다. Windows면 `setup-windows.ps1`, macOS면
+> `setup-mac.sh`를 실행한다. 두 스크립트 모두 멱등(이미 설치된 항목은 건너뜀)이며
+> 비대화식(silent)이다 — **설치 방식·패키지 매니저(winget/brew) 사용 여부·버전 업그레이드
+> 동의 등을 사용자에게 묻지 말 것.** 멈추지 말고 그냥 끝까지 진행한다.
 
-### 자동 실행 절차
-1. **환경 설정** — 다음을 직접 실행한다(⚠️ `npm run ...`이 아니다 — 새 머신엔 npm조차 없음):
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1
-   ```
-   멱등 스크립트가 Python·Python 패키지·`PYTHONUTF8`·Node LTS·npm 의존성·sharp·빌드를
-   한 번에 처리한다(없으면 winget 설치, 있으면 빠르게 통과). 출력의 `[OK]` 7줄 확인.
+### 자동 실행 절차 (공통)
+1. **환경 설정** — OS에 맞는 스크립트를 직접 실행한다(⚠️ `npm run ...`이 아니다 — 새 머신엔
+   npm조차 없을 수 있음).
+   - **Windows**:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1
+     ```
+   - **macOS**:
+     ```bash
+     bash scripts/setup-mac.sh
+     ```
+   멱등 스크립트가 패키지 매니저(winget/brew)·Python·Python 패키지·Node LTS·npm 의존성·
+   sharp 네이티브 모듈·빌드를 한 번에 처리한다. 출력의 `[OK]` 라인들을 확인.
    도중에 멈추거나 사용자에게 묻지 말 것.
 2. **브리지 기동** — `npm run bridge`를 백그라운드로 실행. 로그에
    `[FigmaWS] Server listening on port 8767` + `[MCP] HTTP server listening`이 뜨면 OK.
-3. **MCP 접속 검증** — `figma_mcp_client.py init` 실행(아래 "함정"의 전체 경로 + `PYTHONUTF8=1`).
+3. **MCP 접속 검증** — `figma_mcp_client.py init` 실행.
    `Ready.` + 실제 세션 ID가 나오면 OK (`Session initialized: None`이면 실패 → 브리지/패치 점검).
 4. **플러그인 연결 확인** — 브리지 로그에 `Figma: connected`가 있으면 완료. 없으면 사용자에게
    *"Figma 데스크톱 앱에서 플러그인을 실행해 주세요"* 안내 (플러그인 실행은 자동화 불가 — 유일한 수동 단계).
 5. **완료 보고** — 준비 완료를 알리고, 디자인할 화면의 PRD/요구사항을 요청한다.
 
 ### 멈춰서 사용자에게 보고해도 되는 경우 (이때만)
-- winget 자체가 없음 → Microsoft Store "앱 설치 관리자"(App Installer) 설치 안내
-- `setup-windows.ps1`이 에러로 종료 → 에러 원문과 함께 보고
+- **Windows**: winget 자체가 없음 → Microsoft Store "앱 설치 관리자"(App Installer) 설치 안내
+- **macOS**: Homebrew 자동 설치가 sudo 비밀번호 입력 실패로 종료 → 사용자에게 Homebrew
+  수동 설치 안내 (`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
+- 셋업 스크립트가 그 외 에러로 종료 → 에러 원문과 함께 보고
 - 그 외에는 멈추지 말고 끝까지 자동 진행한다
 
 ### setup-windows.ps1이 처리하는 항목 (멱등)
@@ -52,6 +61,20 @@ AI 기반 Figma 디자인 생성 데스크톱 앱: Electron + React + Anthropic 
 > npm이 이미 있으면 `npm run setup:windows`로도 실행 가능. rembg 포함:
 > `powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1 -InstallRembg`
 
+### setup-mac.sh가 처리하는 항목 (멱등)
+1. **Homebrew** — 없으면 비대화식 설치 시도(`NONINTERACTIVE=1`). sudo 입력 필요할 수 있음
+2. **Python 3** — 시스템 `python3`(3.9+) 우선, 없으면 `brew install python@3.12`
+3. **Python 패키지** — `requests`, `Pillow`. PEP 668 환경(Homebrew Python)에서는
+   `--break-system-packages` → 실패 시 `--user` 폴백 (`--install-rembg`로 rembg 추가)
+4. **Node.js LTS** (Homebrew) — Vite 6는 Node 18+ 필수
+5. **npm 의존성** — `.npmrc`의 `legacy-peer-deps=true`
+6. **sharp 네이티브 모듈** — Apple Silicon은 `@img/sharp-darwin-arm64`, Intel은 `darwin-x64`
+   (`uname -m`으로 자동 판단)
+7. **빌드** — `npm run build` → `out/`
+
+> npm이 이미 있으면 `npm run setup:mac`으로도 실행 가능. rembg 포함:
+> `bash scripts/setup-mac.sh --install-rembg`
+
 ### Windows 함정 (스크립트가 처리하지만 참고)
 - PATH의 `python3`/`python`은 Microsoft Store 별칭 stub — **실제 Python은 `%LOCALAPPDATA%\Programs\Python\Python3xx\python.exe`**. `figma_mcp_client.py` 호출 시 이 전체 경로 + `PYTHONUTF8=1` 환경변수 사용
 - winget 설치 직후 같은 셸 세션은 PATH가 갱신 안 됨 — `node`/`npm`이 안 잡히면 `C:\Program Files\nodejs\` 전체 경로 사용
@@ -59,6 +82,14 @@ AI 기반 Figma 디자인 생성 데스크톱 앱: Electron + React + Anthropic 
 - 브리지: `npm run bridge` — Electron 없이 WS 8767 + HTTP MCP 8769 동시 기동. Python 워크플로우는 이것만 있으면 됨
 - `@hono/mcp` 패치: `npm install`의 postinstall이 `scripts/patch-hono-mcp.js`로 Accept 헤더 검사 제거 (없으면 MCP 호출이 406 에러). 패치 실패 로그가 보이면 `@hono/mcp` 버전 변경 — 스크립트 갱신 필요
 - `scripts/*.ps1`은 **UTF-8 BOM 필수** — PowerShell 5.1은 BOM 없으면 cp949로 읽어 한글 파싱이 깨짐
+
+### macOS 함정 (스크립트가 처리하지만 참고)
+- Homebrew 경로는 아키텍처별로 다름 — **Apple Silicon은 `/opt/homebrew`, Intel은 `/usr/local`**. 스크립트가 `uname -m`으로 자동 판단
+- Homebrew 설치 직후 같은 셸 세션은 PATH가 갱신 안 됨 — 스크립트가 `brew shellenv`로 즉시 적용
+- macOS 12+의 시스템/Homebrew Python은 **PEP 668(externally-managed-environment)** 적용 → `pip install` 시 `--break-system-packages` 또는 `--user` 필요. 스크립트가 자동 처리
+- 시스템 `/usr/bin/python3`은 Xcode CLT 번들이라 버전이 고정됨 — Homebrew Python이 있으면 그것을 우선 사용
+- macOS는 기본 UTF-8 로케일이라 `PYTHONUTF8` 불필요
+- sharp 네이티브 모듈: nvm 사용자는 Node 메이저 버전 바뀔 때마다 `node_modules` 삭제 + 재설치 필요할 수 있음
 
 ## 빌드 & 실행
 ```bash
@@ -141,6 +172,31 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 ## 디자인 생성 필수 규칙
 
+> 🔴 **절대 규칙 0 — 루트 프레임(화면 최상위 프레임) 배경색은 반드시 `bg-primary`**
+>
+> 루트 프레임의 `fill`은 **무조건 `$token(bg-primary)`**(`#fcfcfd`, 거의 흰색)여야 한다.
+> `bg-secondary`(`#f3f4f6`, 회색) 등 다른 값을 쓰면 **버그**다. 화면 배경이 회색으로
+> 보이면 무조건 이 규칙 위반이다.
+>
+> - blueprint 작성 시 root `fill`을 처음부터 `$token(bg-primary)`로 쓸 것.
+> - 이 규칙은 빌드 파이프라인 **3곳에서 자동 강제**된다 — 그래도 blueprint에서 직접 지킬 것:
+>   1. `figma_mcp_client.py cmd_build` → `_enforce_root_bg_primary()`: 빌드 전 blueprint root fill을 `$token(bg-primary)`로 강제 교정
+>   2. `figma_mcp_client.py post-fix` → `_enforce_root_bg_primary_live()`: 빌드된 루트 노드 배경을 bg-primary로 런타임 강제(리터럴 + DS 변수 바인딩)
+>   3. `figma-mcp-embedded.ts enhanceBlueprint`: 모든 `batch_build_screen` 호출에서 root fill을 bg-primary로 교정
+> - **빌드 후 검증**: 스크린샷에서 콘텐츠 카드 바깥 배경이 회색이 아닌 흰색(`bg-primary`)인지 확인.
+
+> 🔴 **절대 규칙 0-B — `-alt` / `_alt` 변형 토큰은 절대 쓰지 말 것**
+>
+> `bg-secondary-alt`, `border-secondary-alt` 같은 `-alt` 토큰은 **금지**다.
+> `bg-secondary`가 필요하면 **반드시 `$token(bg-secondary)`** — 절대 `-alt`를 붙이지 말 것.
+> (figmaPath에서는 `_alt`(언더스코어)로 표기되지만 blueprint에는 `-alt`·`_alt` 둘 다 쓰지 않는다.)
+>
+> - 빌드 파이프라인이 `$token(...-alt)` / `$token(..._alt)`를 자동으로 기본 토큰으로 교정한다:
+>   1. `figma_mcp_client.py` `resolve_token_ref` / `_token_to_figma_path` → `_strip_alt_token()`으로 `-alt` 제거 + **마지막 세그먼트 '정확 일치' 우선 매칭**
+>   2. `figma-mcp-embedded.ts` `set_bound_variables` → 바인딩 경로의 `_alt`/`-alt` 접미사 제거
+> - ⚠️ 과거 버그: 토큰 매칭이 `startswith(name + "_")`를 허용해 `$token(bg-secondary)`가
+>   `bg-secondary_alt`로 오매칭됐다 — 이제 '정확 일치' 우선이라 해결됨.
+
 ### 1. ⚠️ Status Bar는 blueprint에 넣지 말 것 — 빌드가 DS Status Bar를 자동 삽입
 - **Status Bar를 텍스트/프레임으로 직접 그리거나 blueprint 노드로 넣지 말 것.**
 - `batch_build_screen`은 blueprint root.children에 status bar 노드가 **없으면 DS "Status Bar" 인스턴스를 루트 첫 자식으로 자동 삽입**한다. blueprint에 "Status Bar" 같은 노드를 넣으면 빌드가 그걸 그대로 써서 직접 그린 status bar가 박힌다(= 버그).
@@ -198,17 +254,18 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 ### 9. ⚠️ Tab Bar와 FAB — 루트 프레임 하단에 배치 (콘텐츠 아래)
 - **이 규칙도 매번 누락된다. 빌드 후 반드시 적용해야 한다.**
 - **batch_build_screen은 `layoutPositioning: "ABSOLUTE"`를 적용하지 않는다** → 빌드 후 반드시 별도 `set_layout_positioning` 호출
-- **배치 원칙**: 모든 콘텐츠가 루트 프레임 안에 보여야 하고, Tab Bar는 루트 프레임 맨 하단, FAB는 Tab Bar 바로 위
-- **위치 계산**:
-  1. 마지막 콘텐츠 요소의 bottom (y + height) 확인
-  2. FAB: `y = content_bottom + 24` (스페이서), `x = 253` (우측 정렬)
-  3. Tab Bar: `y = FAB_y + 44 + 16` (FAB 높이 + 간격)
-  4. Root height: `Tab Bar_y + 73` (Tab Bar 높이)
+- **배치 원칙**: Tab Bar는 **콘텐츠 하단에 밀착**(빈 흰 띠/데드밴드 금지), FAB는 **콘텐츠 위로 떠서** Tab Bar 바로 위에 위치한다. FAB는 floating 버튼이므로 마지막 섹션과 겹쳐도 정상이다.
+- **위치 계산** (`post-fix` `_fix_layout_and_positions`가 자동 적용):
+  1. 마지막 콘텐츠 요소의 bottom (y + height) = `content_bottom`
+  2. Tab Bar: `y = content_bottom` (콘텐츠에 밀착 — 사이에 빈 공간 두지 말 것), `x = 0`
+  3. FAB: `y = Tab Bar_y − 44 − 16` (Tab Bar 바로 위로 뜸, 콘텐츠와 겹침), `x = 253`
+  4. Root height: `Tab Bar_y + 73`
+- ⚠️ **데드밴드 금지**: 예전엔 `FAB y = content_bottom + 24`, `Tab Bar y = FAB_y + 60`으로 둬서 콘텐츠와 Tab Bar 사이에 ~76px 빈 흰 띠가 생겼다 — 이제 Tab Bar가 콘텐츠에 밀착하고 FAB가 그 위로 뜬다.
 - Tab Bar: `set_layout_positioning(positioning: "ABSOLUTE")` → `move_node(x: 0, y: 계산값)`
 - FAB: `set_layout_positioning(positioning: "ABSOLUTE")` → `move_node(x: 253, y: 계산값)`
 - **FAB 크기**: pill 형태 `120×44`, `cornerRadius: 22` — 56×56 원형은 텍스트가 잘림
 - **FAB 컬러**: PRD에 특정 색상이 지정되어 있으면 해당 색상 사용 (config에서 fill 오버라이드). 미지정 시 브랜드 컬러 `$token(bg-brand-solid)` 사용 — FAB는 화면에서 가장 중요한 버튼이므로 브랜드 컬러가 기본
-- **빌드 후 검증**: `get_node_info`로 Tab Bar/FAB가 루트 프레임 하단에 있는지, 콘텐츠와 겹치지 않는지 확인
+- **빌드 후 검증**: Tab Bar가 콘텐츠 하단에 밀착했는지, FAB가 Tab Bar 바로 위에 떠 있는지, 콘텐츠~Tab Bar 사이에 빈 띠가 없는지 확인
 
 ### 10. ⚠️ 히어로 배너는 반드시 가로 캐로셀 구조
 - **이 규칙도 매번 VERTICAL 스택으로 잘못 생성된다.**
@@ -235,6 +292,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - 텍스트 컬러: `$token(fg-primary)` 또는 `$token(fg-secondary)` 사용 (어두운 색)
 - 카드 배경이 밝은 색이면 텍스트는 Bold + 어두운 색 필수
 - **빌드 후 검증**: 스크린샷에서 모든 레이블/버튼 텍스트가 눈에 보이는지 확인
+- 🔴 **`fg-quaternary`(#f9fafb)·`text-quaternary`(#d2d6db)는 거의 흰색** — 흰 배경 위 텍스트/아이콘에 **절대 사용 금지**(안 보임). 비활성 탭·보조 텍스트 등 "흐린 회색"이 필요하면 `fg-secondary`/`text-secondary`(#687079) 또는 `fg-tertiary`/`text-tertiary`(#b1b6be)를 쓸 것.
 
 ### 12. 섹션 간 간격 — 배경색 동일 + divider 없으면 gap 0
 - 인접한 섹션의 배경색이 동일(둘 다 투명/white)이고 사이에 divider가 없으면 **gap 0px** — 섹션 내부 padding이 여백 역할
@@ -282,6 +340,25 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - `height`에 의존하지 말고 **padding으로 높이를 확보**하는 것이 안전
 - `validate_blueprint`의 R5 규칙이 자동 검증
 
+### 21. ⚠️ 숫자/짧은 텍스트는 아이콘으로 변환되면 안 됨 — 빌드 후 QA로 검증
+- `enhanceBlueprint`의 이모지→아이콘 자동변환은 **숫자만 있는 텍스트**(스테퍼 값 `"5"`,
+  카운트, 배지 숫자 등)를 이모지로 오인해 `star-01` 아이콘으로 바꾸는 버그가 있었다.
+  - 원인: 정규식 `\p{Emoji}` 는 숫자 `0-9`·`#`·`*` 도 매칭한다.
+  - 수정: `isEmojiOnlyText`에 `글자/숫자(\p{L}\p{N})가 하나라도 있으면 이모지 아님` 가드 추가.
+- **빌드 후 QA 강제** — `cmd_build` Step E.6 `_qa_blueprint_integrity()`:
+  원본 blueprint와 빌드 트리를 1:1 대조해 **blueprint가 `type:"text"`인데 빌드 결과가
+  TEXT가 아닌 노드**를 잡아낸다. 위반 시 같은 부모의 TEXT 형제를 복제·텍스트 교체로 자동 교정.
+- blueprint 작성 시 스테퍼 값·카운트·배지 숫자는 반드시 `type:"text"`로 명시할 것.
+
+### 22. ⚠️ 빌드 후 QA — 대비(가시성) + 레이아웃 자동 검사
+- `cmd_build` Step E.7 `_qa_visual_checks()` — 사람 눈에 의존하지 않고 빌드 트리를 분석:
+  - **대비 검사**: 텍스트/아이콘 색을 배경과 WCAG 상대휘도로 비교, 대비 비율 `< 1.8`이면
+    경고 (안 보이는 텍스트/아이콘 차단 — 예: `fg-quaternary` on white). `fg-tertiary`(~1.98)는 통과.
+  - **레이아웃 검사**: 마지막 콘텐츠와 Tab Bar 사이 데드밴드(빈 띠 24px↑), 콘텐츠가
+    Tab Bar 뒤로 가려짐, Tab Bar 잘림/루트 하단 빈 공간을 감지.
+- 빌드 로그의 `[QA] ⚠️ 시각 검사` 라인을 반드시 확인하고, 잡힌 항목을 수정할 것.
+- ※ 측정 가능한 항목만 자동화된다 — "디자인이 PRD 의도에 맞나"는 여전히 사람이 확인.
+
 ### 16. 이미지 자동 생성 — Blueprint `imageGen` 필드
 - Blueprint 노드에 `imageGen` 필드를 추가하면 **디자인 빌드 후 자동으로 Gemini 이미지 생성 + 적용**
 - 디자인 빌드 한 번으로 **빌드 → post-fix → 이미지 생성/적용**까지 전부 자동 실행
@@ -319,7 +396,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > python3 scripts/figma_mcp_client.py post-fix <rootNodeId>
 > ```
 
-**post-fix가 자동 수정하는 항목 (5단계):**
+**post-fix가 자동 수정하는 항목:**
 ```
 1. FILL 검증/수정: 모든 FRAME 자식 → FILL (FAB/Tab Bar 제외, SPACE_BETWEEN 마지막 HUG 자식 보존)
    - _walk: 재귀적 FILL 수정 (parent_layout_mode 빈 문자열이면 skip 안 함)
@@ -328,6 +405,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 3. Tab Bar/FAB: ABSOLUTE 배치 + 루트 하단 위치 + FAB width 복원 (HUG)
 4. Tab Bar item FILL 통일 + Tab Row individual stroke (bottom-only)
 5. zero-width 텍스트: width=0 TEXT → textAutoResize="WIDTH_AND_HEIGHT" + FILL (Banner Card 내부 텍스트는 FIXED 160px)
+[규칙] 루트 프레임 배경 = bg-primary 강제 (절대 규칙 0 — 리터럴 + DS 변수 바인딩)
 ```
 
 **cmd_build 루트 auto-layout 보호:**

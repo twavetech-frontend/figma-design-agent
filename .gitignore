@@ -6,9 +6,6 @@ release/
 *.app
 
 # Generated images
-assets/generated/
-assets/.DS_Store
-assets/reference-images/.DS_Store
 
 # DS sync state
 ds/.last_sync_sha
