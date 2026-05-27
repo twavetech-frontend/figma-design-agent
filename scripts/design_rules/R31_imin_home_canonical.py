@@ -308,6 +308,30 @@ def _has_footer_section(bp: dict) -> bool:
     return False
 
 
+def _has_fab(bp: dict) -> bool:
+    """imin_home requires a floating action button (FAB) above the Tab Bar.
+    Heuristic: any frame whose name == 'FAB' or contains 'fab' token-bounded."""
+    import re
+    FAB_NAME_RE = re.compile(r"\bfab\b|^fab$", re.I)
+    for node, _ in walk_blueprint(bp):
+        if (node.get("type") or "").lower() != "frame":
+            continue
+        nm = (node.get("name") or "")
+        if FAB_NAME_RE.search(nm):
+            return True
+    return False
+
+
+FAB_REMEDIATION = (
+    "Use blueprint_templates.json → sections.FAB (120×44 pill, cornerRadius 22, "
+    "fill $token(bg-brand-solid), HORIZONTAL auto-layout with icon+label). "
+    "post-fix automatically applies ABSOLUTE positioning at x=253, y=Tab Bar_y - 60. "
+    "Default label '마이 월렛' (icon wallet-02) — override per PRD if needed. "
+    "imin_home baseline always includes FAB; omitting it leaves the home screen "
+    "without its primary floating CTA."
+)
+
+
 FOOTER_REMEDIATION = (
     "Use blueprint_templates.json → sections.FooterSection (canonical legal "
     "footer with 이용약관 / 개인정보처리방침 / 사업자등록번호 / Copyright). "
@@ -335,6 +359,15 @@ def _check(bp: dict, ctx: dict) -> Iterable[Violation]:
             "root",
             (f"imin_home missing Footer Section (legal text: 이용약관 / "
              f"개인정보처리방침 / 사업자등록번호 / Copyright). {FOOTER_REMEDIATION}"),
+            Phase.LINT,
+        )
+    if not _has_fab(bp):
+        yield Violation(
+            "R31-imin-home-canonical",
+            Severity.ERROR,
+            "root",
+            (f"imin_home missing FAB (floating action button above Tab Bar). "
+             f"{FAB_REMEDIATION}"),
             Phase.LINT,
         )
 

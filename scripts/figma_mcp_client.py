@@ -1060,7 +1060,7 @@ def _enforce_text_hierarchy(blueprint: dict) -> None:
             return False
         return bool(_HERO_AMOUNT_RE.match(t))
 
-    def walk(node, inside_card, parent_layout):
+    def walk(node, inside_card, parent_layout, narrow_parent_width=None):
         if not isinstance(node, dict):
             return
         in_card_now = inside_card or _is_card_like(node)
@@ -1073,20 +1073,31 @@ def _enforce_text_hierarchy(blueprint: dict) -> None:
             if parent_layout == "HORIZONTAL":
                 pass
             elif is_hero_amount(text):
-                cur = node.get("fontSize") or 0
-                if cur < 28:
-                    node["fontSize"] = _HERO_TEXT_SIZE
-                font = node.get("fontName") or {}
-                if (font.get("style") or "").lower() != "bold":
-                    node["fontName"] = {
-                        "family": font.get("family") or "Pretendard",
-                        "style": "Bold",
-                    }
-                bumped[0] += 1
+                # 2026-05-27 — 좁은 부모(<150px) 안에서는 30px hero 승격 skip.
+                # Schedule cell(116px) / Lounge card(130px) 안 통화 "+130만원" / "9,800원"
+                # 이 30px Bold 로 승격되면 cell padding 안에 들어가지 못해 wrap → 사용자에게
+                # "잘림" 으로 보임. 좁은 cell 은 본문 폰트(14~16px) 유지.
+                if narrow_parent_width is not None and narrow_parent_width < 150:
+                    pass
+                else:
+                    cur = node.get("fontSize") or 0
+                    if cur < 28:
+                        node["fontSize"] = _HERO_TEXT_SIZE
+                    font = node.get("fontName") or {}
+                    if (font.get("style") or "").lower() != "bold":
+                        node["fontName"] = {
+                            "family": font.get("family") or "Pretendard",
+                            "style": "Bold",
+                        }
+                    bumped[0] += 1
         cur_layout = ((node.get("autoLayout") or {}).get("layoutMode")
                       or node.get("layoutMode") or "").upper()
+        # narrow parent width 추적 — 자식 hero 승격 판단용
+        w = node.get("width")
+        node_width = w if isinstance(w, (int, float)) and w > 0 else None
+        child_narrow = node_width if node_width else narrow_parent_width
         for child in node.get("children", []) or []:
-            walk(child, in_card_now, cur_layout)
+            walk(child, in_card_now, cur_layout, child_narrow)
 
     walk(blueprint, False, "")
     if bumped[0]:
@@ -1395,6 +1406,14 @@ def cmd_build(blueprint_file: str):
     # Step E.5.6: DS Effect Style (Shadows/*) 자동 적용 (2026-05-26)
     # 빌드 시 frame.effects 가 raw 값으로 박혀 있어도 fingerprint 매칭으로 DS 스타일에 바인딩.
     if root_id:
+        # 2026-05-27 사용자 룰 — non-interactive UI (badge/pill/progress bar/icon wrap)
+        # 에서 drop shadow 제거. interaction surface (카드/버튼) 에만 elevation 의미.
+        print("\n🌑 비-interaction UI shadow 제거 중...")
+        try:
+            _remove_shadow_from_non_interactive(root_id)
+        except Exception as e:
+            print(f"  [no-shadow-deco] 실패 (무시하고 계속): {e}")
+
         print("\n🌑 DS Effect Style (Shadows) 자동 적용 중...")
         try:
             _apply_ds_effect_styles(root_id)
@@ -1895,18 +1914,18 @@ def _fix_layout_and_positions(tree: dict, pre_computed_layout: dict = None) -> d
     result = {"content_bottom": content_bottom, "fab_y": None, "tab_y": None, "root_height": None}
 
     # ── Tab Bar / FAB 배치 좌표 계산 ──
-    # ⚠️ 시스템 규칙: Tab Bar는 콘텐츠 하단에 밀착(데드밴드 금지). FAB는 콘텐츠 위로 떠서
-    #    Tab Bar 바로 위에 배치한다 — FAB는 floating 버튼이므로 마지막 섹션과 겹쳐도 정상.
-    #    (예전엔 content_bottom+16 에 FAB를 두고 그 아래 Tab Bar를 둬서 빈 흰 띠가 생겼음)
+    # ⚠️ 시스템 규칙 (2026-05-27 사용자 룰): FAB icon-only 56×56 원형, 우측 20px, 상단 20px gap.
+    #    Tab Bar 있으면 Tab Bar 위 20px, 없으면 콘텐츠 마지막 요소 위 20px.
     TAB_BAR_H = 73
-    FAB_H = 44
-    FAB_GAP = 16  # FAB 하단 ~ Tab Bar 상단 간격
+    FAB_H = 56              # 2026-05-27: 44 (pill) → 56 (icon-only 원형)
+    FAB_GAP = 20            # 2026-05-27: 16 → 20 (사용자 룰)
+    FAB_RIGHT_MARGIN = 20   # 2026-05-27: 우측 20px (사용자 룰)
     if tab_bar:
         tab_y = content_bottom                    # Tab Bar는 콘텐츠에 밀착
-        fab_y = tab_y - FAB_H - FAB_GAP           # FAB는 Tab Bar 바로 위 (콘텐츠 위로 뜸)
+        fab_y = tab_y - FAB_H - FAB_GAP           # FAB는 Tab Bar 위 20px
     else:
         tab_y = None
-        fab_y = content_bottom - FAB_H - FAB_GAP  # Tab Bar 없으면 FAB만 콘텐츠 하단 위로
+        fab_y = content_bottom - FAB_H - FAB_GAP  # Tab Bar 없으면 콘텐츠 마지막 요소 위 20px
 
     # FAB 배치
     if fab:
@@ -1917,9 +1936,9 @@ def _fix_layout_and_positions(tree: dict, pre_computed_layout: dict = None) -> d
             })
         except Exception as e:
             print(f"  FAB ABSOLUTE 설정 실패 (무시): {e}")
-        # FAB 크기 복원 (pill 형태 120×44) — FILL 변환으로 width가 늘어났을 수 있음
-        fab_width = fab.get("width", 120)
-        if fab_width > 200:  # FILL로 늘어난 경우
+        # FAB 크기 복원 (2026-05-27: icon-only 56×56 원형 표준) — FILL 변환으로 늘어났을 수 있음
+        fab_width = fab.get("width", 56)
+        if fab_width > 100:  # FILL로 늘어난 경우
             try:
                 call_tool("set_layout_sizing", {
                     "nodeId": fab.get("id"),
@@ -1928,13 +1947,15 @@ def _fix_layout_and_positions(tree: dict, pre_computed_layout: dict = None) -> d
                 print(f"  FAB 크기 복원: width {fab_width} → HUG")
             except Exception as e:
                 print(f"  FAB 크기 복원 실패: {e}")
+        # 우측 20px (root width 393 가정 — 다른 width 면 _enforce_root_min_height 가 재조정)
+        fab_x = 393 - FAB_H - FAB_RIGHT_MARGIN  # 393 - 56 - 20 = 317
         try:
             call_tool("move_node", {
                 "nodeId": fab.get("id"),
-                "x": 253,
+                "x": fab_x,
                 "y": fab_y
             })
-            print(f"  FAB 배치: y={fab_y}, x=253")
+            print(f"  FAB 배치: x={fab_x}, y={fab_y} (우측 {FAB_RIGHT_MARGIN}px, 상단 gap {FAB_GAP}px)")
             result["fab_y"] = fab_y
         except Exception as e:
             print(f"  FAB 이동 실패: {e}")
@@ -2037,6 +2058,222 @@ _VERTICAL_HUG_SKIP_KEYWORDS = (
     "tab bar", "tabbar", "fab", "action bar", "actionbar",
     "cta bar", "ctabar", "status bar", "statusbar",
 )
+
+
+_BORDER_SECONDARY_RGB = (0.898, 0.906, 0.922)
+_BUTTON_NAME_RE = re.compile(r"\b(btn|button)\b|^cta\b|cta$", re.I)
+
+
+def _enforce_button_border_on_same_bg(root_id: str) -> int:
+    """Button 의 fill 이 부모 fill 과 같은 색이면 border-secondary stroke 자동 추가 (2026-05-27).
+
+    **Why:** Summary Card 가 bg-primary (흰색) 로 강제된 후, 그 안의 outline 버튼
+    (예: '내역 보기') 도 bg-primary 면 둘 다 흰색이라 button 이 안 보임 (그림자만
+    살짝). 사용자 분노 — "구분 안 됨". outline 의도면 border 가 필수.
+
+    Detection (shape + name):
+      - FRAME with name matching btn/button/cta
+      - cornerRadius >= 20 (pill 형태) OR (50 <= height <= 60) — 버튼 추정
+      - 자기 fills RGB 가 부모 fills RGB 와 동일 (±0.02)
+      - 이미 strokes 있으면 skip
+
+    Fix: strokes = border-secondary 1px (RGB 0.898/0.906/0.922).
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        if not items:
+            return 0
+        doc = items[0].get("document") or items[0]
+    except Exception as e:
+        print(f"  [btn-border] tree 조회 실패: {e}")
+        return 0
+
+    fixed = [0]
+
+    def _first_solid_rgb(fills):
+        if not isinstance(fills, list):
+            return None
+        for p in fills:
+            if not isinstance(p, dict) or p.get("type") != "SOLID":
+                continue
+            if p.get("visible") is False:
+                continue
+            c = p.get("color") or {}
+            return (c.get("r", 0), c.get("g", 0), c.get("b", 0))
+        return None
+
+    def _rgb_eq(a, b, tol=0.02):
+        return (a is not None and b is not None
+                and abs(a[0] - b[0]) < tol
+                and abs(a[1] - b[1]) < tol
+                and abs(a[2] - b[2]) < tol)
+
+    def walk(node, parent_fill=None):
+        if not isinstance(node, dict):
+            return
+        self_fill = _first_solid_rgb(node.get("fills"))
+        is_frame = (node.get("type") or "").upper() == "FRAME"
+        name = node.get("name") or ""
+        if is_frame and _BUTTON_NAME_RE.search(name):
+            bb = node.get("absoluteBoundingBox") or {}
+            h = bb.get("height", 0) or 0
+            cr = node.get("cornerRadius") or 0
+            is_button_shape = (cr >= 20) or (40 <= h <= 64)
+            has_stroke = bool(node.get("strokes"))
+            if (is_button_shape and self_fill and parent_fill
+                    and _rgb_eq(self_fill, parent_fill) and not has_stroke):
+                try:
+                    call_tool("set_stroke_color", {
+                        "nodeId": node.get("id"),
+                        "r": _BORDER_SECONDARY_RGB[0],
+                        "g": _BORDER_SECONDARY_RGB[1],
+                        "b": _BORDER_SECONDARY_RGB[2],
+                        "a": 1,
+                        "strokeWeight": 1,
+                    })
+                    fixed[0] += 1
+                    print(f"  [btn-border] '{name}' fill==parent → border-secondary 1px 추가")
+                except Exception as e:
+                    print(f"  [btn-border] '{name}' set 실패: {e}")
+        # 자식 walk — 자기 fill 이 있으면 자기를 parent_fill 로 전달
+        child_parent = self_fill if self_fill else parent_fill
+        for c in node.get("children") or []:
+            walk(c, child_parent)
+
+    walk(doc)
+    if fixed[0] == 0:
+        print("  [btn-border] OK — same-bg button 없음")
+    return fixed[0]
+
+
+def _fix_fill_sibling_1px(root_id: str) -> int:
+    """batch_build_screen 의 FILL sibling 1px 버그 자동 fix (2026-05-27).
+
+    **Why:** 같은 부모 안에 두 개 이상의 `layoutSizingHorizontal=FILL` 자식이 있을 때,
+    `batch_build_screen` 이 종종 한 자식의 width 를 **1px** 로 박고 다른 자식이
+    부모 inner-width 전부를 차지하는 버그가 있다. 결과:
+      - Segmented Tabs: Tab Active=1px, Tab 누적 거래=353px (라벨이 -5.5px 음수 x)
+      - Summary Actions: Schedule Btn=1px, Pay Btn=325px (라벨 안 보임)
+
+    Fix: 모든 frame 자식 중 `layoutSizingHorizontal=FILL` + `width<10` 인 노드를
+    detect → sibling 들 중 FILL 인 자식들에 부모 inner-width 를 균등 분배해 resize.
+
+    height 는 보존(layoutSizingVertical 안 건드림).
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        if not items:
+            return 0
+        doc = items[0].get("document") or items[0]
+    except Exception as e:
+        print(f"  [fill-1px] tree 조회 실패: {e}")
+        return 0
+
+    fixed = [0]
+
+    def walk(node):
+        kids = node.get("children") or []
+        # FILL 자식들 중 width<10 인 게 있으면 sibling 들 균등 분배
+        fill_kids = [k for k in kids if isinstance(k, dict)
+                     and k.get("layoutSizingHorizontal") == "FILL"]
+        if len(fill_kids) >= 2:
+            buggy = [k for k in fill_kids
+                     if ((k.get("absoluteBoundingBox") or {}).get("width") or 0) < 10]
+            if buggy:
+                # 부모 inner-width 계산
+                parent_bb = node.get("absoluteBoundingBox") or {}
+                pw = parent_bb.get("width") or 0
+                pad_l = node.get("paddingLeft") or 0
+                pad_r = node.get("paddingRight") or 0
+                spacing = node.get("itemSpacing") or 0
+                inner_w = pw - pad_l - pad_r - spacing * (len(fill_kids) - 1)
+                if inner_w > 0:
+                    per_kid = int(inner_w / len(fill_kids))
+                    for k in fill_kids:
+                        kid_bb = k.get("absoluteBoundingBox") or {}
+                        kid_h = kid_bb.get("height") or 0
+                        try:
+                            call_tool("resize_node", {
+                                "nodeId": k.get("id"),
+                                "width": per_kid,
+                                "height": kid_h,
+                            })
+                            # resize_node 가 sizing 을 FIXED 로 박으므로 FILL 복원
+                            call_tool("set_layout_sizing", {
+                                "nodeId": k.get("id"),
+                                "horizontal": "FILL",
+                            })
+                            fixed[0] += 1
+                        except Exception as e:
+                            print(f"  [fill-1px] resize 실패 '{k.get('name')}': {e}")
+                    print(f"  [fill-1px] parent '{node.get('name')}' FILL siblings "
+                          f"{len(fill_kids)}개 → 각 {per_kid}px 균등 분배 "
+                          f"(buggy 1px: {len(buggy)}개)")
+        for c in kids:
+            if isinstance(c, dict):
+                walk(c)
+
+    walk(doc)
+    if fixed[0] == 0:
+        print("  [fill-1px] OK — width<10 FILL 자식 없음")
+    return fixed[0]
+
+
+def _enforce_carousel_hug_v(root_id: str) -> int:
+    """HORIZONTAL carousel scroll 의 layoutSizingVertical 을 HUG 로 강제 (2026-05-27).
+
+    **Why:** Lounge Scroll / Stage Card Scroll / Schedule Scroll 같은 가로 carousel 이
+    `batch_build_screen` 후 vertical FILL 로 박히면, 부모 Section 안에서 자기 콘텐츠가
+    아닌 부모 height 에 맞춰진다. 부모 Section 이 HUG 이고 다른 sibling (Title Row 등)
+    이 작은 height 면 carousel 도 작아지고 (예: 93px), 안의 카드들 (240px+) 이 overflow
+    → 다음 섹션 (Footer / Tab Bar) 을 시각적으로 침범. 사용자는 "잘리고 안 보임" 인식.
+
+    R36 `_ensure_carousel_hug_v` 가 있지만 carousel detect 가 까다로워 정상 carousel
+    (peek 문제 없는) 은 skip. 이름 기반 (Scroll / Carousel / Banner Row) 으로
+    unconditional HUG 강제.
+
+    Skip: VERTICAL frame, ABSOLUTE frame, Tab Bar / Status Bar / NavBar 같은 utility.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        if not items:
+            return 0
+        doc = items[0].get("document") or items[0]
+    except Exception as e:
+        print(f"  [carousel-hug] tree 조회 실패: {e}")
+        return 0
+
+    fixed = [0]
+    CAROUSEL_KEYWORDS = ("scroll", "carousel", "banner row", "hero row")
+
+    def walk(node, depth=0):
+        if depth > 0:
+            nm_low = (node.get("name") or "").lower()
+            layout_mode = (node.get("layoutMode") or "").upper()
+            sizing_v = node.get("layoutSizingVertical")
+            is_carousel_name = any(kw in nm_low for kw in CAROUSEL_KEYWORDS)
+            if (is_carousel_name and layout_mode == "HORIZONTAL"
+                    and sizing_v != "HUG"
+                    and node.get("layoutPositioning") != "ABSOLUTE"):
+                try:
+                    call_tool("set_layout_sizing", {
+                        "nodeId": node.get("id"),
+                        "vertical": "HUG",
+                    })
+                    fixed[0] += 1
+                    print(f"  [carousel-hug] '{node.get('name')}' V={sizing_v} → HUG")
+                except Exception as e:
+                    print(f"  [carousel-hug] '{node.get('name')}' set 실패: {e}")
+        for c in node.get("children") or []:
+            walk(c, depth + 1)
+
+    walk(doc)
+    if fixed[0] == 0:
+        print("  [carousel-hug] OK — 모든 carousel scroll 이 이미 HUG")
+    return fixed[0]
 
 
 def _enforce_vertical_hug(root_id: str) -> int:
@@ -2419,6 +2656,26 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     # 밖으로 흘러나오고 root_min_height 측정이 짧게 잡혀 BAB 가 콘텐츠를 덮는다.
     print("\n[규칙] VERTICAL frame HUG 강제 (batch_build height-FIXED 버그 회피) 적용 중...")
     _enforce_vertical_hug(root_node_id)
+
+    # ⚠️ 시스템 규칙 (2026-05-27): carousel scroll vertical HUG 강제 — 사용자 분노 fix.
+    # HORIZONTAL parent (Lounge Scroll, Schedule Scroll 등) 가 vertical FILL 로 박혀
+    # height=93 같은 작은 값으로 fix 되면, 자식 카드 (height 240+) 가 overflow 해서
+    # 다음 섹션 (Footer 등) 을 덮어버린다. R36 _ensure_carousel_hug_v 가 있지만
+    # carousel detect 조건이 까다로워 빠지는 케이스가 많음 — 이름 기반으로 unconditional.
+    print("\n[규칙] carousel scroll vertical HUG 강제 (overflow → next-section 침범 방지) 적용 중...")
+    _enforce_carousel_hug_v(root_node_id)
+
+    # ⚠️ 시스템 규칙 (2026-05-27): FILL sibling 1px 버그 자동 fix — 사용자 분노 fix.
+    # batch_build_screen 이 같은 부모 안 두 FILL sibling 중 한 쪽 width 를 1px 로 박는
+    # 버그. Segmented Tab Active 1px / Schedule Btn 1px 케이스. 자동 균등 분배 + FILL 복원.
+    print("\n[규칙] FILL sibling 1px 버그 자동 fix 적용 중...")
+    _fix_fill_sibling_1px(root_node_id)
+
+    # ⚠️ 시스템 규칙 (2026-05-27): button fill==parent fill 이면 border-secondary 자동 추가.
+    # Summary Card bg-primary 강제 후 안의 outline button(bg-primary)이 안 보이는
+    # 사용자 분노 fix. cornerRadius>=20 + 이름 ~ btn/button/cta 인 frame 검사.
+    print("\n[규칙] button same-bg → border-secondary 자동 추가 적용 중...")
+    _enforce_button_border_on_same_bg(root_node_id)
 
     # ⚠️ 시스템 규칙: 루트 minHeight=852 + 하단 바 bottom-pin (2026-05-24)
     print("\n[규칙] 루트 minHeight=852 + 하단 바 bottom-pin 적용 중...")
@@ -2826,6 +3083,43 @@ def _qa_visual_checks(root_id: str) -> int:
         elif root_h and root_h - tab_bottom > 8:
             issues.append(f"루트 하단 빈 공간 {round(root_h - tab_bottom)}px — 루트 높이({round(root_h)}) > Tab Bar 하단({round(tab_bottom)})")
 
+    # ── 2026-05-27 — Left/Right overflow detect (사용자 분노: 좌측 잘림 사각지대) ──
+    # _fix_overflow_children 가 자동 fix 하지만 fix 못한 케이스 남으면 여기서 잡음.
+    # carousel 자식은 의도된 overflow 이므로 제외.
+    root_left = root_bb.get("x", 0)
+    root_right = root_left + (root_bb.get("width", 0) or 0)
+    left_off: List[tuple] = []
+    right_off: List[tuple] = []
+
+    def _is_carousel_nm(nm: str) -> bool:
+        nm = (nm or "").lower()
+        return any(k in nm for k in ("scroll", "carousel", "banner row", "hero row"))
+
+    def _walk_overflow(node, depth=0, in_carousel=False):
+        if not isinstance(node, dict):
+            return
+        if depth > 0 and not in_carousel:
+            bb_ = node.get("absoluteBoundingBox") or {}
+            nx_, nw_ = bb_.get("x"), bb_.get("width", 0) or 0
+            if nx_ is not None:
+                if nx_ < root_left - 1:
+                    left_off.append((node.get("name", "?"), round(nx_), round(nw_)))
+                if nx_ + nw_ > root_right + 1:
+                    right_off.append((node.get("name", "?"), round(nx_ + nw_), round(nw_)))
+        node_is_carousel = _is_carousel_nm(node.get("name"))
+        for c_ in node.get("children") or []:
+            _walk_overflow(c_, depth + 1, in_carousel or node_is_carousel)
+
+    _walk_overflow(built)
+    if left_off:
+        sample = ", ".join(f"'{n}'@x={x}" for n, x, _w in left_off[:5])
+        tail = f" ... +{len(left_off) - 5} more" if len(left_off) > 5 else ""
+        issues.append(f"좌측 overflow {len(left_off)}건 — 자식이 root left({round(root_left)}) 밖: {sample}{tail}")
+    if right_off:
+        sample = ", ".join(f"'{n}'@right={x}" for n, x, _w in right_off[:5])
+        tail = f" ... +{len(right_off) - 5} more" if len(right_off) > 5 else ""
+        issues.append(f"우측 overflow {len(right_off)}건 — 자식이 root right({round(root_right)}) 밖: {sample}{tail}")
+
     if not issues:
         print("  [QA] 시각 검사 OK — 대비/레이아웃 문제 없음")
         return 0
@@ -2920,35 +3214,44 @@ def _fix_overflow_children(root_id: str) -> int:
                     return False
         return True
 
-    def walk(node):
+    def _is_carousel_name(nm: str) -> bool:
+        nm = (nm or "").lower()
+        return any(k in nm for k in ("scroll", "carousel", "banner row", "hero row"))
+
+    def walk(node, parent_is_carousel=False):
         nonlocal fixed
         if not isinstance(node, dict):
             return
         if node.get("id") == root_id:
             for c in node.get("children") or []:
-                walk(c)
+                walk(c, False)
             return
         bb = node.get("absoluteBoundingBox") or {}
         nx, nw = bb.get("x", 0), bb.get("width", 0)
-        if nx + nw > right_limit and node.get("layoutSizingHorizontal") != "FILL":
-            # ⚠️ Guard: never FILL an icon/SVG wrapper — it stretches the vector
-            # into a thin smear (2026-05-26: m1-fail-x 51×10 bug).
-            # Also skip small HUG-intended pills (status tags) — FILL'ing them
-            # makes them awkwardly wide (2026-05-26: m1-fail 120px bug).
-            if _is_icon_like(node) or _is_small_pill(node):
+        right_overflow = nx + nw > right_limit
+        # 2026-05-27 — left overflow도 잡음 (사용자 분노: 좌측 잘림 사각지대)
+        left_overflow = nx < (rx - 1)
+        # 2026-05-27 — carousel 자식은 FIXED width 의도이므로 절대 FILL 금지.
+        # 부모 frame name 에 'scroll' / 'carousel' 포함하면 그 직계 자식 skip.
+        if (right_overflow or left_overflow) and node.get("layoutSizingHorizontal") != "FILL":
+            if _is_icon_like(node) or _is_small_pill(node) or parent_is_carousel:
                 pass
             else:
-                # Try set FILL — works only if parent has auto-layout
                 try:
                     call_tool("set_layout_sizing", {
                         "nodeId": node.get("id"), "horizontal": "FILL",
                     })
                     fixed += 1
-                    print(f"  [overflow] '{node.get('name')}' x+w={int(nx+nw)} > root right {int(right_limit)} → FILL")
+                    if left_overflow:
+                        print(f"  [overflow] '{node.get('name')}' x={int(nx)} < root left {int(rx)} → FILL (좌측)")
+                    else:
+                        print(f"  [overflow] '{node.get('name')}' x+w={int(nx+nw)} > root right {int(right_limit)} → FILL (우측)")
                 except Exception:
                     pass
+        # 자식 walk — 이 node가 carousel이면 자식들은 parent_is_carousel=True
+        node_is_carousel = _is_carousel_name(node.get("name"))
         for c in node.get("children") or []:
-            walk(c)
+            walk(c, node_is_carousel)
 
     walk(root)
     if fixed == 0:
@@ -3383,6 +3686,101 @@ def _match_ds_shadow(fp: tuple, style_map: dict) -> Optional[str]:
         if d < best_d and name in style_map:
             best_name, best_d = name, d
     return best_name
+
+
+_NON_INTERACTIVE_NAME_RE = re.compile(
+    r"\b(badge|pill|tag|chip|status|mark|progress|track|bar|divider|wrap|indicator|dot)\b",
+    re.I,
+)
+_INTERACTIVE_NAME_RE = re.compile(
+    r"\b(btn|button|cta|input|select|dropdown|toggle|switch|stepper|minus|plus)\b|^cta\b|cta$",
+    re.I,
+)
+
+
+def _is_non_interactive_decoration(node: dict) -> bool:
+    """badge / pill / progress bar 같이 interaction 없는 작은 UI 요소 detect (2026-05-27).
+
+    Heuristic (shape + name 조합):
+      - 이름이 interactive (btn/button/cta/input 등) → False (shadow 유지)
+      - 이름이 non-interactive (badge/pill/progress/track 등) → True
+      - shape-based fallback:
+        * 작은 정사각 frame (≤50px, |w-h|<4) — icon wrap → True
+        * 얇은 가로 막대 (width>=60, height<=12) — progress bar → True
+        * 작은 pill (cornerRadius>=999, width<100, height<=30) — badge/pill → True
+    """
+    if not isinstance(node, dict):
+        return False
+    name = node.get("name") or ""
+    if _INTERACTIVE_NAME_RE.search(name):
+        return False
+    if _NON_INTERACTIVE_NAME_RE.search(name):
+        return True
+    bb = node.get("absoluteBoundingBox") or {}
+    w = bb.get("width") or node.get("width") or 0
+    h = bb.get("height") or node.get("height") or 0
+    cr = node.get("cornerRadius") or 0
+    # 작은 정사각 icon wrap
+    if 0 < w <= 50 and 0 < h <= 50 and abs(w - h) < 4:
+        return True
+    # 얇은 가로 막대 (progress bar)
+    if w >= 60 and 0 < h <= 12:
+        return True
+    # 작은 pill (badge/tag)
+    if cr >= 999 and 0 < w < 100 and 0 < h <= 30:
+        return True
+    return False
+
+
+def _remove_shadow_from_non_interactive(root_id: str) -> int:
+    """비-interaction UI 요소 (badge/pill/progress bar/icon wrap) 의 drop shadow 제거 (2026-05-27).
+
+    **Why:** 사용자 명시 룰 — "badge, progress bar 등과 같이 interaction 이 없는 UI
+    요소들은 drop-shadow 가 필요 없다". shadow 는 elevation/depth 단서로 interactive
+    surface (카드, 버튼) 에만 의미가 있음. 작은 decoration 에 shadow 가 깔리면
+    시각적 노이즈 + 부정확한 위계.
+
+    Detection: `_is_non_interactive_decoration` (이름 + shape 휴리스틱).
+    Fix: `set_effects` 로 effects = [] 적용.
+    """
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+    except Exception as e:
+        print(f"  [no-shadow-deco] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(items, list) or not items:
+        return 0
+    built = items[0].get("document") or items[0]
+
+    removed = [0]
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        nid = node.get("id") or ""
+        if ";" not in nid:  # 인스턴스 내부 자식 skip
+            effects = node.get("effects") or []
+            has_shadow = any(
+                isinstance(e, dict)
+                and e.get("type") in ("DROP_SHADOW", "INNER_SHADOW")
+                and e.get("visible") is not False
+                for e in effects
+            )
+            already_styled = (node.get("styles") or {}).get("effect") or node.get("effectStyleId")
+            if has_shadow and _is_non_interactive_decoration(node):
+                try:
+                    call_tool("set_effects", {"nodeId": nid, "effects": []})
+                    removed[0] += 1
+                    print(f"  [no-shadow-deco] '{node.get('name')}' shadow 제거 (non-interactive)")
+                except Exception as e:
+                    print(f"  [no-shadow-deco] '{node.get('name')}' 제거 실패: {e}")
+        for c in node.get("children") or []:
+            walk(c)
+
+    walk(built)
+    if removed[0] == 0:
+        print("  [no-shadow-deco] OK — non-interactive 노드에 shadow 없음")
+    return removed[0]
 
 
 def _apply_ds_effect_styles(root_id: str) -> None:
