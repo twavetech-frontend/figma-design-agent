@@ -185,6 +185,52 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 >   3. `figma-mcp-embedded.ts enhanceBlueprint`: 모든 `batch_build_screen` 호출에서 root fill을 bg-primary로 교정
 > - **빌드 후 검증**: 스크린샷에서 콘텐츠 카드 바깥 배경이 회색이 아닌 흰색(`bg-primary`)인지 확인.
 
+> 🔴 **절대 규칙 0-D — Modal 기본형 = Bottom Sheet (2026-05-27)**
+>
+> Modal 의 **기본형은 bottom sheet** — 화면 세로의 절반 정도로 표시되고, 뒤에 원래
+> 화면 위 **dimmed overlay** 가 깔린 채 **bottom 에 붙어서** 슬라이드업.
+>
+> Blueprint 작성 시 `_screenType: "bottom-sheet"` 명시. 빌드 후 자동:
+> 1. Root 852 FIXED (디바이스 viewport)
+> 2. 1st 자식 = **Dim Overlay** (FILL, alpha-black 50%) — 위쪽 가용 공간 채움
+> 3. 2nd 자식 = **Modal Sheet** (FILL, HUG, bg-primary, top-rounded 24px) — 콘텐츠 wrap
+>
+> 강제 함수: `_enforce_bottom_sheet_pattern` (cmd_build pre-process)
+> 회귀 테스트: `scripts/tests/test_bottom_sheet_pattern.py` 14개 케이스
+>
+> **Modal 두 가지 구분:**
+> - `_screenType: "bottom-sheet"` (기본형) — 반 화면 + dim overlay + bottom anchor
+> - `_screenType: "modal"` (full modal) — 전체 화면 modal, X 닫기만 (Footer/Tab 제거)
+>
+> ⚠️ 새 modal 빌드는 기본 `bottom-sheet` 사용. full modal 필요시에만 `modal` 명시.
+
+> 🔴 **절대 규칙 0-C — 와이어프레임 1:1 복제 금지, 창의적 재해석 의무 (2026-05-27)**
+>
+> 와이어프레임의 **레이아웃 · 정보 위계 · 포인트 컬러**를 그대로 베끼면 안 된다.
+> 와이어프레임은 **콘텐츠 source**일 뿐 layout/visual blueprint 가 아니다.
+>
+> **금지:**
+> - 와이어프레임의 회색 박스 배치를 그대로 frame 배치로 옮기는 것
+> - 와이어프레임의 글자 크기 위계를 그대로 fontSize 로 옮기는 것 (예: 와이어 본문이 다 같은 크기여도 디자인에선 hero/section/body 차등)
+> - 와이어프레임의 포인트 컬러(빨강·파랑 등) 를 그대로 brand 외 컬러로 옮기는 것
+>
+> **필수:**
+> - **가독성 / 시인성 / 미학** 우선으로 시각 위계 재구성
+> - 핵심 수치는 hero size (28~36px Bold), 카드 그룹화로 정보 위계 차등
+> - 반복 요소(카드 리스트 등)는 첫 번째를 강조하거나 차등 적용
+> - **약간의 창의적 컬러 사용**: 상태 표시(성공/완료/주의) 에 brand tint + 시맨틱 액센트 소량 (브랜드 일관)
+> - 와이어프레임에 없는 폴리시(카드 그림자/elevation, 도형-배경 대비, 강한 타이포 위계) 추가
+>
+> **Why:** 와이어프레임을 그대로 옮기면 "디자인을 한 게 아니라 와이어를 강화한 것"이 된다.
+> 사용자가 디자이너에게 기대하는 건 **콘텐츠를 받아 디자인적 판단을 더한 결과물**이지,
+> 와이어를 px-perfect 로 옮기는 게 아니다.
+>
+> **검증 (사람이 확인):**
+> - 빌드 후 스크린샷을 와이어프레임 옆에 놓고 비교 — 시각 위계/그룹화/액센트가 **달라야** 정상
+> - 똑같으면 룰 위반 → 재구성
+>
+> 코드로 자동 검출 불가능 (의미적 판단). 매 디자인 빌드 시 사람(Claude)이 자체 검증.
+
 > 🔴 **절대 규칙 0-B — `-alt` / `_alt` 변형 토큰은 절대 쓰지 말 것**
 >
 > `bg-secondary-alt`, `border-secondary-alt` 같은 `-alt` 토큰은 **금지**다.

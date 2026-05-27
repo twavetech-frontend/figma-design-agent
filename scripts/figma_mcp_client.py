@@ -619,6 +619,98 @@ _MODAL_NAV_NONX_PARTS = ("logo", "bell", "chat", "alarm", "알림", "채팅",
                          "message", "search", "검색")
 
 
+_BOTTOM_SHEET_DIM_FILL = {
+    "type": "SOLID",
+    "color": {"r": 0, "g": 0, "b": 0},
+    "opacity": 0.5,
+}
+
+
+def _enforce_bottom_sheet_pattern(blueprint: dict) -> None:
+    """Bottom Sheet Modal 기본형 패턴 강제 (2026-05-27 사용자 지시).
+
+    **Why:** Modal 기본형은 화면 세로 절반 정도로 표시되고, 뒤에 원래 화면 위 dimmed
+    overlay 가 깔린 채 bottom 에 붙어서 보여진다. 단순히 콘텐츠만 가운데 그리면
+    modal 의 시각적 컨텍스트(dim + bottom anchor) 가 표현 안 됨.
+
+    Blueprint root 에 `_screenType: "bottom-sheet"` 명시 시 작동:
+    - Root: 852 FIXED (디바이스 viewport)
+    - 1st child: **Dim Overlay** (FILL, fill=alpha-black 50%) — height auto-grow 로 위쪽
+      가용 공간 채움. 뒤 원래 화면을 어둡게 가린 효과.
+    - 2nd child: **Modal Sheet** (FILL, HUG, bg-primary, top-rounded 24) — 콘텐츠 wrap.
+    - Modal 안 콘텐츠는 자동 추출 (root.children 중 Dim 외 노드들 모두 Modal Sheet 안으로).
+
+    빌드 후 결과: 뒤 dim + 하단 흰 sheet (top rounded) + 콘텐츠.
+
+    **Full Modal 과 구분:** `_screenType: "modal"` 은 기존 full modal 패턴 (X만, footer
+    제거). bottom-sheet 는 더 가벼운 modal 기본형 (dim + 반 화면).
+    """
+    if not isinstance(blueprint, dict):
+        return
+    st = (blueprint.get("_screenType") or blueprint.get("screenType") or "").lower()
+    if st not in ("bottom-sheet", "bottomsheet", "sheet"):
+        return
+
+    children = blueprint.get("children") or []
+    if not isinstance(children, list) or not children:
+        return
+
+    # 이미 wrap 적용된 경우 (Dim Overlay + Modal Sheet) skip — idempotent
+    names = [(c.get("name") or "") for c in children if isinstance(c, dict)]
+    if "Dim Overlay" in names and "Modal Sheet" in names:
+        return
+
+    # 콘텐츠를 Modal Sheet 로 wrap. Status Bar 가 있으면 그것만 유지하고 나머지 wrap.
+    status_bar_child = None
+    modal_kids = []
+    for c in children:
+        if not isinstance(c, dict):
+            continue
+        if "status bar" in (c.get("name") or "").lower():
+            status_bar_child = c
+        else:
+            modal_kids.append(c)
+
+    dim = {
+        "name": "Dim Overlay",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "FILL",
+        "fills": [_BOTTOM_SHEET_DIM_FILL],
+    }
+    modal = {
+        "name": "Modal Sheet",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "HUG",
+        "fill": "$token(bg-primary)",
+        "topLeftRadius": 24,
+        "topRightRadius": 24,
+        "bottomLeftRadius": 0,
+        "bottomRightRadius": 0,
+        "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 0,
+            "paddingTop": 0, "paddingBottom": 0,
+            "paddingLeft": 0, "paddingRight": 0,
+        },
+        "children": modal_kids,
+    }
+
+    new_children = []
+    if status_bar_child is not None:
+        new_children.append(status_bar_child)
+    new_children.extend([dim, modal])
+    blueprint["children"] = new_children
+
+    # Root 는 852 FIXED 로 (bottom sheet 위치 고정 위해)
+    blueprint["height"] = 852
+    blueprint["layoutSizingVertical"] = "FIXED"
+
+    print(f"[규칙] Bottom Sheet 패턴 강제 — Dim Overlay + Modal Sheet wrap "
+          f"({len(modal_kids)}개 자식을 Modal Sheet 안으로)")
+
+
 def _enforce_modal_pattern(blueprint: dict) -> None:
     """Modal 화면 패턴 강제 — 상단 X만, Footer·Tab Bar·기타 nav 아이콘 제거 (2026-05-24).
 
@@ -968,13 +1060,19 @@ def _enforce_text_hierarchy(blueprint: dict) -> None:
             return False
         return bool(_HERO_AMOUNT_RE.match(t))
 
-    def walk(node, inside_card):
+    def walk(node, inside_card, parent_layout):
         if not isinstance(node, dict):
             return
         in_card_now = inside_card or _is_card_like(node)
         if node.get("type") in ("text", "TEXT") and inside_card:
             text = node.get("text") or node.get("characters") or ""
-            if is_hero_amount(text):
+            # 2026-05-27 fix — HORIZONTAL row 의 인라인 텍스트는 승격 금지.
+            # 인라인 hero 를 30px 로 끌어올리면 row 의 다른 자식(suffix/pill/date 등)이
+            # 깨진다(stage_list 회귀: r2-amt "20,800,000원" 17px → 30px 로 폭주, 카드 밖 흘러나옴).
+            # VERTICAL 부모(또는 root)의 직계 자식 hero 만 승격 의도.
+            if parent_layout == "HORIZONTAL":
+                pass
+            elif is_hero_amount(text):
                 cur = node.get("fontSize") or 0
                 if cur < 28:
                     node["fontSize"] = _HERO_TEXT_SIZE
@@ -985,10 +1083,12 @@ def _enforce_text_hierarchy(blueprint: dict) -> None:
                         "style": "Bold",
                     }
                 bumped[0] += 1
+        cur_layout = ((node.get("autoLayout") or {}).get("layoutMode")
+                      or node.get("layoutMode") or "").upper()
         for child in node.get("children", []) or []:
-            walk(child, in_card_now)
+            walk(child, in_card_now, cur_layout)
 
-    walk(blueprint, False)
+    walk(blueprint, False, "")
     if bumped[0]:
         print(f"[규칙] 타이포 위계 — hero 금액 텍스트 {bumped[0]}건 → {_HERO_TEXT_SIZE}px Bold")
 
@@ -1086,6 +1186,7 @@ def cmd_build(blueprint_file: str):
 
     # ⚠️ 시스템 규칙: modal 패턴 → 색상 advisory → 카드 표면 → elevation → 타이포 위계 → 섹션 divider → tooltip ignore auto layout → disabled slot 패턴
     _enforce_modal_pattern(blueprint)
+    _enforce_bottom_sheet_pattern(blueprint)  # 2026-05-27 — bottom sheet modal 기본형
     _enforce_color_restraint(blueprint)
     _enforce_card_surface(blueprint)
     _enforce_card_elevation(blueprint)
@@ -1346,6 +1447,16 @@ def cmd_build(blueprint_file: str):
         except Exception as e:
             print(f"  ⚠️ 로고 교체 실패 (무시): {e}")
 
+    # ⚠️ Step F (2026-05-27 박음) — frontend spec 자동 추출 → json/<화면이름>_<날짜>_<시간>.json
+    # 메모리 feedback_frontend_json_export 에 "빌드 후 자동" 박혔지만 실제 코드에 없어서
+    # 2026-05-21 이후 모든 빌드에서 spec 누락. 이제 cmd_build 가 직접 호출.
+    if root_id:
+        try:
+            print("\n[Step F] Frontend spec 추출 중...")
+            _export_frontend_spec(root_id)
+        except Exception as e:
+            print(f"  ⚠️ Frontend spec 추출 실패 (무시): {e}")
+
     total_elapsed = time.time() - start
     print(f"\n{'='*50}")
     print(f"전체 완료: {total_elapsed:.1f}s (빌드 {build_elapsed:.1f}s + 후처리)")
@@ -1355,6 +1466,47 @@ def cmd_build(blueprint_file: str):
         print(f"   re-screenshot:  python3 scripts/figma_mcp_client.py call export_node_as_image '{{\"nodeId\":\"{root_id}\",\"format\":\"PNG\",\"scale\":1}}'")
         print(f"   re-post-fix:    python3 scripts/figma_mcp_client.py post-fix {root_id}")
     print(f"{'='*50}")
+
+
+def _export_frontend_spec(root_id: str) -> Optional[str]:
+    """Frontend spec JSON 추출 — gen_frontend_spec.py 를 subprocess 로 호출 (2026-05-27).
+
+    cmd_build 끝의 Step F. 빌드된 root 의 flexbox 스펙 + 토큰명·hex 병기를
+    json/<화면이름>_<날짜>_<시간>.json 으로 저장. gen_frontend_spec.py 내부 main 이
+    sys.argv 기반이라 subprocess 로 호출하는 게 안전.
+
+    실패하면 무시 (Step F 는 빌드 자체엔 영향 없음).
+    """
+    import subprocess
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    gen_script = os.path.join(project_root, "scripts", "gen_frontend_spec.py")
+    if not os.path.exists(gen_script):
+        print(f"  ⚠️ gen_frontend_spec.py 없음 — skip")
+        return None
+    json_dir = os.path.join(project_root, "json")
+    os.makedirs(json_dir, exist_ok=True)
+    try:
+        result = subprocess.run(
+            ["python3", gen_script, root_id],
+            cwd=project_root,
+            capture_output=True, text=True,
+            timeout=60,
+        )
+        if result.returncode == 0:
+            # gen_frontend_spec 가 stdout 마지막 줄에 출력 경로 명시
+            out = (result.stdout or "").strip().split("\n")
+            saved_line = next((ln for ln in reversed(out) if "json/" in ln), None)
+            if saved_line:
+                print(f"  ✓ {saved_line}")
+            else:
+                print(f"  ✓ Frontend spec 추출 완료")
+            return saved_line
+        else:
+            print(f"  ⚠️ gen_frontend_spec exit {result.returncode}: {(result.stderr or '')[:200]}")
+            return None
+    except subprocess.TimeoutExpired:
+        print(f"  ⚠️ gen_frontend_spec timeout (60s)")
+        return None
 
 
 def _collect_tree(node_id: str, depth: int = 0, max_depth: int = 6) -> dict:
@@ -1881,6 +2033,73 @@ def _should_use_bab_normal_flow(
     return total > min_height
 
 
+_VERTICAL_HUG_SKIP_KEYWORDS = (
+    "tab bar", "tabbar", "fab", "action bar", "actionbar",
+    "cta bar", "ctabar", "status bar", "statusbar",
+)
+
+
+def _enforce_vertical_hug(root_id: str) -> int:
+    """VERTICAL layoutMode 프레임의 layoutSizingVertical 을 HUG 로 강제 (2026-05-27).
+
+    **Why:** `batch_build_screen` 이 카드 안 VERTICAL Body/Section 프레임의
+    `layoutSizingVertical` 을 FIXED <콘텐츠보다 작은 값> 으로 박는 버그가 있다.
+    카드 콘텐츠가 카드 밖으로 흘러나오고, 그 결과 `_enforce_root_min_height` 의
+    content_bottom 측정이 실제보다 짧게 잡혀 → 짧은 화면(A 케이스)으로 잘못
+    분기 → BAB ABSOLUTE pin → 사용자에게 콘텐츠가 잘려보임 (2026-05-27 stage_list 회귀).
+
+    이 룰은 모든 VERTICAL 프레임을 HUG 로 강제하되, ABSOLUTE 배치 대상(Tab Bar /
+    FAB / Action Bar / Status Bar) 은 제외한다. 그 후 `_enforce_root_min_height`
+    가 올바른 content_bottom 으로 분기 결정.
+
+    회귀 테스트: scripts/tests/test_vertical_hug.py
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        if not items:
+            return 0
+        doc = items[0].get("document") or items[0]
+    except Exception as e:
+        print(f"  [vertical-hug] tree 조회 실패: {e}")
+        return 0
+
+    fixed = [0]
+
+    def walk(node, depth=0):
+        if depth > 0:  # root 자체는 제외 (별도 _enforce_root_min_height 가 결정)
+            nm_low = (node.get("name") or "").lower()
+            layout_mode = (node.get("layoutMode") or "").upper()
+            sizing_v = node.get("layoutSizingVertical")
+            # ABSOLUTE 배치 대상은 제외
+            skip = any(kw in nm_low for kw in _VERTICAL_HUG_SKIP_KEYWORDS)
+            # ABSOLUTE 노드도 제외
+            if node.get("layoutPositioning") == "ABSOLUTE":
+                skip = True
+            # 2026-05-27 확장: FILL 도 잡는다. 카드(HUG) 안의 Body(FILL) 가
+            # 부모 height 에 맞춰 0px 로 collapse 되어 stage_list 회귀 재발.
+            if (not skip and layout_mode == "VERTICAL"
+                    and sizing_v in ("FIXED", "FILL")):
+                try:
+                    call_tool("set_layout_sizing", {
+                        "nodeId": node.get("id"),
+                        "vertical": "HUG",
+                    })
+                    fixed[0] += 1
+                except Exception:
+                    pass
+        for c in node.get("children", []) or []:
+            walk(c, depth + 1)
+
+    walk(doc)
+    if fixed[0]:
+        print(f"  [vertical-hug] VERTICAL FIXED → HUG 강제 {fixed[0]}건 "
+              f"(batch_build height-FIXED 버그 회피)")
+    else:
+        print(f"  [vertical-hug] OK — VERTICAL frame 전부 HUG/FILL")
+    return fixed[0]
+
+
 def _enforce_root_min_height(root_id: str) -> None:
     """루트 height 정책 — 콘텐츠 길이에 따라 두 가지 분기 (2026-05-24):
 
@@ -2194,6 +2413,12 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     # ⚠️ 시스템 규칙: 루트 프레임 배경 = bg-primary 강제 (런타임 보장)
     print("\n[규칙] 루트 프레임 배경 bg-primary 강제 적용 중...")
     _enforce_root_bg_primary_live(root_node_id)
+
+    # ⚠️ 시스템 규칙 (2026-05-27): VERTICAL frame HUG 강제 — batch_build 가 카드 안
+    # VERTICAL Body 를 FIXED <small> 로 박는 버그 회피. 이게 안 되면 콘텐츠가 카드
+    # 밖으로 흘러나오고 root_min_height 측정이 짧게 잡혀 BAB 가 콘텐츠를 덮는다.
+    print("\n[규칙] VERTICAL frame HUG 강제 (batch_build height-FIXED 버그 회피) 적용 중...")
+    _enforce_vertical_hug(root_node_id)
 
     # ⚠️ 시스템 규칙: 루트 minHeight=852 + 하단 바 bottom-pin (2026-05-24)
     print("\n[규칙] 루트 minHeight=852 + 하단 바 bottom-pin 적용 중...")
