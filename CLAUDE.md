@@ -205,14 +205,60 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **빌드 후 검증**: 루트 첫 자식이 INSTANCE `"Status Bar"`인지 확인.
 - 참고: "Styles" 페이지(`276:1882`)에 마스터 인스턴스가 있다 — Status Bar `279:4758`, 로고 `279:4757`. 자동 삽입이 안 되는 특수 상황에서만 `clone_node`(인스턴스는 clone해도 인스턴스 유지) 후 `insert_child`로 수동 삽입.
 
-### 2. 색상 다양성 — 브랜드 컬러만 사용 금지
-- CTA/강조에 브랜드 컬러(`bg-brand-solid`)만 반복 사용하면 단조로워짐
-- **최소 2–3개 액센트 컬러**를 섞어 사용:
-  - `$token(bg-warning-primary)` — 오렌지/경고 (포인트, 이벤트)
-  - `$token(bg-success-primary)` — 그린/성공 (달성률, 완료)
-  - `$token(bg-error-primary)` — 레드/긴급 (알림, 한정)
-- 카드형 CTA 배경도 동일 브랜드 컬러 반복 금지 — 각 카드마다 다른 톤 적용
-- 숫자/통계 강조에 `fg-success-primary`, `fg-warning-primary` 등 시맨틱 색상 활용
+### 2. ⚠️ 색상 — 절제된 단일 액센트 + 폴리시 (2026-05-23 갱신)
+- **브랜드 컬러는 앱의 단일 일관 액센트** — 주 액션(CTA)·active 탭/네비·핵심 수치·중요 링크/아이콘 등 **의도된 여러 지점**에 일관되게 사용한다. 회사가 거부한 건 "여러 색 난무"이지 브랜드 컬러 자체가 아니다. 단, 모든 카드·태그·통계에 무분별하게 깔지는 말 것.
+- **피드백(상태) 컬러는 소량·차분하게** — 미납·완료·주의 등 **진짜 상태 정보**에 한해 `success`/`warning`/`error` 계열을 절제된 톤으로 소량 사용 가능. 장식·태그·통계 전반에 색을 까는 건 금지.
+- **폴리시 필수 (와이어프레임 탈피)** — 평평한 그레이 박스만 나열하면 와이어프레임처럼 보인다. **카드 그림자/elevation, 흰 카드 ↔ 연한 그레이 면의 도형-배경 대비, 강한 타이포 위계(히어로 수치는 크게·Bold)**로 "디자인된" 느낌을 만든다.
+- **베이스는 뉴트럴 그레이** — `bg-/fg-/border-` 그레이 계열 중심이되, 완전 무채색 평면은 금지.
+- **Why**: 회사가 "브랜드/피드백 컬러 난무"를 거부 → 절제. 그러나 완전 그레이톤 + 버튼 1개는 "와이어프레임 같다"고 재피드백 (2026-05-23). 적정선 = 절제된 단일 액센트 + 상태 컬러 소량 + 입체감 폴리시.
+
+### 2-B. ⚠️ 카드 표면 — bg-primary + 보더 (root 위 카드, 2026-05-23 룰)
+- **루트 위 최상위 카드의 표면 = `$token(bg-primary)` fill + `$token(border-secondary)` 1px 보더** — `bg-secondary`(회색)로 채우지 말 것. 흰 카드를 보더(+ 자동 주입되는 subtle shadow)로 정의한다.
+- 카드 안의 인셋·서브카드는 대상 아님 (필요 시 `bg-secondary`/`bg-tertiary` 유지). 브랜드 컬러 카드(`bg-brand-solid` 등)도 그대로 둔다.
+- **예외 — 맨 아래 Footer**: Footer는 `$token(bg-secondary)` fill + **보더 없음**(그림자도 없음). 페이지를 닫는 회색 띠이지 카드가 아니다.
+- `cmd_build`의 `_enforce_card_surface`가 최상위 그레이 카드를 bg-primary + border-secondary로 자동 교정하고, Footer는 bg-secondary + 보더 제거로 처리 — blueprint에서 어떻게 쓰든 빌드가 바로잡는다.
+
+### 2-C. ⚠️ 타이포 위계 — 크기·굵기로 시각 리듬 (2026-05-23 룰)
+- **컬러가 절제될수록 시각 위계는 폰트 크기·굵기로 강화한다.** 표준 type scale:
+  - **HERO** (카드 안 핵심 금액·수치) — `28~36px Bold`
+  - **TITLE** — `22~26px Bold`
+  - **SECTION** (섹션 헤더) — `17~19px Bold`
+  - **BODY** — `14~16px Medium/SemiBold`
+  - **CAPTION** (라벨·메타) — `11~13px Medium/Regular`, 컬러 `fg-tertiary`
+- 같은 카드 안에 **최소 3단계 이상 차이**를 둔다 — HERO 금액은 본문(BODY)의 2배 안팎이어야 리듬이 산다. 16px 본문 옆에 16px Bold 금액 = 단조로움(금지).
+- `cmd_build`의 `_enforce_text_hierarchy`가 카드 안의 통화 hero(부호 `+/−` 또는 천단위 콤마가 있는 금액 텍스트)를 자동으로 **30px Bold**로 승격 — 본문이 hero보다 작게 작성되어 있어도 hero가 본문 위로 올라온다.
+
+### 2-D. ⚠️ Modal 화면 패턴 — 상단 X만, Footer·Tab Bar·상단 탭 없음 (2026-05-24 룰)
+- **Full modal** (홈 위로 슬라이드업되는 단일 화면, 예: 거래 스케줄 상세) 은:
+  - **상단 헤더 = X(닫기) 버튼만** — 로고·알림·채팅·검색 등 nav 아이콘 없음. X 는 우측 상단(NavBar `primaryAxisAlignItems: MAX`).
+  - **Footer 없음 · Tab Bar 없음 · 상단 Tab 메뉴(거래현황/누적거래 등) 없음** — 모달은 단일 컨텍스트.
+  - 루트 높이는 콘텐츠에 HUG (불필요한 빈 공간 금지).
+- Blueprint root 에 `"_screenType": "modal"` 명시 → `cmd_build`의 `_enforce_modal_pattern` 이 자동 강제: Footer / Tab Bar / 상단 탭(`Tab Row`/`Top Tab`/`Section Tab` 포함) / non-X nav 아이콘(`Logo`/`bell`/`chat` 등) 을 빌드 전에 제거하고 NavBar 를 우측 정렬한다.
+- 모달이 아닌 일반 화면은 기존대로 (NavBar 풀세트 + Tab Bar + Footer).
+
+### 2-G. ⚠️ 하단 CTA = DS Button 컴포넌트 인스턴스 우선 (2026-05-24 룰)
+- **하단 CTA 버튼(Bottom Action Bar 의 Primary CTA / Submit Button / 참여하기 등) 은 무조건 DS `Action Button` 컴포넌트 인스턴스로 만든다.** raw frame 으로 그리지 말 것.
+- DS Button 으로 표현이 안 되는 특수 케이스(이중 버튼, 그라데이션 CTA 등)에 한해 직접 그릴 수 있음 — 그 외는 항상 instance.
+- **사용할 키 (scripts/design_rules/ds_catalog.py):**
+  - `Action Button md Primary` (`ed0032bcf28f03da97e4b3006f54d30a0fbe5914`) — 기본 CTA
+  - `Action Button md Secondary` / `Tertiary` / `Outline` / `Ghost` — 위계별
+  - `Action Button sm` (`a8a4d7eb7874c469ab89105cc342fad85a3d28ce`) — 보조 CTA
+- **사이즈 / 상태:** Bottom Action Bar 의 대형 CTA 는 `Size: lg`, 비활성 상태는 `State: Disabled` (variant 로 적용 — opacity 0.5 자동).
+- **라벨:** `componentProperties` 의 텍스트 슬롯에 override (e.g., "참여하기"). 아이콘 토글(`⬅️ Icon leading` / `➡️ Icon trailing`) 은 기본 false.
+- **시스템 강제 (기존):** R23 inject 의 `detect_button_shape` 가 raw button frame 을 자동 swap. 2026-05-24 — `Primary CTA` 같이 VERTICAL 로 잘못 작성된 케이스도 잡도록 name 매칭(`cta` / `button` / `submit`) 시 layoutMode 무관 인정. catalog 미스 시 build ERROR.
+- Blueprint 작성 시: `{"type":"instance","componentKey":"ed0032bcf28f03da97e4b3006f54d30a0fbe5914","properties":{"Size":"lg","State":"Disabled","label":"참여하기"}}` 패턴.
+
+### 2-F. ⚠️ 루트 minHeight=852 + 하단 바 bottom-pin (2026-05-24 룰)
+- 루트 프레임 **min height = 852** (iPhone 16 뷰포트). 콘텐츠가 늘어나면 그에 따라 같이 늘어남.
+- 콘텐츠 합이 852 보다 짧을 때, 화면에 고정된 하단 바(**Bottom Action Bar / Tab Bar / CTA Bar / FAB**) 는 **루트 하단(y = 852 - bar.height)에 bottom-align** — 콘텐츠 끝에 붙어 떠 있지 않게 한다.
+- **시스템 강제:** `cmd_post_fix` 의 `_enforce_root_min_height` (scripts/figma_mcp_client.py, 2026-05-24) — 루트 높이 < 852 시 852 로 늘리고, 이름에 `tab bar`/`tabbar`/`bottom action bar`/`action bar`/`cta bar`/`fab` 포함된 자식을 ABSOLUTE + bottom constraint MAX 로 새 루트 하단에 재배치. 콘텐츠가 852 보다 길면 손대지 않음 (콘텐츠 끝이 곧 바의 위치).
+
+### 2-E. ⚠️ 정보 그룹 divider — 섹션 사이에 가는 라인 (2026-05-24 룰)
+- 컬러가 절제되고 카드 톤이 단순화되면서 섹션 경계가 흐려진다 — **타이틀 섹션과 서브 섹션, 서브 섹션끼리** 사이에 1px `border-secondary` divider 를 둬서 정보 그룹을 시각 구분한다.
+- 적용 대상: 루트의 직계 정보 섹션 (콘텐츠 프레임). 제외: Status Bar / NavBar / Bottom Action Bar / Tab Bar / Footer 같은 utility 프레임. 즉 콘텐츠 섹션끼리만 divider 가 들어간다.
+- **divider는 콘텐츠와 띄워서 표시** — 라인 자체는 1px 이지만 **위·아래 padding 20px** 컨테이너로 감싼다(총 높이 ~41px). 콘텐츠가 라인에 딱 붙으면 답답하므로 padding 필수.
+- **시스템 강제:** `cmd_build`의 `_enforce_section_dividers` 가 blueprint 루트 children 을 훑어 연속한 콘텐츠 섹션 사이에 `Section Divider` 컨테이너(VERTICAL, `paddingTop/Bottom: 20`, 투명 fill) + 내부 `Divider Line` 자식(FILL 가로, height 1, `fill: $token(border-secondary)`) 을 자동 삽입. 이미 divider 가 있으면 스킵 (재실행 안전).
+- Blueprint 에서 명시적으로 두고 싶을 땐 위 구조 그대로 작성 (`Section Divider` 컨테이너 + 안에 `Divider Line` 자식). utility 프레임 사이에는 두지 말 것.
 
 ### 3. Tab Bar 아이템은 반드시 FILL 균등 분배
 - Tab Bar 내 모든 아이템: `layoutSizingHorizontal: "FILL"`, `layoutSizingVertical: "FILL"`
@@ -405,6 +451,11 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 3. Tab Bar/FAB: ABSOLUTE 배치 + 루트 하단 위치 + FAB width 복원 (HUG)
 4. Tab Bar item FILL 통일 + Tab Row individual stroke (bottom-only)
 5. zero-width 텍스트: width=0 TEXT → textAutoResize="WIDTH_AND_HEIGHT" + FILL (Banner Card 내부 텍스트는 FIXED 160px)
+6. DS Effect Style (Shadows/*) 자동 바인딩: frame.effects 가 raw 값으로 박혀 있어도
+   첫 DROP_SHADOW fingerprint(offset.y, radius) → Shadows/shadow-{xs,sm,md,lg,xl,2xl}
+   가장 가까운 DS effect style 에 `set_effect_style_id` 로 바인딩.
+   인스턴스 내부 노드(`I…;…`) 와 이미 styles.effect 가 채워진 노드는 skip.
+   - 수동 재바인딩: `python3 scripts/figma_mcp_client.py bind-effect-styles <rootNodeId>`
 [규칙] 루트 프레임 배경 = bg-primary 강제 (절대 규칙 0 — 리터럴 + DS 변수 바인딩)
 ```
 

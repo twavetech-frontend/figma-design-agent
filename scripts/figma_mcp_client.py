@@ -599,6 +599,472 @@ def _enforce_root_bg_primary_live(root_node_id: str) -> None:
             print(f"  [규칙] 루트 bg-primary 변수 바인딩 실패 (무시): {e}")
 
 
+# ── 색상 + 폴리시 규칙 (회사 피드백 2026-05-22, 2026-05-23 재조정) ──────────
+# 브랜드 컬러는 절제된 단일 액센트, 피드백 컬러는 진짜 상태 정보에만 소량.
+# 평면 그레이 박스 나열은 와이어프레임처럼 보이므로 카드에 입체감을 강제한다.
+_COLOR_FIELDS = ("fill", "fontColor", "iconColor", "stroke")
+_FEEDBACK_KEYWORDS = ("success", "warning", "error")
+
+
+def _token_name_of(value) -> Optional[str]:
+    if isinstance(value, str) and value.startswith("$token(") and value.endswith(")"):
+        return value[7:-1].strip()
+    return None
+
+
+# Modal 패턴 — 상단 X만, Footer·Tab Bar·상단 탭 메뉴·기타 nav 아이콘 제거
+_MODAL_DISALLOWED_NAME_PARTS = ("footer", "tab bar", "tabbar",
+                                "tab row", "top tab", "section tab")
+_MODAL_NAV_NONX_PARTS = ("logo", "bell", "chat", "alarm", "알림", "채팅",
+                         "message", "search", "검색")
+
+
+def _enforce_modal_pattern(blueprint: dict) -> None:
+    """Modal 화면 패턴 강제 — 상단 X만, Footer·Tab Bar·기타 nav 아이콘 제거 (2026-05-24).
+
+    Blueprint root 에 `_screenType: "modal"` 명시 시 작동. Full modal 은:
+    - 상단 헤더: X 닫기 버튼만 (로고·알림·채팅 등 nav 아이콘 없음)
+    - Footer·Tab Bar 없음 (홈 위로 슬라이드업되는 단일 화면)
+    - NavBar 우측 정렬(MAX) 로 X 가 우측 상단에 위치
+    """
+    if not isinstance(blueprint, dict):
+        return
+    st = (blueprint.get("_screenType") or blueprint.get("screenType") or "").lower()
+    if st != "modal":
+        return
+
+    removed = [0]
+
+    def strip(node, in_navbar):
+        is_navbar = any(p in (node.get("name") or "").lower() for p in ("navbar", "nav bar"))
+        in_navbar_now = in_navbar or is_navbar
+        kids = node.get("children")
+        if not isinstance(kids, list):
+            return
+        keep = []
+        for c in kids:
+            nm = (c.get("name") or "").lower()
+            if any(d in nm for d in _MODAL_DISALLOWED_NAME_PARTS):
+                removed[0] += 1
+                continue
+            if in_navbar_now and any(p in nm for p in _MODAL_NAV_NONX_PARTS):
+                removed[0] += 1
+                continue
+            keep.append(c)
+        node["children"] = keep
+        for c in keep:
+            strip(c, in_navbar_now)
+
+    strip(blueprint, False)
+
+    # NavBar 찾아서 우측 정렬 (X 가 우측 상단에 위치)
+    def find_navbar(node):
+        if any(p in (node.get("name") or "").lower() for p in ("navbar", "nav bar")):
+            return node
+        for c in node.get("children", []) or []:
+            r = find_navbar(c)
+            if r:
+                return r
+        return None
+
+    nav = find_navbar(blueprint)
+    if nav:
+        al = nav.get("autoLayout") or {}
+        al["layoutMode"] = al.get("layoutMode") or "HORIZONTAL"
+        al["primaryAxisAlignItems"] = "MAX"
+        nav["autoLayout"] = al
+
+    if removed[0]:
+        print(f"[규칙] Modal 패턴 강제 — Footer/Tab Bar/non-X nav 노드 {removed[0]}건 제거 (X 닫기만 유지)")
+
+
+# 정보 그룹 divider — 루트 위 섹션 사이에 가는 라인을 넣어 그룹 시각 구분
+# (Status Bar / NavBar / Action Bar / Tab Bar / Footer 같은 utility 프레임은 제외)
+_DIVIDER_UTIL_PARTS = ("status bar", "navbar", "nav bar", "tab bar", "tabbar",
+                       "action bar", "footer", "tab row", "top tab", "section tab")
+
+
+def _enforce_tooltip_ignore_auto_layout(blueprint: dict) -> None:
+    """Tooltip 류 노드는 ignore auto layout (layoutPositioning=ABSOLUTE) 강제 (2026-05-24 룰).
+
+    "궁금한 건 물어보세요" 같은 floating tooltip은 부모 normal flow를 차지하면 안 된다 —
+    인접 콘텐츠 위에 떠 있는 hint. 이름에 'tooltip'/'tooltip wrap'/'tooltip row'가 들어간
+    노드 (또는 그 자식)를 자동으로 ABSOLUTE로 표시.
+
+    blueprint 단계에서 표시하고, 실제 좌표는 post-fix가 부모 width 안에서 자동 배치.
+    """
+    found = 0
+
+    def walk(node):
+        nonlocal found
+        if not isinstance(node, dict):
+            return
+        name = (node.get("name") or "").lower()
+        # tooltip / tooltip wrap / tooltip row → 자체를 ABSOLUTE로
+        if "tooltip" in name and node.get("layoutPositioning") != "ABSOLUTE":
+            node["layoutPositioning"] = "ABSOLUTE"
+            found += 1
+        for c in node.get("children") or []:
+            walk(c)
+
+    walk(blueprint)
+    if found:
+        print(f"[규칙] Tooltip ignore auto layout — {found}개 노드 ABSOLUTE 처리")
+
+
+def _enforce_section_dividers(blueprint: dict) -> None:
+    """루트 위 **타이틀 섹션(헤딩 ≥17px 보유) 앞에만** 1px divider 자동 삽입 (2026-05-24 룰).
+
+    너무 자주 넣으면 정보 탐색이 흐트러진다 — 타이틀이 있는 섹션 앞에만 (= 진짜 정보 그룹 경계).
+    Status Bar / NavBar / Bottom Action Bar / Tab Bar / Footer 같은 utility 프레임은 제외.
+    divider 삽입 시 아래 섹션의 `paddingTop` 을 0 으로 정리 — divider padding 과 섹션 padding 이
+    겹쳐 불규칙 갭이 생기지 않게 (2026-05-24 추가). 재실행에도 안전.
+    """
+    children = blueprint.get("children")
+    if not isinstance(children, list) or len(children) < 2:
+        return
+
+    def is_util(node):
+        return any(p in (node.get("name") or "").lower() for p in _DIVIDER_UTIL_PARTS)
+
+    def is_divider(node):
+        return "divider" in (node.get("name") or "").lower()
+
+    def has_heading(node):
+        """섹션 안에 fontSize ≥ 17 인 TEXT 가 깊이 3 안에 있으면 '타이틀 섹션'."""
+        if not isinstance(node, dict):
+            return False
+        stack = [(node, 0)]
+        while stack:
+            n, d = stack.pop()
+            if d > 3 or not isinstance(n, dict):
+                continue
+            for c in (n.get("children") or []):
+                if not isinstance(c, dict):
+                    continue
+                if (c.get("type") or "").lower() == "text":
+                    fs = c.get("fontSize")
+                    if isinstance(fs, (int, float)) and fs >= 17:
+                        return True
+                else:
+                    stack.append((c, d + 1))
+        return False
+
+    def zero_padding_top(node):
+        """섹션의 autoLayout.paddingTop 을 0 으로 (divider padding 과 겹침 방지)."""
+        al = node.get("autoLayout")
+        if isinstance(al, dict):
+            al["paddingTop"] = 0
+        elif node.get("paddingTop"):
+            node["paddingTop"] = 0
+
+    def zero_padding_bottom(node):
+        """섹션의 autoLayout.paddingBottom 을 0 으로 (divider 와 위 섹션 사이 갭 정리)."""
+        al = node.get("autoLayout")
+        if isinstance(al, dict):
+            al["paddingBottom"] = 0
+        elif node.get("paddingBottom"):
+            node["paddingBottom"] = 0
+
+    new_children = []
+    inserted = 0
+    has_seen_title = False
+    for c in children:
+        is_section = not is_util(c) and not is_divider(c)
+        # divider 삽입 조건: title-heading 보유 섹션 + 이미 다른 title 섹션을 거친 뒤
+        # (첫 title 섹션 앞에는 divider 없음 — 화면 첫 정보 그룹은 자연스럽게 시작)
+        if is_section and has_heading(c) and has_seen_title and (not new_children or not is_divider(new_children[-1])):
+            # divider 는 위·아래 padding 20px 컨테이너 안의 1px 라인 — 콘텐츠와 띄워서 보이게
+            new_children.append({
+                "name": "Section Divider",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "layoutSizingVertical": "HUG",
+                "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "paddingTop": 20, "paddingBottom": 20,
+                    "paddingLeft": 0, "paddingRight": 0,
+                    "itemSpacing": 0,
+                },
+                # fill 생략 = 투명 (batch_build_screen이 "transparent" 문자열을 검정으로 fallback하는 이슈 회피)
+                "children": [{
+                    "name": "Divider Line",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "FILL",
+                    "height": 1,
+                    "fill": "$token(border-secondary)",
+                }],
+            })
+            inserted += 1
+            zero_padding_top(c)  # 아래 섹션 paddingTop=0
+            # 위 섹션 paddingBottom=0 — divider 양쪽 갭이 divider padding(20+20)만으로 결정되도록
+            for prev in reversed(new_children[:-1]):
+                if not is_divider(prev) and not is_util(prev):
+                    zero_padding_bottom(prev)
+                    break
+        new_children.append(c)
+        if is_section and has_heading(c):
+            has_seen_title = True
+    blueprint["children"] = new_children
+    if inserted:
+        print(f"[규칙] 섹션 divider 자동 삽입 — {inserted}건 (타이틀 섹션 앞 + 위·아래 20px, 아래 섹션 paddingTop=0)")
+
+
+def _enforce_color_restraint(blueprint: dict) -> None:
+    """색상 사용 advisory (2026-05-23 정책).
+
+    브랜드 컬러는 절제된 단일 액센트, 피드백 컬러는 진짜 상태 정보에만 소량.
+    정책이 미묘해 자동 치환은 하지 않는다 — 과거 강제 치환(피드백 제거 + 브랜드
+    ≤2)이 화면을 완전 무채색 와이어프레임처럼 만들어 제거됨. 사용량을 집계해
+    로그로 보고하고, 0이거나 과다하면 경고한다.
+    """
+    counts = {"brand": 0, "feedback": 0}
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        for field in _COLOR_FIELDS:
+            name = _token_name_of(node.get(field))
+            if not name:
+                continue
+            low = name.lower()
+            if any(k in low for k in _FEEDBACK_KEYWORDS):
+                counts["feedback"] += 1
+            elif "brand" in low:
+                counts["brand"] += 1
+        for child in node.get("children", []) or []:
+            walk(child)
+
+    walk(blueprint)
+    print(f"[색상] 브랜드 액센트 {counts['brand']}곳 · 상태 컬러 {counts['feedback']}곳")
+    if counts["brand"] == 0:
+        print("  ⚠️  브랜드 액센트 0곳 — 완전 무채색은 와이어프레임처럼 보임. "
+              "주 액션·active 등에 브랜드 컬러를 단일 액센트로 줄 것.")
+    if counts["feedback"] > 8:
+        print(f"  ⚠️  상태 컬러 {counts['feedback']}곳 — 진짜 상태 정보(미납·완료 등)에만 "
+              "절제 사용할 것. 장식·태그·통계 전반에 색을 까는 건 금지.")
+
+
+# 그레이로 채운 카드 fill — 카드 표면 규칙(2026-05-23)에서 bg-primary+보더로 교정 대상
+_GREY_CARD_FILLS = ("bg-secondary", "bg-tertiary")
+# 보더 관련 키 — Footer 예외 처리에서 일괄 제거
+_STROKE_KEYS = ("stroke", "strokes", "strokeWeight", "strokeTopWeight",
+                "strokeBottomWeight", "strokeLeftWeight", "strokeRightWeight")
+
+
+def _is_footer(node: dict) -> bool:
+    """맨 아래 Footer 섹션인가 — 이름에 'footer' 포함."""
+    return "footer" in (node.get("name") or "").lower()
+
+
+def _is_card_like(node: dict) -> bool:
+    """카드형 프레임 판별 — cornerRadius ≥ 8 + fill + children."""
+    if not isinstance(node, dict):
+        return False
+    if node.get("type") not in (None, "frame", "FRAME"):
+        return False
+    radius = node.get("cornerRadius") or node.get("topLeftRadius") or 0
+    try:
+        radius = float(radius)
+    except (TypeError, ValueError):
+        radius = 0
+    return radius >= 8 and node.get("fill") is not None and bool(node.get("children"))
+
+
+def _enforce_card_surface(blueprint: dict) -> None:
+    """루트 위 최상위 카드 표면 = bg-primary fill + border-secondary 보더 (2026-05-23 룰).
+
+    그레이(bg-secondary/tertiary)로 채운 카드 대신 흰 카드 + 보더로 표면을 정의한다.
+    중첩 카드(카드 안의 인셋)·브랜드 컬러 카드는 건드리지 않는다.
+    예외 — 맨 아래 Footer: bg-secondary fill + 보더 없음(카드 아닌 회색 띠).
+    """
+    flipped = [0]
+    footer_fixed = [0]
+
+    def walk(node, inside_card, in_footer):
+        if not isinstance(node, dict):
+            return
+        is_footer = (not in_footer) and _is_footer(node)
+        if is_footer:
+            # Footer 예외 — bg-secondary 채움, 보더 제거
+            node["fill"] = "$token(bg-secondary)"
+            for k in _STROKE_KEYS:
+                node.pop(k, None)
+            footer_fixed[0] += 1
+        is_card = (not in_footer and not is_footer) and _is_card_like(node)
+        if is_card and not inside_card:
+            fill_name = _token_name_of(node.get("fill"))
+            if fill_name and fill_name.lower() in _GREY_CARD_FILLS:
+                node["fill"] = "$token(bg-primary)"
+                if not node.get("stroke"):
+                    node["stroke"] = "$token(border-secondary)"
+                    node["strokeWeight"] = 1
+                flipped[0] += 1
+        for child in node.get("children", []) or []:
+            walk(child, inside_card or is_card, in_footer or is_footer)
+
+    walk(blueprint, False, False)
+    if flipped[0]:
+        print(f"[규칙] 카드 표면 교정 — 최상위 카드 {flipped[0]}건: bg-secondary → bg-primary + border-secondary")
+    if footer_fixed[0]:
+        print(f"[규칙] Footer 표면 교정 — bg-secondary 채움 + 보더 제거 ({footer_fixed[0]}건)")
+
+
+def _enforce_card_elevation(blueprint: dict) -> None:
+    """그림자 없는 카드형 프레임에 subtle drop shadow 자동 주입 (2026-05-23).
+
+    평평한 그레이 박스만 나열하면 와이어프레임처럼 보인다 — 카드에 입체감을
+    코드로 강제해 '디자인된' 느낌을 보장한다. CLAUDE.md 룰 2 폴리시 항목.
+    대상: cornerRadius ≥ 8 + fill + children 을 가진 카드형 프레임(루트 제외).
+    """
+    shadow = {
+        "type": "DROP_SHADOW",
+        "color": {"r": 0, "g": 0, "b": 0, "a": 0.06},
+        "offset": {"x": 0, "y": 2},
+        "radius": 8,
+        "spread": 0,
+        "visible": True,
+    }
+    added = [0]
+
+    def walk(node, is_root, in_footer):
+        if not isinstance(node, dict):
+            return
+        # Footer 는 그림자 없는 회색 띠 — elevation 제외
+        if (not in_footer) and _is_footer(node):
+            in_footer = True
+        if not is_root and not in_footer and _is_card_like(node) and not node.get("effects"):
+            node["effects"] = [dict(shadow)]
+            added[0] += 1
+        for child in node.get("children", []) or []:
+            walk(child, False, in_footer)
+
+    walk(blueprint, True, False)
+    if added[0]:
+        print(f"[규칙] 카드 elevation 자동 주입 — 그림자 없는 카드 {added[0]}건에 subtle shadow 추가")
+
+
+# Hero 금액 텍스트 패턴 — 부호(+/−) 또는 천단위 콤마가 있는 명확한 통화 표기
+# 예: "+ 0원", "- 0원", "+1,300,000원", "12,500P", "1,000만원"
+_HERO_AMOUNT_RE = __import__("re").compile(
+    r"^\s*[+\-−]\s*[\d,]+\s*(원|만원|P|p|포인트)\s*$"           # 부호 prefix
+    r"|^\s*[\d]{1,3}(,\d{3})+\s*(원|만원|P|p|포인트)\s*$"        # 천단위 콤마
+)
+_HERO_TEXT_SIZE = 30
+
+
+def _enforce_text_hierarchy(blueprint: dict) -> None:
+    """타이포 위계 강화 — 카드 안 hero 금액 텍스트를 28px+ Bold로 자동 승격 (2026-05-23).
+
+    컬러가 절제될수록 시각 리듬은 크기·굵기 차이로 만들어야 한다. 통화 hero
+    텍스트(부호 prefix 또는 천단위 콤마가 있는 금액)가 카드 안에 있으면 본문
+    수준 폰트(<28px)로 남지 않도록 30px Bold 로 끌어올린다.
+    """
+    bumped = [0]
+
+    def is_hero_amount(text: str) -> bool:
+        t = (text or "").strip()
+        if not t or len(t) > 18:
+            return False
+        return bool(_HERO_AMOUNT_RE.match(t))
+
+    def walk(node, inside_card):
+        if not isinstance(node, dict):
+            return
+        in_card_now = inside_card or _is_card_like(node)
+        if node.get("type") in ("text", "TEXT") and inside_card:
+            text = node.get("text") or node.get("characters") or ""
+            if is_hero_amount(text):
+                cur = node.get("fontSize") or 0
+                if cur < 28:
+                    node["fontSize"] = _HERO_TEXT_SIZE
+                font = node.get("fontName") or {}
+                if (font.get("style") or "").lower() != "bold":
+                    node["fontName"] = {
+                        "family": font.get("family") or "Pretendard",
+                        "style": "Bold",
+                    }
+                bumped[0] += 1
+        for child in node.get("children", []) or []:
+            walk(child, in_card_now)
+
+    walk(blueprint, False)
+    if bumped[0]:
+        print(f"[규칙] 타이포 위계 — hero 금액 텍스트 {bumped[0]}건 → {_HERO_TEXT_SIZE}px Bold")
+
+
+_DIGIT_ONLY_RE = re.compile(r"^\d+$")
+_LOCK_NAME_RE = re.compile(r"\b(lock|lk|padlock)\b", re.I)
+
+
+def _enforce_disabled_slot_pattern(blueprint: dict) -> None:
+    """R44 — 참여 불가 슬롯은 lock 아이콘만 있는 회색 박스 (2026-05-24 룰).
+
+    Number-selector grid 안의 "disabled / 참여 불가" 셀이 *숫자 텍스트 + 작은
+    lock 아이콘* 으로 그려지면 사용자에게 "선택 가능한데 잠긴 것" 처럼 잘못
+    읽힌다. legend swatch 와 동일하게 **lock 아이콘만 있는 bg-tertiary 채움
+    박스** 로 정리한다.
+
+    Detection (shape-only, parent-name 무관):
+      - 노드가 FRAME
+      - 자식 중 digit-only TEXT (예: "6") 가 있음
+      - 자식 중 lock-named 아이콘 (lock / lk / padlock) 이 있음
+
+    Legend swatch (예: sw3) 는 lock 만 있고 digit text 가 없으므로 매칭되지
+    않는다 — false positive 없음.
+
+    Fix:
+      1) digit-only TEXT 자식 제거
+      2) fill = $token(bg-tertiary), stroke 제거
+      3) auto-layout primaryAxis/counterAxis = CENTER (lock 가운데)
+    """
+    fixed = 0
+
+    def is_lock_icon(c: dict) -> bool:
+        if not isinstance(c, dict):
+            return False
+        typ = (c.get("type") or "").lower()
+        if typ not in ("icon", "vector", "instance"):
+            return False
+        return bool(_LOCK_NAME_RE.search(c.get("name") or ""))
+
+    def is_digit_text(c: dict) -> bool:
+        if not isinstance(c, dict):
+            return False
+        if (c.get("type") or "").lower() != "text":
+            return False
+        # blueprint TEXT nodes use 'text' OR 'characters' depending on author.
+        s = (c.get("text") or c.get("characters") or "").strip()
+        return bool(_DIGIT_ONLY_RE.match(s))
+
+    def walk(node):
+        nonlocal fixed
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").lower() == "frame":
+            children = node.get("children") or []
+            has_digit = any(is_digit_text(c) for c in children)
+            has_lock = any(is_lock_icon(c) for c in children)
+            if has_digit and has_lock:
+                node["children"] = [c for c in children if not is_digit_text(c)]
+                node["fill"] = "$token(bg-tertiary)"
+                node.pop("stroke", None)
+                node.pop("strokeColor", None)
+                al = node.setdefault("autoLayout", {})
+                al.setdefault("layoutMode", "VERTICAL")
+                al["primaryAxisAlignItems"] = "CENTER"
+                al["counterAxisAlignItems"] = "CENTER"
+                for k in ("paddingTop", "paddingBottom", "paddingLeft", "paddingRight"):
+                    al.setdefault(k, 0)
+                fixed += 1
+        for c in node.get("children", []) or []:
+            walk(c)
+
+    walk(blueprint)
+    if fixed:
+        print(f"[규칙] R44 disabled slot — {fixed}개 셀 정리 (숫자 제거 + bg-tertiary fill)")
+
+
 def cmd_build(blueprint_file: str):
     """Build a screen from a blueprint JSON file.
 
@@ -617,6 +1083,16 @@ def cmd_build(blueprint_file: str):
 
     # ⚠️ 시스템 규칙: 루트 프레임 배경은 반드시 bg-primary — 다른 값이 와도 강제 교정
     _enforce_root_bg_primary(blueprint)
+
+    # ⚠️ 시스템 규칙: modal 패턴 → 색상 advisory → 카드 표면 → elevation → 타이포 위계 → 섹션 divider → tooltip ignore auto layout → disabled slot 패턴
+    _enforce_modal_pattern(blueprint)
+    _enforce_color_restraint(blueprint)
+    _enforce_card_surface(blueprint)
+    _enforce_card_elevation(blueprint)
+    _enforce_text_hierarchy(blueprint)
+    _enforce_section_dividers(blueprint)
+    _enforce_tooltip_ignore_auto_layout(blueprint)
+    _enforce_disabled_slot_pattern(blueprint)
 
     # 자동 바인딩용 원본 보존 ($token() 참조가 살아있는 사본 — resolve 전에 떠둠)
     original_blueprint = json.loads(json.dumps(blueprint))
@@ -785,11 +1261,17 @@ def cmd_build(blueprint_file: str):
 
     # Step E: post-fix (2회 실행 — 1회차: FILL 수정 + 배치, 2회차: 레이아웃 안정화 후 최종 배치)
     if root_id:
+        # ⚠️ 2026-05-24 사용자 "다 박아" — latest 빌드 정보를 저장. cmd_post_fix가
+        # 인자 없이 호출돼도 blueprint auto-load하여 토큰 재바인딩 가능.
+        try:
+            _save_latest_build(root_id, os.path.abspath(blueprint_file))
+        except Exception:
+            pass
         print("\n🔧 자동 후처리 실행 중...")
         sim_layout = sim_result.get("layout") if sim_result else None
-        cmd_post_fix(root_id, pre_computed_layout=sim_layout)
+        cmd_post_fix(root_id, pre_computed_layout=sim_layout, original_blueprint=original_blueprint)
         print("\n🔧 후처리 2회차 (레이아웃 안정화 후 최종 배치)...")
-        cmd_post_fix(root_id)
+        cmd_post_fix(root_id, original_blueprint=original_blueprint)
     else:
         print("⚠️  rootId를 찾을 수 없어 post-fix를 건너뜁니다.")
 
@@ -800,6 +1282,23 @@ def cmd_build(blueprint_file: str):
             auto_bind_design(root_id, original_blueprint)
         except Exception as e:
             print(f"  [auto-bind] 실패 (무시하고 계속): {e}")
+
+    # Step E.5.5: DS Text Style 자동 적용 (2026-05-24 복원 — 머지로 소실된 기능 복구)
+    if root_id:
+        print("\n🔤 DS Text Style 자동 적용 중...")
+        try:
+            _apply_ds_text_styles(root_id)
+        except Exception as e:
+            print(f"  [text-style] 실패 (무시하고 계속): {e}")
+
+    # Step E.5.6: DS Effect Style (Shadows/*) 자동 적용 (2026-05-26)
+    # 빌드 시 frame.effects 가 raw 값으로 박혀 있어도 fingerprint 매칭으로 DS 스타일에 바인딩.
+    if root_id:
+        print("\n🌑 DS Effect Style (Shadows) 자동 적용 중...")
+        try:
+            _apply_ds_effect_styles(root_id)
+        except Exception as e:
+            print(f"  [effect-style] 실패 (무시하고 계속): {e}")
 
     # Step E.6: QA — blueprint text 노드 무결성 검증 (이모지/아이콘 오변환 사고 차단)
     if root_id:
@@ -850,6 +1349,11 @@ def cmd_build(blueprint_file: str):
     total_elapsed = time.time() - start
     print(f"\n{'='*50}")
     print(f"전체 완료: {total_elapsed:.1f}s (빌드 {build_elapsed:.1f}s + 후처리)")
+    # ⚠️ 2026-05-24 사용자 "다 박아" — latest rootId 명시 (post-fix/screenshot/binding 재사용용)
+    if root_id:
+        print(f"⭐ LATEST ROOT: {root_id}  (saved → .latest_build.json)")
+        print(f"   re-screenshot:  python3 scripts/figma_mcp_client.py call export_node_as_image '{{\"nodeId\":\"{root_id}\",\"format\":\"PNG\",\"scale\":1}}'")
+        print(f"   re-post-fix:    python3 scripts/figma_mcp_client.py post-fix {root_id}")
     print(f"{'='*50}")
 
 
@@ -1352,6 +1856,158 @@ def _fix_layout_and_positions(tree: dict, pre_computed_layout: dict = None) -> d
     return result
 
 
+# 루트 minHeight + bottom bar bottom-pin (2026-05-24 룰)
+ROOT_MIN_HEIGHT = 852
+_BOTTOM_BAR_PARTS = ("tab bar", "tabbar", "bottom action bar", "action bar", "cta bar", "fab")
+
+
+def _should_use_bab_normal_flow(
+    content_bottom: float,
+    bab_heights: List[float],
+    min_height: int = None,
+) -> bool:
+    """긴 콘텐츠 분기 판단 — content + BAB 합이 min_height 초과 시 True (B 케이스).
+
+    이 헬퍼는 _enforce_root_min_height 내부 분기 로직을 단위 테스트하기 위해 분리됨.
+
+    2026-05-26 회귀 fix: 이전엔 content_bottom 단독으로 비교해 BAB 높이를 빠뜨림.
+    v3 s2 (content=796, BAB=119) 가 단독 비교에선 852 안에 든다고 판단돼
+    ABSOLUTE pin 분기로 가서 BAB 가 위 콘텐츠를 덮어 잘림 발생. content+BAB 합산
+    필수. 테스트는 scripts/tests/test_root_min_height.py 참고.
+    """
+    if min_height is None:
+        min_height = ROOT_MIN_HEIGHT
+    total = int(content_bottom) + sum(int(h) for h in bab_heights)
+    return total > min_height
+
+
+def _enforce_root_min_height(root_id: str) -> None:
+    """루트 height 정책 — 콘텐츠 길이에 따라 두 가지 분기 (2026-05-24):
+
+    A) **콘텐츠 ≤ ROOT_MIN_HEIGHT (852) 인 짧은 화면**
+       - root height = ROOT_MIN_HEIGHT (852)
+       - 하단 바(BAB / Tab Bar / CTA Bar / FAB)를 ABSOLUTE + constraint MAX 로
+         루트 하단(852 - bar_h)에 pin → 빈 공간 위에 떠 있음.
+
+    B) **콘텐츠 > ROOT_MIN_HEIGHT 인 긴 화면**
+       - 하단 바를 normal flow(AUTO)로 전환 — 콘텐츠 아래 자연스럽게 자리잡음.
+       - root layoutSizingVertical = HUG → 콘텐츠 + 하단 바 모두 포함하도록 자동 확장.
+       - ABSOLUTE pin 그대로 두면 BAB 가 콘텐츠를 덮어 잘려보임(2026-05-24 v14 회귀).
+
+    FAB 는 floating button 이므로 두 케이스 모두 ABSOLUTE 유지.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        result = parse_content(info)
+        items = result.get("json") or []
+        if not items:
+            return
+        doc = items[0].get("document") or items[0]
+        root_bb = doc.get("absoluteBoundingBox") or {}
+        root_h = root_bb.get("height") or 0
+        root_w = root_bb.get("width") or 393
+        root_y = root_bb.get("y") or 0
+
+        # 자식 분류 — name 매칭으로 bottom bar vs content
+        children = doc.get("children") or []
+        content_bottom = 0
+        bottom_bars = []
+        for c in children:
+            nm = (c.get("name") or "").lower()
+            bb = c.get("absoluteBoundingBox") or {}
+            cy = (bb.get("y") or 0) - root_y
+            ch = bb.get("height") or 0
+            cx = (bb.get("x") or 0) - (root_bb.get("x") or 0)
+            if any(p in nm for p in _BOTTOM_BAR_PARTS):
+                bottom_bars.append({
+                    "id": c.get("id"), "name": c.get("name"),
+                    "height": ch, "x": cx,
+                })
+            else:
+                # 콘텐츠 extent — ABSOLUTE 자식은 제외
+                if c.get("layoutPositioning") != "ABSOLUTE":
+                    content_bottom = max(content_bottom, cy + ch)
+
+        tabish = [b for b in bottom_bars if "fab" not in (b["name"] or "").lower()]
+        fabs   = [b for b in bottom_bars if "fab" in (b["name"] or "").lower()]
+        FAB_GAP = 16
+
+        # 정책 분기 — _should_use_bab_normal_flow 가 표준. content + BAB 합산 (2026-05-26 fix).
+        # 회귀 테스트: scripts/tests/test_root_min_height.py
+        bab_total_h = sum(b["height"] for b in tabish)
+        total_with_bab = int(content_bottom) + int(bab_total_h)
+        content_overflows = _should_use_bab_normal_flow(
+            content_bottom, [b["height"] for b in tabish], ROOT_MIN_HEIGHT,
+        )
+
+        if content_overflows and tabish:
+            # B 케이스 — 긴 콘텐츠 + 하단 바: BAB normal flow + root HUG.
+            # ABSOLUTE pin 으로 두면 BAB 가 콘텐츠를 덮음(2026-05-24 v14 회귀).
+            for bar in tabish:
+                try:
+                    call_tool("set_layout_positioning", {
+                        "nodeId": bar["id"], "layoutPositioning": "AUTO",
+                    })
+                except Exception:
+                    pass
+            try:
+                call_tool("set_layout_sizing", {"nodeId": root_id, "vertical": "HUG"})
+            except Exception:
+                pass
+            print(f"[규칙] 긴 콘텐츠(content={int(content_bottom)} + BAB={int(bab_total_h)} = {total_with_bab} > {ROOT_MIN_HEIGHT}) — "
+                  f"하단 바 {len(tabish)}개 normal flow + root HUG")
+            # FAB 는 콘텐츠 위에 떠야 하므로 ABSOLUTE 유지 (아래에서 처리)
+            # bottom_anchor_y 는 BAB 가 normal flow 라 root 의 새 height 가 됨.
+            # 다시 측정 — root 이 HUG 로 늘어났을 것.
+            try:
+                info2 = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+                items2 = parse_content(info2).get("json") or []
+                if items2:
+                    doc2 = items2[0].get("document") or items2[0]
+                    new_root_h = (doc2.get("absoluteBoundingBox") or {}).get("height") or content_bottom
+                    desired = int(new_root_h)
+            except Exception:
+                desired = int(content_bottom) + sum(b["height"] for b in tabish)
+            bottom_anchor_y = desired - sum(b["height"] for b in tabish)
+        else:
+            # A 케이스 — 짧은 콘텐츠: root = max(content, ROOT_MIN_HEIGHT), BAB ABSOLUTE pin.
+            desired = max(int(content_bottom), ROOT_MIN_HEIGHT)
+            if desired != int(root_h):
+                call_tool("set_layout_sizing", {"nodeId": root_id, "vertical": "FIXED"})
+                call_tool("resize_node", {"nodeId": root_id, "width": root_w, "height": desired})
+                direction = "늘림" if desired > root_h else "줄임"
+                print(f"[규칙] 루트 height {direction}: {int(root_h)} → {desired} (콘텐츠 extent={int(content_bottom)}, min={ROOT_MIN_HEIGHT})")
+            else:
+                print(f"[규칙] 루트 height 유지: {desired} (콘텐츠 extent={int(content_bottom)})")
+
+            bottom_anchor_y = desired
+            for bar in tabish:
+                new_y = desired - bar["height"]
+                try:
+                    call_tool("set_layout_positioning", {
+                        "nodeId": bar["id"], "layoutPositioning": "ABSOLUTE",
+                        "constraints": {"vertical": "MAX", "horizontal": "STRETCH"},
+                    })
+                except Exception:
+                    pass
+                call_tool("move_node", {"nodeId": bar["id"], "x": bar["x"], "y": new_y})
+                print(f"  하단 pin: {bar['name']} → y={new_y}")
+                bottom_anchor_y = min(bottom_anchor_y, new_y)
+        for fab in fabs:
+            new_y = bottom_anchor_y - fab["height"] - FAB_GAP
+            try:
+                call_tool("set_layout_positioning", {
+                    "nodeId": fab["id"], "layoutPositioning": "ABSOLUTE",
+                    "constraints": {"vertical": "MAX", "horizontal": "MAX"},
+                })
+            except Exception:
+                pass
+            call_tool("move_node", {"nodeId": fab["id"], "x": fab["x"], "y": new_y})
+            print(f"  FAB pin: {fab['name']} → y={new_y}")
+    except Exception as e:
+        print(f"  루트 minHeight 처리 실패: {e}")
+
+
 def _fix_tab_bar_items(tree: dict) -> int:
     """Tab Bar 내부 아이템을 FILL로 통일하고, Tab Row에 individual stroke 적용."""
     fix_count = 0
@@ -1465,7 +2121,31 @@ def _fix_zero_width_text(tree: dict) -> int:
     return fix_count
 
 
-def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
+# ── 2026-05-24 사용자 "다 박아" — latest 추적 + 자동 재바인딩 ─────
+# 빌드/post-fix 호출마다 latest rootId + blueprint path 저장. cmd_post_fix가
+# 인자 없이 호출돼도 latest 자동 lookup → 토큰 재바인딩 가능.
+
+_LATEST_BUILD_FILE = os.path.join(os.path.dirname(__file__), ".latest_build.json")
+
+
+def _save_latest_build(root_id: str, blueprint_path: str) -> None:
+    try:
+        with open(_LATEST_BUILD_FILE, "w") as f:
+            json.dump({"rootId": root_id, "blueprintPath": blueprint_path}, f)
+    except Exception:
+        pass
+
+
+def _load_latest_build() -> dict:
+    try:
+        with open(_LATEST_BUILD_FILE) as f:
+            return json.load(f) or {}
+    except Exception:
+        return {}
+
+
+def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
+                 original_blueprint: Optional[dict] = None):
     """빌드 후 자동 후처리: FILL 사이징, Tab Bar/FAB 배치, 섹션 갭, 텍스트 수정.
 
     Usage:
@@ -1514,6 +2194,42 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None):
     # ⚠️ 시스템 규칙: 루트 프레임 배경 = bg-primary 강제 (런타임 보장)
     print("\n[규칙] 루트 프레임 배경 bg-primary 강제 적용 중...")
     _enforce_root_bg_primary_live(root_node_id)
+
+    # ⚠️ 시스템 규칙: 루트 minHeight=852 + 하단 바 bottom-pin (2026-05-24)
+    print("\n[규칙] 루트 minHeight=852 + 하단 바 bottom-pin 적용 중...")
+    _enforce_root_min_height(root_node_id)
+
+    # ⚠️ 2026-05-24 사용자 분노 fix — root export clip blind spot
+    # CTA overflow / icon button 시인성 / small text center 자동 검출 + fix
+    print("\n[규칙] overflow detect + auto FILL 적용 중...")
+    _fix_overflow_children(root_node_id)
+    print("\n[규칙] icon button 시인성 보장 (bg-secondary → bg-tertiary) 적용 중...")
+    _fix_icon_button_visibility(root_node_id)
+    print("\n[규칙] small text FILL + LEFT → CENTER 정렬 적용 중...")
+    _fix_small_text_center(root_node_id)
+    print("\n[규칙] R45 섹션 clipsContent=false 강제 (carousel 제외) 적용 중...")
+    _disable_section_clipping(root_node_id)
+
+    # ⚠️ 2026-05-24 사용자 "다 박아" — manual fix 후 자동 재바인딩
+    # 위 3개 fix가 set_fill_color/set_layout_sizing 호출 → boundVariables 끊김 가능.
+    # original_blueprint가 있으면 token 재적용. 없으면 .latest_build.json에서 자동 lookup.
+    bp_for_rebind = original_blueprint
+    if bp_for_rebind is None:
+        latest = _load_latest_build()
+        bp_path = latest.get("blueprintPath")
+        if bp_path and os.path.exists(bp_path):
+            try:
+                with open(bp_path, encoding="utf-8") as f:
+                    bp_for_rebind = json.load(f)
+                print(f"\n[규칙] manual fix 후 자동 재바인딩 — blueprint auto-loaded: {os.path.basename(bp_path)}")
+            except Exception as e:
+                print(f"\n[규칙] blueprint auto-load 실패 (재바인딩 skip): {e}")
+    if bp_for_rebind is not None:
+        try:
+            re_ok = auto_bind_design(root_node_id, bp_for_rebind)
+            print(f"  [재바인딩] 완료 — {re_ok}개 적용 (manual fix로 끊긴 token 복구)")
+        except Exception as e:
+            print(f"  [재바인딩] 실패: {e}")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
@@ -1657,16 +2373,39 @@ def auto_bind_design(root_id: str, original_blueprint: dict) -> int:
 
     print(f"  [auto-bind] DS 변수 바인딩 {len(bindings)}개 노드 적용 중...")
     ok = fail = 0
+    invalid_tokens: list = []  # 2026-05-26 — silent fail 검출용
     for i, item in enumerate(bindings):
         try:
-            call_tool("set_bound_variables",
+            resp = call_tool("set_bound_variables",
                       {"nodeId": item["nodeId"], "bindings": item["bindings"]},
                       msg_id=i + 1)
+            # 응답 본문의 errors 검사 — set_bound_variables 가 invalid 토큰을
+            # 200 OK 로 반환하지만 본문에 errors[] 가 들어있는 silent fail 케이스.
+            # 이전엔 그냥 ok 카운트 → blueprint 의 fake 토큰 (예: text-white-primary)
+            # 이 검정 default 로 fallback 되어 텍스트 invisible 회귀(v3 s3).
+            try:
+                parsed = parse_content(resp).get("json") or {}
+                errs = parsed.get("errors") or []
+                for err in errs:
+                    invalid_tokens.append({
+                        "nodeId": item["nodeId"],
+                        "field": err.get("field"),
+                        "requested": (item["bindings"] or {}).get(err.get("field"), "?"),
+                        "reason": err.get("reason") or err.get("message") or "not found in DS",
+                    })
+            except Exception:
+                pass
             ok += 1
         except Exception as e:
             fail += 1
             if fail <= 3:
                 print(f"    FAIL {item['nodeId']}: {e}")
+    if invalid_tokens:
+        print(f"  [auto-bind] ⚠️ Invalid 토큰 silent-skip {len(invalid_tokens)}건 — blueprint 수정 필요:")
+        for it in invalid_tokens[:5]:
+            print(f"    · {it['nodeId']} {it['field']} ← {it['requested']!r} ({it['reason']})")
+        if len(invalid_tokens) > 5:
+            print(f"    · ... +{len(invalid_tokens)-5} more")
     print(f"  [auto-bind] 완료 — {ok}개 노드 성공, {fail}개 실패")
     return ok
 
@@ -1869,6 +2608,640 @@ def _qa_visual_checks(root_id: str) -> int:
     for it in issues:
         print(f"    - {it}")
     return len(issues)
+
+
+# ── 2026-05-24 사용자 분노 fix (root export clip blind spot) ─────────
+#
+# 사용자 케이스: Primary CTA가 root width 393을 200+px overflow했는데
+# root export PNG는 393으로 clip되어 잘 보였음. 사용자는 Figma canvas로
+# overflow까지 봐서 즉시 발견. "이걸 왜 못 찾냐" 분노.
+#
+# 3개 자동 fix:
+# 1) overflow detect — root width를 넘은 자식의 layoutSizingHorizontal=FILL 자동 적용
+# 2) icon button 시인성 — Bookmark/Chat 같은 small icon button이 bg-secondary로
+#    화이트와 거의 구분 안 될 때 보더 추가 (또는 bg-tertiary로 격상)
+# 3) small text center — chat-badge 같은 짧은 텍스트가 FILL 폭에 LEFT align되어
+#    부모 frame 중앙 자식과 어긋날 때 CENTER로 자동 변환
+
+def _fix_overflow_children(root_id: str) -> int:
+    """root width를 넘어 그려진 자식을 detect → layoutSizingHorizontal=FILL 강제.
+
+    가장 흔한 케이스: button/CTA frame이 blueprint에 layoutSizingHorizontal: FILL
+    명시됐어도 batch_build_screen이 height만 명시된 자식을 FIXED parent-inner-width로
+    박는 버그. 결과적으로 sibling을 밀어내고 root 밖으로 overflow.
+
+    Returns: fix 건수.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [overflow] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+    rb = root.get("absoluteBoundingBox") or {}
+    rx, rw = rb.get("x", 0), rb.get("width", 0)
+    if not rw:
+        return 0
+    right_limit = rx + rw + 1  # 1px tolerance
+    fixed = 0
+
+    def _is_icon_like(node: dict) -> bool:
+        """Icon SVG wrappers must never be FILL'd — they'd stretch the vector.
+        Detect by: VECTOR type, or FRAME with a single VECTOR child (svg_icon wrapper)
+        and width≈height (square), or known icon child names."""
+        if not isinstance(node, dict):
+            return False
+        if (node.get("type") or "").upper() == "VECTOR":
+            return True
+        kids = node.get("children") or []
+        # svg_icon wrapper: a FRAME with single VECTOR child, square-ish
+        if len(kids) == 1 and (kids[0].get("type") or "").upper() == "VECTOR":
+            bb = node.get("absoluteBoundingBox") or {}
+            w, h = bb.get("width", 0) or 0, bb.get("height", 0) or 0
+            if w and h and 0.7 <= (w / h) <= 1.43 and max(w, h) <= 64:
+                return True
+        return False
+
+    def _is_small_pill(node: dict) -> bool:
+        """Small status/tag pills (cornerRadius≥999, width<150) are HUG-intended.
+        FILL'ing them stretches the pill across the row with empty space (2026-05-26
+        m1-fail 120px bug). Detect by: fully-rounded radius + short content + width<150.
+        """
+        if not isinstance(node, dict):
+            return False
+        if (node.get("type") or "").upper() != "FRAME":
+            return False
+        # Full-pill radius — corner radius ≥ height/2 → effectively a pill
+        cr = node.get("cornerRadius") or 0
+        bb = node.get("absoluteBoundingBox") or {}
+        w, h = bb.get("width", 0) or 0, bb.get("height", 0) or 0
+        is_pill = (cr >= 999) or (h and cr >= h / 2 - 1)
+        if not (is_pill and w and w < 150):
+            return False
+        # Tight content — only text/icon children, no large frames
+        kids = node.get("children") or []
+        if len(kids) > 4:
+            return False
+        for k in kids:
+            kt = (k.get("type") or "").upper()
+            if kt not in ("TEXT", "VECTOR", "FRAME"):
+                return False
+            if kt == "FRAME":
+                kbb = k.get("absoluteBoundingBox") or {}
+                if (kbb.get("width", 0) or 0) > 40:
+                    return False
+        return True
+
+    def walk(node):
+        nonlocal fixed
+        if not isinstance(node, dict):
+            return
+        if node.get("id") == root_id:
+            for c in node.get("children") or []:
+                walk(c)
+            return
+        bb = node.get("absoluteBoundingBox") or {}
+        nx, nw = bb.get("x", 0), bb.get("width", 0)
+        if nx + nw > right_limit and node.get("layoutSizingHorizontal") != "FILL":
+            # ⚠️ Guard: never FILL an icon/SVG wrapper — it stretches the vector
+            # into a thin smear (2026-05-26: m1-fail-x 51×10 bug).
+            # Also skip small HUG-intended pills (status tags) — FILL'ing them
+            # makes them awkwardly wide (2026-05-26: m1-fail 120px bug).
+            if _is_icon_like(node) or _is_small_pill(node):
+                pass
+            else:
+                # Try set FILL — works only if parent has auto-layout
+                try:
+                    call_tool("set_layout_sizing", {
+                        "nodeId": node.get("id"), "horizontal": "FILL",
+                    })
+                    fixed += 1
+                    print(f"  [overflow] '{node.get('name')}' x+w={int(nx+nw)} > root right {int(right_limit)} → FILL")
+                except Exception:
+                    pass
+        for c in node.get("children") or []:
+            walk(c)
+
+    walk(root)
+    if fixed == 0:
+        print("  [overflow] OK — root width 초과 자식 없음")
+    return fixed
+
+
+# Bookmark/Chat 같은 small icon button (정사각 48 이하 + 아이콘 1~2개) 의 fill 이
+# bg-secondary 인데 부모도 흰 배경이면 거의 invisible. 자동 fix:
+# 1) bg-secondary → bg-tertiary 같은 진한 회색 (선호) — 불가능하면 border-secondary 보더 추가
+# bg-secondary RGB ≈ (0.953, 0.957, 0.965); bg-tertiary RGB ≈ (0.898, 0.906, 0.922).
+_BG_SECONDARY_RGB = (0.953, 0.957, 0.965)
+_BG_TERTIARY_RGB = (0.898, 0.906, 0.922)
+
+def _fix_icon_button_visibility(root_id: str) -> int:
+    """small icon button (≤48px square, 1~2개 자식, name ~ /btn|button|icon/) 의
+    bg-secondary fill 을 bg-tertiary 로 격상해 흰 배경 위 시인성 확보.
+
+    Returns: fix 건수.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [icon-btn] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+    import re as _re
+    BTN_RE = _re.compile(r"\b(btn|button)\b|icon$", _re.I)
+    fixed = 0
+
+    def is_bg_secondary(fills):
+        if not isinstance(fills, list):
+            return False
+        for p in fills:
+            if not isinstance(p, dict) or p.get("type") != "SOLID":
+                continue
+            c = p.get("color") or {}
+            if (abs(c.get("r", 0) - _BG_SECONDARY_RGB[0]) < 0.01
+                    and abs(c.get("g", 0) - _BG_SECONDARY_RGB[1]) < 0.01
+                    and abs(c.get("b", 0) - _BG_SECONDARY_RGB[2]) < 0.01):
+                return True
+        return False
+
+    def walk(node):
+        nonlocal fixed
+        if not isinstance(node, dict):
+            return
+        bb = node.get("absoluteBoundingBox") or {}
+        w, h = bb.get("width", 0), bb.get("height", 0)
+        name = node.get("name") or ""
+        ntype = (node.get("type") or "").upper()
+        # square small icon button
+        if (ntype == "FRAME" and w and h
+                and 32 <= w <= 56 and 32 <= h <= 56
+                and abs(w - h) < 4
+                and BTN_RE.search(name)
+                and is_bg_secondary(node.get("fills"))):
+            try:
+                call_tool("set_fill_color", {
+                    "nodeId": node.get("id"),
+                    "r": _BG_TERTIARY_RGB[0], "g": _BG_TERTIARY_RGB[1],
+                    "b": _BG_TERTIARY_RGB[2], "a": 1,
+                })
+                fixed += 1
+                print(f"  [icon-btn] '{name}' bg-secondary → bg-tertiary (시인성)")
+            except Exception:
+                pass
+        for c in node.get("children") or []:
+            walk(c)
+
+    walk(root)
+    if fixed == 0:
+        print("  [icon-btn] OK — 시인성 부족 small icon button 없음")
+    return fixed
+
+
+def _disable_section_clipping(root_id: str) -> int:
+    """R45 — 섹션/카드 frame 의 clipsContent=false 강제 (2026-05-24).
+
+    Figma 는 frame 생성 시 default clipsContent=true. 섹션이 clip 되면:
+      - 카드 drop shadow 가 잘려보임
+      - 가로 carousel 마지막 카드 peek 이 안 보임
+      - tooltip 같은 ABSOLUTE 자식이 부모 밖으로 못 나옴
+
+    사용자가 명시적으로 viewport 효과(가로 carousel 마지막 peek)를 의도한 경우만 clip 유지:
+      - 이름에 'carousel' / 'banner row' / 'hero row' 등 포함된 HORIZONTAL frame
+
+    그 외 모든 FRAME(섹션/카드/래퍼)은 clipsContent=false 로 강제.
+    root frame 은 viewport 자체라 건드리지 않음(이미 plugin 이 true 강제).
+
+    Returns: fix 건수.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [no-clip] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+
+    def is_carousel_wrapper(n: dict) -> bool:
+        nm = (n.get("name") or "").lower()
+        if not nm:
+            return False
+        # carousel 류 — viewport clip 의도된 frame
+        keys = ("carousel", "banner row", "hero row", "scroll row", "carousel wrap")
+        return any(k in nm for k in keys)
+
+    targets = []  # (id, layoutMode)
+
+    def walk(node, depth):
+        if not isinstance(node, dict):
+            return
+        # root(depth=0) 자체는 건드리지 않음 — viewport
+        if depth > 0 and (node.get("type") or "").upper() == "FRAME":
+            if node.get("clipsContent") is True and not is_carousel_wrapper(node):
+                # layoutMode 가 None 이면 NONE 으로 전달 — plugin 이 clipsContent 만 적용
+                lm = node.get("layoutMode") or "NONE"
+                targets.append((node.get("id"), lm, node.get("name") or ""))
+        for c in node.get("children", []) or []:
+            walk(c, depth + 1)
+
+    walk(root, 0)
+
+    if not targets:
+        print(f"  [no-clip] OK — clipsContent=true 인 비-carousel 섹션 frame 없음")
+        return 0
+
+    # batch_execute 로 한 번에 처리 — plugin 의 set_auto_layout 이 layoutMode=NONE 케이스도
+    # clipsContent 적용하도록 패치돼 있음 (2026-05-24).
+    ops = [{
+        "op": "set_auto_layout",
+        "params": {
+            "nodeId": nid,
+            "layoutMode": lm,
+            "clipsContent": False,
+        }
+    } for (nid, lm, _nm) in targets]
+
+    try:
+        call_tool("batch_execute", {"operations": ops})
+        print(f"  [no-clip] {len(targets)}개 frame clipsContent=false 강제 (carousel 제외)")
+        return len(targets)
+    except Exception as e:
+        print(f"  [no-clip] batch 실패: {e}")
+        return 0
+
+
+def _fix_small_text_center(root_id: str) -> int:
+    """짧은 TEXT 노드(≤4자) 가 FILL 폭 + LEFT 정렬이라 부모 center 자식과 어긋날 때
+    textAlignHorizontal=CENTER 자동 변환. chat-badge "99+" 같은 케이스.
+
+    Returns: fix 건수.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [text-center] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+    fixed = 0
+
+    def walk(node):
+        nonlocal fixed
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").upper() == "TEXT":
+            chars = (node.get("characters") or "").strip()
+            sz = node.get("layoutSizingHorizontal")
+            align = node.get("textAlignHorizontal")
+            # font size threshold: small badge/counter text only (≤11px).
+            # 큰 section title 같은 게 잘못 잡히면 시각 망가짐 (empty-title "빈자리" 18px 케이스).
+            tstyle = node.get("style") or {}
+            fsize = tstyle.get("fontSize") if isinstance(tstyle, dict) else None
+            if (len(chars) <= 4 and sz == "FILL"
+                    and align in (None, "LEFT")
+                    and isinstance(fsize, (int, float)) and fsize <= 11):
+                try:
+                    call_tool("set_text_align", {
+                        "nodeId": node.get("id"), "horizontal": "CENTER",
+                    })
+                    fixed += 1
+                    print(f"  [text-center] '{node.get('name')}' \"{chars}\" → CENTER")
+                except Exception:
+                    pass
+        for c in node.get("children") or []:
+            walk(c)
+
+    walk(root)
+    if fixed == 0:
+        print("  [text-center] OK — center 필요 짧은 텍스트 없음")
+    return fixed
+
+
+# ── DS Text Style 자동 적용 (2026-05-12 사용자 "시스템에 박아" 지시 → 2026-05-22 머지로 소실 → 2026-05-24 복원) ──
+# 빌드된 트리의 TEXT 노드 (fontSize, weight bucket) → DS textStyle key 자동 바인딩.
+_DS_TEXT_SIZE_SCALE = (12, 14, 16, 18, 20, 24, 30, 36, 48, 60, 72)
+_DS_TEXT_SIZE_TOLERANCE = 3
+_TEXT_STYLE_MAP_CACHE: Optional[dict] = None
+
+# DS Shadow fingerprint table (first DROP_SHADOW effect: offset.y, radius)
+# ds/DESIGN_TOKENS.md 의 Shadows/* effect style 정의 기반
+# 참고: shadow-sm·md·lg·xl·2xl 는 2개 effect 합성이지만 첫 effect 만으로 충분히 구분됨
+_DS_SHADOW_FINGERPRINTS = [
+    # (offset_y, radius, ds_style_name)
+    (1, 2, "Shadows/shadow-xs"),
+    (1, 3, "Shadows/shadow-sm"),
+    (4, 6, "Shadows/shadow-md"),
+    (12, 16, "Shadows/shadow-lg"),
+    (20, 24, "Shadows/shadow-xl"),
+    (24, 48, "Shadows/shadow-2xl"),
+]
+_EFFECT_STYLE_MAP_CACHE: Optional[dict] = None
+
+
+def _weight_bucket(label) -> str:
+    """폰트 weight 라벨을 (regular/medium/semibold/bold) 버킷으로 정규화."""
+    s = str(label or "").lower()
+    if "bold" in s and "semi" not in s and "demi" not in s:
+        return "bold"
+    if "semi" in s or "demi" in s:
+        return "semibold"
+    if "medium" in s:
+        return "medium"
+    return "regular"
+
+
+def _load_text_style_map() -> dict:
+    """DS text styles → {(size:int, weight_bucket:str): styleKey} 인덱스. 캐시."""
+    global _TEXT_STYLE_MAP_CACHE
+    if _TEXT_STYLE_MAP_CACHE is not None:
+        return _TEXT_STYLE_MAP_CACHE
+    try:
+        d = parse_content(call_tool("get_styles", {})).get("json") or {}
+    except Exception as e:
+        print(f"  [text-style] get_styles 실패: {e}")
+        _TEXT_STYLE_MAP_CACHE = {}
+        return _TEXT_STYLE_MAP_CACHE
+    idx = {}
+    for t in (d.get("texts") or []):
+        size = t.get("fontSize")
+        if not isinstance(size, (int, float)):
+            continue
+        # DS style 이름 예: "Display 2xl/Bold", "Text md/Medium" — 끝의 슬래시-suffix 가 weight
+        name = t.get("name") or ""
+        suffix = name.split("/")[-1] if "/" in name else (t.get("fontName") or {}).get("style")
+        bucket = _weight_bucket(suffix)
+        idx[(int(size), bucket)] = t.get("key")
+    _TEXT_STYLE_MAP_CACHE = idx
+    return idx
+
+
+def _snap_to_ds_size(size: int) -> Optional[int]:
+    """off-scale 사이즈를 ±3px 안 가장 가까운 DS 스케일로 snap. 범위 밖이면 None."""
+    best, best_d = None, _DS_TEXT_SIZE_TOLERANCE + 1
+    for s in _DS_TEXT_SIZE_SCALE:
+        d = abs(size - s)
+        if d < best_d:
+            best, best_d = s, d
+    return best
+
+
+def _apply_ds_text_styles(root_id: str) -> None:
+    """빌드된 트리의 모든 TEXT 노드에 DS Text Style 자동 바인딩.
+
+    인스턴스 내부 노드(`I…;…`)는 건너뛴다 (인스턴스가 자기 스타일 보유).
+    off-scale 사이즈는 ±3px 안 DS 스케일로 snap.
+    """
+    style_map = _load_text_style_map()
+    if not style_map:
+        print("  [text-style] DS text style 인덱스 비어있음 — 건너뜀")
+        return
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+    except Exception as e:
+        print(f"  [text-style] 빌드 트리 조회 실패: {e}")
+        return
+    if not isinstance(items, list) or not items:
+        return
+    built = items[0].get("document") or items[0]
+
+    entries = []
+    stats = {"applied": 0, "instance_skip": 0, "no_size": 0, "no_match": 0}
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        if node.get("type") in ("TEXT", "text"):
+            nid = node.get("id") or ""
+            if ";" in nid:
+                stats["instance_skip"] += 1
+            else:
+                # get_nodes_info 는 TEXT 폰트 속성을 node.style 하위에 둔다
+                tstyle = node.get("style") or {}
+                size = tstyle.get("fontSize")
+                bucket = _weight_bucket(tstyle.get("fontStyle"))
+                if not isinstance(size, (int, float)):
+                    stats["no_size"] += 1
+                else:
+                    si = int(round(size))
+                    key = style_map.get((si, bucket))
+                    if not key:
+                        snapped = _snap_to_ds_size(si)
+                        if snapped is not None:
+                            key = style_map.get((snapped, bucket))
+                    if key:
+                        entries.append({"nodeId": nid, "textStyleId": f"S:{key},{root_id}"})
+                        stats["applied"] += 1
+                    else:
+                        stats["no_match"] += 1
+        for c in node.get("children", []) or []:
+            walk(c)
+
+    walk(built)
+    if not entries:
+        print(f"  [text-style] 적용 0건 (스킵: instance {stats['instance_skip']} / no-size {stats['no_size']} / no-match {stats['no_match']})")
+        return
+    # NOTE: `batch_set_text_style_id` 는 조용히 실패하는 케이스 확인됨 → 단일 set_text_style_id 루프로 안정 적용 (2026-05-24)
+    ok, fail = 0, 0
+    for e in entries:
+        try:
+            call_tool("set_text_style_id", {"nodeId": e["nodeId"], "textStyleId": e["textStyleId"]})
+            ok += 1
+        except Exception:
+            fail += 1
+    print(f"  [text-style] ✓ DS Text Style 적용 {ok}건"
+          + (f" / 실패 {fail}건" if fail else "")
+          + f" (스킵: instance {stats['instance_skip']} / no-match {stats['no_match']})")
+
+    # ⚠️ 2026-05-24 사용자 "다 박아" — set_text_style_id silent fail 검출 + 1회 재시도
+    # set_text_style_id 가 ok=N 반환하지만 실제 stored 안 되는 케이스 확인 (sticky-id mismatch).
+    # get_nodes_info 응답이 Figma REST API 형식이라 textStyleId는 styles.text 에 들어옴.
+    def _stored_text_style_id(d: dict) -> str:
+        if not isinstance(d, dict):
+            return ""
+        return (d.get("textStyleId")
+                or (d.get("styles") or {}).get("text")
+                or (d.get("boundVariables") or {}).get("textStyleId")
+                or "")
+    try:
+        applied_ids = [e["nodeId"] for e in entries]
+        verify_info = parse_content(call_tool("get_nodes_info", {"nodeIds": applied_ids})).get("json")
+        if isinstance(verify_info, list):
+            stored_map = {}
+            for it in verify_info:
+                d = it.get("document") or it
+                stored_map[d.get("id")] = bool(_stored_text_style_id(d))
+            unset = [e for e in entries if not stored_map.get(e["nodeId"])]
+            if unset:
+                print(f"  [text-style] ⚠️ silent fail 검출 {len(unset)}건 — 재시도 중...")
+                retry_ok = 0
+                for e in unset:
+                    try:
+                        call_tool("set_text_style_id", {"nodeId": e["nodeId"], "textStyleId": e["textStyleId"]})
+                        retry_ok += 1
+                    except Exception:
+                        pass
+                verify2 = parse_content(call_tool("get_nodes_info", {"nodeIds": [e["nodeId"] for e in unset]})).get("json")
+                still_unset = 0
+                if isinstance(verify2, list):
+                    for it in verify2:
+                        d = it.get("document") or it
+                        if not _stored_text_style_id(d):
+                            still_unset += 1
+                print(f"  [text-style] 재시도 결과 — {retry_ok}건 호출, {still_unset}건 여전히 미적용")
+            else:
+                print(f"  [text-style] ✓ stored 검증 OK — {len(applied_ids)}건 모두 styles.text 에 적용 확인")
+    except Exception as e:
+        print(f"  [text-style] stored 검증 실패 (skip): {e}")
+
+
+def _load_effect_style_map() -> dict:
+    """DS effect styles → {name: styleKey} 인덱스. 캐시.
+
+    `Shadows/*` 와 `Focus rings/*` 같은 effect style 만 포함한다 (Backdrop blur 등은 매핑 대상 아님).
+    """
+    global _EFFECT_STYLE_MAP_CACHE
+    if _EFFECT_STYLE_MAP_CACHE is not None:
+        return _EFFECT_STYLE_MAP_CACHE
+    try:
+        d = parse_content(call_tool("get_styles", {})).get("json") or {}
+    except Exception as e:
+        print(f"  [effect-style] get_styles 실패: {e}")
+        _EFFECT_STYLE_MAP_CACHE = {}
+        return _EFFECT_STYLE_MAP_CACHE
+    idx = {}
+    for e in (d.get("effects") or []):
+        name = e.get("name") or ""
+        key = e.get("key")
+        if name and key:
+            idx[name] = key
+    _EFFECT_STYLE_MAP_CACHE = idx
+    return idx
+
+
+def _shadow_fingerprint(effects) -> Optional[tuple]:
+    """첫 DROP_SHADOW effect 의 (y, radius) 핑거프린트 추출. visible=False/INNER_SHADOW 는 무시."""
+    if not isinstance(effects, list):
+        return None
+    for ef in effects:
+        if not isinstance(ef, dict):
+            continue
+        if ef.get("type") != "DROP_SHADOW":
+            continue
+        if ef.get("visible") is False:
+            continue
+        off = ef.get("offset") or {}
+        y = off.get("y")
+        r = ef.get("radius")
+        if isinstance(y, (int, float)) and isinstance(r, (int, float)):
+            return (float(y), float(r))
+    return None
+
+
+def _match_ds_shadow(fp: tuple, style_map: dict) -> Optional[str]:
+    """fingerprint → 가장 가까운 DS Shadows/* 스타일 키. tolerance 없이 nearest 매칭."""
+    if not fp or not style_map:
+        return None
+    y, r = fp
+    best_name, best_d = None, float("inf")
+    for cy, cr, name in _DS_SHADOW_FINGERPRINTS:
+        # 라디우스 차이가 더 무겁게 작용 (시각적 임팩트가 큼)
+        d = ((y - cy) ** 2) + ((r - cr) ** 2) * 1.5
+        if d < best_d and name in style_map:
+            best_name, best_d = name, d
+    return best_name
+
+
+def _apply_ds_effect_styles(root_id: str) -> None:
+    """빌드된 트리의 모든 frame-like 노드에 DS Effect Style 자동 바인딩.
+
+    대상: 가시 DROP_SHADOW effect 를 가진 frame/component/instance 노드.
+    인스턴스 내부 노드(`I…;…`)는 건너뜀 (마스터/인스턴스가 자기 effectStyleId 보유).
+    fingerprint(첫 DROP_SHADOW 의 y_offset, radius) → 가장 가까운 Shadows/* 스타일에 매핑.
+    """
+    style_map = _load_effect_style_map()
+    if not style_map:
+        print("  [effect-style] DS effect style 인덱스 비어있음 — 건너뜀")
+        return
+    # Shadows/* 가 하나도 없으면 매핑 불가
+    if not any(n.startswith("Shadows/") for n in style_map.keys()):
+        print("  [effect-style] DS 에 Shadows/* effect style 없음 — 건너뜀")
+        return
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+    except Exception as e:
+        print(f"  [effect-style] 빌드 트리 조회 실패: {e}")
+        return
+    if not isinstance(items, list) or not items:
+        return
+    built = items[0].get("document") or items[0]
+
+    entries = []
+    stats = {"applied": 0, "instance_skip": 0, "no_effects": 0, "no_match": 0, "already_bound": 0}
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        ntype = node.get("type") or ""
+        if ntype in ("FRAME", "COMPONENT", "COMPONENT_SET", "INSTANCE", "RECTANGLE"):
+            nid = node.get("id") or ""
+            if ";" in nid:
+                stats["instance_skip"] += 1
+            else:
+                effects = node.get("effects")
+                # styles.effect 가 이미 채워져 있으면 skip (이미 스타일 바인딩 됨)
+                already = (node.get("styles") or {}).get("effect") or node.get("effectStyleId")
+                if already:
+                    stats["already_bound"] += 1
+                else:
+                    fp = _shadow_fingerprint(effects)
+                    if fp is None:
+                        if effects:
+                            stats["no_effects"] += 1
+                    else:
+                        name = _match_ds_shadow(fp, style_map)
+                        if name:
+                            key = style_map[name]
+                            entries.append({
+                                "nodeId": nid,
+                                "effectStyleId": f"S:{key},{root_id}",
+                                "_name": name,
+                            })
+                            stats["applied"] += 1
+                        else:
+                            stats["no_match"] += 1
+        for c in node.get("children", []) or []:
+            walk(c)
+
+    walk(built)
+    if not entries:
+        print(f"  [effect-style] 적용 0건 "
+              f"(스킵: instance {stats['instance_skip']} / already-bound {stats['already_bound']} / no-match {stats['no_match']})")
+        return
+
+    ok, fail = 0, 0
+    by_style = {}
+    for e in entries:
+        try:
+            call_tool("set_effect_style_id", {"nodeId": e["nodeId"], "effectStyleId": e["effectStyleId"]})
+            ok += 1
+            by_style[e["_name"]] = by_style.get(e["_name"], 0) + 1
+        except Exception as ex:
+            fail += 1
+            if fail <= 3:
+                print(f"  [effect-style] FAIL {e['nodeId']} ({e['_name']}): {ex}")
+    summary = ", ".join(f"{n.split('/')[-1]}×{c}" for n, c in sorted(by_style.items()))
+    print(f"  [effect-style] ✓ DS Effect Style 적용 {ok}건 ({summary})"
+          + (f" / 실패 {fail}건" if fail else "")
+          + f" (스킵: instance {stats['instance_skip']} / already-bound {stats['already_bound']} / no-match {stats['no_match']})")
 
 
 def cmd_auto_bind(root_node_id: str, blueprint_file: str):
@@ -2252,6 +3625,12 @@ def main():
             print("Usage: figma_mcp_client.py bind-text-styles <styles.json>")
             sys.exit(1)
         cmd_bind_text_styles(sys.argv[2])
+    elif cmd == "bind-effect-styles":
+        if len(sys.argv) < 3:
+            print("Usage: figma_mcp_client.py bind-effect-styles <rootNodeId>")
+            sys.exit(1)
+        ensure_session()
+        _apply_ds_effect_styles(sys.argv[2])
     elif cmd == "post-fix":
         if len(sys.argv) < 3:
             print("Usage: figma_mcp_client.py post-fix <rootNodeId>")

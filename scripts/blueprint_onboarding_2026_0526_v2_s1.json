@@ -1,0 +1,406 @@
+{
+  "name": "onboarding_v2_s1_2026_0526",
+  "rootName": "Onboarding v2 1/2 · 돈 모으기 힘들어요 (2026-0526)",
+  "type": "frame",
+  "width": 393,
+  "height": 852,
+  "fill": "$token(bg-primary)",
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "paddingTop": 0,
+    "paddingBottom": 0,
+    "paddingLeft": 0,
+    "paddingRight": 0,
+    "itemSpacing": 0
+  },
+  "discoverySource": "onboarding v2 — 좌절 감정 시각화, 액수 hero 차등 + 시간선",
+  "references": [
+    {
+      "section": "Emotional storytelling onboarding w/ progress",
+      "ref": "uibowl/toss/cm7k1iuc80058jy0cuo2zni7v.png",
+      "extract": "hero stat + sub copy + memory list with diminishing amounts (좌절 시각화)",
+      "_searchLog": {
+        "queries": ["온보딩 스토리텔링 감정", "온보딩 --app toss", "회원가입", "후기"],
+        "candidates": [
+          "uibowl/kakaopay/cmgnnd2j50005gy04dpx0012m.png (커뮤니티 동의 modal — 풀폭 brand pill CTA)",
+          "uibowl/kakaopay/cmgnnd2k10007gy04b3robat2.png (alert modal — side-by-side 취소/확인)",
+          "uibowl/kakaopay/cmgnnd2kq0009gy04pyejgg0q.png (프로필 만들어주세요 — back+title+input+풀폭 CTA)",
+          "uibowl/kakaopay/cmgnnd2le000bgy04tvkoa5e8.png (프로필 완성 confetti)",
+          "uibowl/kakaopay/cmgnnd2m2000dgy04busw85mp.png (프로필 완성 final)",
+          "uibowl/heydealer/cmliq1flb00f6jf04lmjboxyt.png (구매 후기 254 — brand-color key number)",
+          "uibowl/payhere/cmnfmw4vv0011le04a6nppl3v.png (splash — 멀티라인 hero title + 풀폭 brand pill)"
+        ],
+        "chosen": "uibowl/heydealer/cmliq1flb00f6jf04lmjboxyt.png + uibowl/payhere/cmnfmw4vv0011le04a6nppl3v.png",
+        "copyNotes": "검토 결과: 가용 레퍼런스는 모두 profile/splash/list pattern — narrative dual-choice 온보딩과 1:1 매칭은 0건. 도입한 패턴: (1) heydealer 의 brand-color key number → v2 의 hero amount/99.6% 동일 적용. (2) payhere 의 multi-line bold hero title → s1 의 '돈을 모으는 건\\n참 힘든 일이에요' 30px multi-line. (3) kakaopay end-of-row check badge → s1 '실패' outline pill / s2 check icon end-of-row 동일 패턴. Wireframe 의 dual-choice text 는 narrative 선택지로 wireframe-source 유지 (메모리 룰 wireframe_is_truth). 풀폭 brand pill CTA 패턴은 narrative 와 어울리지 않아 적용 보류."
+      }
+    }
+  ],
+  "children": [
+    {
+      "name": "Hero Block",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "paddingTop": 28,
+        "paddingBottom": 24,
+        "itemSpacing": 6
+      },
+      "children": [
+        {
+          "name": "step-tag",
+          "type": "text",
+          "characters": "STEP 1 · 솔직한 질문",
+          "fontSize": 11,
+          "fontWeight": 700,
+          "fontColor": "$token(text-tertiary)",
+          "letterSpacing": 1.5,
+          "layoutSizingHorizontal": "FILL"
+        },
+        {
+          "name": "Hero Title Row",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "MAX",
+            "paddingTop": 14,
+            "itemSpacing": 12
+          },
+          "children": [
+            {
+              "name": "Hero Title",
+              "type": "text",
+              "characters": "돈을 모으는 건\n참 힘든 일이에요.",
+              "fontSize": 30,
+              "fontWeight": 700,
+              "fontColor": "$token(text-primary)",
+              "lineHeight": 40,
+              "layoutSizingHorizontal": "FILL"
+            },
+            {
+              "name": "Hero Icon Wrap",
+              "type": "frame",
+              "width": 72,
+              "height": 72,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "cornerRadius": 999,
+              "fill": "$token(bg-secondary)",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {
+                  "name": "piggy-icon",
+                  "type": "icon",
+                  "iconName": "piggy-bank-01",
+                  "size": 40,
+                  "iconColor": "$token(fg-secondary)"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Progress Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "paddingTop": 0,
+        "paddingBottom": 0,
+        "itemSpacing": 6
+      },
+      "children": [
+        {"name": "Progress Seg 1", "type": "frame", "height": 4, "layoutSizingHorizontal": "FILL", "cornerRadius": 4, "fill": "$token(bg-tertiary)"},
+        {"name": "Progress Seg 2", "type": "frame", "height": 4, "layoutSizingHorizontal": "FILL", "cornerRadius": 4, "fill": "$token(bg-tertiary)"},
+        {"name": "Progress Seg 3", "type": "frame", "height": 4, "layoutSizingHorizontal": "FILL", "cornerRadius": 4, "fill": "$token(bg-tertiary)"}
+      ]
+    },
+
+    {
+      "name": "Memory Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "paddingTop": 36,
+        "paddingBottom": 0,
+        "itemSpacing": 14
+      },
+      "children": [
+        {
+          "name": "section-headline",
+          "type": "text",
+          "characters": "이런 적 있지 않으세요?",
+          "fontSize": 13,
+          "fontWeight": 600,
+          "fontColor": "$token(text-tertiary)",
+          "layoutSizingHorizontal": "FILL"
+        },
+        {
+          "name": "Memory Card 1",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "fill": "$token(bg-primary)",
+          "stroke": "$token(border-secondary)",
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "cornerRadius": 16,
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "paddingLeft": 18,
+            "paddingRight": 18,
+            "paddingTop": 16,
+            "paddingBottom": 16,
+            "itemSpacing": 14,
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "name": "m1-time",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "fill": "$token(bg-secondary)",
+              "cornerRadius": 999,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "paddingLeft": 10,
+                "paddingRight": 10,
+                "paddingTop": 4,
+                "paddingBottom": 4,
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {"name": "m1-time-text", "type": "text", "characters": "1년 전", "fontSize": 11, "fontWeight": 600, "fontColor": "$token(text-tertiary)"}
+              ]
+            },
+            {
+              "name": "m1-texts",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 4},
+              "children": [
+                {"name": "m1-amount", "type": "text", "characters": "1,000만원", "fontSize": 22, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                {"name": "m1-reason", "type": "text", "characters": "갑자기 사고 싶은 게 생겨서", "fontSize": 12, "fontWeight": 400, "fontColor": "$token(text-tertiary)"}
+              ]
+            },
+            {
+              "name": "m1-fail",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "layoutSizingVertical": "HUG",
+              "cornerRadius": 999,
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "paddingLeft": 8,
+                "paddingRight": 8,
+                "paddingTop": 4,
+                "paddingBottom": 4,
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 4
+              },
+              "children": [
+                {"name": "m1-fail-x", "type": "icon", "iconName": "x-close", "size": 10, "iconColor": "$token(fg-tertiary)"},
+                {"name": "m1-fail-text", "type": "text", "characters": "실패", "fontSize": 10, "fontWeight": 700, "fontColor": "$token(text-tertiary)"}
+              ]
+            }
+          ]
+        },
+
+        {
+          "name": "Memory Card 2",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "fill": "$token(bg-primary)",
+          "stroke": "$token(border-secondary)",
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "cornerRadius": 16,
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "paddingLeft": 18,
+            "paddingRight": 18,
+            "paddingTop": 16,
+            "paddingBottom": 16,
+            "itemSpacing": 14,
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "name": "m2-time",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "fill": "$token(bg-secondary)",
+              "cornerRadius": 999,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 10, "paddingRight": 10, "paddingTop": 4, "paddingBottom": 4, "counterAxisAlignItems": "CENTER"},
+              "children": [{"name": "m2-time-text", "type": "text", "characters": "2달 전", "fontSize": 11, "fontWeight": 600, "fontColor": "$token(text-tertiary)"}]
+            },
+            {
+              "name": "m2-texts",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 4},
+              "children": [
+                {"name": "m2-amount", "type": "text", "characters": "200만원", "fontSize": 22, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                {"name": "m2-reason", "type": "text", "characters": "이게 다 무슨 의미인가 싶어서", "fontSize": 12, "fontWeight": 400, "fontColor": "$token(text-tertiary)"}
+              ]
+            },
+            {
+              "name": "m2-fail",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "cornerRadius": 999,
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 8, "paddingRight": 8, "paddingTop": 4, "paddingBottom": 4, "counterAxisAlignItems": "CENTER", "itemSpacing": 4},
+              "children": [
+                {"name": "m2-fail-x", "type": "icon", "iconName": "x-close", "size": 10, "iconColor": "$token(fg-tertiary)"},
+                {"name": "m2-fail-text", "type": "text", "characters": "실패", "fontSize": 10, "fontWeight": 700, "fontColor": "$token(text-tertiary)"}
+              ]
+            }
+          ]
+        },
+
+        {
+          "name": "Memory Card 3",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "fill": "$token(bg-primary)",
+          "stroke": "$token(border-secondary)",
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "cornerRadius": 16,
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "paddingLeft": 18,
+            "paddingRight": 18,
+            "paddingTop": 16,
+            "paddingBottom": 16,
+            "itemSpacing": 14,
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "name": "m3-time",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "fill": "$token(bg-secondary)",
+              "cornerRadius": 999,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 10, "paddingRight": 10, "paddingTop": 4, "paddingBottom": 4, "counterAxisAlignItems": "CENTER"},
+              "children": [{"name": "m3-time-text", "type": "text", "characters": "1주일 전", "fontSize": 11, "fontWeight": 600, "fontColor": "$token(text-tertiary)"}]
+            },
+            {
+              "name": "m3-texts",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 4},
+              "children": [
+                {"name": "m3-amount", "type": "text", "characters": "50만원", "fontSize": 22, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                {"name": "m3-reason", "type": "text", "characters": "이유가 기억도 안 나게", "fontSize": 12, "fontWeight": 400, "fontColor": "$token(text-tertiary)"}
+              ]
+            },
+            {
+              "name": "m3-fail",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "cornerRadius": 999,
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 8, "paddingRight": 8, "paddingTop": 4, "paddingBottom": 4, "counterAxisAlignItems": "CENTER", "itemSpacing": 4},
+              "children": [
+                {"name": "m3-fail-x", "type": "icon", "iconName": "x-close", "size": 10, "iconColor": "$token(fg-tertiary)"},
+                {"name": "m3-fail-text", "type": "text", "characters": "실패", "fontSize": 10, "fontWeight": 700, "fontColor": "$token(text-tertiary)"}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Quote Block",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "paddingTop": 36,
+        "paddingBottom": 0,
+        "itemSpacing": 6
+      },
+      "children": [
+        {"name": "q1", "type": "text", "characters": "필요한 목돈은 늘 생기지만,", "fontSize": 15, "fontWeight": 500, "fontColor": "$token(text-secondary)", "layoutSizingHorizontal": "FILL"},
+        {"name": "q2", "type": "text", "characters": "혼자 만든 목표는 지키기가 어렵죠.", "fontSize": 15, "fontWeight": 700, "fontColor": "$token(text-primary)", "layoutSizingHorizontal": "FILL"}
+      ]
+    },
+
+    {
+      "name": "Bottom Choice Row",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "paddingTop": 28,
+        "paddingBottom": 32,
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "MIN",
+        "itemSpacing": 16
+      },
+      "children": [
+        {
+          "name": "Choice Left",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 4},
+          "children": [
+            {"name": "cl-line1", "type": "text", "characters": "아니요?", "fontSize": 15, "fontWeight": 500, "fontColor": "$token(text-tertiary)"},
+            {"name": "cl-line2", "type": "text", "characters": "전 늘 성공해요.", "fontSize": 15, "fontWeight": 500, "fontColor": "$token(text-tertiary)"}
+          ]
+        },
+        {
+          "name": "Choice Right",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 4, "counterAxisAlignItems": "MAX"},
+          "children": [
+            {"name": "cr-line1", "type": "text", "characters": "맞아요,", "fontSize": 16, "fontWeight": 700, "fontColor": "$token(text-primary)", "textAlignHorizontal": "RIGHT"},
+            {
+              "name": "cr-cta",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 6, "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {"name": "cr-line2", "type": "text", "characters": "매번 실패해요.", "fontSize": 16, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                {"name": "cr-arrow", "type": "icon", "iconName": "arrow-right", "size": 18, "iconColor": "$token(fg-primary)"}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

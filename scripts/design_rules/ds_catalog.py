@@ -376,7 +376,11 @@ def detect_button_shape(node: dict) -> Optional[Tuple[str, str, str]]:
         return None
     if _h_padding(node) < 8:
         return None
-    if _layout_mode(node) and _layout_mode(node) != "HORIZONTAL":
+    # CTA/Button 이름이 명시되면 layoutMode 무관 (VERTICAL 로 잘못 작성된 CTA 도 잡음 — 2026-05-24)
+    nl = name.lower()
+    is_named_cta = (nl.endswith("btn") or nl.endswith("button") or nl.startswith("cta ")
+                    or " cta" in f" {nl}" or "primary cta" in nl or "submit" in nl)
+    if not is_named_cta and _layout_mode(node) and _layout_mode(node) != "HORIZONTAL":
         return None
     # explicit height sanity — buttons aren't tall blocks
     h = node.get("height")

@@ -6,7 +6,7 @@
 
 아래 규칙은 **모든 디자인 생성/수정 시** 기본으로 적용한다. 위반하면 QA에서 반드시 실패한다.
 
-### ⚠️ 룰 0: 와이어프레임 1:1 복제 금지 + 컬러 단조로움 금지 (사용자 명시 2026-05-18)
+### ⚠️ 룰 0: 와이어프레임 1:1 복제 금지 + 색상 절제 (사용자 명시 2026-05-18, 색상 2026-05-22 갱신)
 > 가장 자주 지적받는 품질 문제. 와이어프레임을 입력으로 받아도 결과가 와이어프레임처럼 보이면 실패다.
 
 - **와이어프레임/PRD는 콘텐츠·정보 구조의 source일 뿐, 시각 레이아웃 청사진이 아니다.** 평면 배치(인라인 텍스트 나열, 단색 박스, 균일 카드)를 그대로 옮기지 말 것.
@@ -14,7 +14,7 @@
   - 핵심 수치 → 히어로 크기 (인라인 문장 → 큰 숫자 블록, 28px+ Bold)
   - 정보 → 카드·통계 미니블록으로 그룹화 (나열 금지)
   - 반복 요소 → 차등화 (1순위/강조 카드는 보더·그림자·랭크 뱃지로 구분)
-- **컬러 단조로움 금지**: 브랜드 단색 반복 금지. 시맨틱 액센트 2~3색(success 그린·warning 오렌지)을 의미에 맞게 — 태그/뱃지/상태/통계 강조/긍정·부정 지표에 운용.
+- **색상 — 절제된 단일 액센트 + 폴리시** (2026-05-23 갱신): 브랜드 컬러를 앱의 단일 일관 액센트로 의도된 여러 지점(주 액션·active 탭/네비·핵심 수치·중요 링크/아이콘)에 사용. 피드백(상태) 컬러는 미납·완료 등 진짜 상태 정보에만 소량·차분하게. 입체감(카드 그림자)·도형-배경 대비·타이포 위계로 폴리시 — 평면 그레이 박스만 나열하면 와이어프레임처럼 보임(금지). 자세히는 아래 '컬러' 규칙 참조.
 - 와이어프레임 = "무엇을", 에이전트 = "어떻게 보여줄지". "와이어프레임이랑 똑같다" 피드백 = 실패.
 
 ### ⚠️ 룰 0-B: 매 디자인은 새로 분석 — 이전 블루프린트/생성기 재사용 금지 (사용자 명시 2026-05-18)
@@ -82,6 +82,12 @@
 15. **배너형 CTA 카드(아이콘+텍스트+chevron 행)는 padding 16, spacing 16** — 계산기 배너, 프로모션 배너 등 아이콘+텍스트그룹+chevron을 한 줄로 배치하는 카드형 CTA는: `HORIZONTAL`, `SPACE_BETWEEN`, `CENTER`, **padding 16(전방향)**, **itemSpacing 16**, `cornerRadius: 16`. 텍스트 그룹은 반드시 `HUG` (FILL 금지 — rule 8 참조)
 16. **그림자(DROP_SHADOW) 카드는 부모 안에 그림자 여백 확보 (R42 자동 강제)** — 그림자 달린 카드/프레임은 부모 autoLayout 의 padding·itemSpacing 이 그림자 extent(`radius + spread + |offset|`, 보통 ~12px) 이상이어야 한다. 안 그러면 그림자가 인접 섹션의 불투명 배경에 덮여 잘려 보인다. **섹션 래퍼 `paddingBottom: 0` 금지** — 그림자 카드를 담으면 ≥ 그림자 extent. `R42` inject 가 빌드 전 자동 보정 + 조상 `clipsContent` 해제(가로 캐로셀 제외).
 17. **부모와 같은 색으로 채운 레이아웃 래퍼 프레임은 fill 제거 (R43 자동 강제)** — root 가 `bg-primary` 인데 그 위 섹션 래퍼도 `bg-primary` 로 채우면 중복이다. cornerRadius/stroke/effects 없는 순수 레이아웃 프레임은 부모와 같은 색이면 fill 을 넣지 말 것(투명 → 부모 배경이 비침). 카드(cornerRadius·stroke·그림자 중 하나라도 있음)는 독립 표면이므로 같은 색이라도 유지. `R43` inject 가 중복 fill 자동 제거.
+18. **카드 표면 = bg-primary + 보더 (2026-05-23 룰, `_enforce_card_surface` 자동 강제)** — 루트 위 최상위 카드는 `$token(bg-primary)` fill + `$token(border-secondary)` 1px 보더로 표면을 정의한다. `bg-secondary`(회색)로 채우지 말 것 — 흰 카드를 보더 + (자동 주입되는) subtle shadow 로 구분한다. 카드 안의 인셋·서브카드(`bg-secondary`/`bg-tertiary`)와 브랜드 컬러 카드는 대상 아님. **예외 — 맨 아래 Footer는 `bg-secondary` fill + 보더·그림자 없음**(페이지를 닫는 회색 띠, 카드 아님). `cmd_build` 의 `_enforce_card_surface` 가 최상위 그레이 카드 + Footer 를 자동 교정한다.
+19. **타이포 위계 = 크기·굵기 차이로 시각 리듬 (2026-05-23 룰, `_enforce_text_hierarchy` 자동 승격)** — 컬러가 절제될수록 위계는 폰트 크기·굵기로 만든다. 표준 type scale: HERO(카드 핵심 금액·수치) `28~36px Bold` / TITLE `22~26px Bold` / SECTION 헤더 `17~19px Bold` / BODY `14~16px Medium·SemiBold` / CAPTION `11~13px Medium·Regular fg-tertiary`. 같은 카드 안에 최소 3단계 이상 차이를 두고, HERO는 BODY의 2배 안팎. `cmd_build`의 `_enforce_text_hierarchy` 가 카드 안의 통화 hero(부호 `+/−` 또는 천단위 콤마 금액)를 30px Bold 로 자동 승격한다.
+20. **Modal 화면 패턴 (2026-05-24 룰, `_enforce_modal_pattern` 자동 강제)** — Full modal(홈 위로 슬라이드업되는 단일 화면)은 **상단 X 닫기 버튼만** 두고, 로고·알림·채팅 등 nav 아이콘 없음, **Footer 없음 · Tab Bar 없음 · 상단 Tab 메뉴 없음**. Blueprint root 에 `"_screenType": "modal"` 명시 시 `cmd_build` 의 `_enforce_modal_pattern` 이 Footer/Tab Bar/상단 탭(`Tab Row`/`Top Tab`/`Section Tab`)/non-X nav 아이콘 노드를 자동 제거하고 NavBar 를 우측 정렬한다.
+21. **정보 그룹 divider (2026-05-24 룰, `_enforce_section_dividers` 자동 삽입)** — 컬러가 절제되면 섹션 경계가 흐려진다. 타이틀 섹션과 서브 섹션, 서브 섹션끼리 사이에 **1px `border-secondary` divider** 를 두되 **위·아래 padding 20px** 으로 콘텐츠와 띄워서 표시한다(라인이 콘텐츠에 딱 붙으면 답답). `cmd_build` 의 `_enforce_section_dividers` 가 blueprint 루트의 직계 콘텐츠 섹션 사이에 `Section Divider` 컨테이너(VERTICAL, `paddingTop/Bottom: 20`, 투명 fill) + 내부 `Divider Line` 자식(FILL 가로, height 1, `fill: $token(border-secondary)`) 을 자동 삽입. Status Bar / NavBar / Bottom Action Bar / Tab Bar / Footer 같은 utility 프레임 사이에는 넣지 않는다. 재실행 안전.
+22. **루트 minHeight=852 + 하단 바 bottom-pin (2026-05-24 룰, `_enforce_root_min_height` 자동 강제)** — 루트 프레임 **min height = 852** (iPhone 16 뷰포트). 콘텐츠가 늘면 따라서 늘어남. 콘텐츠 합이 852 보다 짧을 때 화면에 고정된 하단 바(Bottom Action Bar / Tab Bar / CTA Bar / FAB) 는 **루트 하단(y = 852 - bar.height)** 에 bottom-align — 콘텐츠 끝에 떠서 붙지 않게 한다. `cmd_post_fix` 의 `_enforce_root_min_height` 가 루트 높이 < 852 일 때 852 로 늘리고, 이름에 `tab bar`/`tabbar`/`bottom action bar`/`action bar`/`cta bar`/`fab` 포함된 자식을 ABSOLUTE + bottom constraint MAX 로 재배치한다. 콘텐츠가 852 이상이면 손대지 않음.
+23. **하단 CTA = DS Action Button 인스턴스 우선 (2026-05-24 룰, R23 + `detect_button_shape` 자동 swap)** — Bottom Action Bar 의 Primary CTA / Submit Button 류는 **항상 DS `Action Button` 컴포넌트 인스턴스**로 만든다. raw frame 금지. DS 로 표현이 안 되는 특수 케이스에만 직접 그림. 사용 키: `Action Button md/sm Primary/Secondary/Tertiary/Outline/Ghost` (catalog `ds_catalog.py`). 대형 CTA = `Size: lg`, 비활성 = `State: Disabled` (variant 로 적용). 라벨은 `componentProperties` text override, 아이콘 토글(`⬅️ Icon leading` / `➡️ Icon trailing`) 기본 false. R23 inject 의 `detect_button_shape` 가 raw button frame 자동 swap; 2026-05-24 — name 에 `cta`/`button`/`submit` 포함 시 layoutMode 무관 인정 (VERTICAL CTA 도 잡힘). catalog 미스 시 build ERROR.
 
 ---
 
@@ -172,13 +178,11 @@
 - **아이콘 명도 대비 4:1 필수** — 색상 배경 위 아이콘은 반드시 흰색(#FFF) 사용. 검정/다크 아이콘을 컬러 배경에 올리면 대비 부족으로 안 보임
 - 대비 확인 기준: 짙은 배경(brand, dark gray 등) → 아이콘/텍스트 **흰색**, 연한 배경(gray-50, white 등) → 아이콘/텍스트 **다크**
 
-### 컬러 조화 규칙 (화면 단조로움 방지)
-- **중요 텍스트·기능·버튼은 Brand color** — CTA, 핵심 수치, 강조 라벨, active 탭 아이콘 등
-- **기본 톤은 Gray Modern** — 배경: `bg-primary`(white) / `bg-secondary`(gray-50), 텍스트: `fg-primary`(gray-900) / `fg-secondary`(gray-600) / `fg-tertiary`(gray-400), 보더: `border-secondary`(gray-200)
-- **2~3개 액센트 컬러 혼용 필수** — Brand 단색만 쓰면 단조로움. DS 토큰의 Error(빨강), Warning(주황), Success(초록) 등 Semantic color를 상황에 맞게 배치하여 시각적 리듬감 부여
-  - 예: 마감임박 배지 → Error red, 수익률/긍정 지표 → Success green, 신규/HOT 태그 → Warning orange
-  - 히어로 배너 배경 → `bg-brand-section` (짙은 brand), 카드 배경 → `bg-brand-primary` (연한 brand)
-- **동일 색상의 농도 변화로 깊이감** — bg-brand-primary(연) → bg-brand-secondary(중) → bg-brand-solid(진) 순으로 계층 표현
+### 컬러 — 절제된 단일 액센트 + 폴리시 (2026-05-23 갱신)
+- **베이스는 뉴트럴 그레이** — 배경 `bg-primary`/`bg-secondary`/`bg-tertiary`, 텍스트 `fg-primary`/`fg-secondary`/`fg-tertiary`, 보더 `border-secondary`. 단, 완전 무채색 평면은 금지.
+- **브랜드 컬러 = 앱의 단일 일관 액센트** — 주 액션(CTA)·active 탭/네비·핵심 수치·중요 링크/아이콘 등 의도된 여러 지점에 일관 사용. 거부된 건 "여러 색 난무"이지 브랜드 컬러 자체가 아니다. 모든 카드·태그·통계에 무분별하게 까는 것만 금지.
+- **피드백(상태) 컬러는 소량·차분하게** — 미납·완료·주의 등 진짜 상태 정보에만 success/warning/error 계열을 절제된 톤으로 소량. 장식·태그·통계 전반에 색을 까는 건 금지.
+- **폴리시 필수 (와이어프레임 탈피)** — 평평한 그레이 박스만 나열하면 와이어프레임처럼 보인다. 카드 그림자/elevation, 흰 카드 ↔ 연한 그레이 면의 도형-배경 대비, 강한 타이포 위계(히어로 수치 크게·Bold)로 "디자인된" 느낌을 만든다. `cmd_build`의 `_enforce_card_elevation`이 그림자 없는 카드에 자동으로 subtle shadow를 주입한다.
 
 ---
 
@@ -225,6 +229,7 @@
 - 바인딩 순서: ① Text Style (`set_text_style_id`) → ② Typography 변수 (fontSize, lineHeight) → ③ Radius 변수 → ④ Color 변수 (fills/0, strokes/0)
 - `set_bound_variables`로 바인딩: fontSize, lineHeight, cornerRadius(topLeftRadius 등), padding, itemSpacing, fills/0, strokes/0
 - `set_text_style_id`로 Text Style 바인딩 (Style ID 형식: `S:{key},{nodeId}`)
+- ⚙️ **자동화 (2026-05-24 복원)** — `cmd_build` 의 Step E.5.5 `_apply_ds_text_styles` 가 매 빌드 시 자동 실행: `get_styles().texts` 의 `(fontSize, weight bucket)` → styleKey 인덱스로 모든 TEXT 노드(인스턴스 내부 `I…;…` 제외)에 `set_text_style_id` 자동 적용. off-scale 사이즈는 ±3px 안 DS 스케일(12/14/16/18/20/24/30/36/48/60/72)로 snap. `batch_set_text_style_id` 는 무응답 사례가 확인돼 단일 호출 루프로 안정 적용한다. 이전(2026-05-22 머지)으로 사라진 기능을 복원한 것.
 
 ### ⚠️ TEXT 컬러는 `Colors/Text/text-*` 에 바인딩 (사용자 정책 2026-05-18)
 - **TEXT 노드의 fill 컬러는 `fg-*`가 아닌 `Colors/Text/text-*` 토큰에 바인딩한다**

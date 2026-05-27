@@ -501,6 +501,10 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
       if (node.lineHeight !== figma.mixed) info.lineHeight = node.lineHeight;
       if (node.letterSpacing !== figma.mixed) info.letterSpacing = node.letterSpacing;
       if (node.textAutoResize) info.textAutoResize = node.textAutoResize;
+      // 2026-05-24 — textStyleId 응답에 포함 (post-fix 검증용)
+      if (node.textStyleId !== undefined && node.textStyleId !== figma.mixed) {
+        info.textStyleId = node.textStyleId || "";
+      }
     } catch (e) { /* mixed text props */ }
   }
 
@@ -2937,6 +2941,11 @@ async function setAutoLayout(params) {
   // Configure layout mode
   if (layoutMode === "NONE") {
     node.layoutMode = "NONE";
+    // clipsContent도 NONE 케이스에서 처리해야 함 (R45 — 2026-05-24)
+    // 단순 wrapper frame(아이콘/divider)도 clipsContent 강제 변경 가능
+    if (clipsContent !== undefined) {
+      node.clipsContent = clipsContent;
+    }
   } else {
     // Set auto layout properties
     node.layoutMode = layoutMode;
@@ -3866,24 +3875,53 @@ async function setEffectStyleId(params) {
         throw new Error(`Node with ID ${nodeId} does not support effect styles`);
       }
 
-      // Try to validate the effect style exists before applying
-      console.log(`Fetching effect styles to validate style ID: ${effectStyleId}`);
+      // Remote/library style format: S:key,nodeId — mirror setTextStyleId pattern
+      var remoteMatch = effectStyleId.match(/^S:([^,]+),(.+)$/);
+      if (remoteMatch) {
+        var styleKey = remoteMatch[1];
+        console.log("Importing remote effect style with key: " + styleKey);
+        var importedStyle = await figma.importStyleByKeyAsync(styleKey);
+        if (!importedStyle) {
+          throw new Error("Failed to import remote effect style with key: " + styleKey);
+        }
+        console.log("Imported effect style: " + importedStyle.name + " (id: " + importedStyle.id + ")");
+        if (typeof node.setEffectStyleIdAsync === "function") {
+          await node.setEffectStyleIdAsync(importedStyle.id);
+        } else {
+          node.effectStyleId = importedStyle.id;
+        }
+        return {
+          id: node.id,
+          name: node.name,
+          effectStyleId: node.effectStyleId,
+          styleName: importedStyle.name,
+          appliedEffects: node.effects
+        };
+      }
+
+      // Local style fallback — accept either style.id or style.key
+      console.log(`Fetching local effect styles to validate style ID: ${effectStyleId}`);
       const effectStyles = await figma.getLocalEffectStylesAsync();
-      const foundStyle = effectStyles.find(style => style.id === effectStyleId);
+      const foundStyle = effectStyles.find(function(style) { return style.id === effectStyleId || style.key === effectStyleId; });
 
       if (!foundStyle) {
         throw new Error(`Effect style not found with ID: ${effectStyleId}. Available styles: ${effectStyles.length}`);
       }
 
-      console.log(`Effect style found, applying to node...`);
+      console.log(`Effect style "${foundStyle.name}" found, applying to node...`);
 
       // Apply the effect style to the node
-      node.effectStyleId = effectStyleId;
+      if (typeof node.setEffectStyleIdAsync === "function") {
+        await node.setEffectStyleIdAsync(foundStyle.id);
+      } else {
+        node.effectStyleId = foundStyle.id;
+      }
 
       return {
         id: node.id,
         name: node.name,
         effectStyleId: node.effectStyleId,
+        styleName: foundStyle.name,
         appliedEffects: node.effects
       };
     })();
