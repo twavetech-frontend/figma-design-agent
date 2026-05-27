@@ -344,6 +344,10 @@ FOOTER_REMEDIATION = (
 def _check(bp: dict, ctx: dict) -> Iterable[Violation]:
     if not _is_imin_home(bp):
         return
+    # 2026-05-27 — _wireframeContent dict 가 있으면 와이어가 명시된 케이스 → V20 canonical 우회.
+    # 와이어 콘텐츠가 V20 와 다를 수 있으므로 사용자 의도(와이어) 우선.
+    if isinstance(bp.get("_wireframeContent"), dict) and bp["_wireframeContent"]:
+        return
     found = _find_recommend_root(bp)
     if found:
         rec, rec_path = found

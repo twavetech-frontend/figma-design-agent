@@ -1,0 +1,67 @@
+{
+  "_description": "와이어프레임 17015:73113 (imin_home_1) 정밀 추출 — blueprint root._wireframeContent 에 그대로 박힘",
+  "section_1_1_navbar": {
+    "logo": "imin",
+    "icons": ["bell", "chat"]
+  },
+  "section_1_2_tabs": {
+    "active": "거래 현황",
+    "inactive": "누적 거래"
+  },
+  "section_1_3_progress_card": {
+    "header": "진행중인 0건의 스테이지 내역",
+    "row_collected_label": "모은 금액",
+    "row_collected_value": "+ 0원",
+    "row_borrowed_label": "빌린 금액",
+    "row_borrowed_value": "- 0원"
+  },
+  "section_1_3_day_strip": {
+    "day_1": "14일 수",
+    "day_1_amount": "0원",
+    "day_2": "15일 목",
+    "day_2_amount": "0원",
+    "day_3": "16일 금",
+    "day_3_amount": "0원",
+    "day_4_today": "17일 토",
+    "day_4_amount": "0원",
+    "day_5": "18일 일",
+    "day_5_amount": "0원",
+    "day_6": "19일 월",
+    "day_6_amount": "0원"
+  },
+  "section_1_3_calc_cta": {
+    "icon": "help",
+    "text": "얼마까지 모을 수 있는 지 확인해보세요."
+  },
+  "section_1_4_attendance_banner": {
+    "icon": "calendar",
+    "title": "연속 0일째 출석 체크 중",
+    "subtitle": "매일매일 출첵하면 특별한 혜택이!"
+  },
+  "section_1_5_recommend": {
+    "title": "추천 스테이지",
+    "monthly_pill": "10만원",
+    "period_pill": "13개월",
+    "round_selector": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"],
+    "round_active": "6",
+    "round_caption": "1회차",
+    "round_sub": "납입 후 목적 수령",
+    "goal_text": "총 1300만원 모으기 도전",
+    "view_all": "추천 전체 보기(13개)"
+  },
+  "section_1_6_stage_tabs": {
+    "tab1": "참여 중인 스테이지",
+    "tab2_active": "찜한 스테이지",
+    "placeholder_grid_count": 4,
+    "fab_icon": "bookmark"
+  },
+  "section_1_7_lounge": {
+    "title": "추천 상품 (라운지)",
+    "deposit": "예치금(포인트): 312,490원(100p)",
+    "card_count": 5
+  },
+  "section_1_8_tabbar": {
+    "tabs": ["홈", "라운지", "스테이지", "커뮤니티", "전체"],
+    "active": "홈"
+  }
+}

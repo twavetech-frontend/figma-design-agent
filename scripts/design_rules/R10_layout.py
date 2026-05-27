@@ -130,16 +130,28 @@ def _carousel_horizontal_check(bp: dict, ctx: dict) -> Iterable[Violation]:
 
 
 def _fab_pill_check(bp: dict, ctx: dict) -> Iterable[Violation]:
-    """R10.4 — FAB with text should be pill-shaped (width >= 100)."""
+    """R10.4 — FAB with text should be pill-shaped (width >= 100).
+
+    2026-05-27 — icon-only 56×56 표준이 추가됨 ([[feedback_fab_icon_only_standard]]).
+    width≈56 + cornerRadius>=28 (원형) 은 icon-only FAB → 허용. 그 외에 텍스트가
+    들어있는데 폭이 50<w<100 인 어중간한 경우만 pill 권장 WARN.
+    """
     for node, path in walk_blueprint(bp):
         if "FAB" not in node.get("name", ""):
             continue
         children = node.get("children", []) or []
         has_text = any(c.get("type") in ("text", "TEXT") for c in children)
-        if has_text and node.get("width", 0) < 100:
+        if not has_text:
+            continue
+        w = node.get("width", 0) or 0
+        cr = node.get("cornerRadius", 0) or 0
+        # icon-only 표준: 50<=w<=64 + cornerRadius>=24 (원형) — 통과
+        if 50 <= w <= 64 and cr >= 24:
+            continue
+        if w < 100:
             yield Violation(
                 "R10.4-fab-pill", Severity.WARN, path,
-                f"FAB has text but width={node.get('width', 0)} — pill (width>=100)",
+                f"FAB has text but width={w} — pill (width>=100) 또는 icon-only 56×56 + cornerRadius>=28",
                 Phase.LINT,
             )
 

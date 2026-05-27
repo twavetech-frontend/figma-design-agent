@@ -162,6 +162,54 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 ## 디자인 생성 필수 규칙
 
+> 🔴 **절대 규칙 0-E — 와이어프레임 콘텐츠 1:1 추출 의무 / archetype config 재사용 금지 (2026-05-27 사용자 분노)**
+>
+> 새 세션에서 와이어프레임을 받아 디자인을 빌드할 때, **와이어의 실제 텍스트/숫자/카운트
+> 를 그대로 빌드에 박는다.** v12 같은 이전 archetype 빌드의 config(`config_*.json`)를
+> 복사해 새 v13으로 재사용하지 말 것 — **콘텐츠가 v12 더미 데이터 그대로 박혀서 와이어 의도
+> 무시 + 사용자 격분**.
+>
+> **사례 (이번 회귀)**:
+> - 와이어: "진행중인 **0건**의 스테이지 내역 / 모은 금액 **+0원** / 빌린 금액 **-0원**"
+> - 빌드(v13=v12 reuse): "3건 / +14,420,320원 / -5,240,020원" (v12 더미 그대로)
+> - 와이어: Day Strip "**14~19일 6 cell × +0원**" / 빌드: "미납 28일/오늘 4일/지급 12일/예정 18일" (다른 컨셉)
+> - 와이어 1.5: "**10만원 stepper + 13개월 stepper + 1~13 회차 round selector + 1회차 + 납입 후 목적 수령 + 총 1300만원 모으기 도전**"
+> - 빌드: "예상 수령 금액/총 1,300만원/회차 stepper 3개" (1~13 round selector 누락)
+>
+> **워크플로우 — 무조건 이 순서**:
+> 1. **와이어 export** (`mcp__figma-tools__export_node_as_image`) → 사람이 읽을 수 있는 이미지
+> 2. **콘텐츠 추출 dict 작성** — 섹션별로 모든 텍스트/숫자/카운트/아이콘 종류를 추출:
+>    ```json
+>    {
+>      "1.3 진행 현황 카드": {
+>        "header": "진행중인 0건의 스테이지 내역",
+>        "more": "자세히 >",
+>        "rows": [{"label": "모은 금액", "value": "+0원"}, {"label": "빌린 금액", "value": "-0원"}],
+>        "dayStrip": ["14일", "15일", "16일", "17일(today)", "18일", "19일"],
+>        "dayValues": ["0원", "0원", "0원", "0원", "0원", "0원"],
+>        "calcCTA": "얼마까지 모을 수 있는 지 확인해보세요"
+>      },
+>      ...
+>    }
+>    ```
+> 3. **blueprint root._wireframeContent 필드에 dict 박기** — `cmd_build` Step E.6.5 의
+>    `_qa_wireframe_content_match` 가 blueprint TEXT characters 와 dict 매치 검증. 미스매치 ≥30% 시 build 차단
+> 4. **config 는 처음부터 작성** — `cp config_*.json` 금지. 와이어 dict 기반으로 새 config 작성
+> 5. 그 다음 assemble → build → post-fix → token bind → QA 2 pass
+>
+> **자동 강제 (코드 박힘)**:
+> 1. `figma_mcp_client.py cmd_build` Step E.0 `_check_no_archetype_reuse` (S22) —
+>    config 의 textual 패턴이 이전 빌드 산출물과 70%+ 일치 시 build 차단(ERROR)
+> 2. `cmd_build` Step E.0 `_check_wireframe_content_required` (S23) —
+>    imin_* archetype 빌드인데 root._wireframeContent dict 도 _wireframeContentSkipped 도
+>    없으면 build 차단(ERROR). bypass: `"_wireframeContentSkipped": "<reason>"`
+> 3. `cmd_build` Step E.6.5 `_qa_wireframe_content_match` —
+>    blueprint TEXT characters 가 root._wireframeContent dict 와 매치 검증. 30%+ 미스매치 시 WARN, 50%+ 시 ERROR
+>
+> **Why**: 새 세션 컨텍스트 부족 → "imin_home은 v12 있으니 base 가져가자" 본능 → 더미 데이터 박힘 → 사용자가 "와이어 무시"라고 분노. 시스템이 와이어 콘텐츠 추출을 강제하지 않으면 매번 새 세션마다 회귀.
+>
+> **참고**: 메모리 [feedback_no_wireframe_clone] 은 **시각 위계** 만 재해석하라는 뜻 — 카드 그림자/타이포/그룹화 같은 디자인 판단. **콘텐츠(텍스트/숫자/카운트)는 와이어 1:1**.
+
 > 🔴 **절대 규칙 0 — 루트 프레임(화면 최상위 프레임) 배경색은 반드시 `bg-primary`**
 >
 > 루트 프레임의 `fill`은 **무조건 `$token(bg-primary)`**(`#fcfcfd`, 거의 흰색)여야 한다.
@@ -241,6 +289,23 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **빌드 후 검증**: 루트 첫 자식이 INSTANCE `"Status Bar"`인지 확인.
 - 참고: "Styles" 페이지(`276:1882`)에 마스터 인스턴스가 있다 — Status Bar `279:4758`, 로고 `279:4757`. 자동 삽입이 안 되는 특수 상황에서만 `clone_node`(인스턴스는 clone해도 인스턴스 유지) 후 `insert_child`로 수동 삽입.
 
+### 2-H. ⚠️ 큰 면적 frame에 brand color 채우기 금지 (2026-05-27 사용자 명시)
+- **"추천 스테이지 섹션같이 버튼이 아니면서 면적이 큰 frame에 brand color를 채우지마!"**
+- 이전 룰 폐기 — "Recommend Brand Card = brand-solid hero" 패턴 (`bg-brand-solid` 보라색 큰 카드) 사용자 분노.
+- **새 표준**: 큰 카드 = `bg-primary` + `border-secondary` 1px. brand 는 **작은 액센트**(텍스트, 버튼 label, 작은 dot)만.
+- **사용자 reference 패턴** (17380:48334 분석):
+  - Recommend Brand Card: `bg-primary` 흰 + border (이전 brand-solid)
+  - Eyebrow / Headline: `text-primary` 다크 / `fg-secondary` (이전 fg-white)
+  - **숫자 hero** "1,300,000": `text-brand-primary` 보라 (강조)
+  - **CTA Primary** "참여하기": `bg-primary` + label brand
+  - Detail Card: `bg-secondary` 회색 (위계 역전 — 흰 hero 안 회색 inset)
+  - CTA Secondary: `fill=none` + label `text-tertiary`
+- **시스템 강제 (3단 박힘):**
+  1. `_enforce_no_large_brand_fill(blueprint)` — blueprint 단계: `$token(bg-brand-*)` + (cornerRadius≥12 ∧ children≥2 ∨ children≥3) frame 자동 `bg-primary` + border 교체
+  2. `_strip_large_brand_fills(root_id)` — 빌드 트리 단계: brand RGB heuristic + 면적 ≥ 100×60 frame 검출 + 교정
+  3. `cmd_post_fix` 끝에서 매 실행 자동 — 회귀 차단 (`_auto_fix_invisible_text` 가 내부 흰 텍스트 다크로 연쇄 fix)
+- **실측 검증**: brand card fill을 일부러 깨뜨린 후 post-fix → 1건 frame + 8건 텍스트 자동 회복 로그 확인.
+
 ### 2. ⚠️ 색상 — 절제된 단일 액센트 + 폴리시 (2026-05-23 갱신)
 - **브랜드 컬러는 앱의 단일 일관 액센트** — 주 액션(CTA)·active 탭/네비·핵심 수치·중요 링크/아이콘 등 **의도된 여러 지점**에 일관되게 사용한다. 회사가 거부한 건 "여러 색 난무"이지 브랜드 컬러 자체가 아니다. 단, 모든 카드·태그·통계에 무분별하게 깔지는 말 것.
 - **피드백(상태) 컬러는 소량·차분하게** — 미납·완료·주의 등 **진짜 상태 정보**에 한해 `success`/`warning`/`error` 계열을 절제된 톤으로 소량 사용 가능. 장식·태그·통계 전반에 색을 까는 건 금지.
@@ -289,17 +354,29 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - 콘텐츠 합이 852 보다 짧을 때, 화면에 고정된 하단 바(**Bottom Action Bar / Tab Bar / CTA Bar / FAB**) 는 **루트 하단(y = 852 - bar.height)에 bottom-align** — 콘텐츠 끝에 붙어 떠 있지 않게 한다.
 - **시스템 강제:** `cmd_post_fix` 의 `_enforce_root_min_height` (scripts/figma_mcp_client.py, 2026-05-24) — 루트 높이 < 852 시 852 로 늘리고, 이름에 `tab bar`/`tabbar`/`bottom action bar`/`action bar`/`cta bar`/`fab` 포함된 자식을 ABSOLUTE + bottom constraint MAX 로 새 루트 하단에 재배치. 콘텐츠가 852 보다 길면 손대지 않음 (콘텐츠 끝이 곧 바의 위치).
 
-### 2-E. ⚠️ 정보 그룹 divider — 섹션 사이에 가는 라인 (2026-05-24 룰)
-- 컬러가 절제되고 카드 톤이 단순화되면서 섹션 경계가 흐려진다 — **타이틀 섹션과 서브 섹션, 서브 섹션끼리** 사이에 1px `border-secondary` divider 를 둬서 정보 그룹을 시각 구분한다.
-- 적용 대상: 루트의 직계 정보 섹션 (콘텐츠 프레임). 제외: Status Bar / NavBar / Bottom Action Bar / Tab Bar / Footer 같은 utility 프레임. 즉 콘텐츠 섹션끼리만 divider 가 들어간다.
-- **divider는 콘텐츠와 띄워서 표시** — 라인 자체는 1px 이지만 **위·아래 padding 20px** 컨테이너로 감싼다(총 높이 ~41px). 콘텐츠가 라인에 딱 붙으면 답답하므로 padding 필수.
-- **시스템 강제:** `cmd_build`의 `_enforce_section_dividers` 가 blueprint 루트 children 을 훑어 연속한 콘텐츠 섹션 사이에 `Section Divider` 컨테이너(VERTICAL, `paddingTop/Bottom: 20`, 투명 fill) + 내부 `Divider Line` 자식(FILL 가로, height 1, `fill: $token(border-secondary)`) 을 자동 삽입. 이미 divider 가 있으면 스킵 (재실행 안전).
-- Blueprint 에서 명시적으로 두고 싶을 땐 위 구조 그대로 작성 (`Section Divider` 컨테이너 + 안에 `Divider Line` 자식). utility 프레임 사이에는 두지 말 것.
+### 2-E. ⛔ Section Divider 자동 삽입 폐기 (2026-05-27 사용자 명시)
+- **"frame에 border를 추가하라니깐 엉뚱하게 섹션 사이에 선을 넣고있냐!!!"** — 섹션 사이에 1px divider 라인 자동 삽입 금지. 이전(2026-05-24) 룰 폐기.
+- 정보 그룹 경계는 **카드 자체의 border** 로 표현한다 — `_enforce_white_card_border`(fill=`bg-primary` frame 에 `border-secondary` 1px 자동) + 카드별 stroke 토큰 바인딩이 담당.
+- **시스템 강제:** `_enforce_section_dividers` 는 폐기 (no-op + 입력 divider 노드 자동 제거). `cmd_post_fix` 끝에 `_strip_section_dividers` 가 빌드 트리의 모든 "Section Divider" 노드 자동 삭제 — 회귀 차단.
+- Blueprint 에 명시적으로 "Section Divider" 노드 작성하지 말 것. drop-shadow 도 함께 금지 ([[feedback_no_drop_shadow]] 참조).
 
 ### 3. Tab Bar 아이템은 반드시 FILL 균등 분배
 - Tab Bar 내 모든 아이템: `layoutSizingHorizontal: "FILL"`, `layoutSizingVertical: "FILL"`
 - HUG/FIXED 혼용 금지 — 아이템 간격이 불균등해짐
 - 빌드 후 반드시 Tab Bar 아이템 사이징 검증할 것
+
+### 5-B. ⚠️ 상단 모드 탭 = Underline Tab (RECTANGLE underline 자식, 2026-05-27 사용자 명시)
+- 이전 룰 폐기 — "white pill on grey track" (R29) 폐기. 새 표준은 **Underline Tab v2**.
+- **컨테이너 (Tabs Wrap)**: HORIZONTAL, `paddingLeft/Right=24`, `paddingBottom=8`, `itemSpacing=22`, `counterAxisAlignItems=MAX` (베이스라인 정렬), `fill=$token(bg-primary)`, `clipsContent=true`, `layoutSizingHorizontal=FILL`, `layoutSizingVertical=HUG`
+- **각 탭**: VERTICAL HUG×HUG, `paddingTop=16`, `itemSpacing=12`, `counterAxisAlignItems=CENTER`
+  - **label (TEXT)**: 16px / lineHeight 24px
+    - Active: Bold + `text-primary` 바인딩
+    - Inactive: Medium + `text-tertiary` 바인딩
+  - **underline (RECTANGLE)**: height 2.5, `layoutSizingHorizontal=FILL`, `layoutSizingVertical=FIXED`
+    - Active: `fill=$token(bg-brand-solid)`
+    - Inactive: 투명 (fill 없음) — 자리만 유지해 높이 일치
+- **레퍼런스 노드**: `17382:48541` (Mode Tabs). clone 후 라벨 override + 부모 swap 패턴 사용 가능.
+- 코드 강제: R29 폐기, blueprint 작성 시 위 구조 그대로. 별도 R 룰 미구현 — 메모리 [[feedback_underline_tab_v2]] 참조.
 
 ### 6. Underline Tab Active/Inactive 높이 일치 + Individual Stroke
 - Underline 스타일 탭에서 Active에는 Underline Bar(2px)가 있어 Inactive보다 높아짐

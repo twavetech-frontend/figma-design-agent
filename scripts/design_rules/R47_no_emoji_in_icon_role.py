@@ -84,6 +84,5 @@ register(Rule(
         "(💰🔍⭐ 등) 사용 금지. DS icon component 인스턴스 또는 Pretendard Bold "
         "ASCII (+, → 등) 만 허용. 2026-05-27 사용자 강력 명시."
     ),
-    check=_check,
-    severity=Severity.ERROR,
+    check_blueprint_fn=_check,
 ))

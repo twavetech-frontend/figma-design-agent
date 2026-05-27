@@ -1,9 +1,17 @@
-"""R29 — Segmented control must follow imin_home_v17 (사용자 결정형 레퍼런스).
+"""⛔ R29 — 2026-05-27 폐기. white pill on grey track 패턴 사용자 폐기.
 
-Project policy 2026-05-05: every Segmented Control / pill-tabs in this
-project must replicate the Home Tabs Wrap pattern in `imin_home_v17`
-(file 17037:3628). The pattern is intentionally minimal — a white pill
-floating on a grey track, NO additional decoration.
+새 룰: Underline Tab 패턴 ([[feedback_underline_tab_v2]]).
+사용자 reference 노드(Mode Tabs, file 17382:48541) 분석:
+- 컨테이너: HORIZONTAL, paddingLeft/Right=24, paddingBottom=8, itemSpacing=22,
+  counterAxisAlignItems=MAX, fill=bg-primary
+- 각 탭: VERTICAL HUG x HUG, paddingTop=16, itemSpacing=12, counterAxisAlignItems=CENTER
+  - label (TEXT): 16px Bold (active) / Medium (inactive),
+    text-primary / text-tertiary 바인딩
+  - underline (RECTANGLE): 2.5px, FILL horizontal, fill=bg-brand-solid (active) /
+    transparent (inactive)
+
+이 룰은 no-op 으로 남김 (이전 v17 white pill 패턴 강제 폐기).
+새 패턴 강제는 별도 R48 또는 메모리/CLAUDE.md 룰로 처리.
 
 Required pattern:
   Wrapper (VERTICAL, fill=bg-primary, padding 16/12)
@@ -126,9 +134,11 @@ def _check(bp: dict, ctx: dict) -> Iterable[Violation]:
                 break
 
 
-register(Rule(
-    rule_id="R29-segmented-control",
-    title="Segmented control follows imin_home_v17 pattern (white pill, no stroke)",
-    description="Active = bg-primary fill, fg-primary label, no border.",
-    check_blueprint_fn=_check,
-))
+# ⛔ 2026-05-27 폐기 — R29 white pill on grey track 룰 등록 해제.
+# 새 패턴(Underline Tab) 은 별도 룰/문서로 강제.
+# register(Rule(
+#     rule_id="R29-segmented-control",
+#     title="Segmented control follows imin_home_v17 pattern (white pill, no stroke)",
+#     description="Active = bg-primary fill, fg-primary label, no border.",
+#     check_blueprint_fn=_check,
+# ))
