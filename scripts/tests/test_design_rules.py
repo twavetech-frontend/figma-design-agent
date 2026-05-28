@@ -513,3 +513,59 @@ def test_s20_accepts_proper_references():
     errs = [v for v in vs if v.severity == Severity.ERROR
             and v.rule_id.startswith("S20")]
     assert not errs
+
+
+# ── R58 modal-no-home-sections — 모달에 홈 섹션 박힘 차단 (2026-05-28 사용자 반복 분노) ──
+
+def _modal(children, screen_type="modal", **root):
+    return {"name": "m", "type": "frame", "width": 393, "_screenType": screen_type,
+            "statusBar": True, "children": children, **root}
+
+
+def test_r58_blocks_tabbar_fab_footer_in_modal():
+    bp = _modal([
+        {"name": "NavBar", "type": "frame", "children": [{"name": "close-x", "type": "icon"}]},
+        {"name": "Tab Bar", "type": "frame", "children": []},
+        {"name": "FAB", "type": "frame", "children": []},
+        {"name": "Footer Policy", "type": "frame", "children": []},
+    ])
+    errs = [v for v in REGISTRY.run_lint(bp)
+            if v.severity == Severity.ERROR and v.rule_id.startswith("R58.1")]
+    assert len(errs) == 3  # tab bar + fab + footer
+
+
+def test_r58_blocks_home_sections_in_modal():
+    bp = _modal([
+        {"name": "Screen Hero", "type": "frame", "children": []},
+        {"name": "Recommend Stage Wrap", "type": "frame", "children": []},
+        {"name": "Lounge Section", "type": "frame", "children": []},
+    ])
+    errs = [v for v in REGISTRY.run_lint(bp)
+            if v.severity == Severity.ERROR and v.rule_id.startswith("R58.2")]
+    assert len(errs) == 3
+
+
+def test_r58_passes_clean_modal():
+    bp = _modal([
+        {"name": "NavBar", "type": "frame", "children": [{"name": "close-x", "type": "icon"}]},
+        {"name": "Stage Detail Card", "type": "frame", "children": []},
+        {"name": "Schedule Calendar Card", "type": "frame", "children": []},
+    ])
+    errs = [v for v in REGISTRY.run_lint(bp) if v.rule_id.startswith("R58")]
+    assert not errs
+
+
+def test_r58_ignores_non_modal_home():
+    bp = {"name": "home", "type": "frame", "width": 393, "statusBar": True, "children": [
+        {"name": "Tab Bar", "type": "frame", "children": []},
+        {"name": "FAB", "type": "frame", "children": []},
+    ]}
+    errs = [v for v in REGISTRY.run_lint(bp) if v.rule_id.startswith("R58")]
+    assert not errs
+
+
+def test_r58_allowlist_bypass():
+    bp = _modal([{"name": "Lounge Section", "type": "frame", "children": []}],
+                _modalAllowSections=["Lounge Section"])
+    errs = [v for v in REGISTRY.run_lint(bp) if v.rule_id.startswith("R58")]
+    assert not errs

@@ -1,0 +1,403 @@
+{
+  "rootName": "stage_recommend_modal",
+  "name": "stage_recommend_modal",
+  "type": "frame",
+  "width": 393,
+  "_screenType": "modal",
+  "fill": "$token(bg-primary)",
+  "_wireframeContent": {
+    "header": {"close": "X"},
+    "title": {"line1": "잠깐!", "line2": "더 받는 스테이지 어떠세요?"},
+    "추천 스테이지": {
+      "section_title": "추천 스테이지",
+      "badge": "5",
+      "amount": "200만원 (5순번)",
+      "remaining": "1명 남음",
+      "rows": [
+        {"label": "실 이자", "delta": "▲4,210원", "value": "10,530원"},
+        {"label": "포인트", "value": "0P"},
+        {"label": "기프티콘", "value": "0개"}
+      ]
+    },
+    "내가 선택한 스테이지": {
+      "section_title": "내가 선택한 스테이지",
+      "badge": "5",
+      "amount": "200만원 (4순번)",
+      "remaining": "2명 남음",
+      "rows": [
+        {"label": "실 이자", "value": "6,320원"},
+        {"label": "포인트", "value": "0P"},
+        {"label": "기프티콘", "value": "0개"}
+      ]
+    },
+    "cta": "스테이지 참여하기"
+  },
+  "references": [
+    {
+      "app": "toss",
+      "section": "비교 카드 모달 — 제목 + 카드 2개 + 풀폭 CTA",
+      "ref": "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png",
+      "thumbPath": "scripts/ref_thumbnails/cm7k1itvy003wjy0csv1fjcv4.png",
+      "extract": "큰 Bold 2줄 제목(24px) + 카드 cornerRadius 16~20 padding 20 + 풀폭 라운드 CTA 중앙 흰 라벨. 카드 안 label(grey) ↔ value(우측 Bold) 정렬, 섹션 간격 24.",
+      "copyNotes": "제목 24 Bold 2줄 + 카드 padding 20 cornerRadius 16 + label-value SPACE_BETWEEN row + 풀폭 CTA. 본 모달 추천/선택 카드 + CTA 에 적용.",
+      "_searchLog": {
+        "queries": ["toss 비교 카드", "toss 선택 모달", "toss 제목 CTA"],
+        "candidates": ["uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png", "uibowl/toss/cm7k1itwb003yjy0cj2xhoy5x.png", "uibowl/toss/e71t78p94toqxa3prlofk58g.png"],
+        "chosen": "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png",
+        "copyNotes": "제목 + 카드 label-value row + 풀폭 CTA 위계 카피"
+      }
+    },
+    {
+      "app": "toss",
+      "section": "리스트 카드 row — label grey + value Bold 우측",
+      "ref": "uibowl/toss/cm7k1itwb003yjy0cj2xhoy5x.png",
+      "thumbPath": "scripts/ref_thumbnails/cm7k1itwb003yjy0cj2xhoy5x.png",
+      "extract": "흰 카드 안 row = 라벨 14 grey 좌 + 값 16~18 Bold 우. 상태/변동은 작은 색 pill. cornerRadius 16, 행 간격 12.",
+      "copyNotes": "label-value row 위계(grey 좌 / Bold 우) + 변동 작은 색 표식(▲ 빨강) 카피. 본 모달 실이자/포인트/기프티콘 row 에 적용.",
+      "_searchLog": {
+        "queries": ["toss 카드 row 금액", "toss 변동 표식", "toss 리스트 라벨 값"],
+        "candidates": ["uibowl/toss/cm7k1itwb003yjy0cj2xhoy5x.png", "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png", "uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png"],
+        "chosen": "uibowl/toss/cm7k1itwb003yjy0cj2xhoy5x.png",
+        "copyNotes": "label-value row + 변동 색 표식 위계 카피"
+      }
+    }
+  ],
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "itemSpacing": 24,
+    "paddingTop": 8,
+    "paddingBottom": 24,
+    "paddingLeft": 20,
+    "paddingRight": 20
+  },
+  "children": [
+    {
+      "name": "NavBar",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "height": 40,
+      "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "MAX", "counterAxisAlignItems": "CENTER", "paddingTop": 4, "paddingBottom": 4},
+      "children": [
+        {"name": "close-x", "type": "icon", "iconName": "x-close", "size": 24, "iconColor": "$token(fg-primary)"}
+      ]
+    },
+    {
+      "name": "Title Block",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 8, "counterAxisAlignItems": "MIN"},
+      "children": [
+        {
+          "name": "Title Row 1",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "layoutSizingVertical": "HUG",
+          "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 10},
+          "children": [
+            {"name": "title-1", "type": "text", "characters": "잠깐!", "fontSize": 26, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+            {
+              "name": "Won Circle",
+              "type": "frame",
+              "width": 34, "height": 34,
+              "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+              "cornerRadius": 17,
+              "fill": {"r": 0.61, "g": 0.64, "b": 0.69, "a": 1},
+              "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {"name": "won", "type": "text", "characters": "₩", "fontSize": 18, "fontWeight": 700, "fill": "$token(fg-light)", "fontColor": "$token(fg-light)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT", "textAlignHorizontal": "CENTER"}
+              ]
+            }
+          ]
+        },
+        {"name": "title-2", "type": "text", "characters": "더 받는 스테이지 어떠세요?", "fontSize": 26, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "FILL", "textAutoResize": "HEIGHT"}
+      ]
+    },
+    {
+      "name": "Recommend Option Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 12, "counterAxisAlignItems": "MIN"},
+      "children": [
+        {"name": "sec-title-1", "type": "text", "characters": "추천 스테이지", "fontSize": 18, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+        {
+          "name": "Recommend Option Card",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "fill": "$token(bg-primary)",
+          "cornerRadius": 16,
+          "strokeColor": "$token(border-secondary)",
+          "strokeWeight": 1,
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 16, "paddingTop": 20, "paddingBottom": 20, "paddingLeft": 20, "paddingRight": 20, "counterAxisAlignItems": "MIN"},
+          "children": [
+            {
+              "name": "Card Top Row",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER", "itemSpacing": 8},
+              "children": [
+                {
+                  "name": "Top Left",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 10},
+                  "children": [
+                    {
+                      "name": "Seq Circle",
+                      "type": "frame",
+                      "width": 28, "height": 28,
+                      "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 14,
+                      "fill": {"r": 0.61, "g": 0.64, "b": 0.69, "a": 1},
+                      "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+                      "children": [{"name": "seq-num", "type": "text", "characters": "5", "fontSize": 14, "fontWeight": 700, "fill": "$token(fg-light)", "fontColor": "$token(fg-light)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT", "textAlignHorizontal": "CENTER"}]
+                    },
+                    {"name": "amount", "type": "text", "characters": "200만원 (5순번)", "fontSize": 17, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                  ]
+                },
+                {
+                  "name": "Top Right",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 6},
+                  "children": [
+                    {
+                      "name": "Remain Count",
+                      "type": "frame",
+                      "width": 24, "height": 24,
+                      "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 12,
+                      "fill": {"r": 1, "g": 1, "b": 1, "a": 0},
+                      "strokeColor": "$token(border-primary)",
+                      "strokeWeight": 2,
+                      "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+                      "children": [{"name": "remain-num", "type": "text", "characters": "1", "fontSize": 12, "fontWeight": 700, "fill": "$token(text-secondary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT", "textAlignHorizontal": "CENTER"}]
+                    },
+                    {"name": "remain-label", "type": "text", "characters": "명 남음", "fontSize": 14, "fontWeight": 500, "fill": "$token(text-secondary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Row Interest",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER", "itemSpacing": 8},
+              "children": [
+                {
+                  "name": "Interest Left",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 8},
+                  "children": [
+                    {"name": "interest-label", "type": "text", "characters": "실 이자", "fontSize": 15, "fontWeight": 500, "fill": "$token(text-secondary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                    {
+                      "name": "Delta Box",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                      "cornerRadius": 6,
+                      "fill": "$token(bg-error-secondary)",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 2, "paddingTop": 3, "paddingBottom": 3, "paddingLeft": 8, "paddingRight": 8},
+                      "children": [
+                        {"name": "delta", "type": "text", "characters": "▲ 4,210원", "fontSize": 12, "fontWeight": 600, "fill": "$token(text-error-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Interest Value",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 3},
+                  "children": [
+                    {"name": "interest-val", "type": "text", "characters": "10,530", "fontSize": 18, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                    {"name": "interest-unit", "type": "text", "characters": "원", "fontSize": 14, "fontWeight": 500, "fill": "$token(text-tertiary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Row Point",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER", "itemSpacing": 8},
+              "children": [
+                {"name": "point-label", "type": "text", "characters": "포인트", "fontSize": 15, "fontWeight": 500, "fill": "$token(text-secondary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                {
+                  "name": "Point Value",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 3},
+                  "children": [
+                    {"name": "point-val", "type": "text", "characters": "0", "fontSize": 18, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                    {"name": "point-unit", "type": "text", "characters": "P", "fontSize": 14, "fontWeight": 500, "fill": "$token(text-tertiary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Row Gifticon",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER", "itemSpacing": 8},
+              "children": [
+                {"name": "gift-label", "type": "text", "characters": "기프티콘", "fontSize": 15, "fontWeight": 500, "fill": "$token(text-secondary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                {
+                  "name": "Gift Value",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 3},
+                  "children": [
+                    {"name": "gift-val", "type": "text", "characters": "0", "fontSize": 18, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                    {"name": "gift-unit", "type": "text", "characters": "개", "fontSize": 14, "fontWeight": 500, "fill": "$token(text-tertiary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Selected Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 12, "counterAxisAlignItems": "MIN"},
+      "children": [
+        {"name": "sec-title-2", "type": "text", "characters": "내가 선택한 스테이지", "fontSize": 18, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+        {
+          "name": "Selected Option Card",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "fill": "$token(bg-primary)",
+          "cornerRadius": 16,
+          "strokeColor": "$token(border-brand)",
+          "strokeWeight": 1.5,
+          "_selectedHighlight": true,
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 16, "paddingTop": 20, "paddingBottom": 20, "paddingLeft": 20, "paddingRight": 20, "counterAxisAlignItems": "MIN"},
+          "children": [
+            {
+              "name": "Card Top Row",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER", "itemSpacing": 8},
+              "children": [
+                {
+                  "name": "Top Left",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 10},
+                  "children": [
+                    {
+                      "name": "Seq Circle",
+                      "type": "frame",
+                      "width": 28, "height": 28,
+                      "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 14,
+                      "fill": "$token(bg-brand-solid)",
+                      "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+                      "children": [{"name": "seq-num", "type": "text", "characters": "5", "fontSize": 14, "fontWeight": 700, "fill": "$token(fg-light)", "fontColor": "$token(fg-light)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT", "textAlignHorizontal": "CENTER"}]
+                    },
+                    {"name": "amount", "type": "text", "characters": "200만원 (4순번)", "fontSize": 17, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                  ]
+                },
+                {
+                  "name": "Top Right",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 6},
+                  "children": [
+                    {
+                      "name": "Remain Count",
+                      "type": "frame",
+                      "width": 24, "height": 24,
+                      "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 12,
+                      "fill": {"r": 1, "g": 1, "b": 1, "a": 0},
+                      "strokeColor": "$token(border-primary)",
+                      "strokeWeight": 2,
+                      "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+                      "children": [{"name": "remain-num", "type": "text", "characters": "2", "fontSize": 12, "fontWeight": 700, "fill": "$token(text-secondary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT", "textAlignHorizontal": "CENTER"}]
+                    },
+                    {"name": "remain-label", "type": "text", "characters": "명 남음", "fontSize": 14, "fontWeight": 500, "fill": "$token(text-secondary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Row Interest",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER", "itemSpacing": 8},
+              "children": [
+                {"name": "interest-label", "type": "text", "characters": "실 이자", "fontSize": 15, "fontWeight": 500, "fill": "$token(text-secondary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                {
+                  "name": "Interest Value",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 3},
+                  "children": [
+                    {"name": "interest-val", "type": "text", "characters": "6,320", "fontSize": 18, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                    {"name": "interest-unit", "type": "text", "characters": "원", "fontSize": 14, "fontWeight": 500, "fill": "$token(text-tertiary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Row Point",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER", "itemSpacing": 8},
+              "children": [
+                {"name": "point-label", "type": "text", "characters": "포인트", "fontSize": 15, "fontWeight": 500, "fill": "$token(text-secondary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                {
+                  "name": "Point Value",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 3},
+                  "children": [
+                    {"name": "point-val", "type": "text", "characters": "0", "fontSize": 18, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                    {"name": "point-unit", "type": "text", "characters": "P", "fontSize": 14, "fontWeight": 500, "fill": "$token(text-tertiary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Row Gifticon",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER", "itemSpacing": 8},
+              "children": [
+                {"name": "gift-label", "type": "text", "characters": "기프티콘", "fontSize": 15, "fontWeight": 500, "fill": "$token(text-secondary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                {
+                  "name": "Gift Value",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG", "layoutSizingVertical": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER", "itemSpacing": 3},
+                  "children": [
+                    {"name": "gift-val", "type": "text", "characters": "0", "fontSize": 18, "fontWeight": 700, "fill": "$token(text-primary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"},
+                    {"name": "gift-unit", "type": "text", "characters": "개", "fontSize": 14, "fontWeight": 500, "fill": "$token(text-tertiary)", "layoutSizingHorizontal": "HUG", "textAutoResize": "WIDTH_AND_HEIGHT"}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CTA",
+      "type": "instance",
+      "componentKey": "ed0032bcf28f03da97e4b3006f54d30a0fbe5914",
+      "layoutSizingHorizontal": "FILL",
+      "_instanceText": "스테이지 참여하기",
+      "properties": {"Size": "lg", "label": "스테이지 참여하기"}
+    }
+  ]
+}

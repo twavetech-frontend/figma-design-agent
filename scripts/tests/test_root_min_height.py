@@ -25,7 +25,12 @@ _SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 
-from figma_mcp_client import _should_use_bab_normal_flow, ROOT_MIN_HEIGHT  # noqa: E402
+from figma_mcp_client import (  # noqa: E402
+    _should_use_bab_normal_flow,
+    ROOT_MIN_HEIGHT,
+    _is_hug_screen_type,
+    _screen_type_from_blueprint,
+)
 
 
 # ── Regression case ────────────────────────────────────────────────
@@ -105,3 +110,41 @@ def test_must_compare_total_not_content_only():
     assert _should_use_bab_normal_flow(700, [200]) is True
     # content 단독으론 852 초과이지만 BAB 빼면 미만 — 어떻든 B 케이스
     assert _should_use_bab_normal_flow(900, [0]) is True
+
+
+# ── Modal / bottom-sheet → root HUG (2026-05-28) ────────────────────
+# 🔴 회귀 방지 — "또 컨텐츠가 다 안보인 상태에서 잘려있다 ... 시스템에 박아".
+# 모달 root 가 FIXED 면 후속 height 증가 시 하단 clip. screen_type 이 모달 계열이면
+# _enforce_root_min_height 가 A/B 분기 전에 root HUG 로 강제 + return 해야 한다.
+
+def test_modal_screen_types_use_hug():
+    """modal / bottom-sheet 계열은 모두 HUG 강제 대상."""
+    assert _is_hug_screen_type("modal") is True
+    assert _is_hug_screen_type("bottom-sheet") is True
+    assert _is_hug_screen_type("bottomsheet") is True
+    assert _is_hug_screen_type("bottom_sheet") is True
+    # 대소문자/공백 robust
+    assert _is_hug_screen_type(" Modal ") is True
+    assert _is_hug_screen_type("BOTTOM-SHEET") is True
+
+
+def test_non_modal_screen_types_not_hug():
+    """일반 화면(빈 문자열/None/full screen)은 HUG 대상 아님 — A/B 분기 그대로."""
+    assert _is_hug_screen_type("") is False
+    assert _is_hug_screen_type(None) is False
+    assert _is_hug_screen_type("screen") is False
+    assert _is_hug_screen_type("home") is False
+
+
+def test_screen_type_extracted_from_blueprint():
+    """_screenType / screenType 키 모두 인식 (소문자 정규화)."""
+    assert _screen_type_from_blueprint({"_screenType": "modal"}) == "modal"
+    assert _screen_type_from_blueprint({"screenType": "Bottom-Sheet"}) == "bottom-sheet"
+    assert _screen_type_from_blueprint({}) == ""
+    assert _screen_type_from_blueprint(None) == ""
+
+
+def test_modal_blueprint_round_trips_to_hug():
+    """blueprint → screen_type → HUG 판정까지 연결 (end-to-end 순수 경로)."""
+    bp = {"_screenType": "modal", "rootName": "transaction_schedule_modal"}
+    assert _is_hug_screen_type(_screen_type_from_blueprint(bp)) is True

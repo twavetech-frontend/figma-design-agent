@@ -1,0 +1,1007 @@
+{
+  "_note": "선택 노드 17015:73114 (기획 디스크립션 #1 - 거래 스케줄 화면). Modal full-screen. tabBar/FAB inherit 금지 (메모리 feedback_wireframe_is_truth). 와이어 1:1 콘텐츠 — empty 시나리오 그대로 (modal 은 archetype_specs 미적용이라 HARD_fill_mock 안 됨).",
+  "name": "transaction_schedule_modal",
+  "type": "frame",
+  "_screenType": "modal",
+  "_wireframeContent": {
+    "1.1 헤더": {
+      "closeOnly": "X 우상단"
+    },
+    "1.3 진행 현황 카드": {
+      "header": "진행중인 0건의 스테이지 내역",
+      "rows": [
+        {
+          "label": "모은 금액",
+          "value": "+ 0원"
+        },
+        {
+          "label": "빌린 금액",
+          "value": "- 0원"
+        }
+      ],
+      "badges": [
+        "인증사용자가 되면 다른 사용자에게 보여요.",
+        "현재 기준 신납 건이 1건 이상 있으면 '클린사용자' 가 되고 다른 사용자에게 보여요."
+      ]
+    },
+    "1.6 거래 스케줄 캘린더": {
+      "title": "거래 스케줄",
+      "months": [
+        "Oct",
+        "Nov",
+        "Dec",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr"
+      ],
+      "activeMonth": "Jan",
+      "activeLabel": "이번달",
+      "filter": "납입 ▼",
+      "summary": [
+        {
+          "label": "월 납입액",
+          "value": "0원"
+        },
+        {
+          "label": "납입 완료액",
+          "value": "0원"
+        },
+        {
+          "label": "남은 납입액",
+          "value": "0원"
+        }
+      ],
+      "period": "2026년 1월",
+      "count": "총 0건",
+      "emptyTitle": "납입할 금액이 없습니다.",
+      "emptyCTA": "아임인과 함께 목돈 모으기를 시작해보세요."
+    }
+  },
+  "_repetitionAllowed": "Modal 단일 컨텍스트 — month strip 7개는 와이어 명세",
+  "width": 393,
+  "fill": "$token(bg-primary)",
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "primaryAxisSizingMode": "AUTO",
+    "counterAxisSizingMode": "FIXED",
+    "paddingTop": 0,
+    "paddingBottom": 32,
+    "itemSpacing": 0,
+    "primaryAxisAlignItems": "MIN",
+    "counterAxisAlignItems": "MIN"
+  },
+  "layoutSizingHorizontal": "FIXED",
+  "layoutSizingVertical": "HUG",
+  "references": [
+    {
+      "app": "toss",
+      "section": "1.1 NavBar X / 1.3 카드 위계",
+      "ref": "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png",
+      "thumbPath": "scripts/ref_thumbnails/cm7k1itvy003wjy0csv1fjcv4.png",
+      "extract": "흰 카드 hero: 일러스트 + 굵은 한글 hero 2줄 + brand-gradient pill CTA. 닫기 X 우상단 회색 원. 자산 행: 금액 hero(왼쪽) + 라벨(아래) + 우측 트레일링 pill.",
+      "copyNotes": "1.1 NavBar 우상단 X 닫기 (회색 원 패턴). 1.3 카드: 흰 surface + border, header bold + summary rows (라벨 좌·금액 우 reverse), badge 보조 텍스트 dot 아이콘. 카드 위계 명확.",
+      "_searchLog": {
+        "queries": [
+          "toss modal 닫기",
+          "toss X close button",
+          "toss 카드 위계"
+        ],
+        "candidates": [
+          "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png",
+          "uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png",
+          "uibowl/toss/cm7k1ityy0042jy0c1h55iy98.png"
+        ],
+        "chosen": "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png",
+        "copyNotes": "Modal NavBar X(우상단) + Hero card pattern. 카드 안 라벨/값 reverse stack, badge 안내."
+      }
+    },
+    {
+      "app": "toss",
+      "section": "1.6 Month strip / filter pill / summary 3-col",
+      "ref": "uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png",
+      "thumbPath": "scripts/ref_thumbnails/cm7k1itym0040jy0ctugpfpp1.png",
+      "extract": "자산 리스트가 한 큰 회색 카드 안에 다 들어감. 행마다 작은 아바타 + 금액 hero + 보조 라벨. 트레일링 송금 pill 또는 송금 없음.",
+      "copyNotes": "1.6 Calendar Section: month strip (7 cells gap balanced)+ Jan active 회색 원 + 이번달 보조 라벨. Summary 3-col row: 라벨 위 / 값 hero 아래 / 균등 분할. bg-secondary 회색 카드 안 wrap.",
+      "_searchLog": {
+        "queries": [
+          "toss 캘린더 월 strip",
+          "toss 3 column summary",
+          "toss 회색 카드 grouping"
+        ],
+        "candidates": [
+          "uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png",
+          "uibowl/toss/cm7k1itwb003yjy0cj2xhoy5x.png",
+          "uibowl/toss/x775bsvobrcl4ezbo3urt9i7.png"
+        ],
+        "chosen": "uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png",
+        "copyNotes": "Group 안 reverse stack (라벨→값 hero). 회색 surface 안 3-col grid. Active cell = 회색 원 + 이번달 caption."
+      }
+    },
+    {
+      "app": "toss",
+      "section": "1.6 empty state + CTA",
+      "ref": "uibowl/toss/cm7k1ityy0042jy0c1h55iy98.png",
+      "thumbPath": "scripts/ref_thumbnails/cm7k1ityy0042jy0c1h55iy98.png",
+      "extract": "하단 segmented control + 빈 상태 시 행 안 시맨틱 컬러 변동 표시.",
+      "copyNotes": "Empty state center 정렬 본문 + brand-colored 링크 텍스트 underline. 작은 회색 보조 텍스트 + 강조 brand 링크 한 줄.",
+      "_searchLog": {
+        "queries": [
+          "toss empty state",
+          "toss CTA underline link",
+          "toss 시맨틱 컬러"
+        ],
+        "candidates": [
+          "uibowl/toss/cm7k1ityy0042jy0c1h55iy98.png",
+          "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png",
+          "uibowl/toss/cm7k1itwb003yjy0cj2xhoy5x.png"
+        ],
+        "chosen": "uibowl/toss/cm7k1ityy0042jy0c1h55iy98.png",
+        "copyNotes": "Empty state: 본문 회색 중앙 + brand link underline. 정보 위계 평이하게."
+      }
+    }
+  ],
+  "children": [
+    {
+      "name": "NavBar",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisAlignItems": "MAX",
+        "counterAxisAlignItems": "CENTER",
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingTop": 14,
+        "paddingBottom": 14,
+        "itemSpacing": 0
+      },
+      "children": [
+        {
+          "name": "Close Icon Wrap",
+          "type": "frame",
+          "width": 40,
+          "height": 40,
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "FIXED",
+          "cornerRadius": 20,
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "paddingTop": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "paddingRight": 0
+          },
+          "children": [
+            {
+              "type": "icon",
+              "iconName": "x-close",
+              "size": 24,
+              "iconColor": "$token(fg-primary)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Stage Progress Card Wrap",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingTop": 8,
+        "paddingBottom": 8,
+        "itemSpacing": 0
+      },
+      "children": [
+        {
+          "name": "Stage Progress Card",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "cornerRadius": 20,
+          "fill": "$token(bg-primary)",
+          "strokeColor": "$token(border-secondary)",
+          "strokeWeight": 1,
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "paddingLeft": 20,
+            "paddingRight": 20,
+            "paddingTop": 24,
+            "paddingBottom": 20,
+            "itemSpacing": 16
+          },
+          "children": [
+            {
+              "name": "Header Title",
+              "type": "text",
+              "characters": "진행중인 0건의 스테이지 내역",
+              "fontFamily": "Pretendard",
+              "fontWeight": 700,
+              "fontSize": 17,
+              "fontColor": "$token(text-primary)"
+            },
+            {
+              "name": "Summary Rows",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "paddingTop": 4,
+                "paddingBottom": 4,
+                "paddingLeft": 0,
+                "paddingRight": 0,
+                "itemSpacing": 10
+              },
+              "children": [
+                {
+                  "name": "Row 모은 금액",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "SPACE_BETWEEN",
+                    "counterAxisAlignItems": "CENTER",
+                    "paddingLeft": 0,
+                    "paddingRight": 0,
+                    "paddingTop": 0,
+                    "paddingBottom": 0,
+                    "itemSpacing": 12
+                  },
+                  "children": [
+                    {
+                      "name": "label",
+                      "type": "text",
+                      "characters": "모은 금액",
+                      "fontFamily": "Pretendard",
+                      "fontWeight": 500,
+                      "fontSize": 14,
+                      "fontColor": "$token(text-secondary)"
+                    },
+                    {
+                      "name": "value",
+                      "type": "text",
+                      "characters": "+ 0원",
+                      "fontFamily": "Pretendard",
+                      "fontWeight": 700,
+                      "fontSize": 16,
+                      "fontColor": "$token(text-primary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "Row 빌린 금액",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "SPACE_BETWEEN",
+                    "counterAxisAlignItems": "CENTER",
+                    "paddingLeft": 0,
+                    "paddingRight": 0,
+                    "paddingTop": 0,
+                    "paddingBottom": 0,
+                    "itemSpacing": 12
+                  },
+                  "children": [
+                    {
+                      "name": "label",
+                      "type": "text",
+                      "characters": "빌린 금액",
+                      "fontFamily": "Pretendard",
+                      "fontWeight": 500,
+                      "fontSize": 14,
+                      "fontColor": "$token(text-secondary)"
+                    },
+                    {
+                      "name": "value",
+                      "type": "text",
+                      "characters": "- 0원",
+                      "fontFamily": "Pretendard",
+                      "fontWeight": 700,
+                      "fontSize": 16,
+                      "fontColor": "$token(text-primary)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Helper Notes",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "paddingTop": 12,
+                "paddingBottom": 4,
+                "paddingLeft": 0,
+                "paddingRight": 0,
+                "itemSpacing": 8
+              },
+              "children": [
+                {
+                  "name": "Badge Row 인증사용자",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "START",
+                    "paddingTop": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "paddingRight": 0,
+                    "itemSpacing": 8
+                  },
+                  "children": [
+                    {
+                      "type": "icon",
+                      "iconName": "check-verified-02",
+                      "size": 14,
+                      "iconColor": "$token(fg-tertiary)"
+                    },
+                    {
+                      "name": "note-cert",
+                      "type": "text",
+                      "characters": "프로필에 추가 정보를 입력하면 ‘인증사용자’ 가 되고 다른 사용자에게 보여요.",
+                      "fontFamily": "Pretendard",
+                      "fontWeight": 500,
+                      "fontSize": 12,
+                      "fontColor": "$token(text-tertiary)",
+                      "layoutSizingHorizontal": "FILL"
+                    }
+                  ]
+                },
+                {
+                  "name": "Badge Row 클린사용자",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "START",
+                    "paddingTop": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "paddingRight": 0,
+                    "itemSpacing": 8
+                  },
+                  "children": [
+                    {
+                      "type": "icon",
+                      "iconName": "shield-tick",
+                      "size": 14,
+                      "iconColor": "$token(fg-tertiary)"
+                    },
+                    {
+                      "name": "note-clean",
+                      "type": "text",
+                      "characters": "현재 기준 신납 건이 1건 이상 있으면 ‘클린사용자’ 가 되고 다른 사용자에게 보여요.",
+                      "fontFamily": "Pretendard",
+                      "fontWeight": 500,
+                      "fontSize": 12,
+                      "fontColor": "$token(text-tertiary)",
+                      "layoutSizingHorizontal": "FILL"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Calendar Section Wrap",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingTop": 24,
+        "paddingBottom": 8,
+        "itemSpacing": 20
+      },
+      "children": [
+        {
+          "name": "Calendar Title",
+          "type": "text",
+          "characters": "거래 스케줄",
+          "fontFamily": "Pretendard",
+          "fontWeight": 700,
+          "fontSize": 18,
+          "fontColor": "$token(text-primary)",
+          "textAlignHorizontal": "CENTER",
+          "layoutSizingHorizontal": "FILL"
+        },
+        {
+          "name": "Month Strip Row",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "_repetitionAllowed": "와이어 명세상 7개월 strip — Oct~Apr 의도",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "paddingTop": 4,
+            "paddingBottom": 4,
+            "paddingLeft": 0,
+            "paddingRight": 0,
+            "itemSpacing": 6
+          },
+          "children": [
+            {
+              "type": "icon",
+              "iconName": "chevron-left",
+              "size": 20,
+              "iconColor": "$token(fg-tertiary)"
+            },
+            {
+              "name": "Month Cell Oct",
+              "type": "frame",
+              "width": 40,
+              "height": 40,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "cornerRadius": 20,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 0,
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "m-cap",
+                  "type": "text",
+                  "characters": "Oct",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 11,
+                  "fontColor": "$token(text-tertiary)"
+                },
+                {
+                  "name": "m-num",
+                  "type": "text",
+                  "characters": "10",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 14,
+                  "fontColor": "$token(text-secondary)"
+                }
+              ]
+            },
+            {
+              "name": "Month Cell Nov",
+              "type": "frame",
+              "width": 40,
+              "height": 40,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "cornerRadius": 20,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 0,
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "m-cap",
+                  "type": "text",
+                  "characters": "Nov",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 11,
+                  "fontColor": "$token(text-tertiary)"
+                },
+                {
+                  "name": "m-num",
+                  "type": "text",
+                  "characters": "11",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 14,
+                  "fontColor": "$token(text-secondary)"
+                }
+              ]
+            },
+            {
+              "name": "Month Cell Dec",
+              "type": "frame",
+              "width": 40,
+              "height": 40,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "cornerRadius": 20,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 0,
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "m-cap",
+                  "type": "text",
+                  "characters": "Dec",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 11,
+                  "fontColor": "$token(text-tertiary)"
+                },
+                {
+                  "name": "m-num",
+                  "type": "text",
+                  "characters": "12",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 14,
+                  "fontColor": "$token(text-secondary)"
+                }
+              ]
+            },
+            {
+              "name": "Month Cell Jan Active",
+              "type": "frame",
+              "width": 44,
+              "height": 44,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "cornerRadius": 22,
+              "fill": "$token(bg-brand-solid)",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 0,
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "m-cap",
+                  "type": "text",
+                  "characters": "Jan",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 700,
+                  "fontSize": 11,
+                  "fontColor": "$token(fg-light)"
+                },
+                {
+                  "name": "m-num",
+                  "type": "text",
+                  "characters": "1",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 700,
+                  "fontSize": 15,
+                  "fontColor": "$token(fg-light)"
+                }
+              ]
+            },
+            {
+              "name": "Month Cell Feb",
+              "type": "frame",
+              "width": 40,
+              "height": 40,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "cornerRadius": 20,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 0,
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "m-cap",
+                  "type": "text",
+                  "characters": "Feb",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 11,
+                  "fontColor": "$token(text-tertiary)"
+                },
+                {
+                  "name": "m-num",
+                  "type": "text",
+                  "characters": "2",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 14,
+                  "fontColor": "$token(text-secondary)"
+                }
+              ]
+            },
+            {
+              "name": "Month Cell Mar",
+              "type": "frame",
+              "width": 40,
+              "height": 40,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "cornerRadius": 20,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 0,
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "m-cap",
+                  "type": "text",
+                  "characters": "Mar",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 11,
+                  "fontColor": "$token(text-tertiary)"
+                },
+                {
+                  "name": "m-num",
+                  "type": "text",
+                  "characters": "3",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 14,
+                  "fontColor": "$token(text-secondary)"
+                }
+              ]
+            },
+            {
+              "name": "Month Cell Apr",
+              "type": "frame",
+              "width": 40,
+              "height": 40,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "cornerRadius": 20,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 0,
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "m-cap",
+                  "type": "text",
+                  "characters": "Apr",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 11,
+                  "fontColor": "$token(text-tertiary)"
+                },
+                {
+                  "name": "m-num",
+                  "type": "text",
+                  "characters": "4",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 14,
+                  "fontColor": "$token(text-secondary)"
+                }
+              ]
+            },
+            {
+              "type": "icon",
+              "iconName": "chevron-right",
+              "size": 20,
+              "iconColor": "$token(fg-tertiary)"
+            }
+          ]
+        },
+        {
+          "name": "This Month Caption",
+          "type": "text",
+          "characters": "이번달",
+          "fontFamily": "Pretendard",
+          "fontWeight": 600,
+          "fontSize": 12,
+          "fontColor": "$token(text-brand-primary)",
+          "textAlignHorizontal": "CENTER",
+          "layoutSizingHorizontal": "FILL"
+        },
+        {
+          "name": "Filter Row",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "MAX",
+            "counterAxisAlignItems": "CENTER",
+            "paddingTop": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "paddingRight": 0,
+            "itemSpacing": 0
+          },
+          "children": [
+            {
+              "name": "Filter Chip",
+              "type": "frame",
+              "cornerRadius": 8,
+              "fill": "$token(bg-secondary)",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 6,
+                "paddingBottom": 6,
+                "paddingLeft": 12,
+                "paddingRight": 10,
+                "itemSpacing": 4
+              },
+              "layoutSizingHorizontal": "HUG",
+              "layoutSizingVertical": "HUG",
+              "children": [
+                {
+                  "name": "filter-label",
+                  "type": "text",
+                  "characters": "납입",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 600,
+                  "fontSize": 13,
+                  "fontColor": "$token(text-primary)"
+                },
+                {
+                  "type": "icon",
+                  "iconName": "chevron-down",
+                  "size": 14,
+                  "iconColor": "$token(fg-primary)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Summary Grid",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "cornerRadius": 16,
+          "fill": "$token(bg-secondary)",
+          "_repetitionAllowed": "3-col summary grid 의도",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "CENTER",
+            "paddingTop": 18,
+            "paddingBottom": 18,
+            "paddingLeft": 20,
+            "paddingRight": 20,
+            "itemSpacing": 12
+          },
+          "children": [
+            {
+              "name": "Summary Col 월 납입액",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "itemSpacing": 6,
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "lbl",
+                  "type": "text",
+                  "characters": "월 납입액",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 12,
+                  "fontColor": "$token(text-tertiary)"
+                },
+                {
+                  "name": "val",
+                  "type": "text",
+                  "characters": "0원",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 700,
+                  "fontSize": 16,
+                  "fontColor": "$token(text-primary)"
+                }
+              ]
+            },
+            {
+              "name": "Summary Col 납입 완료액",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "itemSpacing": 6,
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "lbl",
+                  "type": "text",
+                  "characters": "납입 완료액",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 12,
+                  "fontColor": "$token(text-tertiary)"
+                },
+                {
+                  "name": "val",
+                  "type": "text",
+                  "characters": "0원",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 700,
+                  "fontSize": 16,
+                  "fontColor": "$token(text-primary)"
+                }
+              ]
+            },
+            {
+              "name": "Summary Col 남은 납입액",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "itemSpacing": 6,
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "lbl",
+                  "type": "text",
+                  "characters": "남은 납입액",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 500,
+                  "fontSize": 12,
+                  "fontColor": "$token(text-tertiary)"
+                },
+                {
+                  "name": "val",
+                  "type": "text",
+                  "characters": "0원",
+                  "fontFamily": "Pretendard",
+                  "fontWeight": 700,
+                  "fontSize": 16,
+                  "fontColor": "$token(text-primary)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Period Row",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "CENTER",
+            "paddingTop": 8,
+            "paddingBottom": 8,
+            "paddingLeft": 0,
+            "paddingRight": 0,
+            "itemSpacing": 12
+          },
+          "children": [
+            {
+              "name": "period",
+              "type": "text",
+              "characters": "2026년 1월",
+              "fontFamily": "Pretendard",
+              "fontWeight": 700,
+              "fontSize": 16,
+              "fontColor": "$token(text-primary)"
+            },
+            {
+              "name": "count",
+              "type": "text",
+              "characters": "총 0건",
+              "fontFamily": "Pretendard",
+              "fontWeight": 500,
+              "fontSize": 13,
+              "fontColor": "$token(text-tertiary)"
+            }
+          ]
+        },
+        {
+          "name": "Empty State",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "paddingTop": 64,
+            "paddingBottom": 64,
+            "paddingLeft": 20,
+            "paddingRight": 20,
+            "itemSpacing": 12
+          },
+          "children": [
+            {
+              "name": "empty-title",
+              "type": "text",
+              "characters": "납입할 금액이 없습니다.",
+              "fontFamily": "Pretendard",
+              "fontWeight": 600,
+              "fontSize": 15,
+              "fontColor": "$token(text-secondary)",
+              "textAlignHorizontal": "CENTER"
+            },
+            {
+              "name": "empty-cta",
+              "type": "text",
+              "characters": "아임인과 함께 목돈 모으기를 시작해보세요.",
+              "fontFamily": "Pretendard",
+              "fontWeight": 600,
+              "fontSize": 14,
+              "fontColor": "$token(text-brand-primary)",
+              "textAlignHorizontal": "CENTER",
+              "textDecoration": "UNDERLINE"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

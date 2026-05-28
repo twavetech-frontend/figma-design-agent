@@ -1,0 +1,4738 @@
+{
+  "schema": "imin-frontend-layout-spec/v1",
+  "description": "Framework-neutral layout spec. colors = {token, value}; layout = flexbox(direction/gap/padding/justify/align/sizing).",
+  "screen": {
+    "type": "frame",
+    "name": "imin_home_v17",
+    "layout": {
+      "direction": "column",
+      "gap": 0,
+      "padding": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sizingHorizontal": "fixed",
+      "sizingVertical": "hug",
+      "clipContent": true
+    },
+    "style": {
+      "background": {
+        "token": "bg-primary",
+        "value": "#FCFCFD"
+      }
+    },
+    "children": [
+      {
+        "type": "instance",
+        "name": "Status Bar",
+        "layout": {
+          "direction": "row",
+          "gap": 154,
+          "padding": [
+            21,
+            24,
+            19,
+            24
+          ],
+          "justify": "center",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Time",
+            "layout": {
+              "direction": "row",
+              "gap": 10,
+              "padding": [
+                1.5,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "Time",
+                "style": {},
+                "text": {
+                  "content": "9:41",
+                  "color": {
+                    "token": "Primary",
+                    "value": "#000000"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Levels",
+            "layout": {
+              "direction": "row",
+              "gap": 7,
+              "padding": [
+                1,
+                1,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "fixed"
+            },
+            "children": [
+              {
+                "type": "icon",
+                "name": "Cellular Connection",
+                "style": {
+                  "background": {
+                    "token": "Primary",
+                    "value": "#000000"
+                  }
+                }
+              },
+              {
+                "type": "icon",
+                "name": "Wifi",
+                "style": {
+                  "background": {
+                    "token": "Primary",
+                    "value": "#000000"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Frame",
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Border",
+                    "style": {
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "Primary",
+                          "value": "#000000"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 4.300000190734863,
+                      "opacity": 0.3499999940395355
+                    }
+                  },
+                  {
+                    "type": "icon",
+                    "name": "Cap",
+                    "style": {
+                      "background": {
+                        "token": "Primary",
+                        "value": "#000000"
+                      },
+                      "opacity": 0.4000000059604645
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Capacity",
+                    "style": {
+                      "background": {
+                        "token": "Primary",
+                        "value": "#000000"
+                      },
+                      "borderRadius": 2.5
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "NavBar",
+        "layout": {
+          "direction": "row",
+          "gap": 0,
+          "padding": [
+            12,
+            20,
+            12,
+            20
+          ],
+          "justify": "space-between",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "fixed"
+        },
+        "children": [
+          {
+            "type": "instance",
+            "name": "logo",
+            "style": {
+              "background": {
+                "token": "fg-light",
+                "value": "#FFFFFF"
+              }
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "image 1"
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Nav Right",
+            "layout": {
+              "direction": "row",
+              "gap": 16,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "align": "center",
+              "sizingHorizontal": "hug",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "icon-bell",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-primary-solid",
+                          "value": "#2C3744"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "icon-chat",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-primary-solid",
+                          "value": "#2C3744"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Top Alert Banner",
+        "layout": {
+          "direction": "row",
+          "gap": 8,
+          "padding": [
+            12,
+            20,
+            12,
+            20
+          ],
+          "justify": "space-between",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "style": {
+          "background": {
+            "token": "bg-warning-secondary",
+            "value": "#FEF0C7"
+          }
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "alert-left",
+            "layout": {
+              "direction": "row",
+              "gap": 8,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "align": "center",
+              "sizingHorizontal": "hug",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "alert-triangle",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 1.5,
+                        "color": {
+                          "token": "bg-warning-solid",
+                          "value": "#DC6803"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "납입 기한이 지난 1건이 있어요",
+                "style": {},
+                "text": {
+                  "content": "납입 기한이 지난 1건이 있어요",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "name": "지금 납입 >",
+            "style": {},
+            "text": {
+              "content": "지금 납입 >",
+              "color": {
+                "token": "text-warning-primary",
+                "value": "#DC6803"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Mode Tabs Wrap",
+        "layout": {
+          "direction": "row",
+          "gap": 22,
+          "padding": [
+            8,
+            24,
+            8,
+            24
+          ],
+          "align": "end",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Tab Transaction",
+            "layout": {
+              "direction": "column",
+              "gap": 12,
+              "padding": [
+                16,
+                0,
+                0,
+                0
+              ],
+              "align": "center",
+              "sizingHorizontal": "hug",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "label",
+                "style": {},
+                "text": {
+                  "content": "거래 현황",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "underline",
+                "style": {
+                  "background": {
+                    "token": "bg-brand-solid",
+                    "value": "#7700FF"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Tab Accumulated",
+            "layout": {
+              "direction": "column",
+              "gap": 12,
+              "padding": [
+                16,
+                0,
+                0,
+                0
+              ],
+              "align": "center",
+              "sizingHorizontal": "hug",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "label",
+                "style": {},
+                "text": {
+                  "content": "누적 거래",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "underline",
+                "style": {
+                  "background": {
+                    "token": null,
+                    "value": "#D9D9D9"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Screen Hero",
+        "layout": {
+          "direction": "column",
+          "gap": 4,
+          "padding": [
+            20,
+            20,
+            16,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "text",
+            "name": "hero-caption",
+            "style": {},
+            "text": {
+              "content": "진행 중인 스테이지 0개",
+              "color": {
+                "token": "text-tertiary",
+                "value": "#B1B6BE"
+              }
+            }
+          },
+          {
+            "type": "text",
+            "name": "hero-label",
+            "style": {},
+            "text": {
+              "content": "모은 금액",
+              "color": {
+                "token": "text-secondary",
+                "value": "#687079"
+              }
+            }
+          },
+          {
+            "type": "text",
+            "name": "hero-amount",
+            "style": {},
+            "text": {
+              "content": "0원",
+              "color": {
+                "token": "text-primary",
+                "value": "#2C3744"
+              }
+            }
+          },
+          {
+            "type": "frame",
+            "name": "hero-footnote",
+            "layout": {
+              "direction": "row",
+              "gap": 6,
+              "padding": [
+                6,
+                0,
+                0,
+                0
+              ],
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "footnote-dot",
+                "style": {
+                  "background": {
+                    "token": "bg-success-solid",
+                    "value": "#079455"
+                  },
+                  "borderRadius": 3
+                }
+              },
+              {
+                "type": "text",
+                "name": "출석 체크 시작하면 혜택 받을 수 있어요",
+                "style": {},
+                "text": {
+                  "content": "출석 체크 시작하면 혜택 받을 수 있어요",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Progress Section",
+        "layout": {
+          "direction": "column",
+          "gap": 12,
+          "padding": [
+            12,
+            20,
+            8,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Progress Card",
+            "layout": {
+              "direction": "column",
+              "gap": 20,
+              "padding": [
+                20,
+                20,
+                20,
+                20
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 20
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Card Header Row",
+                "layout": {
+                  "direction": "row",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "space-between",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "header-title",
+                    "style": {},
+                    "text": {
+                      "content": "진행중인 0건의 스테이지 내역",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "header-actions",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "icon-more",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.3333333730697632,
+                                "color": {
+                                  "token": "utility-gray-400",
+                                  "value": "#B1B6BE"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "frame",
+                        "name": "icon-add",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.5,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Amount Rows",
+                "layout": {
+                  "direction": "column",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Amount Row Saved",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "모은 금액",
+                        "style": {},
+                        "text": {
+                          "content": "모은 금액",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "+0원",
+                        "style": {},
+                        "text": {
+                          "content": "+0원",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Amount Row Borrowed",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "빌린 금액",
+                        "style": {},
+                        "text": {
+                          "content": "빌린 금액",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "-0원",
+                        "style": {},
+                        "text": {
+                          "content": "-0원",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Day Strip",
+                "layout": {
+                  "direction": "row",
+                  "gap": 6,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 14",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        10,
+                        0,
+                        10,
+                        0
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "어제",
+                        "style": {},
+                        "text": {
+                          "content": "어제",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "0원",
+                        "style": {},
+                        "text": {
+                          "content": "0원",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "status-label",
+                        "style": {},
+                        "text": {
+                          "content": "미납",
+                          "color": {
+                            "token": "text-error-primary",
+                            "value": "#D92D20"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Day Cell Today",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        10,
+                        0,
+                        10,
+                        0
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 12
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "오늘",
+                        "style": {},
+                        "text": {
+                          "content": "오늘",
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "0원",
+                        "style": {},
+                        "text": {
+                          "content": "0원",
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "status-label",
+                        "style": {},
+                        "text": {
+                          "content": "오늘 납입",
+                          "color": {
+                            "token": "text-white",
+                            "value": "#FFFFFF"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 16",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        10,
+                        0,
+                        10,
+                        0
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "16일",
+                        "style": {},
+                        "text": {
+                          "content": "16일",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "0원",
+                        "style": {},
+                        "text": {
+                          "content": "0원",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "status-label",
+                        "style": {},
+                        "text": {
+                          "content": "납입",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 17",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        10,
+                        0,
+                        10,
+                        0
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "17일",
+                        "style": {},
+                        "text": {
+                          "content": "17일",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "0원",
+                        "style": {},
+                        "text": {
+                          "content": "0원",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "status-label",
+                        "style": {},
+                        "text": {
+                          "content": "납입",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 18",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        10,
+                        0,
+                        10,
+                        0
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "18일",
+                        "style": {},
+                        "text": {
+                          "content": "18일",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "0원",
+                        "style": {},
+                        "text": {
+                          "content": "0원",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "status-label",
+                        "style": {},
+                        "text": {
+                          "content": "지급",
+                          "color": {
+                            "token": "text-success-primary",
+                            "value": "#079455"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 19",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        10,
+                        0,
+                        10,
+                        0
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "19일",
+                        "style": {},
+                        "text": {
+                          "content": "19일",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "0원",
+                        "style": {},
+                        "text": {
+                          "content": "0원",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "status-label",
+                        "style": {},
+                        "text": {
+                          "content": "납입",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Calc CTA Card",
+            "layout": {
+              "direction": "row",
+              "gap": 12,
+              "padding": [
+                14,
+                16,
+                14,
+                16
+              ],
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 16
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "help-icon-wrap",
+                "layout": {
+                  "direction": "row",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "fixed"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-brand-primary",
+                    "value": "#F4ECFF"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "help-circle",
+                    "children": [
+                      {
+                        "type": "icon",
+                        "name": "Vector",
+                        "style": {
+                          "border": {
+                            "width": 1.5,
+                            "color": {
+                              "token": "border-brand",
+                              "value": "#7700FF"
+                            },
+                            "align": "center"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "얼마까지 모을 수 있는 지 확인해보세요.",
+                "style": {},
+                "text": {
+                  "content": "얼마까지 모을 수 있는 지 확인해보세요.",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "chevron-right",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 1.5,
+                        "color": {
+                          "token": "utility-gray-400",
+                          "value": "#B1B6BE"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Attendance Section",
+        "layout": {
+          "direction": "column",
+          "gap": 0,
+          "padding": [
+            8,
+            20,
+            8,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Attendance Banner",
+            "layout": {
+              "direction": "row",
+              "gap": 14,
+              "padding": [
+                16,
+                16,
+                16,
+                16
+              ],
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 16
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "cal-icon-wrap",
+                "layout": {
+                  "direction": "row",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "fixed"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-brand-primary",
+                    "value": "#F4ECFF"
+                  },
+                  "borderRadius": 12
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "calendar-check-01",
+                    "children": [
+                      {
+                        "type": "icon",
+                        "name": "Vector",
+                        "style": {
+                          "border": {
+                            "width": 2,
+                            "color": {
+                              "token": "border-brand",
+                              "value": "#7700FF"
+                            },
+                            "align": "center"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Attendance Text",
+                "layout": {
+                  "direction": "column",
+                  "gap": 2,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "연속 0일째 출석 체크 중",
+                    "style": {},
+                    "text": {
+                      "content": "연속 0일째 출석 체크 중",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "매일매일 출석하면 특별한 혜택이!",
+                    "style": {},
+                    "text": {
+                      "content": "매일매일 출석하면 특별한 혜택이!",
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "chevron-right",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 1.5,
+                        "color": {
+                          "token": "utility-gray-400",
+                          "value": "#B1B6BE"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Recommend Stage Section",
+        "layout": {
+          "direction": "column",
+          "gap": 12,
+          "padding": [
+            12,
+            20,
+            8,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "text",
+            "name": "추천 스테이지",
+            "style": {},
+            "text": {
+              "content": "추천 스테이지",
+              "color": {
+                "token": "text-primary",
+                "value": "#2C3744"
+              }
+            }
+          },
+          {
+            "type": "frame",
+            "name": "Recommend Stage Card",
+            "layout": {
+              "direction": "column",
+              "gap": 16,
+              "padding": [
+                20,
+                20,
+                20,
+                20
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 20
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "polish-personal-caption",
+                "style": {},
+                "text": {
+                  "content": "회원님을 위한 추천",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "polish-title",
+                "style": {},
+                "text": {
+                  "content": "총 1,300만원 모으기 도전",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "polish-label",
+                "style": {},
+                "text": {
+                  "content": "예상 수령 금액 (1회차)",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "polish-currency",
+                "style": {},
+                "text": {
+                  "content": "1,300,000원",
+                  "color": {
+                    "token": "text-brand-primary",
+                    "value": "#6A00E0"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "polish-currency-sub",
+                "style": {},
+                "text": {
+                  "content": "월 100,000원 · 13개월 · 납입 후 목표 수령",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Steppers Row",
+                "layout": {
+                  "direction": "row",
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "월",
+                    "style": {},
+                    "text": {
+                      "content": "월",
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Stepper Amount",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 8,
+                      "padding": [
+                        10,
+                        12,
+                        10,
+                        12
+                      ],
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 12
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "minus",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.1666666269302368,
+                                "color": {
+                                  "token": "bg-secondary-solid",
+                                  "value": "#687079"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "10만원",
+                        "style": {},
+                        "text": {
+                          "content": "10만원",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "frame",
+                        "name": "plus",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.1666666269302368,
+                                "color": {
+                                  "token": "bg-secondary-solid",
+                                  "value": "#687079"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "name": "대",
+                    "style": {},
+                    "text": {
+                      "content": "대",
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Stepper Period",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 8,
+                      "padding": [
+                        10,
+                        12,
+                        10,
+                        12
+                      ],
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 12
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "minus",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.1666666269302368,
+                                "color": {
+                                  "token": "bg-secondary-solid",
+                                  "value": "#687079"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "13개월",
+                        "style": {},
+                        "text": {
+                          "content": "13개월",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "frame",
+                        "name": "plus",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.1666666269302368,
+                                "color": {
+                                  "token": "bg-secondary-solid",
+                                  "value": "#687079"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "name": "모으기",
+                    "style": {},
+                    "text": {
+                      "content": "모으기",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Round Selector",
+                "layout": {
+                  "direction": "row",
+                  "gap": 4,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "space-between",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "R1",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-solid",
+                        "value": "#7700FF"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "1",
+                        "style": {},
+                        "text": {
+                          "content": "1",
+                          "color": {
+                            "token": "text-white",
+                            "value": "#FFFFFF"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R2",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "2",
+                        "style": {},
+                        "text": {
+                          "content": "2",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R3",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "3",
+                        "style": {},
+                        "text": {
+                          "content": "3",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R4",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "4",
+                        "style": {},
+                        "text": {
+                          "content": "4",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R5",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "5",
+                        "style": {},
+                        "text": {
+                          "content": "5",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R6",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "6",
+                        "style": {},
+                        "text": {
+                          "content": "6",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R7",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "7",
+                        "style": {},
+                        "text": {
+                          "content": "7",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R8",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "8",
+                        "style": {},
+                        "text": {
+                          "content": "8",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R9",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "9",
+                        "style": {},
+                        "text": {
+                          "content": "9",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R10",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "10",
+                        "style": {},
+                        "text": {
+                          "content": "10",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R11",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "11",
+                        "style": {},
+                        "text": {
+                          "content": "11",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R12",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "12",
+                        "style": {},
+                        "text": {
+                          "content": "12",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "R13",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 10
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "13",
+                        "style": {},
+                        "text": {
+                          "content": "13",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Round Selected Info",
+                "layout": {
+                  "direction": "row",
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Round Pill",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        4,
+                        10,
+                        4,
+                        10
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-primary",
+                        "value": "#F4ECFF"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "1회차",
+                        "style": {},
+                        "text": {
+                          "content": "1회차",
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "name": "납입 후 목적 수령",
+                    "style": {},
+                    "text": {
+                      "content": "납입 후 목적 수령",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "Goal Hero",
+                "style": {},
+                "text": {
+                  "content": "총 1,300만원 모으기 도전",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Join Action Strip",
+                "layout": {
+                  "direction": "row",
+                  "gap": 8,
+                  "padding": [
+                    14,
+                    24,
+                    14,
+                    24
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-brand-solid",
+                    "value": "#7700FF"
+                  },
+                  "borderRadius": 999
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "참여하기",
+                    "style": {},
+                    "text": {
+                      "content": "참여하기",
+                      "color": {
+                        "token": "text-white",
+                        "value": "#FFFFFF"
+                      }
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "arrow-right",
+                    "children": [
+                      {
+                        "type": "icon",
+                        "name": "Vector",
+                        "style": {
+                          "border": {
+                            "width": 1.5,
+                            "color": {
+                              "token": "Black",
+                              "value": "#000000"
+                            },
+                            "align": "center"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "View All Recommend",
+            "layout": {
+              "direction": "row",
+              "gap": 4,
+              "padding": [
+                8,
+                0,
+                4,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "추천 전체 보기(13개)",
+                "style": {},
+                "text": {
+                  "content": "추천 전체 보기(13개)",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "chevron-right",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 1.1666666269302368,
+                        "color": {
+                          "token": "utility-gray-400",
+                          "value": "#B1B6BE"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Participation Section",
+        "layout": {
+          "direction": "column",
+          "gap": 16,
+          "padding": [
+            12,
+            0,
+            8,
+            0
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Participation Tabs Wrap",
+            "layout": {
+              "direction": "row",
+              "gap": 22,
+              "padding": [
+                0,
+                24,
+                8,
+                24
+              ],
+              "align": "end",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Tab Participation",
+                "layout": {
+                  "direction": "column",
+                  "gap": 10,
+                  "padding": [
+                    12,
+                    0,
+                    0,
+                    0
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "hug",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "참여 중인 스테이지",
+                    "style": {},
+                    "text": {
+                      "content": "참여 중인 스테이지",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "underline",
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-solid",
+                        "value": "#7700FF"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Tab Bookmarked",
+                "layout": {
+                  "direction": "column",
+                  "gap": 10,
+                  "padding": [
+                    12,
+                    0,
+                    0,
+                    0
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "hug",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "찜한 스테이지",
+                    "style": {},
+                    "text": {
+                      "content": "찜한 스테이지",
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "underline",
+                    "style": {
+                      "background": {
+                        "token": null,
+                        "value": "#D9D9D9"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Participation Grid",
+            "layout": {
+              "direction": "column",
+              "gap": 10,
+              "padding": [
+                0,
+                20,
+                0,
+                20
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "row1",
+                "layout": {
+                  "direction": "row",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Stage Card 월 10만원",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 8,
+                      "padding": [
+                        14,
+                        14,
+                        14,
+                        14
+                      ],
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 16
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "status-pill",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            4,
+                            10,
+                            4,
+                            10
+                          ],
+                          "justify": "center",
+                          "align": "center",
+                          "sizingHorizontal": "hug",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-brand-primary",
+                            "value": "#F4ECFF"
+                          },
+                          "borderRadius": 999
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "진행중",
+                            "style": {},
+                            "text": {
+                              "content": "진행중",
+                              "color": {
+                                "token": "text-brand-primary",
+                                "value": "#6A00E0"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "월 10만원",
+                        "style": {},
+                        "text": {
+                          "content": "월 10만원",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "13개월 · 6.9%",
+                        "style": {},
+                        "text": {
+                          "content": "13개월 · 6.9%",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "progress-track",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 12,
+                          "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ],
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "fixed"
+                        },
+                        "children": [
+                          {
+                            "type": "frame",
+                            "name": "Progress bar",
+                            "style": {
+                              "borderRadius": 8
+                            },
+                            "children": [
+                              {
+                                "type": "frame",
+                                "name": "Background",
+                                "style": {
+                                  "background": {
+                                    "token": "bg-quaternary",
+                                    "value": "#D2D6DB"
+                                  },
+                                  "borderRadius": 9999
+                                }
+                              },
+                              {
+                                "type": "frame",
+                                "name": "Progress",
+                                "style": {
+                                  "background": {
+                                    "token": "fg-brand-primary",
+                                    "value": "#7700FF"
+                                  },
+                                  "borderRadius": 9999
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "5회차 / 13",
+                        "style": {},
+                        "text": {
+                          "content": "5회차 / 13",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Stage Card 월 30만원",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 8,
+                      "padding": [
+                        14,
+                        14,
+                        14,
+                        14
+                      ],
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 16
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "status-pill",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            4,
+                            10,
+                            4,
+                            10
+                          ],
+                          "justify": "center",
+                          "align": "center",
+                          "sizingHorizontal": "hug",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-warning-secondary",
+                            "value": "#FEF0C7"
+                          },
+                          "borderRadius": 999
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "곧 지급",
+                            "style": {},
+                            "text": {
+                              "content": "곧 지급",
+                              "color": {
+                                "token": "text-warning-primary",
+                                "value": "#DC6803"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "월 30만원",
+                        "style": {},
+                        "text": {
+                          "content": "월 30만원",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "12개월 · 5.8%",
+                        "style": {},
+                        "text": {
+                          "content": "12개월 · 5.8%",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "progress-track",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 12,
+                          "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ],
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "fixed"
+                        },
+                        "children": [
+                          {
+                            "type": "frame",
+                            "name": "Progress bar",
+                            "style": {
+                              "borderRadius": 8
+                            },
+                            "children": [
+                              {
+                                "type": "frame",
+                                "name": "Background",
+                                "style": {
+                                  "background": {
+                                    "token": "bg-quaternary",
+                                    "value": "#D2D6DB"
+                                  },
+                                  "borderRadius": 9999
+                                }
+                              },
+                              {
+                                "type": "frame",
+                                "name": "Progress",
+                                "style": {
+                                  "background": {
+                                    "token": "fg-brand-primary",
+                                    "value": "#7700FF"
+                                  },
+                                  "borderRadius": 9999
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "11회차 / 12",
+                        "style": {},
+                        "text": {
+                          "content": "11회차 / 12",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "row2",
+                "layout": {
+                  "direction": "row",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Stage Card 월 5만원",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 8,
+                      "padding": [
+                        14,
+                        14,
+                        14,
+                        14
+                      ],
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 16
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "status-pill",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            4,
+                            10,
+                            4,
+                            10
+                          ],
+                          "justify": "center",
+                          "align": "center",
+                          "sizingHorizontal": "hug",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-success-secondary",
+                            "value": "#DCFAE6"
+                          },
+                          "borderRadius": 999
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "신규",
+                            "style": {},
+                            "text": {
+                              "content": "신규",
+                              "color": {
+                                "token": "text-success-primary",
+                                "value": "#079455"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "월 5만원",
+                        "style": {},
+                        "text": {
+                          "content": "월 5만원",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "6개월 · 4.5%",
+                        "style": {},
+                        "text": {
+                          "content": "6개월 · 4.5%",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "progress-track",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 12,
+                          "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ],
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "fixed"
+                        },
+                        "children": [
+                          {
+                            "type": "frame",
+                            "name": "Progress bar",
+                            "style": {
+                              "borderRadius": 8
+                            },
+                            "children": [
+                              {
+                                "type": "frame",
+                                "name": "Background",
+                                "style": {
+                                  "background": {
+                                    "token": "bg-quaternary",
+                                    "value": "#D2D6DB"
+                                  },
+                                  "borderRadius": 9999
+                                }
+                              },
+                              {
+                                "type": "frame",
+                                "name": "Progress",
+                                "style": {
+                                  "background": {
+                                    "token": "fg-brand-primary",
+                                    "value": "#7700FF"
+                                  },
+                                  "borderRadius": 9999
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "1회차 / 6",
+                        "style": {},
+                        "text": {
+                          "content": "1회차 / 6",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Stage Card 월 20만원",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 8,
+                      "padding": [
+                        14,
+                        14,
+                        14,
+                        14
+                      ],
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 16
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "status-pill",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            4,
+                            10,
+                            4,
+                            10
+                          ],
+                          "justify": "center",
+                          "align": "center",
+                          "sizingHorizontal": "hug",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-secondary",
+                            "value": "#F3F4F6"
+                          },
+                          "borderRadius": 999
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "예정",
+                            "style": {},
+                            "text": {
+                              "content": "예정",
+                              "color": {
+                                "token": "text-tertiary",
+                                "value": "#B1B6BE"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "월 20만원",
+                        "style": {},
+                        "text": {
+                          "content": "월 20만원",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "10개월 · 5.2%",
+                        "style": {},
+                        "text": {
+                          "content": "10개월 · 5.2%",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "progress-track",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 12,
+                          "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ],
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "fixed"
+                        },
+                        "children": [
+                          {
+                            "type": "frame",
+                            "name": "Progress bar",
+                            "style": {
+                              "borderRadius": 8
+                            },
+                            "children": [
+                              {
+                                "type": "frame",
+                                "name": "Background",
+                                "style": {
+                                  "background": {
+                                    "token": "bg-quaternary",
+                                    "value": "#D2D6DB"
+                                  },
+                                  "borderRadius": 9999
+                                }
+                              },
+                              {
+                                "type": "frame",
+                                "name": "Progress",
+                                "style": {
+                                  "background": {
+                                    "token": "fg-brand-primary",
+                                    "value": "#7700FF"
+                                  },
+                                  "borderRadius": 9999
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "0회차 / 10",
+                        "style": {},
+                        "text": {
+                          "content": "0회차 / 10",
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Lounge Section",
+        "layout": {
+          "direction": "column",
+          "gap": 12,
+          "padding": [
+            16,
+            0,
+            8,
+            0
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Lounge Header",
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                0,
+                20,
+                0,
+                20
+              ],
+              "justify": "space-between",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "추천 상품 (라운지)",
+                "style": {},
+                "text": {
+                  "content": "추천 상품 (라운지)",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Points Pill",
+                "layout": {
+                  "direction": "row",
+                  "gap": 4,
+                  "padding": [
+                    5,
+                    10,
+                    5,
+                    10
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "hug",
+                  "sizingVertical": "hug"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-brand-primary",
+                    "value": "#F4ECFF"
+                  },
+                  "borderRadius": 999
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "예치금 312,490p",
+                    "style": {},
+                    "text": {
+                      "content": "예치금 312,490p",
+                      "color": {
+                        "token": "text-brand-primary",
+                        "value": "#6A00E0"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Lounge Carousel",
+            "layout": {
+              "direction": "row",
+              "gap": 10,
+              "padding": [
+                0,
+                20,
+                0,
+                20
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug",
+              "clipContent": true
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Lounge Card 1",
+                "layout": {
+                  "direction": "column",
+                  "gap": 4,
+                  "padding": [
+                    12,
+                    12,
+                    12,
+                    12
+                  ],
+                  "justify": "space-between",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "fixed"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "card-icon-wrap",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-primary",
+                        "value": "#F4ECFF"
+                      },
+                      "borderRadius": 12
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "Frame",
+                        "style": {
+                          "background": {
+                            "token": "fg-brand-primary",
+                            "value": "#7700FF"
+                          },
+                          "borderRadius": 12
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-name",
+                    "style": {},
+                    "text": {
+                      "content": "스타벅스 아메리카노",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-price",
+                    "style": {},
+                    "text": {
+                      "content": "9,800원",
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-points",
+                    "style": {},
+                    "text": {
+                      "content": "8,200P 사용",
+                      "color": {
+                        "token": "text-brand-primary",
+                        "value": "#6A00E0"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Lounge Card 2",
+                "layout": {
+                  "direction": "column",
+                  "gap": 4,
+                  "padding": [
+                    12,
+                    12,
+                    12,
+                    12
+                  ],
+                  "justify": "space-between",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "fixed"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "card-icon-wrap",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-primary",
+                        "value": "#F4ECFF"
+                      },
+                      "borderRadius": 12
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "home-line",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-name",
+                    "style": {},
+                    "text": {
+                      "content": "베이커리 케이크",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-price",
+                    "style": {},
+                    "text": {
+                      "content": "12,000원",
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-points",
+                    "style": {},
+                    "text": {
+                      "content": "12,000P 사용",
+                      "color": {
+                        "token": "text-brand-primary",
+                        "value": "#6A00E0"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Lounge Card 3",
+                "layout": {
+                  "direction": "column",
+                  "gap": 4,
+                  "padding": [
+                    12,
+                    12,
+                    12,
+                    12
+                  ],
+                  "justify": "space-between",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "fixed"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "card-icon-wrap",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-primary",
+                        "value": "#F4ECFF"
+                      },
+                      "borderRadius": 12
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "compass-03",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          },
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-name",
+                    "style": {},
+                    "text": {
+                      "content": "CGV 영화 관람권",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-price",
+                    "style": {},
+                    "text": {
+                      "content": "18,000원",
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-points",
+                    "style": {},
+                    "text": {
+                      "content": "16,500P 사용",
+                      "color": {
+                        "token": "text-brand-primary",
+                        "value": "#6A00E0"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Lounge Card 4",
+                "layout": {
+                  "direction": "column",
+                  "gap": 4,
+                  "padding": [
+                    12,
+                    12,
+                    12,
+                    12
+                  ],
+                  "justify": "space-between",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "fixed"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "card-icon-wrap",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-primary",
+                        "value": "#F4ECFF"
+                      },
+                      "borderRadius": 12
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "heart",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-name",
+                    "style": {},
+                    "text": {
+                      "content": "올리브영 5,000원권",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-price",
+                    "style": {},
+                    "text": {
+                      "content": "5,000원",
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-points",
+                    "style": {},
+                    "text": {
+                      "content": "5,000P 사용",
+                      "color": {
+                        "token": "text-brand-primary",
+                        "value": "#6A00E0"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Lounge Card 5",
+                "layout": {
+                  "direction": "column",
+                  "gap": 4,
+                  "padding": [
+                    12,
+                    12,
+                    12,
+                    12
+                  ],
+                  "justify": "space-between",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "fixed"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "card-icon-wrap",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-primary",
+                        "value": "#F4ECFF"
+                      },
+                      "borderRadius": 12
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "book-open-01",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-name",
+                    "style": {},
+                    "text": {
+                      "content": "교보문고 도서상품권",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-price",
+                    "style": {},
+                    "text": {
+                      "content": "10,000원",
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "product-points",
+                    "style": {},
+                    "text": {
+                      "content": "10,000P 사용",
+                      "color": {
+                        "token": "text-brand-primary",
+                        "value": "#6A00E0"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Sub-card CTA",
+        "layout": {
+          "direction": "column",
+          "gap": 0,
+          "padding": [
+            8,
+            20,
+            16,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Points Card",
+            "layout": {
+              "direction": "row",
+              "gap": 12,
+              "padding": [
+                14,
+                16,
+                14,
+                16
+              ],
+              "justify": "space-between",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "bg-secondary",
+                "value": "#F3F4F6"
+              },
+              "borderRadius": 16
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "points-left",
+                "layout": {
+                  "direction": "row",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "hug",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "gift-icon-wrap",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-primary",
+                        "value": "#F4ECFF"
+                      },
+                      "borderRadius": 8
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "gift-01",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.5,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "points-text",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "내 포인트 0P",
+                        "style": {},
+                        "text": {
+                          "content": "내 포인트 0P",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "라운지에서 기프티콘으로 바꿔보세요",
+                        "style": {},
+                        "text": {
+                          "content": "라운지에서 기프티콘으로 바꿔보세요",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "chevron-right",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 1.5,
+                        "color": {
+                          "token": "utility-gray-400",
+                          "value": "#B1B6BE"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Footer Section",
+        "layout": {
+          "direction": "column",
+          "gap": 14,
+          "padding": [
+            24,
+            20,
+            32,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "style": {
+          "background": {
+            "token": "bg-secondary",
+            "value": "#F3F4F6"
+          }
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Policy Row 1",
+            "layout": {
+              "direction": "row",
+              "gap": 14,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "이용약관",
+                "style": {},
+                "text": {
+                  "content": "이용약관",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "스테이지이용약관",
+                "style": {},
+                "text": {
+                  "content": "스테이지이용약관",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "서비스운영정책",
+                "style": {},
+                "text": {
+                  "content": "서비스운영정책",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Policy Row 2",
+            "layout": {
+              "direction": "row",
+              "gap": 14,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "개인정보처리방침",
+                "style": {},
+                "text": {
+                  "content": "개인정보처리방침",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "쇼핑이용약관",
+                "style": {},
+                "text": {
+                  "content": "쇼핑이용약관",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Company Row 1",
+            "layout": {
+              "direction": "row",
+              "gap": 16,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "(주)티웨이브 역삼지점",
+                "style": {},
+                "text": {
+                  "content": "(주)티웨이브 역삼지점",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "사업자등록번호: 291-85-01499",
+                "style": {},
+                "text": {
+                  "content": "사업자등록번호: 291-85-01499",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Company Row 2",
+            "layout": {
+              "direction": "row",
+              "gap": 16,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "대표: 서재준",
+                "style": {},
+                "text": {
+                  "content": "대표: 서재준",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "통신판매업신고: 2021-서울강남-05837",
+                "style": {},
+                "text": {
+                  "content": "통신판매업신고: 2021-서울강남-05837",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "name": "(주)티웨이브 역삼지점은 통신판매중개자로서 거래 당사자가 아니므로 판매자가 등록한 상품정보 및 거래 등에 대해 책임을 지지 않습니다. 단, (주)티웨이브 역삼지점이 판매자로 등록되어 판매한 상품은 판매자로서 책임을 부담합니다.",
+            "style": {},
+            "text": {
+              "content": "(주)티웨이브 역삼지점은 통신판매중개자로서 거래 당사자가 아니므로 판매자가 등록한 상품정보 및 거래 등에 대해 책임을 지지 않습니다.\n단, (주)티웨이브 역삼지점이 판매자로 등록되어 판매한 상품은 판매자로서 책임을 부담합니다.",
+              "color": {
+                "token": "text-tertiary",
+                "value": "#B1B6BE"
+              }
+            }
+          },
+          {
+            "type": "text",
+            "name": "Copyright ⓒ TWAVE. All Rights Reverved.",
+            "style": {},
+            "text": {
+              "content": "Copyright ⓒ TWAVE. All Rights Reverved.",
+              "color": {
+                "token": "text-tertiary",
+                "value": "#B1B6BE"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "FAB",
+        "position": {
+          "mode": "absolute",
+          "x": 0,
+          "y": 0
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 0,
+          "padding": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "justify": "center",
+          "align": "center",
+          "sizingHorizontal": "fixed",
+          "sizingVertical": "fixed"
+        },
+        "style": {
+          "background": {
+            "token": "bg-brand-solid",
+            "value": "#7700FF"
+          },
+          "borderRadius": 28
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "fab-icon",
+            "children": [
+              {
+                "type": "icon",
+                "name": "Vector",
+                "style": {
+                  "border": {
+                    "width": 2,
+                    "color": {
+                      "token": "Black",
+                      "value": "#000000"
+                    },
+                    "align": "center"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Tab Bar",
+        "layout": {
+          "direction": "row",
+          "gap": 8,
+          "padding": [
+            8,
+            0,
+            24,
+            0
+          ],
+          "align": "center",
+          "sizingHorizontal": "fixed",
+          "sizingVertical": "fixed"
+        },
+        "style": {
+          "background": {
+            "token": "bg-primary",
+            "value": "#FCFCFD"
+          },
+          "border": {
+            "width": 1,
+            "color": {
+              "token": "border-secondary",
+              "value": "#E6E8EA"
+            },
+            "align": "inside"
+          }
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Tab Home",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "tab-home-icon",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "border-brand",
+                          "value": "#7700FF"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "tab-home-label",
+                "style": {},
+                "text": {
+                  "content": "홈",
+                  "color": {
+                    "token": "text-brand-primary",
+                    "value": "#6A00E0"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Tab Community",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "tab-comm-icon",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-secondary-solid",
+                          "value": "#687079"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "tab-comm-label",
+                "style": {},
+                "text": {
+                  "content": "라운지",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Tab Stage",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "tab-stage-icon",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-secondary-solid",
+                          "value": "#687079"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "tab-stage-label",
+                "style": {},
+                "text": {
+                  "content": "스테이지",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Tab Lounge",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "tab-lounge-icon",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-secondary-solid",
+                          "value": "#687079"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "tab-lounge-label",
+                "style": {},
+                "text": {
+                  "content": "커뮤니티",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Tab Me",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "tab-me-icon",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-secondary-solid",
+                          "value": "#687079"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "tab-me-label",
+                "style": {},
+                "text": {
+                  "content": "전체",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

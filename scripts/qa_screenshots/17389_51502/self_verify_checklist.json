@@ -1,0 +1,117 @@
+{
+  "_BLOCKING_INSTRUCTION": "⚠️ Claude 보고 직전 강제 절차 (절대 룰): 위 exported_sections 의 모든 nodeId 를 export_node_as_image (scale=2) 로 재export 후 결과 PNG 를 Read. 그 후 아래 checklist 12개 각각 PASS / FAIL / NA 로 status 채우고 evidence 에 시각 증거 1줄 인용. 이 checklist 미완료 상태로 사용자에게 '검증 ✅' '완료' 보고 금지 — [feedback_self_verify_required_after_build] 메모리 룰 위반.",
+  "root_id": "17389:51502",
+  "blueprint_name": "imin_home_v15",
+  "exported_sections": [
+    {
+      "label": "Header_NavBar",
+      "nodeId": "17389:51503",
+      "name": "Status Bar"
+    },
+    {
+      "label": "Top_Tabs_Hero",
+      "nodeId": "17389:51521",
+      "name": "Mode Tabs Wrap"
+    },
+    {
+      "label": "Day_Strip_Row",
+      "nodeId": "17389:51544",
+      "name": "Day Strip"
+    },
+    {
+      "label": "Recommend_Card",
+      "nodeId": "17389:51582",
+      "name": "Recommend Stage Card"
+    },
+    {
+      "label": "Empty_or_List",
+      "nodeId": "17389:51635",
+      "name": "Participation Section"
+    },
+    {
+      "label": "Footer_TabBar_FAB",
+      "nodeId": "17389:51702",
+      "name": "Footer Section"
+    }
+  ],
+  "checklist": [
+    {
+      "id": "C01-content-1to1",
+      "question": "와이어 모든 텍스트/숫자/카운트가 빌드에 1:1 박혀있나",
+      "status": "PASS",
+      "evidence": "와이어 모든 텍스트/숫자 박힘 — 거래현황/누적거래/진행중인 0건/+0원/-0원/Day Strip 6cells(어제·오늘·16~19일·0원)/얼마까지 모을수있는지/연속 0일째/매일매일 출석/추천 스테이지/월 10만원 대 13개월 모으기/1~13/1회차/납입후 목적 수령/총 1,300만원 모으기 도전/추천 전체 보기(13개)/참여중·찜한/참여중 스테이지가 없어요/추천 상품 (라운지)/예치금 312,490p/5 라운지/Footer 모두 박힘"
+    },
+    {
+      "id": "C02-no-grey-placeholder",
+      "question": "회색 빈 placeholder 박스 (children≤1 + 라벨만) 없나",
+      "status": "PASS",
+      "evidence": "Participation Section 회색 빈 박스 2개 라이브 삭제됨. hint card 하나만 남음. R50 강화로 다음 새 세션 회귀 차단 (test_r50_FILL_card_caught_v15_regression 통과)"
+    },
+    {
+      "id": "C03-real-image-cards",
+      "question": "라운지/상품/카드의 실 시각 콘텐츠 (사진/일러스트/아이콘) 들어있나",
+      "status": "PASS",
+      "evidence": "Lounge 5개 카드 모두 icon-wrap(brand-primary tint) + 라벨(text-primary Bold) + 가격(text-tertiary Medium) 3-자식 구성. 회색 빈 박스 0. R56 inject 자동 적용 (5건 박힘)"
+    },
+    {
+      "id": "C04-cell-row-alignment",
+      "question": "Day Strip / cell row 모든 cell 의 텍스트 alignment 일치하나",
+      "status": "PASS",
+      "evidence": "Day Strip 6 cells 모두 counterAxisAlignItems=CENTER + 텍스트 textAlignHorizontal=CENTER 통일. R53 inject 10건 적용 확인. 어제/오늘 pill/16~19일 라벨·값 다 가운데 정렬"
+    },
+    {
+      "id": "C05-hero-28plus",
+      "question": "Hero 텍스트 28~36px Bold 인가",
+      "status": "PASS",
+      "evidence": "Recommend Stage Card '총 1,300만원 모으기 도전' 30px Bold (R51 자동 승격). 카드 안 hero scale 명확"
+    },
+    {
+      "id": "C06-tabbar-label-order",
+      "question": "Tab Bar 라벨 순서가 와이어와 일치하나",
+      "status": "PASS",
+      "evidence": "Tab Bar: 홈/라운지/스테이지/커뮤니티/전체 — 와이어 순서 완벽 일치. variables.TabBar.tabLabels 박혀 자동 적용"
+    },
+    {
+      "id": "C07-tabbar-icon-match",
+      "question": "Tab Bar 아이콘이 라벨 의미와 일치하나 (커뮤니티=users / 라운지=shop 등)",
+      "status": "PASS",
+      "evidence": "Tab Bar 아이콘: home-line/shopping-bag-01/coins-stacked-01/users-01/menu-04 — 라벨 의미 매칭. variables.TabBar.tabIcons 박혀 자동 적용"
+    },
+    {
+      "id": "C08-underline-width",
+      "question": "Underline tab active/inactive underline width·height 일치하나",
+      "status": "PASS",
+      "evidence": "Mode Tabs: '거래 현황' / '누적 거래' 두 underline 동일 길이. Tab cells layoutSizingHorizontal=FILL 박아 cell width 통일 + underline FILL"
+    },
+    {
+      "id": "C09-stepper-icons",
+      "question": "Stepper minus/plus 아이콘 시인성 충분한가 (대비 ≥3:1)",
+      "status": "PASS",
+      "evidence": "Stepper minus/plus 아이콘 fg-secondary (#687079) — bg-secondary(#f3f4f6) 위 대비 4.2 (WCAG AA 통과). R55 inject 자동 승격 박힘"
+    },
+    {
+      "id": "C10-fab-icon-correct",
+      "question": "FAB 아이콘 의도와 일치하나, 이모티콘 아닌가",
+      "status": "PASS",
+      "evidence": "FAB '+' 아이콘 brand-solid 원형 56×56. emoji 아님. iconName ↔ icon alias fix 작동"
+    },
+    {
+      "id": "C11-card-hierarchy",
+      "question": "카드 위계 (hero vs 보조) 시각 차등화 (size/shadow/border) 됐나",
+      "status": "PARTIAL",
+      "evidence": "Recommend Stage Card 의 hero (총 1,300만원 모으기 도전 30px Bold) 가 시각 weight 차등화함. 단 카드 자체 elevation/shadow/border 변화는 없음 ([feedback_no_drop_shadow] 룰 때문). 위계는 typography 로만 표현"
+    },
+    {
+      "id": "C12-polished-not-wire",
+      "question": "와이어 1:1 복제처럼 보이지 않나 (brand 액센트 의미 매핑, 시각 리듬)",
+      "status": "PASS",
+      "evidence": "라운지 회색 박스 → icon+라벨+가격 (R56). 참여중 placeholder 2개 → hint card 1개. Day Strip alignment 통일. brand 액센트 의미 매핑 (Day cell pill/1회차/FAB/Mode active underline/Round R1/예치금/Lounge icon-wrap/Tab home active). 와이어 1:1 복제 탈피"
+    }
+  ],
+  "summary": {
+    "pass": 11,
+    "fail": 0,
+    "partial": 1,
+    "BLOCKING_RESOLVED": "PASS 11 / PARTIAL 1 / FAIL 0"
+  }
+}

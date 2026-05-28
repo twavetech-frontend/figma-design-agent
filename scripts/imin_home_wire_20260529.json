@@ -1,0 +1,67 @@
+{
+  "archetype": "imin_home",
+  "scenario": "active",
+  "wire_content": {
+    "1.2 mode_tabs": {
+      "tabs": ["거래 현황", "누적 거래"],
+      "active": "거래 현황"
+    },
+    "1.3 stage_progress": {
+      "count": "0건",
+      "header": "진행중인 0건의 스테이지 내역",
+      "saved": "+0원",
+      "borrowed": "-0원",
+      "rows": [
+        {"label": "모은 금액", "value": "+0원"},
+        {"label": "빌린 금액", "value": "-0원"}
+      ],
+      "day_strip": [
+        {"label": "미납 중", "value": "0건"},
+        {"label": "오늘", "value": "0원"},
+        {"label": "16일", "value": "0원"},
+        {"label": "17일", "value": "0원"},
+        {"label": "18일", "value": "0원"},
+        {"label": "19일", "value": "0원"}
+      ]
+    },
+    "1.4 attendance": {
+      "headline": "연속 0일째 출석 체크 중",
+      "sub": "매일매일 출첵하면 특별한 혜택이!"
+    },
+    "calc_callout": {
+      "text": "얼마까지 모을 수 있는 지 확인해보세요."
+    },
+    "1.5 recommend_stage": {
+      "amount": "10만원",
+      "unit": "월",
+      "period": "13개월",
+      "method": "모으기",
+      "round": "1회차",
+      "purpose": "납입 후 목돈 수령",
+      "goal": "총 1300만원 모으기 도전",
+      "more_link": "추천 전체 보기(13개)"
+    },
+    "1.6 participating": {
+      "tabs": ["참여 중인 스테이지", "찜한 스테이지"],
+      "message": "참여 중인 스테이지가 없어요",
+      "cards": []
+    },
+    "1.7 lounge": {
+      "header": "추천 상품(라운지)",
+      "balance": "예치금(포인트): 312,490원(100p)",
+      "cards": []
+    },
+    "footer": {
+      "policies": ["이용약관", "스테이지이용약관", "서비스운영정책", "개인정보처리방침", "쇼핑이용약관"],
+      "company": "(주)티웨이브 역삼지점",
+      "ceo": "대표: 서재준",
+      "reg_no": "사업자등록번호: 291-85-01499",
+      "sales_no": "통신판매업신고: 2021-서울강남-05837",
+      "copyright": "Copyright Ⓒ TWAVE. All Rights Reverved."
+    },
+    "1.8 tab_bar": {
+      "tabs": ["홈", "라운지", "스테이지", "커뮤니티", "전체"],
+      "active": "홈"
+    }
+  }
+}

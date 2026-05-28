@@ -1,0 +1,31 @@
+{
+  "root_id": "1297:6078",
+  "blueprint_name": "imin_home_1",
+  "scenario": "active (와이어 empty state → 프로젝트 확정 방향대로 polished 활성 mock 데이터로 렌더)",
+  "exported_sections": [
+    {"label": "full", "nodeId": "1297:6078"},
+    {"label": "Header_NavBar", "nodeId": "1297:6079 + 1297:6089"},
+    {"label": "Mode_Tabs", "nodeId": "1297:6097"},
+    {"label": "Day_Strip", "nodeId": "1297:6210"},
+    {"label": "Recommend_Card", "nodeId": "1297:6262"},
+    {"label": "Participating", "nodeId": "1297:6325"},
+    {"label": "Footer", "nodeId": "1297:6428"},
+    {"label": "Tab_Bar", "nodeId": "1297:6448"},
+    {"label": "FAB", "nodeId": "1297:6445"}
+  ],
+  "checklist": [
+    {"id": "C01-content-1to1", "status": "PASS", "evidence": "와이어 고유 콘텐츠 1:1 — 추천 스테이지 10만원/13개월/1~13 회차/1회차/총1,300만원/추천 전체 보기(13개), 라운지 예치금 312,490원(100p), mode tabs 거래현황/누적거래, tab bar 5개, footer 정책5+회사정보 모두 일치. 0원/0건 지표는 프로젝트 확정 방향(refactor A)대로 활성 mock 으로 렌더."},
+    {"id": "C02-no-grey-placeholder", "status": "PASS", "evidence": "빈 회색 placeholder 없음 — 진행현황 카드/참여 4-grid/라운지 카드 모두 실 콘텐츠."},
+    {"id": "C03-real-image-cards", "status": "PASS", "evidence": "라운지 5개 카드에 loremflickr 실사진 적용(스킨케어/커피/초콜릿/배달/영화)."},
+    {"id": "C04-cell-row-alignment", "status": "PASS", "evidence": "Day Strip 4 cell(화12미납/토18오늘/수22납입/금25지급) weekday·day·value·status 모두 중앙 정렬 일치."},
+    {"id": "C05-hero-28plus", "status": "PASS", "evidence": "추천카드 1,300,000원 ~40px Bold, screen hero 1,240,000원 대형 Bold."},
+    {"id": "C06-tabbar-label-order", "status": "PASS", "evidence": "홈/라운지/스테이지/커뮤니티/전체 — 와이어 순서 일치, wrap 없음."},
+    {"id": "C07-tabbar-icon-match", "status": "PASS", "evidence": "home/shopping-bag/coins-stacked/users/menu — 라벨 의미 일치, 홈 active brand."},
+    {"id": "C08-underline-width", "status": "PASS", "evidence": "Mode Tabs '거래 현황' active brand underline, '누적 거래' inactive grey — DS Horizontal tabs underline."},
+    {"id": "C09-stepper-icons", "status": "PASS", "evidence": "월/기간 stepper −/+ 아이콘 표시, + 는 brand 원형으로 대비 충분."},
+    {"id": "C10-fab-icon-correct", "status": "PASS", "evidence": "FAB 56×56 cornerRadius28 정원, brand-solid 위 흰 '+' 아이콘(이모지 아님), x=317 우측20px."},
+    {"id": "C11-card-hierarchy", "status": "PASS", "evidence": "hero 금액 대형 + 흰 카드 border + 상태 pill(진행중/곧지급/신규/예정) 시맨틱 차등."},
+    {"id": "C12-polished-not-wire", "status": "PASS", "evidence": "평평한 0원 와이어 복제 아님 — 시맨틱 컬러(미납red/지급green/오늘dark), 카드 위계, progress bar 로 시각 리듬."}
+  ],
+  "summary": {"pass": 12, "fail": 0, "na": 0, "BLOCKING": "완료 — 12개 PASS"}
+}

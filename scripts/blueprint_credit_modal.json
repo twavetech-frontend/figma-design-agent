@@ -1,0 +1,554 @@
+{
+  "rootName": "credit_check_consent_modal",
+  "name": "credit_check_consent_modal",
+  "type": "frame",
+  "width": 393,
+  "_screenType": "modal",
+  "fill": "$token(bg-primary)",
+  "_wireframeContentSkipped": "full modal — 와이어 안에 있는 것만 (X + 제목 + 신용점수 카드 + 안내 4문단 + 동의 체크 + CTA). 홈 섹션 없음.",
+  "references": [
+    {
+      "app": "toss",
+      "section": "제목 + 풀폭 CTA 모달",
+      "ref": "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png",
+      "thumbPath": "scripts/ref_thumbnails/cm7k1itvy003wjy0csv1fjcv4.png",
+      "extract": "큰 Bold 2줄 제목(24px) + 풀폭 라운드(16) CTA 버튼 중앙 흰 라벨. 카드 cornerRadius 20, padding 24, 넉넉한 상하 여백.",
+      "copyNotes": "제목 24 Bold 위계 + 하단 풀폭 라운드 CTA(중앙 라벨) + 카드 padding 24 그대로 카피. 본 모달 제목/CTA/카드 여백에 적용.",
+      "_searchLog": {
+        "queries": [
+          "toss 모달 제목 CTA",
+          "toss 안내 카드 버튼",
+          "toss 단계 안내"
+        ],
+        "candidates": [
+          "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png",
+          "uibowl/toss/cm7k1itwb003yjy0cj2xhoy5x.png",
+          "uibowl/toss/x775bsvobrcl4ezbo3urt9i7.png"
+        ],
+        "chosen": "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png",
+        "copyNotes": "제목 24 Bold + 풀폭 라운드 CTA(중앙 라벨) + 카드 padding 24 위계 카피"
+      }
+    },
+    {
+      "app": "toss",
+      "section": "다크 카드 + 흰 텍스트 금액",
+      "ref": "uibowl/toss/e71t78p94toqxa3prlofk58g.png",
+      "thumbPath": "scripts/ref_thumbnails/e71t78p94toqxa3prlofk58g.png",
+      "extract": "어두운 surface 카드 위 흰 Bold 텍스트 + 라벨 grey, cornerRadius 16~20, 섹션 간격 일정. 절제된 컬러(중성 + 액센트 최소).",
+      "copyNotes": "다크 slate 카드 위 흰 텍스트 위계(타이틀 Bold + 보조 흰) + cornerRadius 16 그대로. 본 모달 신용점수 카드(slate)에 적용.",
+      "_searchLog": {
+        "queries": [
+          "toss 다크 카드",
+          "toss 흰 텍스트 카드",
+          "toss 자산 카드 surface"
+        ],
+        "candidates": [
+          "uibowl/toss/e71t78p94toqxa3prlofk58g.png",
+          "uibowl/toss/x775bsvobrcl4ezbo3urt9i7.png",
+          "uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png"
+        ],
+        "chosen": "uibowl/toss/e71t78p94toqxa3prlofk58g.png",
+        "copyNotes": "다크 surface 위 흰 텍스트 위계 + cornerRadius 16 카피 (신용점수 slate 카드)"
+      }
+    }
+  ],
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "itemSpacing": 24,
+    "paddingTop": 8,
+    "paddingBottom": 24,
+    "paddingLeft": 24,
+    "paddingRight": 24
+  },
+  "children": [
+    {
+      "name": "NavBar",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "height": 40,
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisAlignItems": "MAX",
+        "counterAxisAlignItems": "CENTER",
+        "paddingTop": 4,
+        "paddingBottom": 4,
+        "paddingLeft": 0,
+        "paddingRight": 0
+      },
+      "children": [
+        {
+          "name": "close-x",
+          "type": "icon",
+          "iconName": "x-close",
+          "size": 24,
+          "iconColor": "$token(fg-primary)"
+        }
+      ]
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "characters": "스테이지 참여에 꼭 필요해요.",
+      "fontSize": 24,
+      "fontWeight": 700,
+      "fill": "$token(text-primary)",
+      "layoutSizingHorizontal": "FILL",
+      "textAutoResize": "HEIGHT"
+    },
+    {
+      "name": "Credit Card",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "fill": {
+        "r": 0.44,
+        "g": 0.49,
+        "b": 0.55,
+        "a": 1
+      },
+      "cornerRadius": 16,
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 24,
+        "paddingRight": 24,
+        "paddingTop": 24,
+        "paddingBottom": 24,
+        "itemSpacing": 0,
+        "counterAxisAlignItems": "MIN"
+      },
+      "children": [
+        {
+          "name": "Card Inner",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 56,
+            "counterAxisAlignItems": "MIN",
+            "paddingTop": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "paddingRight": 0
+          },
+          "children": [
+            {
+              "name": "Card Top Row",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 10
+              },
+              "children": [
+                {
+                  "name": "card-title",
+                  "type": "text",
+                  "characters": "신용점수 조회",
+                  "fontSize": 20,
+                  "fontWeight": 700,
+                  "fill": "$token($token(fg-light))",
+                  "layoutSizingHorizontal": "HUG",
+                  "textAutoResize": "WIDTH_AND_HEIGHT",
+                  "fontColor": "$token(fg-light)"
+                },
+                {
+                  "name": "arrow-circle",
+                  "type": "frame",
+                  "width": 28,
+                  "height": 28,
+                  "layoutSizingHorizontal": "FIXED",
+                  "layoutSizingVertical": "FIXED",
+                  "cornerRadius": 14,
+                  "strokeColor": "$token(fg-light)",
+                  "strokeWeight": 1.5,
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER",
+                    "paddingTop": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "paddingRight": 0
+                  },
+                  "children": [
+                    {
+                      "name": "arrow",
+                      "type": "icon",
+                      "iconName": "chevron-right",
+                      "size": 16,
+                      "iconColor": "$token(fg-light)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Card Score Row",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 8
+              },
+              "children": [
+                {
+                  "name": "score-label",
+                  "type": "text",
+                  "characters": "신용점수",
+                  "fontSize": 18,
+                  "fontWeight": 600,
+                  "fill": "$token($token(fg-light))",
+                  "layoutSizingHorizontal": "HUG",
+                  "textAutoResize": "WIDTH_AND_HEIGHT",
+                  "fontColor": "$token(fg-light)"
+                },
+                {
+                  "name": "Score Boxes",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 6
+                  },
+                  "children": [
+                    {
+                      "name": "q-box",
+                      "type": "frame",
+                      "width": 38,
+                      "height": 46,
+                      "layoutSizingHorizontal": "FIXED",
+                      "layoutSizingVertical": "FIXED",
+                      "fill": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.16
+                      },
+                      "cornerRadius": 8,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "q",
+                          "type": "text",
+                          "characters": "?",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "$token($token(fg-light))",
+                          "layoutSizingHorizontal": "HUG",
+                          "textAutoResize": "WIDTH_AND_HEIGHT",
+                          "textAlignHorizontal": "CENTER",
+                          "fontColor": "$token(fg-light)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "q-box",
+                      "type": "frame",
+                      "width": 38,
+                      "height": 46,
+                      "layoutSizingHorizontal": "FIXED",
+                      "layoutSizingVertical": "FIXED",
+                      "fill": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.16
+                      },
+                      "cornerRadius": 8,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "q",
+                          "type": "text",
+                          "characters": "?",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "$token($token(fg-light))",
+                          "layoutSizingHorizontal": "HUG",
+                          "textAutoResize": "WIDTH_AND_HEIGHT",
+                          "textAlignHorizontal": "CENTER",
+                          "fontColor": "$token(fg-light)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "q-box",
+                      "type": "frame",
+                      "width": 38,
+                      "height": 46,
+                      "layoutSizingHorizontal": "FIXED",
+                      "layoutSizingVertical": "FIXED",
+                      "fill": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.16
+                      },
+                      "cornerRadius": 8,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "q",
+                          "type": "text",
+                          "characters": "?",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "$token($token(fg-light))",
+                          "layoutSizingHorizontal": "HUG",
+                          "textAutoResize": "WIDTH_AND_HEIGHT",
+                          "textAlignHorizontal": "CENTER",
+                          "fontColor": "$token(fg-light)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "q-box",
+                      "type": "frame",
+                      "width": 38,
+                      "height": 46,
+                      "layoutSizingHorizontal": "FIXED",
+                      "layoutSizingVertical": "FIXED",
+                      "fill": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.16
+                      },
+                      "cornerRadius": 8,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "q",
+                          "type": "text",
+                          "characters": "?",
+                          "fontSize": 16,
+                          "fontWeight": 700,
+                          "fill": "$token($token(fg-light))",
+                          "layoutSizingHorizontal": "HUG",
+                          "textAutoResize": "WIDTH_AND_HEIGHT",
+                          "textAlignHorizontal": "CENTER",
+                          "fontColor": "$token(fg-light)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "jeom",
+                      "type": "text",
+                      "characters": "점",
+                      "fontSize": 18,
+                      "fontWeight": 600,
+                      "fill": "$token($token(fg-light))",
+                      "layoutSizingHorizontal": "HUG",
+                      "textAutoResize": "WIDTH_AND_HEIGHT",
+                      "fontColor": "$token(fg-light)"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Info Paragraphs",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "itemSpacing": 18
+      },
+      "children": [
+        {
+          "name": "p1",
+          "type": "text",
+          "characters": "아임인 스테이지는 KCB 신용점수 630점 이상인 분들만 참여 가능합니다.",
+          "fontSize": 14,
+          "fontWeight": 400,
+          "fill": "$token(text-secondary)",
+          "layoutSizingHorizontal": "FILL",
+          "textAutoResize": "HEIGHT",
+          "lineHeight": {
+            "value": 150,
+            "unit": "PERCENT"
+          }
+        },
+        {
+          "name": "p2",
+          "type": "text",
+          "characters": "조회된 신용점수에 따라 스테이지 한도가 정해집니다.",
+          "fontSize": 14,
+          "fontWeight": 400,
+          "fill": "$token(text-secondary)",
+          "layoutSizingHorizontal": "FILL",
+          "textAutoResize": "HEIGHT",
+          "lineHeight": {
+            "value": 150,
+            "unit": "PERCENT"
+          }
+        },
+        {
+          "name": "p3",
+          "type": "text",
+          "characters": "신용점수 조회 시 개인 신용점수에는 전혀 영향이 없으며, 회원님의 개인정보는 [개인정보 보호법]에 의거하여 소중하게 보호되니 안심하고 이용하세요.",
+          "fontSize": 14,
+          "fontWeight": 400,
+          "fill": "$token(text-secondary)",
+          "layoutSizingHorizontal": "FILL",
+          "textAutoResize": "HEIGHT",
+          "lineHeight": {
+            "value": 150,
+            "unit": "PERCENT"
+          }
+        },
+        {
+          "name": "p4",
+          "type": "text",
+          "characters": "본 신용 조회 내역에 대해 문의 사항이 있을 경우 KCB 고객센터 (02-708-1000)로 문의주세요.",
+          "fontSize": 14,
+          "fontWeight": 400,
+          "fill": "$token(text-secondary)",
+          "layoutSizingHorizontal": "FILL",
+          "textAutoResize": "HEIGHT",
+          "lineHeight": {
+            "value": 150,
+            "unit": "PERCENT"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consent Row",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "CENTER",
+        "itemSpacing": 8,
+        "paddingTop": 8,
+        "paddingBottom": 8
+      },
+      "children": [
+        {
+          "name": "Consent Left",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "layoutSizingVertical": "HUG",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 10
+          },
+          "children": [
+            {
+              "name": "check-circle",
+              "type": "frame",
+              "width": 22,
+              "height": 22,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "cornerRadius": 11,
+              "strokeColor": "$token(border-secondary)",
+              "strokeWeight": 1.5,
+              "fill": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 0
+              },
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "paddingRight": 0
+              },
+              "children": [
+                {
+                  "name": "check",
+                  "type": "icon",
+                  "iconName": "check",
+                  "size": 14,
+                  "iconColor": "$token(fg-quaternary)"
+                }
+              ]
+            },
+            {
+              "name": "consent-label",
+              "type": "text",
+              "characters": "[필수] 개인신용정보 수집·이용 동의",
+              "fontSize": 14,
+              "fontWeight": 500,
+              "fill": "$token(text-primary)",
+              "layoutSizingHorizontal": "HUG",
+              "textAutoResize": "WIDTH_AND_HEIGHT"
+            }
+          ]
+        },
+        {
+          "name": "consent-chevron",
+          "type": "icon",
+          "iconName": "chevron-right",
+          "size": 20,
+          "iconColor": "$token(fg-tertiary)"
+        }
+      ]
+    },
+    {
+      "name": "CTA",
+      "type": "instance",
+      "componentKey": "ed0032bcf28f03da97e4b3006f54d30a0fbe5914",
+      "layoutSizingHorizontal": "FILL",
+      "properties": {
+        "Size": "lg",
+        "State": "Disabled",
+        "label": "동의 및 조회하기"
+      }
+    }
+  ]
+}

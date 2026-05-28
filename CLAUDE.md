@@ -162,6 +162,44 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 ## 디자인 생성 필수 규칙
 
+> 🔴 **절대 규칙 0-G — references/uibowl REFERENCE READ 강제 (2026-05-28 사용자: "레퍼런스 이미지 검색은 하냐?")**
+>
+> `cmd_build` 빌드 로그에 **"📌 SECTION-REFERENCE-PNG"** 라인이 보이면, **빌드 진행
+> 전에 반드시** 위에 출력된 PNG path 들 (`scripts/ref_thumbnails/*.png`) 을 모두
+> **Read 도구로 열어 시각 학습**. 단순 path 만 보고 references[] 박지 말고
+> **실제 이미지의 시각 위계/리듬/컬러 매핑/카드 패턴/CTA 위치를 참고**.
+>
+> **강제 절차:**
+> 1. Step A.0 출력의 thumbPath 들 (보통 6장) `Read` 호출
+> 2. 학습 결과를 references[] 의 `extract` / `copyNotes` 필드에 **실제 본 내용**으로 반영
+>    (form 통과용 "card surface" 같은 공허한 값 금지)
+> 3. 학습 결과로 archetype 별 polish 강화 — 시각 위계 / 컬러 절제 / 카드 패턴 직접 적용
+> 4. **위반 신호**: PNG Read 0건 / extract 가 generic / references[] 가 path 만
+>
+> **시스템 박힘:** `figma_mcp_client.py _auto_search_uibowl_references()` (Step A.0)
+> — `scripts/ref_search.py --archetype <imin_xxx> --thumbnail --limit 6` 자동 호출
+> → `scripts/ref_thumbnails/` 에 LLM Read 가능 thumbnail (≤1200px) 자동 생성 →
+> stdout 에 SECTION-REFERENCE-PNG 라인 출력 (사용자 화면에도 보임).
+> Claude self-verify 의 마지막 방어선.
+
+> 🔴 **절대 규칙 0-F — SELF-VERIFY 강제 (2026-05-28 옵션 B / 사용자 신뢰 파탄 후 박힘)**
+>
+> `cmd_build` 빌드 로그에 **"📸 SECTION-QA-PNG"** 라인이 보이면, **사용자에게 어떤
+> 보고도 하기 전에 반드시 아래 절차 수행**. 1장 screenshot 만 보고 "검증 ✅" 보고
+> 절대 금지 — 이전 5회 거짓 보고로 신뢰 파탄됨.
+>
+> **강제 절차:**
+> 1. stdout 의 `📋 Checklist: scripts/qa_screenshots/<root>/self_verify_checklist.json` 경로 확인
+> 2. `exported_sections[]` 의 모든 nodeId 를 `mcp__figma-tools__export_node_as_image` (scale=2) 로 재 export + **Read 강제**
+> 3. checklist 12개 항목 (C01~C12) 각각 **PASS / FAIL / NA** + **evidence 1줄 인용** 채움
+> 4. FAIL ≥1 건 → 즉시 라이브 fix 시도 → 재 export → 재 Read → checklist 갱신. 미 fix 시 사용자에게 **솔직 보고** (PASS X / FAIL Y / NA Z 명시)
+> 5. **위반 신호**: 전체 1장만 보고 OK 보고 / PNG export 만 하고 Read skip / checklist 비워둠 / FAIL 있는데 "완료" 보고
+>
+> **시스템 박힘:** `figma_mcp_client.py _self_verify_section_qa_export()` (Step H)
+> — 6장 PNG auto-export + checklist JSON 자동 생성 + stdout 강력 경고.
+> 코드는 Claude 행동 강제 못하지만 stdout 경고가 사용자 화면에도 표시되므로
+> Claude 의 self-verify skip 이 사용자에게 즉시 드러남.
+
 > 🔴 **절대 규칙 0-E — 와이어프레임 콘텐츠 1:1 추출 의무 / archetype config 재사용 금지 (2026-05-27 사용자 분노)**
 >
 > 새 세션에서 와이어프레임을 받아 디자인을 빌드할 때, **와이어의 실제 텍스트/숫자/카운트
@@ -335,6 +373,8 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   - **Footer 없음 · Tab Bar 없음 · 상단 Tab 메뉴(거래현황/누적거래 등) 없음** — 모달은 단일 컨텍스트.
   - 루트 높이는 콘텐츠에 HUG (불필요한 빈 공간 금지).
 - Blueprint root 에 `"_screenType": "modal"` 명시 → `cmd_build`의 `_enforce_modal_pattern` 이 자동 강제: Footer / Tab Bar / 상단 탭(`Tab Row`/`Top Tab`/`Section Tab` 포함) / non-X nav 아이콘(`Logo`/`bell`/`chat` 등) 을 빌드 전에 제거하고 NavBar 를 우측 정렬한다.
+- 🔴 **모달은 unified imin_home 베이스를 쓰지 말 것 — 와이어에 있는 것만 처음부터 custom blueprint 로.** 홈 대시보드 섹션(Screen Hero/Top Alert/Recommend/Lounge/Attendance/Mode Tabs/Tab Bar/FAB/Footer)을 끌어오면 **R58 (`design_rules/R58_modal_no_home_sections.py`) 가 build 를 차단**한다 (2026-05-28 사용자 분노). 와이어에 진짜 있는 드문 경우만 `_modalAllowSections:[...]` 로 허용.
+- 🔴 **루트 높이 = HUG 필수** — 모달 root 가 FIXED(852)면 하단 CTA 가 잘린다. `layoutSizingVertical: "HUG"` 로 콘텐츠 전체 + CTA 가 보이게.
 - 모달이 아닌 일반 화면은 기존대로 (NavBar 풀세트 + Tab Bar + Footer).
 
 ### 2-G. ⚠️ 하단 CTA = DS Button 컴포넌트 인스턴스 우선 (2026-05-24 룰)
@@ -344,15 +384,53 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   - `Action Button md Primary` (`ed0032bcf28f03da97e4b3006f54d30a0fbe5914`) — 기본 CTA
   - `Action Button md Secondary` / `Tertiary` / `Outline` / `Ghost` — 위계별
   - `Action Button sm` (`a8a4d7eb7874c469ab89105cc342fad85a3d28ce`) — 보조 CTA
-- **사이즈 / 상태:** Bottom Action Bar 의 대형 CTA 는 `Size: lg`, 비활성 상태는 `State: Disabled` (variant 로 적용 — opacity 0.5 자동).
-- **라벨:** `componentProperties` 의 텍스트 슬롯에 override (e.g., "참여하기"). 아이콘 토글(`⬅️ Icon leading` / `➡️ Icon trailing`) 은 기본 false.
-- **시스템 강제 (기존):** R23 inject 의 `detect_button_shape` 가 raw button frame 을 자동 swap. 2026-05-24 — `Primary CTA` 같이 VERTICAL 로 잘못 작성된 케이스도 잡도록 name 매칭(`cta` / `button` / `submit`) 시 layoutMode 무관 인정. catalog 미스 시 build ERROR.
-- Blueprint 작성 시: `{"type":"instance","componentKey":"ed0032bcf28f03da97e4b3006f54d30a0fbe5914","properties":{"Size":"lg","State":"Disabled","label":"참여하기"}}` 패턴.
+- **🔴 사이즈 — 하단에 고정되거나 보이는 CTA 버튼은 `Size: lg` 가 기본 (2026-05-28 사용자 명시).** 비활성은 `State: Disabled`.
+  - **코드 강제:** blueprint 의 `properties:{Size:lg}` 는 빌드 때 무시되므로, `_enforce_ds_button_sizing` (post-fix) 가 **VERTICAL 부모의 전폭 CTA 의 Size variant 를 lg 로 자동 강제** → `set_instance_properties`. 매 빌드 자동 적용.
+- **라벨:** Action Button 라벨은 nested TEXT("Button CTA") 라 `properties.label` 로 **안 바뀐다**. `set_text_content` 또는 inject 의 `_instanceText` / label_map 로 override. ⚠️ Size 등 **variant 변경 후엔 라벨 재확인** (variant swap 이 override 를 리셋할 수 있음).
+- **시스템 강제 (기존):** R23 inject 의 `detect_button_shape` 가 raw button frame 을 자동 swap. catalog 미스 시 build ERROR.
+- Blueprint 작성 시: `{"type":"instance","componentKey":"ed0032bcf28f03da97e4b3006f54d30a0fbe5914","_instanceText":"참여하기","properties":{"Size":"lg","State":"Disabled"}}` 패턴.
+
+### 2-I. ⚠️ 폼 컨트롤(체크박스/토글/라디오/인풋)은 DS 컴포넌트 인스턴스 — raw frame 금지 (2026-05-28 사용자 분노)
+- **체크박스를 raw 원형/사각 frame + check 아이콘으로 그리지 말 것.** DS 컴포넌트 인스턴스 사용:
+  - `Checkbox md` (`bbd5c20958464e51295e73c3c90ef7d54c0b0b69`, 20×20, unchecked) / `Checkbox md checked` (`73691ec35c62c70735d61722347dfd995b32c5ec`)
+  - 토글/라디오/인풋/슬라이더/드롭다운도 동일 — `_VERIFIED_AUTOSWAP_ROLES` 의 DS 컴포넌트로.
+- Blueprint: `{"type":"instance","componentKey":"bbd5c20958464e51295e73c3c90ef7d54c0b0b69"}` 패턴.
+- R23 의 `detect_checkbox_shape` 는 현재 key UNVERIFIED → WARN only 라 자동 swap 안 됨 — **작성 시 직접 instance 로 쓸 것** (raw frame 으로 그리면 사용자 분노).
 
 ### 2-F. ⚠️ 루트 minHeight=852 + 하단 바 bottom-pin (2026-05-24 룰)
 - 루트 프레임 **min height = 852** (iPhone 16 뷰포트). 콘텐츠가 늘어나면 그에 따라 같이 늘어남.
 - 콘텐츠 합이 852 보다 짧을 때, 화면에 고정된 하단 바(**Bottom Action Bar / Tab Bar / CTA Bar / FAB**) 는 **루트 하단(y = 852 - bar.height)에 bottom-align** — 콘텐츠 끝에 붙어 떠 있지 않게 한다.
 - **시스템 강제:** `cmd_post_fix` 의 `_enforce_root_min_height` (scripts/figma_mcp_client.py, 2026-05-24) — 루트 높이 < 852 시 852 로 늘리고, 이름에 `tab bar`/`tabbar`/`bottom action bar`/`action bar`/`cta bar`/`fab` 포함된 자식을 ABSOLUTE + bottom constraint MAX 로 새 루트 하단에 재배치. 콘텐츠가 852 보다 길면 손대지 않음 (콘텐츠 끝이 곧 바의 위치).
+
+### 2-E-4. ⚠️ Bottom Tab Bar 자식 FILL + 라벨 wrap 차단 (2026-05-28 사용자 분노)
+- **사례**: Bottom Tab Bar 5개 자식 (Tab 홈/커뮤니티/스테이지/라운지/나) 이 HUG horizontal 로 박혀, tab-label TEXT 가 width=24 (아이콘 width 따라가서) 좁아져 "커뮤/니티", "스테/이지", "라운/지" 같이 두 줄 wrap. R13.3 inject 후에도 회귀 가능.
+- **시스템 강제** — `_enforce_tab_bar_children_fill_live(root_id)` (`cmd_post_fix` chain):
+  1. 이름에 'tab bar' / 'tabbar' / 'bottom tab' / 'bottom nav' 포함 HORIZONTAL parent + 자식 3+ frame 감지
+  2. parent → layoutMode=HORIZONTAL + primaryAxisAlignItems=MIN + counterAxisAlignItems=CENTER + itemSpacing=0
+  3. 각 tab 자식 frame → layoutSizingHorizontal=FILL (5등분 균등)
+  4. tab 자식 안 TEXT (tab-label) → textAutoResize=HEIGHT + textAlignHorizontal=CENTER + layoutSizingHorizontal=FILL
+- **회귀 신호**: Tab Bar 라벨이 두 줄로 wrap 되거나 width 가 24px 정도로 좁아짐
+
+### 2-E-3. ⚠️ 작은 cell (width ≤ 60) 안 TEXT — 중앙 정렬 + 모서리 잘림 차단 (2026-05-28 사용자 명시)
+- **사례**: Month Cell Jan Active (44×44) 안 "Jan/1" 흰 텍스트가 좌측 정렬되어 cell 가장자리에 박힘. 다른 month cells "Oct/Nov/Dec/Feb/Mar/Apr" 도 cornerRadius=20(원형) + 텍스트 width=cell width 가득 → 좌우 둥근 모서리에 의해 "Jct/Vov/Jec" 처럼 잘림.
+- **룰 (3단)**:
+  1. **작은 cell 안 TEXT 는 textAlignHorizontal/Vertical=CENTER 강제** — width ≤ 60 frame 안 TEXT 자식은 무조건 중앙. blueprint 에 명시 안 했어도 post-fix 가 강제
+  2. **작은 cell 의 cornerRadius 가 width/3 이상 + 텍스트 가득 시 cornerRadius 축소** — 원형 cell 안 텍스트 가득은 좌우 잘림 → cornerRadius = max(8, width/5) (rounded square 로 변경)
+  3. **3-col label/value grid (Summary Grid 등) — 균등 분포 + 컬럼 안 텍스트 중앙 정렬 강제** — HORIZONTAL parent 안 라벨/값 VERTICAL stack col ≥ 2 패턴 감지 시: parent layoutMode=HORIZONTAL + primaryAxisAlignItems=MIN + counterAxisAlignItems=CENTER, 각 col → FILL horizontal + VERTICAL + counterAxisAlignItems=CENTER, col 안 TEXT 자식 textAlign=CENTER. 컬럼이 카드 width 균등 분배 + 텍스트 컬럼 중앙
+- **시스템 강제 (cmd_post_fix 자동)**:
+  - `_center_text_in_small_cells_live(root_id)` — 작은 cell 안 TEXT 중앙 정렬
+  - `_fix_text_clip_in_small_round_cells(root_id)` — 원형 cell 잘림 차단
+  - `_fix_space_between_col_baseline(root_id)` — SPACE_BETWEEN col baseline MIN 통일
+- **회귀 신호**: cell 안 텍스트가 좌측·우측에 박혀있음, 셀 모서리에서 글자가 잘림, 3-col grid 라벨이 다른 y 위치
+
+### 2-E-2. ⚠️ Rounded card (cornerRadius ≥ 8) 는 clipsContent=true 유지 (2026-05-28 사용자 명시)
+- **R45 가 모든 비-carousel frame 의 clipsContent=false 를 강제하던 부작용**: 라운지 카드처럼 cornerRadius=16인 카드 안 image/색 영역(예: 보라 Lounge Image 120px)이 카드 라운드 모서리 밖으로 튀어나와 **상단이 각져 보이는 버그**.
+- **룰**: `cornerRadius ≥ 8` (또는 individual `top*Radius` 중 하나라도 ≥ 8) frame 은 `clipsContent=true` 유지. R45 의 clip-false 강제 대상에서 제외.
+- **시스템 강제 (2단)**:
+  1. `_disable_section_clipping` (R45) 의 `is_rounded_card()` 가드 — cornerRadius ≥ 8 frame skip
+  2. `_enforce_rounded_card_clip_live(root_id)` 가 R45 직후 chain — rounded card 의 clipsContent=true 강제 (generator/manual fix 가 false 박아도 복구)
+- shadow 는 어차피 `_strip_all_drop_shadows` 가 다 제거하므로 R42(shadow clearance)와 충돌 없음.
+- 회귀 신호: 카드 안 보라/이미지 영역의 **상단** 모서리가 직각으로 보임 (카드 모서리는 둥근데 내부만 각짐).
 
 ### 2-E. ⛔ Section Divider 자동 삽입 폐기 (2026-05-27 사용자 명시)
 - **"frame에 border를 추가하라니깐 엉뚱하게 섹션 사이에 선을 넣고있냐!!!"** — 섹션 사이에 1px divider 라인 자동 삽입 금지. 이전(2026-05-24) 룰 폐기.
@@ -365,18 +443,13 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - HUG/FIXED 혼용 금지 — 아이템 간격이 불균등해짐
 - 빌드 후 반드시 Tab Bar 아이템 사이징 검증할 것
 
-### 5-B. ⚠️ 상단 모드 탭 = Underline Tab (RECTANGLE underline 자식, 2026-05-27 사용자 명시)
-- 이전 룰 폐기 — "white pill on grey track" (R29) 폐기. 새 표준은 **Underline Tab v2**.
-- **컨테이너 (Tabs Wrap)**: HORIZONTAL, `paddingLeft/Right=24`, `paddingBottom=8`, `itemSpacing=22`, `counterAxisAlignItems=MAX` (베이스라인 정렬), `fill=$token(bg-primary)`, `clipsContent=true`, `layoutSizingHorizontal=FILL`, `layoutSizingVertical=HUG`
-- **각 탭**: VERTICAL HUG×HUG, `paddingTop=16`, `itemSpacing=12`, `counterAxisAlignItems=CENTER`
-  - **label (TEXT)**: 16px / lineHeight 24px
-    - Active: Bold + `text-primary` 바인딩
-    - Inactive: Medium + `text-tertiary` 바인딩
-  - **underline (RECTANGLE)**: height 2.5, `layoutSizingHorizontal=FILL`, `layoutSizingVertical=FIXED`
-    - Active: `fill=$token(bg-brand-solid)`
-    - Inactive: 투명 (fill 없음) — 자리만 유지해 높이 일치
-- **레퍼런스 노드**: `17382:48541` (Mode Tabs). clone 후 라벨 override + 부모 swap 패턴 사용 가능.
-- 코드 강제: R29 폐기, blueprint 작성 시 위 구조 그대로. 별도 R 룰 미구현 — 메모리 [[feedback_underline_tab_v2]] 참조.
+### 5-B. ⚠️ 상단 모드 탭 = DS "Horizontal tabs" 컴포넌트 인스턴스 (2026-05-29 사용자 명시)
+- 🔴 **raw frame + RECTANGLE underline(v2) 폐기** — 2026-05-29 사용자 "이건 Tabs 컴포넌트를 써야 되는데 안 쓰고 있다". DS **"Horizontal tabs"** 컴포넌트 인스턴스(Underline variant)를 쓴다.
+- **컴포넌트 키** (Imin Design System): variant `Type=Underline, Size=md, Full width=False, Breakpoint=Desktop` = `129dd87af9f604fb62b926d66a8ccd773d63912f` (set `dda7a104b0de347c143c6d622c980b8d92fd8674`). ⚠️ Mobile breakpoint underline 은 드롭다운으로 collapse → **Desktop** 사용.
+- **생성기**: `unified_blueprint.py _gen_mode_tabs` 가 Mode Tabs Wrap 안에 이 variant 인스턴스 1개 emit + `_dsModeTabs:{labels,active}` 마커.
+- **✅ trim/label 완전 자동화 (2026-05-29)**: cmd_post_fix 의 `_configure_ds_mode_tabs` 가 자동으로 컨테이너(탭 10개 고정)를 trim — 앞 N개 라벨 `set_text_content` + Badge·나머지 탭 `set_node_visible` hide + 인스턴스 `set_layout_sizing HUG`(기본 폭 1280 FIXED → 축소) + active≠0 이면 Current. config 는 blueprint `_dsModeTabs:{labels,active}` 마커에서 읽음. 수동 단계 불필요.
+- **plugin 도구 `set_node_visible` (신규)**: `code.js` + bridge reg. 인스턴스 자손 visibility 토글(컨테이너 탭 trim 핵심). code.js 수정은 `npm run build` + 브리지 재시작 시 플러그인 WS 재접속이 자동 로드 (Figma 수동 재실행 불필요).
+- active 탭 = Current=True (variant default tab0). 회귀 신호: ⚠ placeholder / raw RECTANGLE underline / 탭 10개 default 라벨(My details…) / 탭바 폭 1280px. 상세 → 메모리 [[feedback_ds_mode_tabs_component]].
 
 ### 6. Underline Tab Active/Inactive 높이 일치 + Individual Stroke
 - Underline 스타일 탭에서 Active에는 Underline Bar(2px)가 있어 Inactive보다 높아짐
@@ -415,6 +488,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - FAB: `set_layout_positioning(positioning: "ABSOLUTE")` → `move_node(x: 317, y: 계산값)` (393−56−20=317)
 - **FAB 크기 (2026-05-27 사용자 룰)**: **icon-only 56×56 원형**, `cornerRadius: 28`. 라벨 텍스트 금지 — 아이콘만. 라벨이 필요한 케이스는 별도 pill variant 사용 (drop-down 메뉴 / 라벨 hint 등).
 - **🔴 FAB 아이콘 (2026-05-27 사용자 강력 명시)**: **이모티콘 절대 사용 금지** (💰 🔍 ❤️ ⭐ 등). 반드시 DS icon component 인스턴스. DS instance 색 override 실패 시 fallback: Pretendard Bold ASCII 텍스트 ("+", "→" 등) — emoji 폰트 사용 금지.
+- **🔴 FAB 아이콘 컬러 (2026-05-28 사용자 강력 명시)**: **무조건 `$token(fg-light)`** (`#ffffff`). brand-solid 보라 위 흰 아이콘이 정석. `fg-white`(alias — silent skip 위험) / `fg-primary_on-brand` / 검정 / raw RGB 모두 금지. **시스템 강제 3단:**
+  1. blueprint inject: `R57_fab_icon_fg_light.py` 가 FAB 자손 icon/vector 의 `iconColor`/`fill`/`stroke`/`strokeColor` 를 자동으로 `$token(fg-light)` 교정
+  2. cmd_post_fix 끝: `_enforce_fab_icon_color_live(root_id)` 가 라이브 트리 FAB 자손 VECTOR/ICON 의 `fills/0`·`strokes/0` 을 fg-light 로 강제 + 바인딩
+  3. 두 곳 모두 idempotent — 새 세션 회귀 차단
 - **🔴 FAB 위치 (2026-05-27 사용자 강력 명시)**: Tab Bar 또는 마지막 bottom 요소 **위 20px** + 우측 20px. Tab Bar 위치 변경 시 FAB 같이 옮겨야 함 — `python3 scripts/figma_mcp_client.py post-fix <rootId>` 재실행 시 자동 동기화.
 - **FAB 컬러**: PRD에 특정 색상이 지정되어 있으면 해당 색상 사용 (config에서 fill 오버라이드). 미지정 시 브랜드 컬러 `$token(bg-brand-solid)` 사용 — FAB는 화면에서 가장 중요한 버튼이므로 브랜드 컬러가 기본
 - **빌드 후 검증**: Tab Bar가 콘텐츠 하단에 밀착했는지, FAB가 우측 20px / Tab Bar 위 20px 위치에 있는지 확인
@@ -517,6 +594,18 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
    가장 가까운 DS effect style 에 `set_effect_style_id` 로 바인딩.
    인스턴스 내부 노드(`I…;…`) 와 이미 styles.effect 가 채워진 노드는 skip.
    - 수동 재바인딩: `python3 scripts/figma_mcp_client.py bind-effect-styles <rootNodeId>`
+7. padding/gap → "3. Spacing"/spacing-* 시맨틱 DS 변수 자동 바인딩 (2026-05-28 "절대값 말고
+   spacing- 토큰 박아" / 🔴 2026-05-29 "primitive(Spacing/) 쓰면 안돼. 3. Spacing 의 spacing- 토큰으로"):
+   `_bind_spacing_tokens_live`가 post-fix 가장 마지막(모든 레이아웃 강제 후)에 라이브 트리의
+   auto-layout paddingLeft/Right/Top/Bottom · itemSpacing · counterAxisSpacing 최종 값을 읽어,
+   디자인 스케일에 **정확히 일치하는 값만** "3. Spacing" 컬렉션의 시맨틱 토큰에 바인딩한다.
+   🔴 **primitive 스케일(`Spacing/5 (20px)` 등) 절대 금지** — 반드시 `spacing-*`:
+   0=`spacing-none` 2=`spacing-xxs` 4=`spacing-xs` 6=`spacing-sm` 8=`spacing-md` 12=`spacing-lg`
+   16=`spacing-xl` 20=`spacing-2xl` 24=`spacing-3xl` 32=`spacing-4xl` 40=`spacing-5xl` 48=`spacing-6xl`...
+   `_load_spacing_map`이 figmaPath 소문자 `spacing-` 시작 토큰만 사용(primitive `Spacing/` 제외).
+   토큰 value == 현재 값이라 시각 변화 0. DS 인스턴스 + 인스턴스 내부 노드(`I…;…`)는 제외.
+   스케일 밖 값(10/14/18/22/28 등)은 토큰이 없어 리터럴 유지 — 임의 snap 금지(레이아웃 보존).
+   → blueprint 의 padding/gap 은 스케일 값(0/2/4/6/8/12/16/20/24/32/40/48...)으로 쓰면 전부 바인딩됨.
 [규칙] 루트 프레임 배경 = bg-primary 강제 (절대 규칙 0 — 리터럴 + DS 변수 바인딩)
 ```
 

@@ -1,0 +1,1687 @@
+{
+  "schema": "imin-frontend-layout-spec/v1",
+  "description": "Framework-neutral layout spec. colors = {token, value}; layout = flexbox(direction/gap/padding/justify/align/sizing).",
+  "screen": {
+    "type": "frame",
+    "name": "onboarding_savings_solution",
+    "size": {
+      "width": 393,
+      "height": 864
+    },
+    "layout": {
+      "direction": "column",
+      "gap": 0,
+      "padding": [
+        0,
+        0,
+        32,
+        0
+      ],
+      "justify": "start",
+      "align": "start",
+      "sizingHorizontal": "fixed",
+      "sizingVertical": "fixed"
+    },
+    "style": {
+      "background": {
+        "token": "bg-primary",
+        "value": "#FCFCFD"
+      }
+    },
+    "children": [
+      {
+        "type": "instance",
+        "name": "Status Bar",
+        "size": {
+          "width": 393,
+          "height": 64
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 154,
+          "padding": [
+            21,
+            24,
+            19,
+            24
+          ],
+          "justify": "center",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Time",
+            "size": {
+              "width": 96,
+              "height": 24
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 10,
+              "padding": [
+                1.5,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "Time",
+                "size": {
+                  "width": 37,
+                  "height": 22
+                },
+                "text": {
+                  "content": "9:41"
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Levels",
+            "size": {
+              "width": 96,
+              "height": 22
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 7,
+              "padding": [
+                1,
+                1,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "fixed"
+            },
+            "children": [
+              {
+                "type": "icon",
+                "name": "Cellular Connection",
+                "size": {
+                  "width": 19,
+                  "height": 12
+                }
+              },
+              {
+                "type": "icon",
+                "name": "Wifi",
+                "size": {
+                  "width": 17,
+                  "height": 12
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Frame",
+                "size": {
+                  "width": 27,
+                  "height": 13
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Border",
+                    "size": {
+                      "width": 25,
+                      "height": 13
+                    },
+                    "style": {
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "Primary",
+                          "value": "#000000"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 4.300000190734863,
+                      "opacity": 0.3499999940395355
+                    }
+                  },
+                  {
+                    "type": "icon",
+                    "name": "Cap",
+                    "size": {
+                      "width": 1,
+                      "height": 4
+                    },
+                    "style": {
+                      "background": {
+                        "token": "Primary",
+                        "value": "#000000"
+                      },
+                      "opacity": 0.4000000059604645
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Capacity",
+                    "size": {
+                      "width": 21,
+                      "height": 9
+                    },
+                    "style": {
+                      "background": {
+                        "token": "Primary",
+                        "value": "#000000"
+                      },
+                      "borderRadius": 2.5
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Hero Section",
+        "size": {
+          "width": 393,
+          "height": 166
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 12,
+          "padding": [
+            32,
+            24,
+            32,
+            24
+          ],
+          "justify": "start",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Hero Title Stack",
+            "size": {
+              "width": 261,
+              "height": 102
+            },
+            "layout": {
+              "direction": "column",
+              "gap": 6,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "start",
+              "align": "start",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "hero-line-1",
+                "size": {
+                  "width": 261,
+                  "height": 30
+                },
+                "text": {
+                  "content": "하지만 아임인에선"
+                }
+              },
+              {
+                "type": "text",
+                "name": "hero-line-2",
+                "size": {
+                  "width": 261,
+                  "height": 30
+                },
+                "text": {
+                  "content": "99.6%가 목표 금액을"
+                }
+              },
+              {
+                "type": "text",
+                "name": "hero-line-3",
+                "size": {
+                  "width": 261,
+                  "height": 30
+                },
+                "text": {
+                  "content": "모으는데 성공해요."
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Hero Icon Box",
+            "size": {
+              "width": 72,
+              "height": 40
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fixed",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "bg-brand-section",
+                "value": "#5200B0"
+              },
+              "borderRadius": 18
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "check-circle",
+                "size": {
+                  "width": 40,
+                  "height": 40
+                },
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "size": {
+                      "width": 33,
+                      "height": 33
+                    },
+                    "style": {
+                      "border": {
+                        "width": 3.3333332538604736,
+                        "color": {
+                          "token": "bg-brand-solid",
+                          "value": "#6A00E0"
+                        },
+                        "align": "inside"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Progress Wrap",
+        "size": {
+          "width": 393,
+          "height": 20
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 0,
+          "padding": [
+            8,
+            0,
+            8,
+            0
+          ],
+          "justify": "start",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Progress Done",
+            "size": {
+              "width": 260,
+              "height": 4
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "start",
+              "align": "start",
+              "sizingHorizontal": "fixed",
+              "sizingVertical": "fixed"
+            },
+            "style": {
+              "background": {
+                "token": "bg-brand-solid",
+                "value": "#7700FF"
+              }
+            }
+          },
+          {
+            "type": "frame",
+            "name": "Progress Rest",
+            "size": {
+              "width": 133,
+              "height": 4
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "start",
+              "align": "start",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "fixed"
+            },
+            "style": {
+              "background": {
+                "token": "border-secondary",
+                "value": "#E6E8EA"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Achievement Header Wrap",
+        "size": {
+          "width": 393,
+          "height": 78
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 0,
+          "padding": [
+            36,
+            24,
+            12,
+            24
+          ],
+          "justify": "start",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Achievement Pill",
+            "size": {
+              "width": 209,
+              "height": 30
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                6,
+                12,
+                6,
+                12
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "hug",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 999
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "achievement-label",
+                "size": {
+                  "width": 185,
+                  "height": 18
+                },
+                "text": {
+                  "content": "어제 0000명의 회원이 목표 금액 달성!"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Success List Card Wrap",
+        "size": {
+          "width": 393,
+          "height": 368
+        },
+        "layout": {
+          "direction": "column",
+          "gap": 0,
+          "padding": [
+            8,
+            16,
+            8,
+            16
+          ],
+          "justify": "start",
+          "align": "start",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Success List Card",
+            "size": {
+              "width": 361,
+              "height": 352
+            },
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                8,
+                8,
+                8,
+                8
+              ],
+              "justify": "start",
+              "align": "start",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 20
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Success Entry 1 Row",
+                "size": {
+                  "width": 345,
+                  "height": 64
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    12,
+                    12,
+                    12
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "s1-circle",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-section",
+                        "value": "#5200B0"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "user-01",
+                        "size": {
+                          "width": 20,
+                          "height": 20
+                        },
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "size": {
+                              "width": 13,
+                              "height": 15
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "s1-body",
+                    "size": {
+                      "width": 216,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "s1-title",
+                        "size": {
+                          "width": 216,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "1,000만원 모으기 도전",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "s1-sub",
+                        "size": {
+                          "width": 216,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "이건 실패할 수가 없다.",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "s1-status-pill",
+                    "size": {
+                      "width": 41,
+                      "height": 28
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        5,
+                        10,
+                        5,
+                        10
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "s1-status-text",
+                        "size": {
+                          "width": 21,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "성공",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Success Entry 2 Row",
+                "size": {
+                  "width": 345,
+                  "height": 64
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    12,
+                    12,
+                    12
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "s2-circle",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-section",
+                        "value": "#5200B0"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "user-01",
+                        "size": {
+                          "width": 20,
+                          "height": 20
+                        },
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "size": {
+                              "width": 13,
+                              "height": 15
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "s2-body",
+                    "size": {
+                      "width": 216,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "s2-title",
+                        "size": {
+                          "width": 216,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "200만원 모으기 도전",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "s2-sub",
+                        "size": {
+                          "width": 216,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "충동구매가 저절로 없어져요.",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "s2-status-pill",
+                    "size": {
+                      "width": 41,
+                      "height": 28
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        5,
+                        10,
+                        5,
+                        10
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "s2-status-text",
+                        "size": {
+                          "width": 21,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "성공",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Success Entry 3 Row",
+                "size": {
+                  "width": 345,
+                  "height": 64
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    12,
+                    12,
+                    12
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "s3-circle",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-section",
+                        "value": "#5200B0"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "user-01",
+                        "size": {
+                          "width": 20,
+                          "height": 20
+                        },
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "size": {
+                              "width": 13,
+                              "height": 15
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "s3-body",
+                    "size": {
+                      "width": 216,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "s3-title",
+                        "size": {
+                          "width": 216,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "1,000만원 모으기 도전",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "s3-sub",
+                        "size": {
+                          "width": 216,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "태어나서 처음으로 성공했어요.",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "s3-status-pill",
+                    "size": {
+                      "width": 41,
+                      "height": 28
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        5,
+                        10,
+                        5,
+                        10
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "s3-status-text",
+                        "size": {
+                          "width": 21,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "성공",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Success Entry 4 Row",
+                "size": {
+                  "width": 345,
+                  "height": 64
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    12,
+                    12,
+                    12
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "s4-circle",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-section",
+                        "value": "#5200B0"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "user-01",
+                        "size": {
+                          "width": 20,
+                          "height": 20
+                        },
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "size": {
+                              "width": 13,
+                              "height": 15
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "s4-body",
+                    "size": {
+                      "width": 216,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "s4-title",
+                        "size": {
+                          "width": 216,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "50만원 모으기 도전",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "s4-sub",
+                        "size": {
+                          "width": 216,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "책임감 때문에 안낼 수가 없습니다.",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "s4-status-pill",
+                    "size": {
+                      "width": 41,
+                      "height": 28
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        5,
+                        10,
+                        5,
+                        10
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "s4-status-text",
+                        "size": {
+                          "width": 21,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "성공",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Success Entry 5 Row",
+                "size": {
+                  "width": 345,
+                  "height": 64
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    12,
+                    12,
+                    12,
+                    12
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "s5-circle",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-section",
+                        "value": "#5200B0"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "user-01",
+                        "size": {
+                          "width": 20,
+                          "height": 20
+                        },
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "size": {
+                              "width": 13,
+                              "height": 15
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "s5-body",
+                    "size": {
+                      "width": 216,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "s5-title",
+                        "size": {
+                          "width": 216,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "2,000만원 모으기 도전",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "s5-sub",
+                        "size": {
+                          "width": 216,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "드디어 큰돈 생겨서 든든해요.",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "s5-status-pill",
+                    "size": {
+                      "width": 41,
+                      "height": 28
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        5,
+                        10,
+                        5,
+                        10
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 999
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "s5-status-text",
+                        "size": {
+                          "width": 21,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "성공",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Insight Wrap",
+        "size": {
+          "width": 393,
+          "height": 94
+        },
+        "layout": {
+          "direction": "column",
+          "gap": 6,
+          "padding": [
+            32,
+            24,
+            8,
+            24
+          ],
+          "justify": "start",
+          "align": "start",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "text",
+            "name": "insight-1",
+            "size": {
+              "width": 345,
+              "height": 24
+            },
+            "style": {},
+            "text": {
+              "content": "일단 시작만 해보세요.",
+              "fontSize": 16,
+              "fontFamily": "Pretendard",
+              "fontWeight": "Medium",
+              "align": "left",
+              "lineHeight": 24,
+              "color": {
+                "token": "text-secondary",
+                "value": "#687079"
+              }
+            }
+          },
+          {
+            "type": "text",
+            "name": "insight-2",
+            "size": {
+              "width": 345,
+              "height": 24
+            },
+            "style": {},
+            "text": {
+              "content": "실패하기가 더 어려울 정도에요.",
+              "fontSize": 16,
+              "fontFamily": "Pretendard",
+              "fontWeight": "Medium",
+              "align": "left",
+              "lineHeight": 24,
+              "color": {
+                "token": "text-secondary",
+                "value": "#687079"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Choice Row",
+        "size": {
+          "width": 393,
+          "height": 106
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 16,
+          "padding": [
+            40,
+            24,
+            24,
+            24
+          ],
+          "justify": "start",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Choice Back",
+            "size": {
+              "width": 164,
+              "height": 42
+            },
+            "layout": {
+              "direction": "column",
+              "gap": 2,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "start",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "back-line-1",
+                "size": {
+                  "width": 164,
+                  "height": 20
+                },
+                "text": {
+                  "content": "이전으로"
+                }
+              },
+              {
+                "type": "text",
+                "name": "back-line-2",
+                "size": {
+                  "width": 164,
+                  "height": 20
+                },
+                "text": {
+                  "content": "갈래요."
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Choice Continue Active",
+            "size": {
+              "width": 164,
+              "height": 42
+            },
+            "layout": {
+              "direction": "column",
+              "gap": 2,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "start",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "continue-line-1",
+                "size": {
+                  "width": 164,
+                  "height": 20
+                },
+                "text": {
+                  "content": "비결이 너무"
+                }
+              },
+              {
+                "type": "text",
+                "name": "continue-line-2",
+                "size": {
+                  "width": 164,
+                  "height": 20
+                },
+                "text": {
+                  "content": "궁금해요."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

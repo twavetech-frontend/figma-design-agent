@@ -1,0 +1,71 @@
+{
+  "archetype": "imin_home",
+  "scenario": "active",
+  "rootName": "imin_home_1",
+  "wire_content": {
+    "1.1 header": {
+      "logo": "imin",
+      "icons": ["알림", "채팅"],
+      "sticky": true
+    },
+    "1.2 mode_tabs": {
+      "tabs": ["거래 현황", "누적 거래"],
+      "active": "거래 현황"
+    },
+    "1.3 stage_progress": {
+      "header": "진행중인 0건의 스테이지 내역",
+      "rows": [
+        {"label": "모은 금액", "value": "+ 0원"},
+        {"label": "빌린 금액", "value": "- 0원"}
+      ],
+      "day_strip": [
+        {"label": "미납 중", "value": "0건"},
+        {"label": "오늘", "value": "0원"},
+        {"label": "16일", "value": "0원"},
+        {"label": "17일", "value": "0원"},
+        {"label": "18일", "value": "0원"},
+        {"label": "19일", "value": "0원"}
+      ]
+    },
+    "1.4 attendance": {
+      "headline": "연속 0일째 출석 체크 중",
+      "sub": "매일매일 출첵하면 특별한 혜택이!"
+    },
+    "1.4b calc_callout": {
+      "text": "얼마까지 모을 수 있는 지 확인해보세요."
+    },
+    "1.5 recommend_stage": {
+      "section_title": "추천 스테이지",
+      "stepper_amount": "10만원",
+      "stepper_period": "13개월",
+      "method": "월/대/모으기",
+      "round_total": 13,
+      "round_current": 1,
+      "purpose_tag": "1회차",
+      "purpose_text": "납입 후 목돈 수령",
+      "goal_total": "총 1300만원 모으기 도전",
+      "show_all_cta": "추천 전체 보기(13개)"
+    },
+    "1.6 participating": {
+      "tabs": ["참여 중인 스테이지", "찜한 스테이지"],
+      "active": "참여 중인 스테이지",
+      "count": 0
+    },
+    "1.7 lounge": {
+      "section_title": "추천 상품(라운지)",
+      "deposit": "예치금(포인트): 312,490원(100p)"
+    },
+    "1.8 tab_bar": {
+      "tabs": ["홈", "라운지", "스테이지", "커뮤니티", "전체"],
+      "active": "홈"
+    },
+    "footer": {
+      "policies": ["이용약관", "스테이지이용약관", "서비스운영정책", "개인정보처리방침", "쇼핑이용약관"],
+      "company": "(주)티웨이브 역삼지점",
+      "reg_no": "사업자등록번호: 291-85-01499",
+      "ceo": "대표: 서재준",
+      "sales_no": "통신판매업신고: 2021-서울강남-05837",
+      "copyright": "Copyright Ⓒ TWAVE. All Rights Reverved."
+    }
+  }
+}

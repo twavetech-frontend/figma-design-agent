@@ -40,6 +40,23 @@ except Exception:
 
 _K_ACTION_BTN_PRIMARY = _DS_KEYS.get("Action Button md Primary", "ed0032bcf28f03da97e4b3006f54d30a0fbe5914")
 _K_BADGE_BRAND = _DS_KEYS.get("Badge sm Brand", "03b25488b460f514f23ddf39b5b42f7d31e7935e")
+# DS "Horizontal tabs" 컨테이너의 published variant: Type=Underline, Size=md,
+# Full width=False, Breakpoint=Desktop (set dda7a104…). 2026-05-29 사용자: "모드 탭은
+# raw frame 말고 DS Tabs 컴포넌트 써라".
+#
+# ⚠️ 제약 (2026-05-29 실측):
+#   - 내부 탭 아이템 "_Tab button base"(set 189bffb4) 는 "_" 미published → import 불가
+#     (개별 탭 조합 불가). 컨테이너 variant 만 published.
+#   - 컨테이너는 탭 10개 고정. 인스턴스 자식은 bridge delete_node "not allowed" (삭제 불가),
+#     bridge 엔 visibility 도구 없음. use_figma 는 .visible 가능하나 이 파일 텍스트가
+#     Pretendard 인데 use_figma 컨텍스트에서 Pretendard 폰트 로드 불가 → appendChild/텍스트
+#     조작 throw. 따라서 "2개만 보이게 trim" 은 빌드 파이프라인만으로 자동화 불가.
+#   - 절차(필요 탭 N개): bridge create_component_instance(아래 key) → bridge set_text_content
+#     로 앞 N개 라벨 → use_figma 로 N 이후 탭 .visible=false + Badge .visible=false →
+#     bridge insert_child 로 Mode Tabs Wrap 에 삽입. (생성기는 placeholder instance 만 emit,
+#     trim/label 은 빌드 후 단계 — 메모리 [ds-mode-tabs-component] 참조)
+_K_HORIZONTAL_TABS_UNDERLINE = _DS_KEYS.get(
+    "Horizontal tabs Underline md", "129dd87af9f604fb62b926d66a8ccd773d63912f")
 # DS Action Button 의 leading/trailing icon BOOLEAN prop (기본 on → off 시켜야 텍스트만)
 _BTN_ICON_OFF = {"⬅️ Icon leading#3287:1577": False, "➡️ Icon trailing#3287:2338": False}
 
@@ -136,55 +153,37 @@ def _gen_nav_bar(data: dict, scenario: str) -> dict:
 
 
 def _gen_mode_tabs(data: dict, scenario: str) -> dict:
-    """Underline tab v2 (top 모드 탭). active = brand bold + 2.5px brand underline."""
+    """top 모드 탭 = DS "Horizontal tabs" 컨테이너(Underline) 인스턴스.
+
+    2026-05-29 사용자: "이건 Tabs 컴포넌트를 써야 되는데 안 쓰고 있다" — 기존 raw frame +
+    RECTANGLE underline(v2) 폐기. 컨테이너 variant 인스턴스를 emit한다 (탭 10개 default).
+    빌드 후 단계가 앞 N개 라벨 set + 나머지 탭 hide 로 trim (위 _K_… 주석의 제약/절차 참조).
+    `_dsModeTabs` 마커에 라벨/active 를 실어 빌드 후 단계가 읽는다.
+    """
     tabs = data.get("tabs") or ["거래 현황", "누적 거래"]
     active_idx = data.get("active", 0)
-
-    def tab_node(label: str, is_active: bool) -> dict:
-        return {
-            "name": f"Mode Tab {'Active' if is_active else 'Inactive'}",
-            "type": "frame",
-            "layoutSizingHorizontal": "HUG",
-            "layoutSizingVertical": "HUG",
-            "autoLayout": {
-                "layoutMode": "VERTICAL",
-                "paddingTop": 16, "itemSpacing": 12,
-                "counterAxisAlignItems": "CENTER",
-            },
-            "children": [
-                {
-                    "name": f"label-{'active' if is_active else 'inactive'}",
-                    "type": "text",
-                    "characters": label,
-                    "fontSize": 16,
-                    "fontWeight": 700 if is_active else 500,
-                    "fill": f"$token({'text-primary' if is_active else 'text-tertiary'})",
-                },
-                {
-                    "name": f"underline-{'active' if is_active else 'inactive'}",
-                    "type": "rectangle",
-                    "height": 2.5,
-                    "layoutSizingHorizontal": "FILL",
-                    "layoutSizingVertical": "FIXED",
-                    **({"fill": "$token(bg-brand-solid)"} if is_active else {}),
-                },
-            ],
-        }
-
     return {
         "name": "Mode Tabs Wrap",
         "type": "frame",
         "layoutSizingHorizontal": "FILL",
         "fill": "$token(bg-primary)",
-        "clipsContent": True,
+        "clipsContent": False,
+        "_dsModeTabs": {"labels": tabs, "active": active_idx},
         "autoLayout": {
             "layoutMode": "HORIZONTAL",
-            "paddingLeft": 24, "paddingRight": 24,
-            "paddingTop": 4, "paddingBottom": 8,
-            "itemSpacing": 22,
-            "counterAxisAlignItems": "MAX",
+            "paddingLeft": 20, "paddingRight": 20,
+            "paddingTop": 8, "paddingBottom": 8,
+            "itemSpacing": 8,
+            "counterAxisAlignItems": "CENTER",
         },
-        "children": [tab_node(label, i == active_idx) for i, label in enumerate(tabs)],
+        "children": [
+            {
+                "name": "Mode Tabs",
+                "type": "instance",
+                "componentKey": _K_HORIZONTAL_TABS_UNDERLINE,
+                "layoutSizingHorizontal": "HUG",
+            },
+        ],
     }
 
 

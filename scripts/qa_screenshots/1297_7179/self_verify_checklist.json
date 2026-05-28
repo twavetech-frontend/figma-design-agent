@@ -1,0 +1,21 @@
+{
+  "root_id": "1297:7179",
+  "blueprint_name": "stage_recommend_modal",
+  "screen_type": "full modal (X 닫기 + 풀폭 CTA, root HUG)",
+  "verified_pngs": ["full.png", "Recommend_Card.png", "Selected_Card.png"],
+  "checklist": [
+    {"id": "C01-content-1to1", "status": "PASS", "evidence": "와이어 1:1 — 잠깐!/더 받는 스테이지 어떠세요?, 추천 200만원(5순번)·1명남음·실이자 ▲4,210원·10,530원·0P·0개, 선택 200만원(4순번)·2명남음·6,320원·0P·0개, CTA 스테이지 참여하기."},
+    {"id": "C02-no-grey-placeholder", "status": "PASS", "evidence": "빈 placeholder 없음 — 두 카드 모두 실 데이터 row."},
+    {"id": "C03-modal-x-only", "status": "PASS", "evidence": "상단 X 닫기만, Footer/Tab Bar/홈섹션 없음 (R58 통과)."},
+    {"id": "C04-row-alignment", "status": "PASS", "evidence": "label grey 좌 / value Bold 우 SPACE_BETWEEN, 3개 row baseline 일치."},
+    {"id": "C05-title-hierarchy", "status": "PASS", "evidence": "제목 26 Bold 2줄, 섹션 18 Bold, 금액 18 Bold + 단위 14 grey 차등."},
+    {"id": "C06-delta-pill", "status": "PASS", "evidence": "▲4,210원 light-pink bg(bg-error-secondary) + red text(text-error-primary), placeholder ring 제거됨, 대비 검사 OK."},
+    {"id": "C07-selected-highlight", "status": "PASS", "evidence": "선택 카드 brand 보더(border-brand) + brand seq circle 로 선택 강조, 추천 카드는 grey 보더."},
+    {"id": "C08-no-ds-swap-break", "status": "PASS", "evidence": "Seq Circle/Remain Count/Delta Box 모두 raw 유지(WARN-only) — 콘텐츠(숫자/₩/▲4,210원) 보존."},
+    {"id": "C09-cta-ds-button", "status": "PASS", "evidence": "하단 CTA = DS Action Button lg Primary 인스턴스, 풀폭, 라벨 '스테이지 참여하기' 흰 텍스트."},
+    {"id": "C10-no-emoji-icon", "status": "PASS", "evidence": "X=DS x-close 아이콘, ₩/▲ 는 Pretendard 텍스트(이모지 아님)."},
+    {"id": "C11-card-surface", "status": "PASS", "evidence": "두 카드 bg-primary + 보더, Footer 없음 — 카드 표면 룰 준수."},
+    {"id": "C12-polished-not-wire", "status": "PASS", "evidence": "와이어 회색 톤 → 시맨틱 컬러(선택=brand, 이자증가=error red) + 위계로 디자인 재해석."}
+  ],
+  "summary": {"pass": 12, "fail": 0, "na": 0, "BLOCKING": "완료 — 12개 PASS"}
+}

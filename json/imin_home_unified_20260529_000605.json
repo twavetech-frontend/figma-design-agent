@@ -1,0 +1,4337 @@
+{
+  "schema": "imin-frontend-layout-spec/v1",
+  "description": "Framework-neutral layout spec. colors = {token, value}; layout = flexbox(direction/gap/padding/justify/align/sizing).",
+  "screen": {
+    "type": "frame",
+    "name": "imin_home_unified",
+    "layout": {
+      "direction": "column",
+      "gap": 0,
+      "padding": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sizingHorizontal": "fixed",
+      "sizingVertical": "hug",
+      "clipContent": true
+    },
+    "style": {
+      "background": {
+        "token": "bg-primary",
+        "value": "#FCFCFD"
+      }
+    },
+    "children": [
+      {
+        "type": "instance",
+        "name": "Status Bar",
+        "layout": {
+          "direction": "row",
+          "gap": 154,
+          "padding": [
+            21,
+            24,
+            19,
+            24
+          ],
+          "justify": "center",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Time",
+            "layout": {
+              "direction": "row",
+              "gap": 10,
+              "padding": [
+                1.5,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "Time",
+                "style": {},
+                "text": {
+                  "content": "9:41",
+                  "color": {
+                    "token": "Primary",
+                    "value": "#000000"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Levels",
+            "layout": {
+              "direction": "row",
+              "gap": 7,
+              "padding": [
+                1,
+                1,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "fixed"
+            },
+            "children": [
+              {
+                "type": "icon",
+                "name": "Cellular Connection",
+                "style": {
+                  "background": {
+                    "token": "Primary",
+                    "value": "#000000"
+                  }
+                }
+              },
+              {
+                "type": "icon",
+                "name": "Wifi",
+                "style": {
+                  "background": {
+                    "token": "Primary",
+                    "value": "#000000"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Frame",
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Border",
+                    "style": {
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "Primary",
+                          "value": "#000000"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 4.300000190734863,
+                      "opacity": 0.3499999940395355
+                    }
+                  },
+                  {
+                    "type": "icon",
+                    "name": "Cap",
+                    "style": {
+                      "background": {
+                        "token": "Primary",
+                        "value": "#000000"
+                      },
+                      "opacity": 0.4000000059604645
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Capacity",
+                    "style": {
+                      "background": {
+                        "token": "Primary",
+                        "value": "#000000"
+                      },
+                      "borderRadius": 2.5
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "NavBar",
+        "layout": {
+          "direction": "row",
+          "gap": 0,
+          "padding": [
+            12,
+            20,
+            12,
+            20
+          ],
+          "justify": "space-between",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "fixed"
+        },
+        "children": [
+          {
+            "type": "instance",
+            "name": "logo",
+            "style": {
+              "background": {
+                "token": "fg-light",
+                "value": "#FFFFFF"
+              }
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "image 1"
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Nav Right",
+            "layout": {
+              "direction": "row",
+              "gap": 16,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "align": "center",
+              "sizingHorizontal": "hug",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "icon-0",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-primary-solid",
+                          "value": "#2C3744"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "icon-1",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-primary-solid",
+                          "value": "#2C3744"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Mode Tabs Wrap",
+        "layout": {
+          "direction": "row",
+          "gap": 22,
+          "padding": [
+            8,
+            24,
+            8,
+            24
+          ],
+          "align": "end",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Mode Tab Active",
+            "layout": {
+              "direction": "column",
+              "gap": 12,
+              "padding": [
+                16,
+                0,
+                0,
+                0
+              ],
+              "align": "center",
+              "sizingHorizontal": "hug",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "border": {
+                "width": 0,
+                "color": {
+                  "token": null,
+                  "value": "#6B3DEB"
+                },
+                "align": "inside"
+              }
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "label-active",
+                "style": {},
+                "text": {
+                  "content": "거래 현황",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "underline-active",
+                "style": {
+                  "background": {
+                    "token": "bg-brand-solid",
+                    "value": "#7700FF"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Mode Tab Inactive",
+            "layout": {
+              "direction": "column",
+              "gap": 12,
+              "padding": [
+                16,
+                0,
+                0,
+                0
+              ],
+              "align": "center",
+              "sizingHorizontal": "hug",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "label-inactive",
+                "style": {},
+                "text": {
+                  "content": "누적 거래",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "underline-inactive",
+                "style": {
+                  "background": {
+                    "token": null,
+                    "value": "#D9D9D9"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Screen Hero",
+        "layout": {
+          "direction": "column",
+          "gap": 6,
+          "padding": [
+            20,
+            20,
+            12,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "text",
+            "name": "hero-caption",
+            "style": {},
+            "text": {
+              "content": "안녕하세요 :)",
+              "color": {
+                "token": "text-tertiary",
+                "value": "#B1B6BE"
+              }
+            }
+          },
+          {
+            "type": "text",
+            "name": "hero-title",
+            "style": {},
+            "text": {
+              "content": "오늘부터 스테이지 시작해보세요",
+              "color": {
+                "token": "text-primary",
+                "value": "#2C3744"
+              }
+            }
+          },
+          {
+            "type": "text",
+            "name": "hero-sub",
+            "style": {},
+            "text": {
+              "content": "월 10만원으로 1300만원 모으기 도전",
+              "color": {
+                "token": "text-secondary",
+                "value": "#687079"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Stage Progress Card Wrap",
+        "layout": {
+          "direction": "column",
+          "gap": 0,
+          "padding": [
+            16,
+            20,
+            8,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Stage Progress Card",
+            "layout": {
+              "direction": "column",
+              "gap": 18,
+              "padding": [
+                22,
+                20,
+                22,
+                20
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug",
+              "clipContent": true
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 20
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Header Row",
+                "layout": {
+                  "direction": "row",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "space-between",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "Header Title",
+                    "style": {},
+                    "text": {
+                      "content": "진행중인 3건의 스테이지 내역",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "instance",
+                    "name": "More Link",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "Text",
+                        "style": {},
+                        "text": {
+                          "content": "자세히",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "frame",
+                        "name": "container",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 10,
+                          "padding": [
+                            2,
+                            0,
+                            0,
+                            0
+                          ],
+                          "sizingHorizontal": "hug",
+                          "sizingVertical": "hug"
+                        },
+                        "children": [
+                          {
+                            "type": "instance",
+                            "name": "external-link",
+                            "children": [
+                              {
+                                "type": "frame",
+                                "name": "Frame",
+                                "children": [
+                                  {
+                                    "type": "icon",
+                                    "name": "Vector",
+                                    "style": {
+                                      "background": {
+                                        "token": "fg-primary",
+                                        "value": "#2C3744"
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Summary Rows",
+                "layout": {
+                  "direction": "column",
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Row 모은 금액",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "row-label",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 8,
+                          "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ],
+                          "align": "center",
+                          "sizingHorizontal": "hug",
+                          "sizingVertical": "hug"
+                        },
+                        "children": [
+                          {
+                            "type": "frame",
+                            "name": "dot-success",
+                            "style": {
+                              "background": {
+                                "token": "bg-success-solid",
+                                "value": "#079455"
+                              },
+                              "borderRadius": 4
+                            }
+                          },
+                          {
+                            "type": "text",
+                            "name": "text-label",
+                            "style": {},
+                            "text": {
+                              "content": "모은 금액",
+                              "color": {
+                                "token": "text-secondary",
+                                "value": "#687079"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "row-value",
+                        "style": {},
+                        "text": {
+                          "content": "+1,240,000원",
+                          "color": {
+                            "token": "text-success-primary",
+                            "value": "#079455"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Row 빌린 금액",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "row-label",
+                        "layout": {
+                          "direction": "row",
+                          "gap": 8,
+                          "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ],
+                          "align": "center",
+                          "sizingHorizontal": "hug",
+                          "sizingVertical": "hug"
+                        },
+                        "children": [
+                          {
+                            "type": "frame",
+                            "name": "dot-error",
+                            "style": {
+                              "background": {
+                                "token": "bg-error-solid",
+                                "value": "#F04438"
+                              },
+                              "borderRadius": 4
+                            }
+                          },
+                          {
+                            "type": "text",
+                            "name": "text-label",
+                            "style": {},
+                            "text": {
+                              "content": "빌린 금액",
+                              "color": {
+                                "token": "text-secondary",
+                                "value": "#687079"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "row-value",
+                        "style": {},
+                        "text": {
+                          "content": "-340,000원",
+                          "color": {
+                            "token": "text-error-primary",
+                            "value": "#D92D20"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Card Divider",
+                "style": {
+                  "background": {
+                    "token": "border-secondary",
+                    "value": "#E6E8EA"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "Day Strip Title",
+                "style": {},
+                "text": {
+                  "content": "이번 달 일정",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Day Strip Carousel",
+                "layout": {
+                  "direction": "row",
+                  "gap": 8,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug",
+                  "clipContent": true
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 12",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        14,
+                        8,
+                        14,
+                        8
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-error-secondary",
+                        "value": "#FEE4E2"
+                      },
+                      "borderRadius": 16
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "day-weekday",
+                        "style": {},
+                        "text": {
+                          "content": "화",
+                          "color": {
+                            "token": "text-error-primary",
+                            "value": "#D92D20"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-num",
+                        "style": {},
+                        "text": {
+                          "content": "12",
+                          "color": {
+                            "token": "text-error-primary",
+                            "value": "#D92D20"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-val",
+                        "style": {},
+                        "text": {
+                          "content": "-32만",
+                          "color": {
+                            "token": "text-error-primary",
+                            "value": "#D92D20"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-status",
+                        "style": {},
+                        "text": {
+                          "content": "미납",
+                          "color": {
+                            "token": "text-error-primary",
+                            "value": "#D92D20"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 18 today",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        14,
+                        8,
+                        14,
+                        8
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "Black",
+                        "value": "#000000"
+                      },
+                      "borderRadius": 16
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "day-weekday",
+                        "style": {},
+                        "text": {
+                          "content": "토",
+                          "color": {
+                            "token": "bg-primary",
+                            "value": "#FCFCFD"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-num",
+                        "style": {},
+                        "text": {
+                          "content": "18",
+                          "color": {
+                            "token": "bg-primary",
+                            "value": "#FCFCFD"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-val",
+                        "style": {},
+                        "text": {
+                          "content": "-45만",
+                          "color": {
+                            "token": "bg-primary",
+                            "value": "#FCFCFD"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-status",
+                        "style": {},
+                        "text": {
+                          "content": "오늘 납입",
+                          "color": {
+                            "token": "bg-primary",
+                            "value": "#FCFCFD"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 22",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        14,
+                        8,
+                        14,
+                        8
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 16
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "day-weekday",
+                        "style": {},
+                        "text": {
+                          "content": "수",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-num",
+                        "style": {},
+                        "text": {
+                          "content": "22",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-val",
+                        "style": {},
+                        "text": {
+                          "content": "-30만",
+                          "color": {
+                            "token": "text-error-primary",
+                            "value": "#D92D20"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-status",
+                        "style": {},
+                        "text": {
+                          "content": "납입",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 25",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        14,
+                        8,
+                        14,
+                        8
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 16
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "day-weekday",
+                        "style": {},
+                        "text": {
+                          "content": "금",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-num",
+                        "style": {},
+                        "text": {
+                          "content": "25",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-val",
+                        "style": {},
+                        "text": {
+                          "content": "+260만",
+                          "color": {
+                            "token": "text-success-primary",
+                            "value": "#079455"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-status",
+                        "style": {},
+                        "text": {
+                          "content": "지급",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 28",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        14,
+                        8,
+                        14,
+                        8
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 16
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "day-weekday",
+                        "style": {},
+                        "text": {
+                          "content": "월",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-num",
+                        "style": {},
+                        "text": {
+                          "content": "28",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-val",
+                        "style": {},
+                        "text": {
+                          "content": "-45만",
+                          "color": {
+                            "token": "text-error-primary",
+                            "value": "#D92D20"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-status",
+                        "style": {},
+                        "text": {
+                          "content": "납입",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Day Cell 30",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 6,
+                      "padding": [
+                        14,
+                        8,
+                        14,
+                        8
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 16
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "day-weekday",
+                        "style": {},
+                        "text": {
+                          "content": "수",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-num",
+                        "style": {},
+                        "text": {
+                          "content": "30",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-val",
+                        "style": {},
+                        "text": {
+                          "content": "+18만",
+                          "color": {
+                            "token": "text-success-primary",
+                            "value": "#079455"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "day-status",
+                        "style": {},
+                        "text": {
+                          "content": "지급",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Attendance Banner Wrap",
+        "layout": {
+          "direction": "column",
+          "gap": 0,
+          "padding": [
+            8,
+            20,
+            8,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Attendance Banner",
+            "layout": {
+              "direction": "row",
+              "gap": 14,
+              "padding": [
+                16,
+                16,
+                16,
+                16
+              ],
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug",
+              "clipContent": true
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 18
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Att Icon Wrap",
+                "layout": {
+                  "direction": "row",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "fixed",
+                  "clipContent": true
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-brand-primary",
+                    "value": "#F4ECFF"
+                  },
+                  "borderRadius": 12
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "calendar-check-02",
+                    "children": [
+                      {
+                        "type": "icon",
+                        "name": "Vector",
+                        "style": {
+                          "border": {
+                            "width": 1.8333333730697632,
+                            "color": {
+                              "token": "border-brand",
+                              "value": "#7700FF"
+                            },
+                            "align": "center"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Att Body",
+                "layout": {
+                  "direction": "column",
+                  "gap": 4,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "fill"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "att-headline",
+                    "style": {},
+                    "text": {
+                      "content": "연속 7일째 출석 체크 중",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "att-sub",
+                    "style": {},
+                    "text": {
+                      "content": "매일매일 출석하면 특별한 혜택이!",
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "chevron-right",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 1.3333333730697632,
+                        "color": {
+                          "token": "utility-gray-400",
+                          "value": "#B1B6BE"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Calc Callout Wrap",
+        "layout": {
+          "direction": "column",
+          "gap": 0,
+          "padding": [
+            8,
+            20,
+            12,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Calc Callout",
+            "layout": {
+              "direction": "row",
+              "gap": 12,
+              "padding": [
+                14,
+                16,
+                14,
+                16
+              ],
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug",
+              "clipContent": true
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 16
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Calc Icon Wrap",
+                "layout": {
+                  "direction": "row",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "fixed",
+                  "clipContent": true
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 18
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "help-circle",
+                    "children": [
+                      {
+                        "type": "icon",
+                        "name": "Vector",
+                        "style": {
+                          "border": {
+                            "width": 1.6666666269302368,
+                            "color": {
+                              "token": "border-brand",
+                              "value": "#7700FF"
+                            },
+                            "align": "center"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "calc-text",
+                "style": {},
+                "text": {
+                  "content": "얼마까지 모을 수 있는 지 확인해보세요.",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "chevron-right",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 1.3333333730697632,
+                        "color": {
+                          "token": "border-brand",
+                          "value": "#7700FF"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Recommend Stage Wrap",
+        "layout": {
+          "direction": "column",
+          "gap": 0,
+          "padding": [
+            16,
+            20,
+            8,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Recommend Title Row",
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                0,
+                0,
+                12,
+                0
+              ],
+              "justify": "space-between",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "rec-title",
+                "style": {},
+                "text": {
+                  "content": "추천 스테이지",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Recommend Stage Card",
+            "layout": {
+              "direction": "column",
+              "gap": 18,
+              "padding": [
+                22,
+                18,
+                18,
+                18
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug",
+              "clipContent": true
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 20
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "polish-personal-caption",
+                "style": {},
+                "text": {
+                  "content": "회원님을 위한 추천",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "polish-title",
+                "style": {},
+                "text": {
+                  "content": "총 1,300만원 모으기 도전, 13개월에 받아가요",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "polish-label",
+                "style": {},
+                "text": {
+                  "content": "예상 수령 금액 (1회차)",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "polish-currency",
+                "style": {},
+                "text": {
+                  "content": "1,300,000원",
+                  "color": {
+                    "token": "text-brand-primary",
+                    "value": "#6A00E0"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "polish-currency-sub",
+                "style": {},
+                "text": {
+                  "content": "월 100,000원 · 13개월 · 납입 후 목표 수령",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Stepper Row",
+                "layout": {
+                  "direction": "row",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Stepper 월",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 8,
+                      "padding": [
+                        12,
+                        12,
+                        12,
+                        12
+                      ],
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 14
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "minus-circle",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.6666666269302368,
+                                "color": {
+                                  "token": "utility-gray-400",
+                                  "value": "#B1B6BE"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "frame",
+                        "name": "stepper-body",
+                        "layout": {
+                          "direction": "column",
+                          "gap": 2,
+                          "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ],
+                          "align": "center",
+                          "sizingHorizontal": "hug",
+                          "sizingVertical": "fill"
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "lbl",
+                            "style": {},
+                            "text": {
+                              "content": "월",
+                              "color": {
+                                "token": "text-tertiary",
+                                "value": "#B1B6BE"
+                              }
+                            }
+                          },
+                          {
+                            "type": "text",
+                            "name": "val",
+                            "style": {},
+                            "text": {
+                              "content": "10만원",
+                              "color": {
+                                "token": "text-primary",
+                                "value": "#2C3744"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "frame",
+                        "name": "plus-circle",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.6666666269302368,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Stepper 기간",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 8,
+                      "padding": [
+                        12,
+                        12,
+                        12,
+                        12
+                      ],
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 14
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "minus-circle",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.6666666269302368,
+                                "color": {
+                                  "token": "utility-gray-400",
+                                  "value": "#B1B6BE"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "frame",
+                        "name": "stepper-body",
+                        "layout": {
+                          "direction": "column",
+                          "gap": 2,
+                          "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ],
+                          "align": "center",
+                          "sizingHorizontal": "hug",
+                          "sizingVertical": "fill"
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "lbl",
+                            "style": {},
+                            "text": {
+                              "content": "기간",
+                              "color": {
+                                "token": "text-tertiary",
+                                "value": "#B1B6BE"
+                              }
+                            }
+                          },
+                          {
+                            "type": "text",
+                            "name": "val",
+                            "style": {},
+                            "text": {
+                              "content": "13개월",
+                              "color": {
+                                "token": "text-primary",
+                                "value": "#2C3744"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "frame",
+                        "name": "plus-circle",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 1.6666666269302368,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Round Selector",
+                "layout": {
+                  "direction": "row",
+                  "gap": 6,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "space-between",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "round-1",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-solid",
+                        "value": "#7700FF"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "1",
+                          "color": {
+                            "token": "text-white",
+                            "value": "#FFFFFF"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-2",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "2",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-3",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "3",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-4",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "4",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-5",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "5",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-6",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "6",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-7",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "7",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-8",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "8",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-9",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "9",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-10",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "10",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-11",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "11",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-12",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "12",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "round-13",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 11
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "n",
+                        "style": {},
+                        "text": {
+                          "content": "13",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Round Detail Row",
+                "layout": {
+                  "direction": "row",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "space-between",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "instance",
+                    "name": "round-tag",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        2,
+                        6,
+                        2,
+                        6
+                      ],
+                      "align": "center",
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "utility-brand-50",
+                        "value": "#F4ECFF"
+                      },
+                      "borderRadius": 8
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "Text",
+                        "style": {},
+                        "text": {
+                          "content": "1회차",
+                          "color": {
+                            "token": "utility-brand-700",
+                            "value": "#5200B0"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "name": "round-purpose",
+                    "style": {},
+                    "text": {
+                      "content": "납입 후 목적 수령",
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "instance",
+                "name": "Recommend All CTA",
+                "layout": {
+                  "direction": "row",
+                  "gap": 6,
+                  "padding": [
+                    10,
+                    12,
+                    10,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug",
+                  "clipContent": true
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-brand-solid",
+                    "value": "#7700FF"
+                  },
+                  "borderRadius": 10
+                },
+                "children": [
+                  {
+                    "type": "instance",
+                    "name": "placeholder",
+                    "children": [
+                      {
+                        "type": "icon",
+                        "name": "Icon (Stroke)",
+                        "style": {
+                          "background": {
+                            "token": "fg-quaternary",
+                            "value": "#F9FAFB"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Text padding",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        2,
+                        0,
+                        2
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "hug",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "Text",
+                        "style": {},
+                        "text": {
+                          "content": "추천 전체 보기 (13개)",
+                          "color": {
+                            "token": "text-white",
+                            "value": "#FFFFFF"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "instance",
+                    "name": "placeholder",
+                    "children": [
+                      {
+                        "type": "icon",
+                        "name": "Icon (Stroke)",
+                        "style": {
+                          "background": {
+                            "token": "fg-quaternary",
+                            "value": "#F9FAFB"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Participating Wrap",
+        "layout": {
+          "direction": "column",
+          "gap": 14,
+          "padding": [
+            24,
+            0,
+            8,
+            0
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Participating Tabs Row",
+            "layout": {
+              "direction": "row",
+              "gap": 18,
+              "padding": [
+                8,
+                20,
+                8,
+                20
+              ],
+              "justify": "space-between",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "fg-light",
+                "value": "#FFFFFF"
+              }
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "part-tab-0",
+                "style": {},
+                "text": {
+                  "content": "참여 중인 스테이지",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "frame",
+                "name": "part-divider",
+                "style": {
+                  "background": {
+                    "token": "border-secondary",
+                    "value": "#E6E8EA"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "part-tab-1",
+                "style": {},
+                "text": {
+                  "content": "찜한 스테이지",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Participating Empty Wrap",
+            "layout": {
+              "direction": "column",
+              "gap": 0,
+              "padding": [
+                0,
+                20,
+                0,
+                20
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Empty Card",
+                "layout": {
+                  "direction": "column",
+                  "gap": 14,
+                  "padding": [
+                    36,
+                    24,
+                    36,
+                    24
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug",
+                  "clipContent": true
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 20
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Empty Icon Wrap",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "fixed",
+                      "clipContent": true
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-secondary",
+                        "value": "#F3F4F6"
+                      },
+                      "borderRadius": 28
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "inbox-01",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2.3333332538604736,
+                                "color": {
+                                  "token": "utility-gray-400",
+                                  "value": "#B1B6BE"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "name": "empty-title",
+                    "style": {},
+                    "text": {
+                      "content": "참여 중인 스테이지가 없습니다",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "empty-sub",
+                    "style": {},
+                    "text": {
+                      "content": "추천 스테이지에서 첫 스테이지를 시작해보세요",
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Lounge Section",
+        "layout": {
+          "direction": "column",
+          "gap": 14,
+          "padding": [
+            28,
+            0,
+            12,
+            0
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Lounge Title Row",
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                0,
+                20,
+                0,
+                20
+              ],
+              "justify": "space-between",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "lounge-title",
+                "style": {},
+                "text": {
+                  "content": "추천 상품 (라운지)",
+                  "color": {
+                    "token": "text-primary",
+                    "value": "#2C3744"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "lounge-deposit",
+                "style": {},
+                "text": {
+                  "content": "예치금 312,490원 (100p)",
+                  "color": {
+                    "token": "text-brand-primary",
+                    "value": "#6A00E0"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Lounge Carousel",
+            "layout": {
+              "direction": "row",
+              "gap": 12,
+              "padding": [
+                0,
+                20,
+                0,
+                20
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug",
+              "clipContent": true
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Lounge Card 올리브영",
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    16,
+                    16,
+                    16,
+                    16
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug",
+                  "clipContent": true
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Lounge Image",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-section",
+                        "value": "#5200B0"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "gift-01",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2.6666667461395264,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Lounge Card Body",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        10,
+                        12,
+                        12,
+                        12
+                      ],
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "brand",
+                        "style": {},
+                        "text": {
+                          "content": "올리브영",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "name",
+                        "style": {},
+                        "text": {
+                          "content": "스킨케어 세트",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "price",
+                        "style": {},
+                        "text": {
+                          "content": "29,000P",
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Lounge Card 스타벅스",
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    16,
+                    16,
+                    16,
+                    16
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug",
+                  "clipContent": true
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Lounge Image",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-section",
+                        "value": "#5200B0"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "gift-01",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2.6666667461395264,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Lounge Card Body",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        10,
+                        12,
+                        12,
+                        12
+                      ],
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "brand",
+                        "style": {},
+                        "text": {
+                          "content": "스타벅스",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "name",
+                        "style": {},
+                        "text": {
+                          "content": "아메리카노 Tall",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "price",
+                        "style": {},
+                        "text": {
+                          "content": "4,800P",
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Lounge Card 고디바",
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    16,
+                    16,
+                    16,
+                    16
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug",
+                  "clipContent": true
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Lounge Image",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-section",
+                        "value": "#5200B0"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "gift-01",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2.6666667461395264,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Lounge Card Body",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        10,
+                        12,
+                        12,
+                        12
+                      ],
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "brand",
+                        "style": {},
+                        "text": {
+                          "content": "고디바",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "name",
+                        "style": {},
+                        "text": {
+                          "content": "초콜릿 기프트 박스",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "price",
+                        "style": {},
+                        "text": {
+                          "content": "32,000P",
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Lounge Card 배민",
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    16,
+                    16,
+                    16,
+                    16
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug",
+                  "clipContent": true
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Lounge Image",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-section",
+                        "value": "#5200B0"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "gift-01",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2.6666667461395264,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Lounge Card Body",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        10,
+                        12,
+                        12,
+                        12
+                      ],
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "brand",
+                        "style": {},
+                        "text": {
+                          "content": "배민",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "name",
+                        "style": {},
+                        "text": {
+                          "content": "배달 쿠폰 5,000원",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "price",
+                        "style": {},
+                        "text": {
+                          "content": "5,000P",
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Lounge Card CGV",
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    16,
+                    16,
+                    16,
+                    16
+                  ],
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug",
+                  "clipContent": true
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 16
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Lounge Image",
+                    "layout": {
+                      "direction": "row",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "fixed"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-section",
+                        "value": "#5200B0"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "gift-01",
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "style": {
+                              "border": {
+                                "width": 2.6666667461395264,
+                                "color": {
+                                  "token": "border-brand",
+                                  "value": "#7700FF"
+                                },
+                                "align": "center"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Lounge Card Body",
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        10,
+                        12,
+                        12,
+                        12
+                      ],
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "brand",
+                        "style": {},
+                        "text": {
+                          "content": "CGV",
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "name",
+                        "style": {},
+                        "text": {
+                          "content": "영화 관람권 2매",
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "price",
+                        "style": {},
+                        "text": {
+                          "content": "28,000P",
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Sub-card CTA",
+        "layout": {
+          "direction": "column",
+          "gap": 0,
+          "padding": [
+            8,
+            20,
+            8,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Points Card",
+            "layout": {
+              "direction": "row",
+              "gap": 12,
+              "padding": [
+                14,
+                14,
+                14,
+                14
+              ],
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug",
+              "clipContent": true
+            },
+            "style": {
+              "background": {
+                "token": "bg-secondary",
+                "value": "#F3F4F6"
+              },
+              "borderRadius": 16
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "points-icon-wrap",
+                "layout": {
+                  "direction": "row",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "fixed",
+                  "clipContent": true
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-brand-primary",
+                    "value": "#F4ECFF"
+                  },
+                  "borderRadius": 12
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "gift-01",
+                    "children": [
+                      {
+                        "type": "icon",
+                        "name": "Vector",
+                        "style": {
+                          "border": {
+                            "width": 1.6666666269302368,
+                            "color": {
+                              "token": "border-brand",
+                              "value": "#7700FF"
+                            },
+                            "align": "center"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "points-body",
+                "layout": {
+                  "direction": "column",
+                  "gap": 2,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "fill"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "points-title",
+                    "style": {},
+                    "text": {
+                      "content": "포인트 모으기 시작",
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "points-sub",
+                    "style": {},
+                    "text": {
+                      "content": "출석 체크 + 스테이지 참여로 포인트 받기",
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "chevron-right",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 1.3333333730697632,
+                        "color": {
+                          "token": "utility-gray-400",
+                          "value": "#B1B6BE"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Footer Policy",
+        "layout": {
+          "direction": "column",
+          "gap": 14,
+          "padding": [
+            24,
+            20,
+            28,
+            20
+          ],
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "style": {
+          "background": {
+            "token": "bg-secondary",
+            "value": "#F3F4F6"
+          }
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Policy Row",
+            "layout": {
+              "direction": "row",
+              "gap": 14,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "p-이용약관",
+                "style": {},
+                "text": {
+                  "content": "이용약관",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "p-스테이지이용약관",
+                "style": {},
+                "text": {
+                  "content": "스테이지이용약관",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "p-서비스운영정책",
+                "style": {},
+                "text": {
+                  "content": "서비스운영정책",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Policy Row",
+            "layout": {
+              "direction": "row",
+              "gap": 14,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "p-개인정보처리방침",
+                "style": {},
+                "text": {
+                  "content": "개인정보처리방침",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "name": "p-쇼핑이용약관",
+                "style": {},
+                "text": {
+                  "content": "쇼핑이용약관",
+                  "color": {
+                    "token": "text-tertiary",
+                    "value": "#B1B6BE"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Footer Company",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "fc-row1",
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "fc-name",
+                    "style": {},
+                    "text": {
+                      "content": "(주)티웨이브 역삼지점",
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "fc-reg",
+                    "style": {},
+                    "text": {
+                      "content": "사업자등록번호: 291-85-01499",
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "fc-row2",
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "fc-ceo",
+                    "style": {},
+                    "text": {
+                      "content": "대표: 서재준",
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "fc-sales",
+                    "style": {},
+                    "text": {
+                      "content": "통신판매업신고: 2021-서울강남-05837",
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "name": "Footer Disclaimer",
+            "style": {},
+            "text": {
+              "content": "(주)티웨이브 역삼지점은 통신판매중개자로서 거래 당사자가 아니므로 판매자가 등록한 상품정보 및 거래 등에 대해 책임을 지지 않습니다. 단, (주)티웨이브 역삼지점이 판매자로 등록 판매한 상품은 판매자로서 책임을 부담합니다.",
+              "color": {
+                "token": "text-tertiary",
+                "value": "#B1B6BE"
+              }
+            }
+          },
+          {
+            "type": "text",
+            "name": "Footer Copyright",
+            "style": {},
+            "text": {
+              "content": "Copyright Ⓒ TWAVE. All Rights Reverved.",
+              "color": {
+                "token": "text-tertiary",
+                "value": "#B1B6BE"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "FAB",
+        "position": {
+          "mode": "absolute",
+          "x": 0,
+          "y": 0
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 0,
+          "padding": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "justify": "center",
+          "align": "center",
+          "sizingHorizontal": "fixed",
+          "sizingVertical": "fixed",
+          "clipContent": true
+        },
+        "style": {
+          "background": {
+            "token": "bg-brand-solid",
+            "value": "#7700FF"
+          },
+          "borderRadius": 28
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "fab-icon",
+            "children": [
+              {
+                "type": "icon",
+                "name": "Vector",
+                "style": {
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "fg-light",
+                      "value": "#FFFFFF"
+                    },
+                    "align": "center"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Tab Bar",
+        "layout": {
+          "direction": "row",
+          "gap": 0,
+          "padding": [
+            8,
+            12,
+            24,
+            12
+          ],
+          "align": "center",
+          "sizingHorizontal": "fixed",
+          "sizingVertical": "fixed"
+        },
+        "style": {
+          "background": {
+            "token": "bg-primary",
+            "value": "#FCFCFD"
+          },
+          "border": {
+            "width": 1,
+            "color": {
+              "token": "border-secondary",
+              "value": "#E6E8EA"
+            },
+            "align": "inside"
+          }
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Tab 홈",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "tab-icon",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "border-brand",
+                          "value": "#7700FF"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "tab-label",
+                "style": {},
+                "text": {
+                  "content": "홈",
+                  "color": {
+                    "token": "text-brand-primary",
+                    "value": "#6A00E0"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Tab 라운지",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "tab-icon",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-secondary-solid",
+                          "value": "#687079"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "tab-label",
+                "style": {},
+                "text": {
+                  "content": "라운지",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Tab 스테이지",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "tab-icon",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-secondary-solid",
+                          "value": "#687079"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "tab-label",
+                "style": {},
+                "text": {
+                  "content": "스테이지",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Tab 커뮤니티",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "tab-icon",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-secondary-solid",
+                          "value": "#687079"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "tab-label",
+                "style": {},
+                "text": {
+                  "content": "커뮤니티",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Tab 전체",
+            "layout": {
+              "direction": "column",
+              "gap": 4,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "tab-icon",
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-secondary-solid",
+                          "value": "#687079"
+                        },
+                        "align": "center"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "name": "tab-label",
+                "style": {},
+                "text": {
+                  "content": "전체",
+                  "color": {
+                    "token": "text-secondary",
+                    "value": "#687079"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

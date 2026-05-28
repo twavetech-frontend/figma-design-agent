@@ -1,0 +1,777 @@
+{
+  "rootName": "transaction_schedule_modal",
+  "name": "transaction_schedule_modal",
+  "type": "frame",
+  "width": 393,
+  "_screenType": "modal",
+  "fill": "$token(bg-primary)",
+  "_wireframeContentSkipped": "full modal — 와이어 안에 있는 것만 (X + 스테이지 내역 + 거래 스케줄 캘린더 빈 상태). 홈 섹션/mock 없음.",
+  "_referencesSkipped": "modal — 와이어 1:1, polish 레퍼런스 불필요",
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "itemSpacing": 16,
+    "paddingTop": 8,
+    "paddingBottom": 24,
+    "paddingLeft": 0,
+    "paddingRight": 0
+  },
+  "children": [
+    {
+      "name": "NavBar",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "height": 56,
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisAlignItems": "MAX",
+        "counterAxisAlignItems": "CENTER",
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingTop": 12,
+        "paddingBottom": 12
+      },
+      "children": [
+        {
+          "name": "close-x",
+          "type": "icon",
+          "iconName": "x-close",
+          "size": 24,
+          "iconColor": "$token(fg-primary)"
+        }
+      ]
+    },
+    {
+      "name": "Stage Detail Card Wrap",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingTop": 8,
+        "paddingBottom": 8,
+        "itemSpacing": 0
+      },
+      "children": [
+        {
+          "name": "Stage Detail Card",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "fill": "$token(bg-primary)",
+          "cornerRadius": 16,
+          "strokeColor": "$token(border-secondary)",
+          "strokeWeight": 1,
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "paddingLeft": 20,
+            "paddingRight": 20,
+            "paddingTop": 20,
+            "paddingBottom": 20,
+            "itemSpacing": 18
+          },
+          "children": [
+            {
+              "name": "stage-header",
+              "type": "text",
+              "characters": "진행중인 0건의 스테이지 내역",
+              "fontSize": 18,
+              "fontWeight": 700,
+              "fill": "$token(text-primary)",
+              "layoutSizingHorizontal": "FILL",
+              "textAutoResize": "HEIGHT"
+            },
+            {
+              "name": "Amount Rows",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 14
+              },
+              "children": [
+                {
+                  "name": "amt-모은 금액",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "SPACE_BETWEEN",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "name": "amt-label-모은 금액",
+                      "type": "text",
+                      "characters": "모은 금액",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "$token(text-secondary)",
+                      "layoutSizingHorizontal": "HUG",
+                      "textAutoResize": "WIDTH_AND_HEIGHT"
+                    },
+                    {
+                      "name": "amt-value-모은 금액",
+                      "type": "text",
+                      "characters": "+0원",
+                      "fontSize": 20,
+                      "fontWeight": 700,
+                      "fill": "$token(text-primary)",
+                      "layoutSizingHorizontal": "HUG",
+                      "textAutoResize": "WIDTH_AND_HEIGHT"
+                    }
+                  ]
+                },
+                {
+                  "name": "amt-빌린 금액",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "SPACE_BETWEEN",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "name": "amt-label-빌린 금액",
+                      "type": "text",
+                      "characters": "빌린 금액",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "$token(text-secondary)",
+                      "layoutSizingHorizontal": "HUG",
+                      "textAutoResize": "WIDTH_AND_HEIGHT"
+                    },
+                    {
+                      "name": "amt-value-빌린 금액",
+                      "type": "text",
+                      "characters": "-0원",
+                      "fontSize": 20,
+                      "fontWeight": 700,
+                      "fill": "$token(text-primary)",
+                      "layoutSizingHorizontal": "HUG",
+                      "textAutoResize": "WIDTH_AND_HEIGHT"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Info Note",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "fill": "$token(bg-secondary)",
+              "cornerRadius": 12,
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 6,
+                "paddingLeft": 12,
+                "paddingRight": 12,
+                "paddingTop": 12,
+                "paddingBottom": 12
+              },
+              "children": [
+                {
+                  "name": "note-1",
+                  "type": "text",
+                  "characters": "프로필에 추가 정보를 입력하면 '인증사용자'가 되고 다른 사용자에게 보여요.",
+                  "fontSize": 12,
+                  "fontWeight": 400,
+                  "fill": "$token(text-tertiary)",
+                  "layoutSizingHorizontal": "FILL",
+                  "textAutoResize": "HEIGHT"
+                },
+                {
+                  "name": "note-2",
+                  "type": "text",
+                  "characters": "현재 기준 선납 건이 1건 이상 있으면 '클린사용자'가 되고 다른 사용자에게 보여요.",
+                  "fontSize": 12,
+                  "fontWeight": 400,
+                  "fill": "$token(text-tertiary)",
+                  "layoutSizingHorizontal": "FILL",
+                  "textAutoResize": "HEIGHT"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Schedule Calendar Card Wrap",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingTop": 8,
+        "paddingBottom": 8,
+        "itemSpacing": 0
+      },
+      "children": [
+        {
+          "name": "Schedule Calendar Card",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "HUG",
+          "fill": "$token(bg-primary)",
+          "cornerRadius": 16,
+          "strokeColor": "$token(border-secondary)",
+          "strokeWeight": 1,
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "paddingLeft": 20,
+            "paddingRight": 20,
+            "paddingTop": 20,
+            "paddingBottom": 20,
+            "itemSpacing": 18
+          },
+          "children": [
+            {
+              "name": "Schedule Header Row",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 8
+              },
+              "children": [
+                {
+                  "name": "schedule-title",
+                  "type": "text",
+                  "characters": "거래 스케줄",
+                  "fontSize": 18,
+                  "fontWeight": 700,
+                  "fill": "$token(text-primary)",
+                  "layoutSizingHorizontal": "HUG",
+                  "textAutoResize": "WIDTH_AND_HEIGHT"
+                },
+                {
+                  "name": "Filter Label Row",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 4
+                  },
+                  "children": [
+                    {
+                      "name": "filter-label",
+                      "type": "text",
+                      "characters": "납입",
+                      "fontSize": 14,
+                      "fontWeight": 500,
+                      "fill": "$token(text-secondary)",
+                      "layoutSizingHorizontal": "HUG",
+                      "textAutoResize": "WIDTH_AND_HEIGHT"
+                    },
+                    {
+                      "name": "filter-chevron",
+                      "type": "icon",
+                      "iconName": "chevron-down",
+                      "size": 18,
+                      "iconColor": "$token(fg-tertiary)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Month Selector Row",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 4
+              },
+              "children": [
+                {
+                  "name": "cal-prev",
+                  "type": "icon",
+                  "iconName": "chevron-left",
+                  "size": 20,
+                  "iconColor": "$token(fg-tertiary)"
+                },
+                {
+                  "name": "Months",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 4
+                  },
+                  "children": [
+                    {
+                      "name": "Month Cell 10월",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "height": 48,
+                      "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 12,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "itemSpacing": 0,
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "month-10월",
+                          "type": "text",
+                          "characters": "10월",
+                          "fontSize": 14,
+                          "fontWeight": 500,
+                          "fill": "$token(text-secondary)",
+                          "layoutSizingHorizontal": "FILL",
+                          "textAutoResize": "HEIGHT",
+                          "textAlignHorizontal": "CENTER"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Month Cell 11월",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "height": 48,
+                      "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 12,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "itemSpacing": 0,
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "month-11월",
+                          "type": "text",
+                          "characters": "11월",
+                          "fontSize": 14,
+                          "fontWeight": 500,
+                          "fill": "$token(text-secondary)",
+                          "layoutSizingHorizontal": "FILL",
+                          "textAutoResize": "HEIGHT",
+                          "textAlignHorizontal": "CENTER"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Month Cell 12월",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "height": 48,
+                      "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 12,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "itemSpacing": 0,
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "month-12월",
+                          "type": "text",
+                          "characters": "12월",
+                          "fontSize": 14,
+                          "fontWeight": 500,
+                          "fill": "$token(text-secondary)",
+                          "layoutSizingHorizontal": "FILL",
+                          "textAutoResize": "HEIGHT",
+                          "textAlignHorizontal": "CENTER"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Month Cell 1월 Active",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "height": 48,
+                      "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 12,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "itemSpacing": 0,
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "month-1월",
+                          "type": "text",
+                          "characters": "1월",
+                          "fontSize": 14,
+                          "fontWeight": 700,
+                          "fill": "$token(fg-light)",
+                          "layoutSizingHorizontal": "FILL",
+                          "textAutoResize": "HEIGHT",
+                          "textAlignHorizontal": "CENTER",
+                          "fontColor": "$token(fg-light)"
+                        }
+                      ],
+                      "fill": "$token(bg-brand-solid)"
+                    },
+                    {
+                      "name": "Month Cell 2월",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "height": 48,
+                      "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 12,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "itemSpacing": 0,
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "month-2월",
+                          "type": "text",
+                          "characters": "2월",
+                          "fontSize": 14,
+                          "fontWeight": 500,
+                          "fill": "$token(text-secondary)",
+                          "layoutSizingHorizontal": "FILL",
+                          "textAutoResize": "HEIGHT",
+                          "textAlignHorizontal": "CENTER"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Month Cell 3월",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "height": 48,
+                      "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 12,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "itemSpacing": 0,
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "month-3월",
+                          "type": "text",
+                          "characters": "3월",
+                          "fontSize": 14,
+                          "fontWeight": 500,
+                          "fill": "$token(text-secondary)",
+                          "layoutSizingHorizontal": "FILL",
+                          "textAutoResize": "HEIGHT",
+                          "textAlignHorizontal": "CENTER"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Month Cell 4월",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "height": 48,
+                      "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 12,
+                      "autoLayout": {
+                        "layoutMode": "VERTICAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER",
+                        "itemSpacing": 0,
+                        "paddingTop": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "paddingRight": 0
+                      },
+                      "children": [
+                        {
+                          "name": "month-4월",
+                          "type": "text",
+                          "characters": "4월",
+                          "fontSize": 14,
+                          "fontWeight": 500,
+                          "fill": "$token(text-secondary)",
+                          "layoutSizingHorizontal": "FILL",
+                          "textAutoResize": "HEIGHT",
+                          "textAlignHorizontal": "CENTER"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "cal-next",
+                  "type": "icon",
+                  "iconName": "chevron-right",
+                  "size": 20,
+                  "iconColor": "$token(fg-tertiary)"
+                }
+              ]
+            },
+            {
+              "name": "this-month-caption",
+              "type": "text",
+              "characters": "이번달",
+              "fontSize": 12,
+              "fontWeight": 500,
+              "fill": "$token(text-tertiary)",
+              "layoutSizingHorizontal": "FILL",
+              "textAutoResize": "HEIGHT",
+              "textAlignHorizontal": "CENTER"
+            },
+            {
+              "name": "Schedule Summary Grid",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "fill": "$token(bg-secondary)",
+              "cornerRadius": 12,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 0,
+                "paddingLeft": 8,
+                "paddingRight": 8,
+                "paddingTop": 16,
+                "paddingBottom": 16
+              },
+              "children": [
+                {
+                  "name": "sum-월 납입액",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 6,
+                    "paddingTop": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "paddingRight": 0
+                  },
+                  "children": [
+                    {
+                      "name": "sum-label-월 납입액",
+                      "type": "text",
+                      "characters": "월 납입액",
+                      "fontSize": 12,
+                      "fontWeight": 500,
+                      "fill": "$token(text-tertiary)",
+                      "layoutSizingHorizontal": "FILL",
+                      "textAutoResize": "HEIGHT",
+                      "textAlignHorizontal": "CENTER"
+                    },
+                    {
+                      "name": "sum-value-월 납입액",
+                      "type": "text",
+                      "characters": "0원",
+                      "fontSize": 18,
+                      "fontWeight": 700,
+                      "fill": "$token(text-primary)",
+                      "layoutSizingHorizontal": "FILL",
+                      "textAutoResize": "HEIGHT",
+                      "textAlignHorizontal": "CENTER"
+                    }
+                  ]
+                },
+                {
+                  "name": "sum-납입 완료액",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 6,
+                    "paddingTop": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "paddingRight": 0
+                  },
+                  "children": [
+                    {
+                      "name": "sum-label-납입 완료액",
+                      "type": "text",
+                      "characters": "납입 완료액",
+                      "fontSize": 12,
+                      "fontWeight": 500,
+                      "fill": "$token(text-tertiary)",
+                      "layoutSizingHorizontal": "FILL",
+                      "textAutoResize": "HEIGHT",
+                      "textAlignHorizontal": "CENTER"
+                    },
+                    {
+                      "name": "sum-value-납입 완료액",
+                      "type": "text",
+                      "characters": "0원",
+                      "fontSize": 18,
+                      "fontWeight": 700,
+                      "fill": "$token(text-primary)",
+                      "layoutSizingHorizontal": "FILL",
+                      "textAutoResize": "HEIGHT",
+                      "textAlignHorizontal": "CENTER"
+                    }
+                  ]
+                },
+                {
+                  "name": "sum-남은 납입액",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "VERTICAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 6,
+                    "paddingTop": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "paddingRight": 0
+                  },
+                  "children": [
+                    {
+                      "name": "sum-label-남은 납입액",
+                      "type": "text",
+                      "characters": "남은 납입액",
+                      "fontSize": 12,
+                      "fontWeight": 500,
+                      "fill": "$token(text-tertiary)",
+                      "layoutSizingHorizontal": "FILL",
+                      "textAutoResize": "HEIGHT",
+                      "textAlignHorizontal": "CENTER"
+                    },
+                    {
+                      "name": "sum-value-남은 납입액",
+                      "type": "text",
+                      "characters": "0원",
+                      "fontSize": 18,
+                      "fontWeight": 700,
+                      "fill": "$token(text-primary)",
+                      "layoutSizingHorizontal": "FILL",
+                      "textAutoResize": "HEIGHT",
+                      "textAlignHorizontal": "CENTER"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Schedule Subheader Row",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {
+                  "name": "period-label",
+                  "type": "text",
+                  "characters": "2026년 1월",
+                  "fontSize": 16,
+                  "fontWeight": 700,
+                  "fill": "$token(text-primary)",
+                  "layoutSizingHorizontal": "HUG",
+                  "textAutoResize": "WIDTH_AND_HEIGHT"
+                },
+                {
+                  "name": "count-label",
+                  "type": "text",
+                  "characters": "총 0건",
+                  "fontSize": 14,
+                  "fontWeight": 400,
+                  "fill": "$token(text-tertiary)",
+                  "layoutSizingHorizontal": "HUG",
+                  "textAutoResize": "WIDTH_AND_HEIGHT"
+                }
+              ]
+            },
+            {
+              "name": "Empty State",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 8,
+                "paddingTop": 28,
+                "paddingBottom": 28
+              },
+              "children": [
+                {
+                  "name": "empty-title",
+                  "type": "text",
+                  "characters": "납입할 금액이 없습니다.",
+                  "fontSize": 16,
+                  "fontWeight": 600,
+                  "fill": "$token(text-secondary)",
+                  "layoutSizingHorizontal": "FILL",
+                  "textAutoResize": "HEIGHT",
+                  "textAlignHorizontal": "CENTER"
+                },
+                {
+                  "name": "empty-sub",
+                  "type": "text",
+                  "characters": "아임인과 함께 목돈 모으기를 시작해보세요.",
+                  "fontSize": 14,
+                  "fontWeight": 400,
+                  "fill": "$token(text-tertiary)",
+                  "layoutSizingHorizontal": "FILL",
+                  "textAutoResize": "HEIGHT",
+                  "textAlignHorizontal": "CENTER"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

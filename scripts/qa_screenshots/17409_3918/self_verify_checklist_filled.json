@@ -1,0 +1,24 @@
+{
+  "root_id": "17409:3918",
+  "blueprint_name": "imin_home_unified",
+  "scenario": "active (사용자 선택 — 빈 와이어 → 활성 mock 통일)",
+  "verified_at": "2026-05-29",
+  "checklist": [
+    {"id": "C01-content-1to1", "status": "PASS", "evidence": "와이어 구조/라벨 전부 반영 (거래현황·누적거래 탭, 추천 10만원·13개월·1회차·총1300만원·추천 전체보기(13개), 라운지 예치금 312,490원(100p), footer 티웨이브). 0건/0원 값은 사용자 선택으로 활성 mock 대체"},
+    {"id": "C02-no-grey-placeholder", "status": "PASS", "evidence": "모든 카드에 콘텐츠 — 빈 회색 placeholder 박스 없음"},
+    {"id": "C03-real-image-cards", "status": "PASS", "evidence": "라운지 5카드 실사진 적용 (스타벅스=커피 사진 등). 보라 placeholder 제거됨"},
+    {"id": "C04-cell-row-alignment", "status": "PASS", "evidence": "Day Strip 화12/토18/수22/금25/월28 cell 텍스트 중앙 정렬 일치"},
+    {"id": "C05-hero-28plus", "status": "PASS", "evidence": "모은 금액 1,240,000원 hero + 추천 1,300,000원 보라 ~32px Bold"},
+    {"id": "C06-tabbar-label-order", "status": "PASS", "evidence": "홈/라운지/스테이지/커뮤니티/전체 = 와이어 순서 일치"},
+    {"id": "C07-tabbar-icon-match", "status": "PASS", "evidence": "라운지 building-08 → shopping-bag-01 교체 (base spec + 재빌드). home/bag/coins/users/menu 의미 일치"},
+    {"id": "C08-underline-width", "status": "PASS", "evidence": "active 거래현황 brand 보라 underline 2.5px / inactive 누적거래 grey 2.5px 동일 width"},
+    {"id": "C09-stepper-icons", "status": "PASS", "evidence": "월/기간 stepper minus/plus 회색 원형 아이콘 시인성 충분"},
+    {"id": "C10-fab-icon-correct", "status": "PASS", "evidence": "FAB 56×56 보라 원형 + 흰 + 아이콘(fg-light) — 이모지 아님"},
+    {"id": "C11-card-hierarchy", "status": "PASS", "evidence": "hero 금액 large + eyebrow/caption small grey + CTA brand + 흰카드 border. 위계 차등"},
+    {"id": "C12-polished-not-wire", "status": "PASS", "evidence": "시맨틱 액센트 (미납 red/지급 green/active brand) + 시각 리듬. 와이어 1:1 복제 아님"}
+  ],
+  "known_minor": [
+    "loremflickr 실사진 키워드 매칭이 단일태그라 일부 카드(올리브영=korean) 사진 관련성 낮음 — 소스 랜덤 특성",
+    "R35-underline-tab-active ERROR는 underline-tab-v2(RECTANGLE underline 자식) 패턴 오탐 — 시각은 정상"
+  ]
+}

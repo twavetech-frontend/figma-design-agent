@@ -25,6 +25,7 @@ _OK_ON_BRAND_TOKENS = (
     "bg-primary",                    # white surface used as text fg
     "fg-on-brand",
     "fg-white", "text-white",
+    "fg-light",                       # 2026-05-28 사용자 명시 — FAB/active cell 흰 텍스트 표준
     "text-primary_on-brand",
     "fg-primary_on-brand",
 )

@@ -1,0 +1,3648 @@
+{
+  "schema": "imin-frontend-layout-spec/v1",
+  "description": "Framework-neutral layout spec. colors = {token, value}; layout = flexbox(direction/gap/padding/justify/align/sizing).",
+  "screen": {
+    "type": "frame",
+    "name": "transaction_schedule_modal_active",
+    "size": {
+      "width": 393,
+      "height": 1292
+    },
+    "layout": {
+      "direction": "column",
+      "gap": 0,
+      "padding": [
+        0,
+        0,
+        32,
+        0
+      ],
+      "justify": "start",
+      "align": "start",
+      "sizingHorizontal": "fixed",
+      "sizingVertical": "fixed"
+    },
+    "style": {
+      "background": {
+        "token": "bg-primary",
+        "value": "#FCFCFD"
+      }
+    },
+    "children": [
+      {
+        "type": "instance",
+        "name": "Status Bar",
+        "size": {
+          "width": 393,
+          "height": 64
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 154,
+          "padding": [
+            21,
+            24,
+            19,
+            24
+          ],
+          "justify": "center",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Time",
+            "size": {
+              "width": 96,
+              "height": 24
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 10,
+              "padding": [
+                1.5,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "Time",
+                "size": {
+                  "width": 37,
+                  "height": 22
+                },
+                "text": {
+                  "content": "9:41"
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Levels",
+            "size": {
+              "width": 96,
+              "height": 22
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 7,
+              "padding": [
+                1,
+                1,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "fixed"
+            },
+            "children": [
+              {
+                "type": "icon",
+                "name": "Cellular Connection",
+                "size": {
+                  "width": 19,
+                  "height": 12
+                }
+              },
+              {
+                "type": "icon",
+                "name": "Wifi",
+                "size": {
+                  "width": 17,
+                  "height": 12
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Frame",
+                "size": {
+                  "width": 27,
+                  "height": 13
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Border",
+                    "size": {
+                      "width": 25,
+                      "height": 13
+                    },
+                    "style": {
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "Primary",
+                          "value": "#000000"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 4.300000190734863,
+                      "opacity": 0.3499999940395355
+                    }
+                  },
+                  {
+                    "type": "icon",
+                    "name": "Cap",
+                    "size": {
+                      "width": 1,
+                      "height": 4
+                    },
+                    "style": {
+                      "background": {
+                        "token": "Primary",
+                        "value": "#000000"
+                      },
+                      "opacity": 0.4000000059604645
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Capacity",
+                    "size": {
+                      "width": 21,
+                      "height": 9
+                    },
+                    "style": {
+                      "background": {
+                        "token": "Primary",
+                        "value": "#000000"
+                      },
+                      "borderRadius": 2.5
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "NavBar",
+        "size": {
+          "width": 393,
+          "height": 52
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 0,
+          "padding": [
+            14,
+            20,
+            14,
+            20
+          ],
+          "justify": "end",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Close Icon Wrap",
+            "size": {
+              "width": 40,
+              "height": 24
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fixed",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "borderRadius": 20
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "x-close",
+                "size": {
+                  "width": 24,
+                  "height": 24
+                },
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "size": {
+                      "width": 12,
+                      "height": 12
+                    },
+                    "style": {
+                      "border": {
+                        "width": 2,
+                        "color": {
+                          "token": "bg-primary-solid",
+                          "value": "#2C3744"
+                        },
+                        "align": "inside"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Stage Progress Card Wrap",
+        "size": {
+          "width": 393,
+          "height": 242
+        },
+        "layout": {
+          "direction": "column",
+          "gap": 0,
+          "padding": [
+            8,
+            20,
+            8,
+            20
+          ],
+          "justify": "start",
+          "align": "start",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Stage Progress Card",
+            "size": {
+              "width": 353,
+              "height": 226
+            },
+            "layout": {
+              "direction": "column",
+              "gap": 16,
+              "padding": [
+                24,
+                20,
+                20,
+                20
+              ],
+              "justify": "start",
+              "align": "start",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 20
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "Header Title",
+                "size": {
+                  "width": 313,
+                  "height": 24
+                },
+                "text": {
+                  "content": "진행중인 5건의 스테이지 내역"
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Summary Rows",
+                "size": {
+                  "width": 313,
+                  "height": 66
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 10,
+                  "padding": [
+                    4,
+                    0,
+                    4,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "start",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Row 모은 금액",
+                    "size": {
+                      "width": 313,
+                      "height": 24
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 12,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "label",
+                        "size": {
+                          "width": 52,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "모은 금액",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "value",
+                        "size": {
+                          "width": 117,
+                          "height": 24
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "+ 12,400,000원",
+                          "fontSize": 16,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 24,
+                          "color": {
+                            "token": "text-success-primary",
+                            "value": "#079455"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Row 빌린 금액",
+                    "size": {
+                      "width": 313,
+                      "height": 24
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 12,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "label",
+                        "size": {
+                          "width": 52,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "빌린 금액",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-secondary",
+                            "value": "#687079"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "value",
+                        "size": {
+                          "width": 106,
+                          "height": 24
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "- 3,200,000원",
+                          "fontSize": 16,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 24,
+                          "color": {
+                            "token": "text-error-primary",
+                            "value": "#D92D20"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Helper Notes",
+                "size": {
+                  "width": 313,
+                  "height": 60
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 8,
+                  "padding": [
+                    12,
+                    0,
+                    4,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "start",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Note Row 인증사용자",
+                    "size": {
+                      "width": 313,
+                      "height": 18
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "check-verified-02",
+                        "size": {
+                          "width": 14,
+                          "height": 14
+                        },
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "size": {
+                              "width": 12,
+                              "height": 12
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "note-cert",
+                        "size": {
+                          "width": 296,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "‘인증사용자’ — 프로필 정보 입력 완료. 다른 사용자에게 보여요.",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Note Row 클린사용자",
+                    "size": {
+                      "width": 313,
+                      "height": 18
+                    },
+                    "layout": {
+                      "direction": "row",
+                      "gap": 8,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "frame",
+                        "name": "shield-tick",
+                        "size": {
+                          "width": 14,
+                          "height": 14
+                        },
+                        "children": [
+                          {
+                            "type": "icon",
+                            "name": "Vector",
+                            "size": {
+                              "width": 9,
+                              "height": 12
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "name": "note-clean",
+                        "size": {
+                          "width": 204,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "‘클린사용자’ — 최근 신납 0건. 신뢰도 높음.",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "frame",
+        "name": "Calendar Section Wrap",
+        "size": {
+          "width": 393,
+          "height": 990
+        },
+        "layout": {
+          "direction": "column",
+          "gap": 20,
+          "padding": [
+            24,
+            20,
+            8,
+            20
+          ],
+          "justify": "start",
+          "align": "start",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "text",
+            "name": "Calendar Title",
+            "size": {
+              "width": 353,
+              "height": 28
+            },
+            "style": {},
+            "text": {
+              "content": "거래 스케줄",
+              "fontSize": 18,
+              "fontFamily": "Pretendard",
+              "fontWeight": "Bold",
+              "align": "center",
+              "lineHeight": 28,
+              "color": {
+                "token": "text-primary",
+                "value": "#2C3744"
+              }
+            }
+          },
+          {
+            "type": "frame",
+            "name": "Month Strip Row",
+            "size": {
+              "width": 353,
+              "height": 46
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 6,
+              "padding": [
+                4,
+                0,
+                4,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "chevron-left",
+                "size": {
+                  "width": 20,
+                  "height": 20
+                },
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "size": {
+                      "width": 5,
+                      "height": 10
+                    },
+                    "style": {
+                      "border": {
+                        "width": 1.6666666269302368,
+                        "color": {
+                          "token": "utility-gray-400",
+                          "value": "#B1B6BE"
+                        },
+                        "align": "inside"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Month Cell Oct",
+                "size": {
+                  "width": 40,
+                  "height": 38
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug"
+                },
+                "style": {
+                  "borderRadius": 10
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "m-cap",
+                    "size": {
+                      "width": 40,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "Oct",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "m-num",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "10",
+                      "fontSize": 14,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 20,
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Month Cell Nov",
+                "size": {
+                  "width": 40,
+                  "height": 38
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug"
+                },
+                "style": {
+                  "borderRadius": 10
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "m-cap",
+                    "size": {
+                      "width": 40,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "Nov",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "m-num",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "11",
+                      "fontSize": 14,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 20,
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Month Cell Dec",
+                "size": {
+                  "width": 40,
+                  "height": 38
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug"
+                },
+                "style": {
+                  "borderRadius": 10
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "m-cap",
+                    "size": {
+                      "width": 40,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "Dec",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "m-num",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "12",
+                      "fontSize": 14,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 20,
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Month Cell Jan Active",
+                "size": {
+                  "width": 40,
+                  "height": 38
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-brand-solid",
+                    "value": "#7700FF"
+                  },
+                  "borderRadius": 10
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "m-cap",
+                    "size": {
+                      "width": 40,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "Jan",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Bold",
+                      "align": "center",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "fg-light",
+                        "value": "#FFFFFF"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "m-num",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "1",
+                      "fontSize": 14,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Bold",
+                      "align": "center",
+                      "lineHeight": 20,
+                      "color": {
+                        "token": "fg-light",
+                        "value": "#FFFFFF"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Month Cell Feb",
+                "size": {
+                  "width": 40,
+                  "height": 38
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug"
+                },
+                "style": {
+                  "borderRadius": 10
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "m-cap",
+                    "size": {
+                      "width": 40,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "Feb",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "m-num",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "2",
+                      "fontSize": 14,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 20,
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Month Cell Mar",
+                "size": {
+                  "width": 40,
+                  "height": 38
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug"
+                },
+                "style": {
+                  "borderRadius": 10
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "m-cap",
+                    "size": {
+                      "width": 40,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "Mar",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "m-num",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "3",
+                      "fontSize": 14,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 20,
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Month Cell Apr",
+                "size": {
+                  "width": 40,
+                  "height": 38
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 0,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "fixed",
+                  "sizingVertical": "hug"
+                },
+                "style": {
+                  "borderRadius": 10
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "m-cap",
+                    "size": {
+                      "width": 40,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "Apr",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "m-num",
+                    "size": {
+                      "width": 40,
+                      "height": 20
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "4",
+                      "fontSize": 14,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "center",
+                      "lineHeight": 20,
+                      "color": {
+                        "token": "text-secondary",
+                        "value": "#687079"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "chevron-right",
+                "size": {
+                  "width": 20,
+                  "height": 20
+                },
+                "children": [
+                  {
+                    "type": "icon",
+                    "name": "Vector",
+                    "size": {
+                      "width": 5,
+                      "height": 10
+                    },
+                    "style": {
+                      "border": {
+                        "width": 1.6666666269302368,
+                        "color": {
+                          "token": "utility-gray-400",
+                          "value": "#B1B6BE"
+                        },
+                        "align": "inside"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "name": "This Month Caption",
+            "size": {
+              "width": 353,
+              "height": 18
+            },
+            "style": {},
+            "text": {
+              "content": "이번달",
+              "fontSize": 12,
+              "fontFamily": "Pretendard",
+              "fontWeight": "SemiBold",
+              "align": "center",
+              "lineHeight": 18,
+              "color": {
+                "token": "text-brand-primary",
+                "value": "#6A00E0"
+              }
+            }
+          },
+          {
+            "type": "frame",
+            "name": "Filter Row",
+            "size": {
+              "width": 353,
+              "height": 30
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "end",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Filter Chip",
+                "size": {
+                  "width": 61,
+                  "height": 30
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 4,
+                  "padding": [
+                    6,
+                    10,
+                    6,
+                    12
+                  ],
+                  "justify": "center",
+                  "align": "center",
+                  "sizingHorizontal": "hug",
+                  "sizingVertical": "hug"
+                },
+                "style": {
+                  "background": {
+                    "token": "bg-primary",
+                    "value": "#FCFCFD"
+                  },
+                  "border": {
+                    "width": 1,
+                    "color": {
+                      "token": "border-secondary",
+                      "value": "#E6E8EA"
+                    },
+                    "align": "inside"
+                  },
+                  "borderRadius": 8
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "filter-label",
+                    "size": {
+                      "width": 21,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "납입",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "SemiBold",
+                      "align": "left",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "chevron-down",
+                    "size": {
+                      "width": 14,
+                      "height": 14
+                    },
+                    "children": [
+                      {
+                        "type": "icon",
+                        "name": "Vector",
+                        "size": {
+                          "width": 7,
+                          "height": 4
+                        },
+                        "style": {
+                          "border": {
+                            "width": 1.1666666269302368,
+                            "color": {
+                              "token": "bg-primary-solid",
+                              "value": "#2C3744"
+                            },
+                            "align": "inside"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Summary Grid",
+            "size": {
+              "width": 353,
+              "height": 84
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 12,
+              "padding": [
+                18,
+                20,
+                18,
+                0
+              ],
+              "justify": "space-between",
+              "align": "start",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "style": {
+              "background": {
+                "token": "bg-primary",
+                "value": "#FCFCFD"
+              },
+              "border": {
+                "width": 1,
+                "color": {
+                  "token": "border-secondary",
+                  "value": "#E6E8EA"
+                },
+                "align": "inside"
+              },
+              "borderRadius": 16
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Summary Col 월 납입액",
+                "size": {
+                  "width": 111,
+                  "height": 48
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 6,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "start",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "lbl",
+                    "size": {
+                      "width": 111,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "월 납입액",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "left",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "val",
+                    "size": {
+                      "width": 111,
+                      "height": 24
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "800,000원",
+                      "fontSize": 16,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Bold",
+                      "align": "left",
+                      "lineHeight": 24,
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Summary Col 납입 완료액",
+                "size": {
+                  "width": 111,
+                  "height": 48
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 6,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "start",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "lbl",
+                    "size": {
+                      "width": 111,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "납입 완료액",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "left",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "val",
+                    "size": {
+                      "width": 111,
+                      "height": 24
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "600,000원",
+                      "fontSize": 16,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Bold",
+                      "align": "left",
+                      "lineHeight": 24,
+                      "color": {
+                        "token": "text-brand-primary",
+                        "value": "#6A00E0"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Summary Col 남은 납입액",
+                "size": {
+                  "width": 111,
+                  "height": 48
+                },
+                "layout": {
+                  "direction": "column",
+                  "gap": 6,
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "start",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "name": "lbl",
+                    "size": {
+                      "width": 111,
+                      "height": 18
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "남은 납입액",
+                      "fontSize": 12,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Medium",
+                      "align": "left",
+                      "lineHeight": 18,
+                      "color": {
+                        "token": "text-tertiary",
+                        "value": "#B1B6BE"
+                      }
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "name": "val",
+                    "size": {
+                      "width": 111,
+                      "height": 24
+                    },
+                    "style": {},
+                    "text": {
+                      "content": "200,000원",
+                      "fontSize": 16,
+                      "fontFamily": "Pretendard",
+                      "fontWeight": "Bold",
+                      "align": "left",
+                      "lineHeight": 24,
+                      "color": {
+                        "token": "text-primary",
+                        "value": "#2C3744"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Period Row",
+            "size": {
+              "width": 353,
+              "height": 40
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 12,
+              "padding": [
+                8,
+                0,
+                8,
+                0
+              ],
+              "justify": "space-between",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "period",
+                "size": {
+                  "width": 80,
+                  "height": 24
+                },
+                "text": {
+                  "content": "2026년 1월"
+                }
+              },
+              {
+                "type": "text",
+                "name": "count",
+                "size": {
+                  "width": 32,
+                  "height": 18
+                },
+                "text": {
+                  "content": "총 8건"
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Transaction List",
+            "size": {
+              "width": 353,
+              "height": 592
+            },
+            "layout": {
+              "direction": "column",
+              "gap": 0,
+              "padding": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "justify": "start",
+              "align": "start",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "frame",
+                "name": "Tx Row 1",
+                "size": {
+                  "width": 353,
+                  "height": 74
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    0,
+                    14,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "tx-date",
+                    "size": {
+                      "width": 36,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 8
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "d",
+                        "size": {
+                          "width": 36,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "3",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "center",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-body",
+                    "size": {
+                      "width": 146,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-name",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "직장인 5만원 적금",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "SemiBold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "tx-meta",
+                        "size": {
+                          "width": 146,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "5회차 · 자동납입",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-right",
+                    "size": {
+                      "width": 146,
+                      "height": 46
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "end",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-amount",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "- 50,000원",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "tx-pill",
+                        "size": {
+                          "width": 146,
+                          "height": 22
+                        },
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            2,
+                            6,
+                            2,
+                            6
+                          ],
+                          "justify": "start",
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-secondary",
+                            "value": "#F3F4F6"
+                          },
+                          "border": {
+                            "width": 1,
+                            "color": {
+                              "token": "utility-success-200",
+                              "value": "#ABEFC6"
+                            },
+                            "align": "inside"
+                          },
+                          "borderRadius": 8
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "Text",
+                            "size": {
+                              "width": 134,
+                              "height": 18
+                            },
+                            "text": {
+                              "content": "Label"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Tx Row 2",
+                "size": {
+                  "width": 353,
+                  "height": 74
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    0,
+                    14,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "tx-date",
+                    "size": {
+                      "width": 36,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 8
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "d",
+                        "size": {
+                          "width": 36,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "5",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "center",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-body",
+                    "size": {
+                      "width": 146,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-name",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "사회초년생 10만원 적금",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "SemiBold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "tx-meta",
+                        "size": {
+                          "width": 146,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "3회차 · 자동납입",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-right",
+                    "size": {
+                      "width": 146,
+                      "height": 46
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "end",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-amount",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "- 100,000원",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "tx-pill",
+                        "size": {
+                          "width": 146,
+                          "height": 22
+                        },
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            2,
+                            6,
+                            2,
+                            6
+                          ],
+                          "justify": "start",
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-secondary",
+                            "value": "#F3F4F6"
+                          },
+                          "border": {
+                            "width": 1,
+                            "color": {
+                              "token": "utility-success-200",
+                              "value": "#ABEFC6"
+                            },
+                            "align": "inside"
+                          },
+                          "borderRadius": 8
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "Text",
+                            "size": {
+                              "width": 134,
+                              "height": 18
+                            },
+                            "text": {
+                              "content": "Label"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Tx Row 3",
+                "size": {
+                  "width": 353,
+                  "height": 74
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    0,
+                    14,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "tx-date",
+                    "size": {
+                      "width": 36,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 8
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "d",
+                        "size": {
+                          "width": 36,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "10",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "center",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-body",
+                    "size": {
+                      "width": 146,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-name",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "주택청약 종합저축",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "SemiBold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "tx-meta",
+                        "size": {
+                          "width": 146,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "12회차 · 자동납입",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-right",
+                    "size": {
+                      "width": 146,
+                      "height": 46
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "end",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-amount",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "- 200,000원",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "tx-pill",
+                        "size": {
+                          "width": 146,
+                          "height": 22
+                        },
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            2,
+                            6,
+                            2,
+                            6
+                          ],
+                          "justify": "start",
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-secondary",
+                            "value": "#F3F4F6"
+                          },
+                          "border": {
+                            "width": 1,
+                            "color": {
+                              "token": "utility-success-200",
+                              "value": "#ABEFC6"
+                            },
+                            "align": "inside"
+                          },
+                          "borderRadius": 8
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "Text",
+                            "size": {
+                              "width": 134,
+                              "height": 18
+                            },
+                            "text": {
+                              "content": "Label"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Tx Row 4",
+                "size": {
+                  "width": 353,
+                  "height": 74
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    0,
+                    14,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "tx-date",
+                    "size": {
+                      "width": 36,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 8
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "d",
+                        "size": {
+                          "width": 36,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "15",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "center",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-body",
+                    "size": {
+                      "width": 146,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-name",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "긴급자금 단기 적금",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "SemiBold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "tx-meta",
+                        "size": {
+                          "width": 146,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "8회차 · 자동납입",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-right",
+                    "size": {
+                      "width": 146,
+                      "height": 46
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "end",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-amount",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "- 150,000원",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "tx-pill",
+                        "size": {
+                          "width": 146,
+                          "height": 22
+                        },
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            2,
+                            6,
+                            2,
+                            6
+                          ],
+                          "justify": "start",
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-secondary",
+                            "value": "#F3F4F6"
+                          },
+                          "border": {
+                            "width": 1,
+                            "color": {
+                              "token": "utility-success-200",
+                              "value": "#ABEFC6"
+                            },
+                            "align": "inside"
+                          },
+                          "borderRadius": 8
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "Text",
+                            "size": {
+                              "width": 134,
+                              "height": 18
+                            },
+                            "text": {
+                              "content": "Label"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Tx Row 5",
+                "size": {
+                  "width": 353,
+                  "height": 74
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    0,
+                    14,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "tx-date",
+                    "size": {
+                      "width": 36,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 8
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "d",
+                        "size": {
+                          "width": 36,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "18",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "center",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-body",
+                    "size": {
+                      "width": 146,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-name",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "여행자금 5만원 적금",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "SemiBold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "tx-meta",
+                        "size": {
+                          "width": 146,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "2회차 · 자동납입",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-right",
+                    "size": {
+                      "width": 146,
+                      "height": 46
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "end",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-amount",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "- 50,000원",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "tx-pill",
+                        "size": {
+                          "width": 146,
+                          "height": 22
+                        },
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            2,
+                            6,
+                            2,
+                            6
+                          ],
+                          "justify": "start",
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-secondary",
+                            "value": "#F3F4F6"
+                          },
+                          "border": {
+                            "width": 1,
+                            "color": {
+                              "token": "utility-success-200",
+                              "value": "#ABEFC6"
+                            },
+                            "align": "inside"
+                          },
+                          "borderRadius": 8
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "Text",
+                            "size": {
+                              "width": 134,
+                              "height": 18
+                            },
+                            "text": {
+                              "content": "Label"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Tx Row 6",
+                "size": {
+                  "width": 353,
+                  "height": 74
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    0,
+                    14,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "tx-date",
+                    "size": {
+                      "width": 36,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-primary",
+                        "value": "#F4ECFF"
+                      },
+                      "borderRadius": 8
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "d",
+                        "size": {
+                          "width": 36,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "20",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "center",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-body",
+                    "size": {
+                      "width": 146,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-name",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "결혼자금 20만원 적금",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "SemiBold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "tx-meta",
+                        "size": {
+                          "width": 146,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "6회차 · 자동납입",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-right",
+                    "size": {
+                      "width": 146,
+                      "height": 46
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "end",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-amount",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "- 200,000원",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "tx-pill",
+                        "size": {
+                          "width": 146,
+                          "height": 22
+                        },
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            2,
+                            6,
+                            2,
+                            6
+                          ],
+                          "justify": "start",
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-brand-primary",
+                            "value": "#F4ECFF"
+                          },
+                          "border": {
+                            "width": 1,
+                            "color": {
+                              "token": "utility-warning-200",
+                              "value": "#FEDF89"
+                            },
+                            "align": "inside"
+                          },
+                          "borderRadius": 8
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "Text",
+                            "size": {
+                              "width": 134,
+                              "height": 18
+                            },
+                            "text": {
+                              "content": "Label"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Tx Row 7",
+                "size": {
+                  "width": 353,
+                  "height": 74
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    0,
+                    14,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "tx-date",
+                    "size": {
+                      "width": 36,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-primary",
+                        "value": "#FCFCFD"
+                      },
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "border-secondary",
+                          "value": "#E6E8EA"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 8
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "d",
+                        "size": {
+                          "width": 36,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "25",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "center",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-body",
+                    "size": {
+                      "width": 146,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-name",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "직장인 5만원 적금",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "SemiBold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "tx-meta",
+                        "size": {
+                          "width": 146,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "6회차 · 자동납입",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-right",
+                    "size": {
+                      "width": 146,
+                      "height": 46
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "end",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-amount",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "- 50,000원",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "tx-pill",
+                        "size": {
+                          "width": 146,
+                          "height": 22
+                        },
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            2,
+                            6,
+                            2,
+                            6
+                          ],
+                          "justify": "start",
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-secondary",
+                            "value": "#F3F4F6"
+                          },
+                          "border": {
+                            "width": 1,
+                            "color": {
+                              "token": "utility-warning-200",
+                              "value": "#FEDF89"
+                            },
+                            "align": "inside"
+                          },
+                          "borderRadius": 8
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "Text",
+                            "size": {
+                              "width": 134,
+                              "height": 18
+                            },
+                            "text": {
+                              "content": "Label"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "frame",
+                "name": "Tx Row 8",
+                "size": {
+                  "width": 353,
+                  "height": 74
+                },
+                "layout": {
+                  "direction": "row",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    0,
+                    14,
+                    0
+                  ],
+                  "justify": "start",
+                  "align": "center",
+                  "sizingHorizontal": "fill",
+                  "sizingVertical": "hug"
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "tx-date",
+                    "size": {
+                      "width": 36,
+                      "height": 20
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 0,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "center",
+                      "align": "center",
+                      "sizingHorizontal": "fixed",
+                      "sizingVertical": "hug"
+                    },
+                    "style": {
+                      "background": {
+                        "token": "bg-brand-primary",
+                        "value": "#F4ECFF"
+                      },
+                      "borderRadius": 8
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "d",
+                        "size": {
+                          "width": 36,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "30",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "center",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-brand-primary",
+                            "value": "#6A00E0"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-body",
+                    "size": {
+                      "width": 146,
+                      "height": 40
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 2,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "start",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-name",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "사회초년생 10만원 적금",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "SemiBold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "name": "tx-meta",
+                        "size": {
+                          "width": 146,
+                          "height": 18
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "4회차 · 자동납입",
+                          "fontSize": 12,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Medium",
+                          "align": "left",
+                          "lineHeight": 18,
+                          "color": {
+                            "token": "text-tertiary",
+                            "value": "#B1B6BE"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "frame",
+                    "name": "tx-right",
+                    "size": {
+                      "width": 146,
+                      "height": 46
+                    },
+                    "layout": {
+                      "direction": "column",
+                      "gap": 4,
+                      "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "justify": "start",
+                      "align": "end",
+                      "sizingHorizontal": "fill",
+                      "sizingVertical": "hug"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "tx-amount",
+                        "size": {
+                          "width": 146,
+                          "height": 20
+                        },
+                        "style": {},
+                        "text": {
+                          "content": "- 100,000원",
+                          "fontSize": 14,
+                          "fontFamily": "Pretendard",
+                          "fontWeight": "Bold",
+                          "align": "left",
+                          "lineHeight": 20,
+                          "color": {
+                            "token": "text-primary",
+                            "value": "#2C3744"
+                          }
+                        }
+                      },
+                      {
+                        "type": "instance",
+                        "name": "tx-pill",
+                        "size": {
+                          "width": 146,
+                          "height": 22
+                        },
+                        "layout": {
+                          "direction": "row",
+                          "gap": 0,
+                          "padding": [
+                            2,
+                            6,
+                            2,
+                            6
+                          ],
+                          "justify": "start",
+                          "align": "center",
+                          "sizingHorizontal": "fill",
+                          "sizingVertical": "hug"
+                        },
+                        "style": {
+                          "background": {
+                            "token": "bg-brand-primary",
+                            "value": "#F4ECFF"
+                          },
+                          "border": {
+                            "width": 1,
+                            "color": {
+                              "token": "utility-warning-200",
+                              "value": "#FEDF89"
+                            },
+                            "align": "inside"
+                          },
+                          "borderRadius": 8
+                        },
+                        "children": [
+                          {
+                            "type": "text",
+                            "name": "Text",
+                            "size": {
+                              "width": 134,
+                              "height": 18
+                            },
+                            "text": {
+                              "content": "Label"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

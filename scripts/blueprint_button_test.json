@@ -1,0 +1,91 @@
+{
+  "_note": "버튼 auto-swap + sizing post-fix 검증용 임시 화면",
+  "name": "button_test",
+  "type": "frame",
+  "width": 393,
+  "fill": "$token(bg-primary)",
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "paddingTop": 40,
+    "paddingBottom": 40,
+    "paddingLeft": 24,
+    "paddingRight": 24,
+    "itemSpacing": 20,
+    "primaryAxisAlignItems": "MIN",
+    "counterAxisAlignItems": "MIN"
+  },
+  "layoutSizingHorizontal": "FIXED",
+  "layoutSizingVertical": "HUG",
+  "children": [
+    {
+      "name": "title",
+      "type": "text",
+      "characters": "버튼 테스트",
+      "fontFamily": "Pretendard",
+      "fontWeight": 700,
+      "fontSize": 22,
+      "fontColor": "$token(text-primary)"
+    },
+    {
+      "name": "Primary CTA",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "cornerRadius": 12,
+      "fill": "$token(bg-brand-solid)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingTop": 16,
+        "paddingBottom": 16,
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "CENTER",
+        "counterAxisAlignItems": "CENTER"
+      },
+      "children": [
+        {
+          "name": "cta-label",
+          "type": "text",
+          "characters": "확인하기",
+          "fontFamily": "Pretendard",
+          "fontWeight": 700,
+          "fontSize": 16,
+          "fontColor": "$token(fg-light)"
+        }
+      ]
+    },
+    {
+      "name": "Secondary Btn",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "cornerRadius": 12,
+      "fill": "$token(bg-primary)",
+      "strokeColor": "$token(border-secondary)",
+      "strokeWeight": 1,
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingTop": 16,
+        "paddingBottom": 16,
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "CENTER",
+        "counterAxisAlignItems": "CENTER"
+      },
+      "children": [
+        {
+          "name": "sec-label",
+          "type": "text",
+          "characters": "취소",
+          "fontFamily": "Pretendard",
+          "fontWeight": 600,
+          "fontSize": 16,
+          "fontColor": "$token(text-secondary)"
+        }
+      ]
+    }
+  ],
+  "_referencesSkipped": "버튼 auto-swap+sizing 검증용 임시 화면"
+}

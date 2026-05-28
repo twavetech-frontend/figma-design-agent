@@ -1,0 +1,117 @@
+{
+  "_BLOCKING_INSTRUCTION": "⚠️ Claude 보고 직전 강제 절차 (절대 룰): 위 exported_sections 의 모든 nodeId 를 export_node_as_image (scale=2) 로 재export 후 결과 PNG 를 Read. 그 후 아래 checklist 12개 각각 PASS / FAIL / NA 로 status 채우고 evidence 에 시각 증거 1줄 인용. 이 checklist 미완료 상태로 사용자에게 '검증 ✅' '완료' 보고 금지 — [feedback_self_verify_required_after_build] 메모리 룰 위반.",
+  "root_id": "17402:1214",
+  "blueprint_name": "imin_home_1",
+  "exported_sections": [
+    {
+      "label": "Header_NavBar",
+      "nodeId": "17402:1215",
+      "name": "Status Bar"
+    },
+    {
+      "label": "Top_Tabs_Hero",
+      "nodeId": "17402:1233",
+      "name": "Mode Tabs Wrap"
+    },
+    {
+      "label": "Day_Strip_Row",
+      "nodeId": "17402:1275",
+      "name": "Day Strip Title"
+    },
+    {
+      "label": "Empty_or_List",
+      "nodeId": "17402:1276",
+      "name": "Day Strip Carousel"
+    },
+    {
+      "label": "Recommend_Card",
+      "nodeId": "17402:1328",
+      "name": "Recommend Stage Card"
+    },
+    {
+      "label": "Footer_TabBar_FAB",
+      "nodeId": "17402:1509",
+      "name": "FAB"
+    }
+  ],
+  "checklist": [
+    {
+      "id": "C01-content-1to1",
+      "question": "와이어 모든 텍스트/숫자/카운트가 빌드에 1:1 박혀있나",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C02-no-grey-placeholder",
+      "question": "회색 빈 placeholder 박스 (children≤1 + 라벨만) 없나",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C03-real-image-cards",
+      "question": "라운지/상품/카드의 실 시각 콘텐츠 (사진/일러스트/아이콘) 들어있나",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C04-cell-row-alignment",
+      "question": "Day Strip / cell row 모든 cell 의 텍스트 alignment 일치하나",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C05-hero-28plus",
+      "question": "Hero 텍스트 28~36px Bold 인가",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C06-tabbar-label-order",
+      "question": "Tab Bar 라벨 순서가 와이어와 일치하나",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C07-tabbar-icon-match",
+      "question": "Tab Bar 아이콘이 라벨 의미와 일치하나 (커뮤니티=users / 라운지=shop 등)",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C08-underline-width",
+      "question": "Underline tab active/inactive underline width·height 일치하나",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C09-stepper-icons",
+      "question": "Stepper minus/plus 아이콘 시인성 충분한가 (대비 ≥3:1)",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C10-fab-icon-correct",
+      "question": "FAB 아이콘 의도와 일치하나, 이모티콘 아닌가",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C11-card-hierarchy",
+      "question": "카드 위계 (hero vs 보조) 시각 차등화 (size/shadow/border) 됐나",
+      "status": "FILL_IN",
+      "evidence": ""
+    },
+    {
+      "id": "C12-polished-not-wire",
+      "question": "와이어 1:1 복제처럼 보이지 않나 (brand 액센트 의미 매핑, 시각 리듬)",
+      "status": "FILL_IN",
+      "evidence": ""
+    }
+  ],
+  "summary": {
+    "pass": 0,
+    "fail": 0,
+    "na": 0,
+    "BLOCKING": "FILL_IN — 12개 다 채울 때까지 사용자 보고 금지"
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "_BLOCKING_INSTRUCTION": "⚠️ Claude 보고 직전 강제 절차 (절대 룰): 위 exported_sections 의 모든 nodeId 를 export_node_as_image (scale=2) 로 재export 후 결과 PNG 를 Read. 그 후 아래 checklist 12개 각각 PASS / FAIL / NA 로 status 채우고 evidence 에 시각 증거 1줄 인용. 이 checklist 미완료 상태로 사용자에게 '검증 ✅' '완료' 보고 금지 — [feedback_self_verify_required_after_build] 메모리 룰 위반.",
+  "root_id": "17392:53845",
+  "blueprint_name": "imin_home_v33_2026_0528",
+  "exported_sections": [
+    {
+      "label": "Header_NavBar",
+      "nodeId": "17392:53846",
+      "name": "Status Bar"
+    },
+    {
+      "label": "Top_Tabs_Hero",
+      "nodeId": "17392:53864",
+      "name": "Mode Tabs Wrap"
+    },
+    {
+      "label": "Day_Strip_Row",
+      "nodeId": "17392:53897",
+      "name": "Day Strip"
+    },
+    {
+      "label": "Recommend_Card",
+      "nodeId": "17392:53943",
+      "name": "Recommend Stage Card"
+    },
+    {
+      "label": "Empty_or_List",
+      "nodeId": "17392:54013",
+      "name": "Participating Empty Wrap"
+    },
+    {
+      "label": "Footer_TabBar_FAB",
+      "nodeId": "17392:54073",
+      "name": "FAB"
+    }
+  ],
+  "checklist": [
+    {
+      "id": "C01-content-1to1",
+      "question": "와이어 모든 텍스트/숫자/카운트가 빌드에 1:1 박혀있나",
+      "status": "PASS",
+      "evidence": "와이어 핵심 텍스트 1:1 박힘 — '진행중인 0건의 스테이지 내역' / '+0원/-0원' / '연속 0일째 출석 체크 중' / '매일매일 출석하면 특별한 혜택이!' / '추천 스테이지' / '10만원/13개월' / '1~13 회차' / '1회차' / '납입 후 목적 수령' / '총 1,300만원 모으기 도전' / '추천 전체 보기 (13개)' / '참여 중인 스테이지/찜한 스테이지' / '추천 상품 (라운지)' / '예치금 312,490원 (100p)' / '얼마까지 모을 수 있는 지 확인해보세요' / footer 5개 policy + 회사정보 모두 확인"
+    },
+    {
+      "id": "C02-no-grey-placeholder",
+      "question": "회색 빈 placeholder 박스 (children≤1 + 라벨만) 없나",
+      "status": "PASS",
+      "evidence": "참여중 빈 카드는 empty state 디자인 (icon + 헤드라인 + sub). 라운지 카드는 imageQuery + brand/name/price 텍스트 위계 완비. 회색 빈 박스 없음"
+    },
+    {
+      "id": "C03-real-image-cards",
+      "question": "라운지/상품/카드의 실 시각 콘텐츠 (사진/일러스트/아이콘) 들어있나",
+      "status": "PASS",
+      "evidence": "Lounge 5장 모두 imageQuery (스타벅스/베이커리/CGV/...) + product name + price 콘텐츠"
+    },
+    {
+      "id": "C04-cell-row-alignment",
+      "question": "Day Strip / cell row 모든 cell 의 텍스트 alignment 일치하나",
+      "status": "PASS",
+      "evidence": "Day Strip 6 cells (14-19일) 균등 FILL, paddingLeft/Right=4, textAlign CENTER 통일. zoom-in PNG에서 19일까지 정상 표시 확인 (이전 overflow live-fix 완료)"
+    },
+    {
+      "id": "C05-hero-28plus",
+      "question": "Hero 텍스트 28~36px Bold 인가",
+      "status": "PASS",
+      "evidence": "Recommend Card '1,300,000원' brand hero ~42px+ Bold, '1,300만원' goal hero ~32px Bold, Screen Hero '오늘부터 스테이지 시작해보세요' ~26-28px Bold"
+    },
+    {
+      "id": "C06-tabbar-label-order",
+      "question": "Tab Bar 라벨 순서가 와이어와 일치하나",
+      "status": "PASS",
+      "evidence": "Tab Bar: 홈 / 라운지 / 스테이지 / 커뮤니티 / 전체 — 와이어 순서와 일치"
+    },
+    {
+      "id": "C07-tabbar-icon-match",
+      "question": "Tab Bar 아이콘이 라벨 의미와 일치하나 (커뮤니티=users / 라운지=shop 등)",
+      "status": "PASS",
+      "evidence": "홈=home-line, 라운지=building-08, 스테이지=coins-stacked-01, 커뮤니티=users-01, 전체=menu-01 — 각 라벨 의미와 일치"
+    },
+    {
+      "id": "C08-underline-width",
+      "question": "Underline tab active/inactive underline width·height 일치하나",
+      "status": "PARTIAL",
+      "evidence": "Mode Tab 거래 현황 active = brand 2.5px underline, 누적 거래 inactive = grey thin underline (R35 ERROR 1건 남음 — inactive underline 투명이어야 정상이나 회색으로 박혀있음). 시인성 영향 적음"
+    },
+    {
+      "id": "C09-stepper-icons",
+      "question": "Stepper minus/plus 아이콘 시인성 충분한가 (대비 ≥3:1)",
+      "status": "PASS",
+      "evidence": "Stepper minus (fg-tertiary grey) + plus (fg-brand-primary purple) 대비 명확. zoom-in 에서 확인"
+    },
+    {
+      "id": "C10-fab-icon-correct",
+      "question": "FAB 아이콘 의도와 일치하나, 이모티콘 아닌가",
+      "status": "PASS",
+      "evidence": "FAB = 56×56 brand-solid circle + '+' ASCII icon (DS icon, 이모티콘 아님). PRD '스테이지 생성' 의도와 일치"
+    },
+    {
+      "id": "C11-card-hierarchy",
+      "question": "카드 위계 (hero vs 보조) 시각 차등화 (size/shadow/border) 됐나",
+      "status": "PASS",
+      "evidence": "카드 위계: bg-primary 흰 카드 + border-secondary 1px (Stage Progress / Attendance / Recommend / Participating Empty / Lounge cards) 일관. Recommend brand CTA bg-brand-solid 강조. Footer bg-secondary 회색"
+    },
+    {
+      "id": "C12-polished-not-wire",
+      "question": "와이어 1:1 복제처럼 보이지 않나 (brand 액센트 의미 매핑, 시각 리듬)",
+      "status": "NA",
+      "evidence": "체크리스트 항목 미정의"
+    }
+  ],
+  "summary": {
+    "pass": 0,
+    "fail": 0,
+    "na": 0,
+    "BLOCKING": "FILL_IN — 12개 다 채울 때까지 사용자 보고 금지"
+  },
+  "_summary": {
+    "PASS": 10,
+    "FAIL": 0,
+    "PARTIAL": 1,
+    "NA": 1,
+    "live_fixes_applied": [
+      "Day Strip 6 cells FILL + paddingLeft/Right 4 + textAlign CENTER (19일 overflow 해결)"
+    ],
+    "remaining_issues": [
+      "R35 inactive underline: 누적 거래 underline 회색으로 표시 (투명이어야 정상). 시인성 영향 적음",
+      "Round Selector 2-13 대비 1.10 (bg-secondary 위 text-tertiary). 1번만 brand 강조라 visual hint 로 작동",
+      "Polish baseline 중복 hero: Recommend Card 내 '1,300만원' top + '1,300만원' bottom 두 번 표시 — L2 polish over-injection",
+      "Polish baseline 추가 CTA: '참여하기' (와이어 없음) — L2 폴리시 결정"
+    ]
+  }
+}

@@ -230,6 +230,8 @@ async function handleCommand(command, params) {
       return await exportNodeAsImage(params);
     case "set_corner_radius":
       return await setCornerRadius(params);
+    case "set_node_visible":
+      return await setNodeVisible(params);
     case "set_text_content":
       return await setTextContent(params);
     case "clone_node":
@@ -1920,6 +1922,44 @@ async function setCornerRadius(params) {
     bottomLeftRadius:
       "bottomLeftRadius" in node ? node.bottomLeftRadius : undefined,
   };
+}
+
+// Set node visibility. Accepts a single nodeId or an array nodeIds, plus a
+// `visible` boolean. Works on instance descendants (visibility toggle is allowed
+// even where structural edits are not). Used to trim fixed-count component
+// instances (e.g. DS "Horizontal tabs" → show only the needed tabs).
+async function setNodeVisible(params) {
+  const { nodeId, nodeIds, visible } = params || {};
+  if (typeof visible !== "boolean") {
+    throw new Error("Missing or invalid 'visible' (boolean) parameter");
+  }
+  let ids = [];
+  if (Array.isArray(nodeIds)) ids = nodeIds.slice();
+  if (nodeId) ids.push(nodeId);
+  if (ids.length === 0) {
+    throw new Error("Missing nodeId or nodeIds parameter");
+  }
+  const applied = [];
+  const errors = [];
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
+    try {
+      const node = await figma.getNodeByIdAsync(id);
+      if (!node) {
+        errors.push({ nodeId: id, error: "Node not found" });
+        continue;
+      }
+      if (!("visible" in node)) {
+        errors.push({ nodeId: id, error: "Node does not support visibility" });
+        continue;
+      }
+      node.visible = visible;
+      applied.push({ nodeId: id, name: node.name, visible: node.visible });
+    } catch (e) {
+      errors.push({ nodeId: id, error: (e && e.message) ? e.message : String(e) });
+    }
+  }
+  return { applied, errors, count: applied.length };
 }
 
 async function setTextContent(params) {

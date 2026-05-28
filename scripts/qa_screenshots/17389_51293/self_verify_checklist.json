@@ -1,0 +1,117 @@
+{
+  "_BLOCKING_INSTRUCTION": "⚠️ Claude 보고 직전 강제 절차 (절대 룰): 위 exported_sections 의 모든 nodeId 를 export_node_as_image (scale=2) 로 재export 후 결과 PNG 를 Read. 그 후 아래 checklist 12개 각각 PASS / FAIL / NA 로 status 채우고 evidence 에 시각 증거 1줄 인용. 이 checklist 미완료 상태로 사용자에게 '검증 ✅' '완료' 보고 금지 — [feedback_self_verify_required_after_build] 메모리 룰 위반.",
+  "root_id": "17389:51293",
+  "blueprint_name": "imin_home_v15",
+  "exported_sections": [
+    {
+      "label": "Header_NavBar",
+      "nodeId": "17389:51294",
+      "name": "Status Bar"
+    },
+    {
+      "label": "Top_Tabs_Hero",
+      "nodeId": "17389:51312",
+      "name": "Mode Tabs Wrap"
+    },
+    {
+      "label": "Day_Strip_Row",
+      "nodeId": "17389:51335",
+      "name": "Day Strip"
+    },
+    {
+      "label": "Recommend_Card",
+      "nodeId": "17389:51373",
+      "name": "Recommend Stage Card"
+    },
+    {
+      "label": "Empty_or_List",
+      "nodeId": "17389:51426",
+      "name": "Participation Section"
+    },
+    {
+      "label": "Footer_TabBar_FAB",
+      "nodeId": "17389:51460",
+      "name": "Footer Section"
+    }
+  ],
+  "checklist": [
+    {
+      "id": "C01-content-1to1",
+      "question": "와이어 모든 텍스트/숫자/카운트가 빌드에 1:1 박혀있나",
+      "status": "PASS",
+      "evidence": "거래현황/누적거래/진행중인 0건/모은 +0원/빌린 -0원/Day Strip 6 cells(어제·오늘·16~19일·0원)/얼마까지 모을수있는지/연속 0일째 출석체크중/매일매일 출석.../추천 스테이지/월 10만원 대 13개월 모으기/1~13 round/1회차/납입후 목적 수령/총 1,300만원 모으기 도전/추천 전체 보기(13개)/참여중·찜한 스테이지/없어요 메시지/추천 상품 (라운지)/예치금 312,490p/5 카드 라벨/Footer 약관·회사정보·copyright 모두 박힘"
+    },
+    {
+      "id": "C02-no-grey-placeholder",
+      "question": "회색 빈 placeholder 박스 (children≤1 + 라벨만) 없나",
+      "status": "FAIL",
+      "evidence": "Image #4: Participation Section 에 회색 빈 박스 2개 (Empty Card 1, Empty Card 2 — bg-secondary, children 0개) — R50 안 잡음 (width=FILL 케이스 누락)"
+    },
+    {
+      "id": "C03-real-image-cards",
+      "question": "라운지/상품/카드의 실 시각 콘텐츠 (사진/일러스트/아이콘) 들어있나",
+      "status": "FAIL",
+      "evidence": "Lounge Carousel 17389:51449 — 5개 카드 모두 bg-secondary 회색 빈 박스 + 좌하단 텍스트만. imageQuery 박혀있지만 실제 사진 fetch 0 — R52 가 field 존재만 검사하고 fetch 결과 안 봄"
+    },
+    {
+      "id": "C04-cell-row-alignment",
+      "question": "Day Strip / cell row 모든 cell 의 텍스트 alignment 일치하나",
+      "status": "FAIL",
+      "evidence": "Day Strip 17389:51335 — 어제cell(좌측정렬 위/아래) / 오늘 pill(가운데 정렬, height 더 큼) / 16~19일(상단라벨+가운데값) 모두 alignment 다름"
+    },
+    {
+      "id": "C05-hero-28plus",
+      "question": "Hero 텍스트 28~36px Bold 인가",
+      "status": "PASS",
+      "evidence": "Recommend Card 17389:51373 — '총 1,300만원 모으기 도전' 30px Bold (R51 자동 승격 적용 확인). 시각적으로 카드 안에서 hero scale 명확"
+    },
+    {
+      "id": "C06-tabbar-label-order",
+      "question": "Tab Bar 라벨 순서가 와이어와 일치하나",
+      "status": "FAIL",
+      "evidence": "Tab Bar 17389:51479 — 홈/커뮤니티/스테이지/라운지/나. 와이어 = 홈/라운지/스테이지/커뮤니티/전체. position 1·3·4 mismatch — 라이브 set_text_content swap 안 됨, template variables 미지원"
+    },
+    {
+      "id": "C07-tabbar-icon-match",
+      "question": "Tab Bar 아이콘이 라벨 의미와 일치하나 (커뮤니티=users / 라운지=shop 등)",
+      "status": "FAIL",
+      "evidence": "Tab Bar 아이콘은 홈(home)/users-01/coins-stacked(?)/building-08/user-01 그대로. 라벨이 swap돼도 아이콘은 default 라 의미-시각 mismatch"
+    },
+    {
+      "id": "C08-underline-width",
+      "question": "Underline tab active/inactive underline width·height 일치하나",
+      "status": "FAIL",
+      "evidence": "Mode Tabs 17389:51312 — '거래 현황' brand underline 짧고 '누적 거래' 회색 underline 더 김. HUG 라벨에 따라 underline FILL → 라벨 width 차이만큼 underline 길이도 다름"
+    },
+    {
+      "id": "C09-stepper-icons",
+      "question": "Stepper minus/plus 아이콘 시인성 충분한가 (대비 ≥3:1)",
+      "status": "FAIL",
+      "evidence": "Recommend Card Steppers minus/plus 아이콘 fg-tertiary (#b1b6be) — 카드 bg-secondary (#f3f4f6) 위 contrast ~1.5 (WCAG AA 미달). 거의 안 보임"
+    },
+    {
+      "id": "C10-fab-icon-correct",
+      "question": "FAB 아이콘 의도와 일치하나, 이모티콘 아닌가",
+      "status": "PASS",
+      "evidence": "FAB 17389:51476 — plus(+) 아이콘 brand-solid 원형 56×56 표준. iconName 변수 alias fix 작동 확인. emoji 아님"
+    },
+    {
+      "id": "C11-card-hierarchy",
+      "question": "카드 위계 (hero vs 보조) 시각 차등화 (size/shadow/border) 됐나",
+      "status": "FAIL",
+      "evidence": "모든 카드 bg-primary + 1px border-secondary 동일 weight. shadow 0 ([feedback_no_drop_shadow] 룰). hero 카드(Recommend Stage Card) 와 보조 카드(출석 체크, Progress) 시각 차등 0. hero scale 만 R51 으로 변경, 카드 자체 위계 차등 없음"
+    },
+    {
+      "id": "C12-polished-not-wire",
+      "question": "와이어 1:1 복제처럼 보이지 않나 (brand 액센트 의미 매핑, 시각 리듬)",
+      "status": "FAIL",
+      "evidence": "Image #5 Lounge + Image #4 Participation = 와이어 회색 placeholder 1:1 그대로 박힘. brand 액센트는 점점이 (Day cell pill, FAB, Round R1, 예치금 pill, underline) — hero 액션 없음. polish 미적용"
+    }
+  ],
+  "summary": {
+    "pass": 3,
+    "fail": 9,
+    "na": 0,
+    "BLOCKING": "FAIL 9건 — 라이브 fix 또는 사용자 솔직 보고 필수"
+  }
+}

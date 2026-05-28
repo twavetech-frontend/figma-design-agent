@@ -256,6 +256,16 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['nodeId']
   }, async (params) => cmd('set_corner_radius', params));
 
+  reg('set_node_visible', 'Show/hide a node (or array of nodes). Works on instance descendants — used to trim fixed-count component instances like DS Horizontal tabs.', {
+    type: 'object',
+    properties: {
+      nodeId: { type: 'string', description: 'Single node id to toggle' },
+      nodeIds: { type: 'array', items: { type: 'string' }, description: 'Multiple node ids to toggle' },
+      visible: { type: 'boolean', description: 'true to show, false to hide' }
+    },
+    required: ['visible']
+  }, async (params) => cmd('set_node_visible', params));
+
   reg('set_auto_layout', 'Set auto layout on a frame', {
     type: 'object',
     properties: {

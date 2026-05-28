@@ -1,0 +1,33 @@
+{
+  "rootId": "17394:55475",
+  "screenName": "imin_home_planning_doc",
+  "ref_wireframe": "17015:73113",
+  "verifiedAt": "2026-05-28",
+  "exported_sections": [
+    {"id":"17394:55476","name":"Status Bar"},
+    {"id":"17394:55494","name":"Mode Tabs Wrap"},
+    {"id":"17394:55534","name":"Day Strip Title"},
+    {"id":"17394:55581","name":"Recommend Stage Card"},
+    {"id":"17394:55644","name":"Participation Grid"},
+    {"id":"17394:55759","name":"FAB"}
+  ],
+  "checklist": [
+    {"id":"C01","item":"루트 fill = bg-primary 흰 (절대 규칙 0)","status":"PASS","evidence":"전체 export PNG 배경 흰. post-fix log: 'root bg-primary 강제 적용'"},
+    {"id":"C02","item":"브랜드 액센트 절제 — 큰 면적 frame brand fill 0건 (규칙 2-H)","status":"PASS","evidence":"_strip_large_brand_fills 미적용 (검출 0). 라운지 Lounge Image 보라는 cornerRadius=0 + 이미지 placeholder 영역. Hero 수치/CTA/Badge/Progress/Tab active만 brand"},
+    {"id":"C03","item":"시맨틱 컬러 절제 (4종 이하)","status":"PASS","evidence":"Participation Grid status pill 4종: 진행중(brand-light)/곧 지급(warning)/신규(success)/예정(neutral). 한 카드 1색 매핑"},
+    {"id":"C04","item":"텍스트/아이콘 가시성 대비 ≥ 1.8","status":"WARN","evidence":"QA log: 대비부족 ICON 'gift-01' 1.63 (5건) — 라운지 카드 이미지 placeholder 안 gift 아이콘. mock 상태 정상; imageQuery 박혀있어 실제 이미지 swap 시 자연 해소"},
+    {"id":"C05","item":"타이포 위계 — Hero ≥ 28px Bold","status":"PASS","evidence":"추천 카드 '1,300,000원' brand purple 36px Bold hero. '총 1,300만원 모으기 도전' 22px Bold title. Participation '월 10만원' 22px Bold. SECTION/BODY/CAPTION 위계 명확"},
+    {"id":"C06","item":"drop shadow 없음","status":"PASS","evidence":"post-fix log: '[no-shadow] OK — drop-shadow 가진 frame 없음'. _strip_all_drop_shadows + _remove_shadow_from_non_interactive 통과"},
+    {"id":"C07","item":"흰 카드 + border-secondary 1px","status":"PASS","evidence":"post-fix log: '흰 카드 보더 자동 — fill=bg-primary frame 10건에 border-secondary 1px 추가'. Recommend/Participation 카드 export에서 1px 회색 border 가시"},
+    {"id":"C08","item":"Status Bar = DS instance 첫 자식","status":"PASS","evidence":"17394:55476 export: '9:41 ⋯ 신호 wifi 배터리'. R24 자동 삽입"},
+    {"id":"C09","item":"Tab Bar (bottom) ABSOLUTE + 5개 균등","status":"PASS","evidence":"전체 export 하단: 홈(active brand)/라운지/스테이지/커뮤니티/전체 5개 FILL 균등. post-fix _fix_layout_and_positions 적용"},
+    {"id":"C10","item":"FAB 56×56 brand 원형 + 우측 20px / Tab Bar 위 20px","status":"PASS","evidence":"17394:55759 export: 보라 56×56 원 + '+' ASCII 아이콘. 위치 우측·Tab Bar 위 (전체 export 기준)"},
+    {"id":"C11","item":"Mode Tabs Underline v2 (Bold + 2.5px brand under)","status":"PASS","evidence":"17394:55494 export: '거래 현황' Bold + 보라 2.5px underline / '누적 거래' Medium 회색 + 회색 underline. R35 inject + active-underline post-fix"},
+    {"id":"C12","item":"와이어 콘텐츠 매치 (절대 규칙 0-E)","status":"WARN","evidence":"와이어 #1 empty 시나리오(0건/0원/0일/14~19일·17일 today)를 시스템이 HARD_fill_mock_data + polish baseline로 활성화: 3건/+124만·-34만/7일/15일 today·14~19. Top Alert Banner(납입 기한 1건) 자동 추가. 메모리 [feedback_hard_enforce_unconditional_code] / [feedback_imin_home_polish_baseline] 의 의도된 시스템 동작. 사용자가 실제 0/empty UX 원하면 별도 _wireframeContentSkipped 지정 필요"}
+  ],
+  "summary": {"PASS": 10, "WARN": 2, "FAIL": 0, "NA": 0},
+  "actionItems": [
+    "C04: 라운지 mock 이미지 swap 또는 gift 아이콘 색을 fg-primary로 변경하면 1.63 → 통과",
+    "C12: 사용자가 와이어 1:1 empty 빌드를 원하면 spec.wire_content 그대로 살리도록 generator 분기 추가 필요. 현재는 시스템 강제로 mock 활성화"
+  ]
+}

@@ -663,18 +663,51 @@ def _auto_search_uibowl_references(blueprint: dict) -> None:
             archetype = kw
             break
 
-    if not archetype:
-        return
-
+    # ⚠️ 2026-05-28 사용자 분노 (근본 원인 수정): 예전엔 archetype 미인식 시 여기서
+    # 조용히 return → 모달·신규 화면(예: transaction_schedule_modal)은 레퍼런스 검색이
+    # 경고 한 줄 없이 통째로 누락됐다. 이제 절대 silent-skip 하지 않는다:
+    #   1) root_name 토큰 + 와이어 키워드로 --keyword 검색 시도
+    #   2) 그래도 없으면 일반 fintech 레퍼런스(imin_home)로 폴백
+    #   3) 어느 경우든 SECTION-REFERENCE-PNG 출력 + "archetype 미인식" 경고를 크게 띄움
     import subprocess
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     ref_script = os.path.join(project_root, "scripts", "ref_search.py")
     if not os.path.exists(ref_script):
+        print("  [Step A.0] ⚠️ ref_search.py 없음 — 레퍼런스 검색 불가")
         return
+
+    search_args = None
+    fallback_note = ""
+    if archetype:
+        search_args = ["--archetype", archetype]
+    else:
+        # 키워드 후보: root_name 토큰(영문) + 와이어 콘텐츠에서 의미 토큰 추출
+        import re as _re
+        toks = [t for t in _re.split(r"[_\-\s]+", root_name)
+                if t and t not in ("imin", "modal", "screen", "page", "view", "v1", "v2")]
+        kw_hits = None
+        for t in toks:
+            try:
+                r = subprocess.run(["python3", ref_script, "--keyword", t,
+                                    "--limit", "6", "--thumbnail", "--json"],
+                                   cwd=project_root, capture_output=True, text=True, timeout=30)
+                import json as _j
+                if r.returncode == 0 and r.stdout.strip() and _j.loads(r.stdout):
+                    kw_hits = t
+                    break
+            except Exception:
+                pass
+        if kw_hits:
+            search_args = ["--keyword", kw_hits]
+            fallback_note = f"archetype 미인식 → 키워드 '{kw_hits}' 검색"
+        else:
+            search_args = ["--archetype", "imin_home"]
+            fallback_note = (f"⚠️ archetype·키워드 모두 미인식 (root_name='{root_name}') "
+                             f"→ 일반 fintech 레퍼런스로 폴백. 화면 성격에 맞는지 직접 판단 필수")
 
     try:
         result = subprocess.run(
-            ["python3", ref_script, "--archetype", archetype,
+            ["python3", ref_script, *search_args,
              "--limit", "6", "--thumbnail", "--json"],
             cwd=project_root,
             capture_output=True, text=True,
@@ -686,10 +719,13 @@ def _auto_search_uibowl_references(blueprint: dict) -> None:
         import json as _json
         refs = _json.loads(result.stdout)
         if not refs:
-            print(f"  [Step A.0] archetype '{archetype}' 매칭 reference 없음")
+            print(f"  [Step A.0] ⚠️ 매칭 reference 없음 (search={search_args}) — 레퍼런스 학습 누락! 직접 ref_search 로 검색 권장")
             return
 
-        print(f"\n📚 [Step A.0] references/uibowl 자동 검색 — archetype '{archetype}'")
+        label = archetype if archetype else f"FALLBACK ({fallback_note})"
+        print(f"\n📚 [Step A.0] references/uibowl 자동 검색 — {label}")
+        if fallback_note:
+            print(f"  ⚠️ {fallback_note}")
         print("=" * 70)
         for r in refs:
             print(f"  [{r['app']:9s}] {r['patternCodeName']:14s} | {(r.get('patternName') or '-')[:20]:20s} | {r['thumbPath']}")
@@ -2903,6 +2939,44 @@ def _maybe_resolve_unified_input(input_data: dict, source_path: str = "") -> dic
     return blueprint
 
 
+_FONT_WEIGHT_WORDS = {
+    "thin": 100, "extralight": 200, "extra light": 200, "ultralight": 200,
+    "light": 300, "regular": 400, "normal": 400, "book": 400,
+    "medium": 500, "semibold": 600, "semi bold": 600, "demibold": 600,
+    "bold": 700, "extrabold": 800, "extra bold": 800, "heavy": 800,
+    "black": 900,
+}
+
+
+def _normalize_text_font_weight(node: Any) -> int:
+    """blueprint TEXT 노드의 문자열 fontWeight 를 숫자로 강제 변환.
+
+    플러그인 createText 의 getFontStyle 는 숫자 weight 만 매핑(700→Bold)하고
+    문자열은 default→Regular 로 무시한다. "Bold"/"SemiBold"/"medium" 등 문자열을
+    숫자(700/600/500…)로 교정해 위계가 항상 적용되도록 보장. (2026-05-28 시스템 강제)
+
+    반환: 변환한 노드 수.
+    """
+    count = 0
+    if isinstance(node, dict):
+        fw = node.get("fontWeight")
+        if isinstance(fw, str):
+            key = fw.strip().lower()
+            num = _FONT_WEIGHT_WORDS.get(key)
+            if num is None and key.isdigit():
+                num = int(key)
+            if num is not None:
+                node["fontWeight"] = num
+                count += 1
+        for v in node.values():
+            if isinstance(v, (dict, list)):
+                count += _normalize_text_font_weight(v)
+    elif isinstance(node, list):
+        for it in node:
+            count += _normalize_text_font_weight(it)
+    return count
+
+
 def cmd_build(blueprint_file: str):
     """Build a screen from a blueprint JSON file.
 
@@ -2963,6 +3037,12 @@ def cmd_build(blueprint_file: str):
         print("  [Step A.5] unified mode → polish baseline skip (generator 가 처리)")
     else:
         _enrich_imin_home_polish(blueprint)
+
+    # ⚠️ 시스템 규칙 (2026-05-28 사용자 분노 "텍스트 크기·굵기 위계 무시"): 플러그인
+    # createText 의 getFontStyle 는 *숫자* fontWeight 만 인식(700→Bold). blueprint 가
+    # "Bold"/"SemiBold" 같은 문자열을 주면 default→Regular(400) 로 전부 무시돼 텍스트가
+    # 평평해진다. 빌드 전 문자열 weight 를 숫자로 강제 변환 (어느 세션에서 작성하든 보장).
+    _normalize_text_font_weight(blueprint)
 
     # ⚠️ 시스템 규칙: 루트 프레임 배경은 반드시 bg-primary — 다른 값이 와도 강제 교정
     _enforce_root_bg_primary(blueprint)
@@ -5010,6 +5090,14 @@ def _enforce_ds_button_sizing(root_id: str, label_map: Optional[dict] = None) ->
                 if isinstance(pinfo, dict) and pinfo.get("type") == "BOOLEAN" \
                         and ("icon leading" in pl or "icon trailing" in pl) and pinfo.get("value"):
                     off[pname] = False
+            # ⚠️ 2026-05-28 사용자 명시: "하단에 고정되거나 보여지는 버튼 컴포넌트 size 는
+            # Lg 를 기본". 전폭(VERTICAL 부모) 하단 CTA 의 Size VARIANT 를 lg 로 강제.
+            if parent_layout == "VERTICAL":
+                for pname, pinfo in pdict.items():
+                    if (isinstance(pinfo, dict) and pinfo.get("type") == "VARIANT"
+                            and pname.lower() == "size"
+                            and str(pinfo.get("value")).lower() != "lg"):
+                        off[pname] = "lg"
             if off:
                 call_tool("set_instance_properties", {"nodeId": nid, "properties": off})
         except Exception as e:
@@ -5108,6 +5196,130 @@ def _enforce_ds_instance_text(root_id: str, path_text_map: dict) -> int:
     return fixed[0]
 
 
+def _collect_mode_tabs_config(blueprint: Optional[dict]) -> Optional[dict]:
+    """blueprint 에서 _dsModeTabs 마커 {labels, active} 수집 (Mode Tabs Wrap 에 부착)."""
+    found = [None]
+
+    def walk(n):
+        if found[0] is not None or not isinstance(n, dict):
+            return
+        cfg = n.get("_dsModeTabs")
+        if isinstance(cfg, dict):
+            found[0] = cfg
+            return
+        for c in n.get("children") or []:
+            walk(c)
+
+    walk(blueprint)
+    return found[0]
+
+
+def _configure_ds_mode_tabs(root_id: str, config: Optional[dict]) -> int:
+    """DS "Horizontal tabs" 컨테이너 인스턴스를 N개 탭으로 trim + 라벨 설정 (2026-05-29).
+
+    컨테이너는 탭 10개 고정 → 앞 N개만 라벨 set + 보이게, 나머지/badge 는 set_node_visible
+    (plugin 신규 도구) 로 숨김, 인스턴스는 HUG 로 축소. active 탭은 Current=True.
+    plugin 에 set_node_visible 추가 후 full 자동화 (이전엔 use_figma 수동 단계 필요).
+    [[ds-mode-tabs-component]] 참조.
+    """
+    if not config:
+        return 0
+    labels = config.get("labels") or []
+    active = config.get("active", 0)
+    if not labels:
+        return 0
+    try:
+        tree = _collect_tree(root_id)
+    except Exception as e:
+        print(f"  [mode-tabs] tree 수집 실패: {e}")
+        return 0
+
+    inst = [None]
+
+    def find_inst(n):
+        if inst[0] is not None or not isinstance(n, dict):
+            return
+        if n.get("name") == "Mode Tabs" and (n.get("type") or "").upper() == "INSTANCE":
+            inst[0] = n
+            return
+        for c in n.get("_children_full") or []:
+            find_inst(c)
+
+    find_inst(tree)
+    if inst[0] is None:
+        print("  [mode-tabs] 'Mode Tabs' 인스턴스 없음 — skip")
+        return 0
+
+    def find_named(n, name):
+        if not isinstance(n, dict):
+            return None
+        if n.get("name") == name:
+            return n
+        for c in n.get("_children_full") or []:
+            r = find_named(c, name)
+            if r:
+                return r
+        return None
+
+    def direct_child(n, name):
+        for c in n.get("_children_full") or []:
+            if c.get("name") == name:
+                return c
+        return None
+
+    tabs_frame = find_named(inst[0], "Tabs")
+    if not tabs_frame:
+        print("  [mode-tabs] 'Tabs' frame 없음 — skip")
+        return 0
+    tab_btns = [c for c in (tabs_frame.get("_children_full") or [])
+                if (c.get("type") or "").upper() == "INSTANCE"]
+    if not tab_btns:
+        return 0
+
+    n_keep = min(len(labels), len(tab_btns))
+    hide_ids = []
+
+    # active != 0 일 때만 Current 조정 (default 는 tab0=True). variant swap 이 라벨 override
+    # 를 리셋할 수 있으니 라벨 set 전에 먼저 수행.
+    if active != 0:
+        for i in range(n_keep):
+            try:
+                call_tool("set_instance_properties",
+                          {"nodeId": tab_btns[i]["id"],
+                           "properties": {"Current": "True" if i == active else "False"}})
+            except Exception:
+                pass
+
+    for i in range(n_keep):
+        btn = tab_btns[i]
+        txt = direct_child(btn, "Text") or find_named(btn, "Text")
+        if txt and txt.get("id"):
+            try:
+                call_tool("set_text_content", {"nodeId": txt["id"], "text": labels[i]})
+            except Exception as e:
+                print(f"  [mode-tabs] label {i} 실패: {e}")
+        badge = find_named(btn, "Badge")
+        if badge and badge.get("id"):
+            hide_ids.append(badge["id"])
+
+    for i in range(n_keep, len(tab_btns)):
+        if tab_btns[i].get("id"):
+            hide_ids.append(tab_btns[i]["id"])
+
+    if hide_ids:
+        try:
+            call_tool("set_node_visible", {"nodeIds": hide_ids, "visible": False})
+        except Exception as e:
+            print(f"  [mode-tabs] hide 실패: {e}")
+    try:
+        call_tool("set_layout_sizing", {"nodeId": inst[0]["id"], "horizontal": "HUG"})
+    except Exception as e:
+        print(f"  [mode-tabs] HUG 실패: {e}")
+    print(f"  [mode-tabs] ✓ DS Horizontal tabs trim — {n_keep}탭 라벨 + "
+          f"{len(hide_ids)}개 hide + HUG (set_node_visible 자동화)")
+    return 1
+
+
 def _enforce_fixed_size_invariants_final(root_id: str) -> int:
     """최종 강제 레이어 (2026-05-28) — post-fix 모든 룰 끝난 뒤 순서 무관하게
     고정 사이즈 invariant 보장. vertical-hug 류 룰이 FAB/circle/icon-box 를
@@ -5179,15 +5391,26 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
             except Exception as e:
                 print(f"  [size-invariant] circle '{nid}' fail: {e}")
         # 카드 padding 복원 (batch_build 가 grid row 안 카드의 padding 을 누락 →
-        # 요소가 경계에 붙음). VERTICAL 카드(cornerRadius>=12 + 자식 3+)의 paddingLeft<12
-        # 면 16 복원. layoutMode 동일 재설정이라 자식 sizing 영향 최소.
+        # 요소가 경계에 붙음). 실제 카드 surface 만 (cornerRadius>=12) padding 16 복원.
+        # ⚠️ 2026-05-28 사용자 분노 (근본 원인): 예전엔 이름에 "card" 가 들어간 *모든*
+        # 프레임("Card Inner"/"Card Top Row"/"Card Score Row")을 잡아 (a) layoutMode 를
+        # VERTICAL 로 강제(가로 row 가 세로로 쌓임) + (b) padding 16 누적(우측 들여쓰기)
+        # 시켰다. 이제: 하위 프레임 이름 제외 + cornerRadius>=12 실제 카드만 +
+        # **layoutMode 보존**(절대 뒤집지 않음 — 기존 mode 그대로 재설정).
         elif (ntype == "FRAME" and not node.get("componentKey")
               and "card" in name.lower()
               and "carousel" not in name.lower()
+              and not any(t in name.lower() for t in (
+                  "row", "inner", "wrap", "group", "header", "title", "score",
+                  "body", "list", "stack", "cell", "top", "bottom", "icon", "label"))
+              and (node.get("cornerRadius") or 0) >= 12   # 실제 카드 surface 만
               and (node.get("paddingLeft") or 0) < 8):  # padding 없는 카드만 (있으면 skip)
             try:
+                cur_mode = node.get("layoutMode") or "VERTICAL"
+                if cur_mode == "NONE":
+                    cur_mode = "VERTICAL"
                 call_tool("set_auto_layout", {
-                    "nodeId": nid, "layoutMode": "VERTICAL",
+                    "nodeId": nid, "layoutMode": cur_mode,   # 기존 mode 보존 (HORIZONTAL 안 뒤집음)
                     "paddingLeft": 16, "paddingRight": 16,
                     "paddingTop": 16, "paddingBottom": 16,
                 })
@@ -5227,7 +5450,76 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
     return fixed[0]
 
 
-def _enforce_root_min_height(root_id: str) -> None:
+# 루트가 FIXED 가 아니라 HUG 여야 하는 screen_type (모달 계열) — 2026-05-28.
+# FIXED 로 두면 후속 height 증가 시 하단 clip (CLAUDE.md 2-D). 회귀 테스트:
+# scripts/tests/test_root_min_height.py
+_HUG_SCREEN_TYPES = frozenset({"modal", "bottom-sheet", "bottomsheet", "bottom_sheet"})
+
+
+def _is_hug_screen_type(screen_type: Optional[str]) -> bool:
+    """screen_type 이 모달/바텀시트 계열이면 True (root 를 HUG 로 강제해야 함)."""
+    return (screen_type or "").strip().lower() in _HUG_SCREEN_TYPES
+
+
+def _screen_type_from_blueprint(bp: Optional[dict]) -> str:
+    """blueprint dict 에서 _screenType / screenType 추출 (소문자). 없으면 ''."""
+    if not isinstance(bp, dict):
+        return ""
+    return (bp.get("_screenType") or bp.get("screenType") or "").strip().lower()
+
+
+def _resolve_screen_type(root_id: str, tree: Optional[dict],
+                         original_blueprint: Optional[dict] = None,
+                         injected_blueprint: Optional[dict] = None) -> str:
+    """root 의 screen_type 을 가능한 모든 출처에서 결정 (2026-05-28).
+
+    우선순위:
+      1. original_blueprint._screenType
+      2. injected_blueprint._screenType
+      3. .latest_build.json 의 blueprintPath 파일 _screenType
+      4. 트리 구조 휴리스틱 — 하단 바(Tab Bar/BAB/FAB) 없음 + close-x(X) 있음 → 'modal'
+
+    Why: standalone `post-fix <rootId>` 처럼 blueprint 가 안 넘어오는 경로에서도
+    모달을 인식해 root HUG 를 강제하기 위함 (하단 clip 회귀 차단).
+    """
+    for bp in (original_blueprint, injected_blueprint):
+        st = _screen_type_from_blueprint(bp)
+        if st:
+            return st
+    try:
+        latest = _load_latest_build()
+        bp_path = latest.get("blueprintPath")
+        if bp_path and os.path.exists(bp_path):
+            with open(bp_path, encoding="utf-8") as f:
+                st = _screen_type_from_blueprint(json.load(f))
+                if st:
+                    return st
+    except Exception:
+        pass
+    # 트리 휴리스틱 — 하단 바 없음 + X 닫기 있음 → modal
+    try:
+        children = (tree or {}).get("_children_full", []) or []
+        has_bottom_bar = any(
+            any(p in (c.get("name") or "").lower() for p in _BOTTOM_BAR_PARTS)
+            for c in children
+        )
+        if not has_bottom_bar:
+            def _has_close_x(node: dict, depth: int = 0) -> bool:
+                if depth > 4:
+                    return False
+                nm = (node.get("name") or "").lower()
+                if "close-x" in nm or "x-close" in nm or nm in ("x", "닫기"):
+                    return True
+                return any(_has_close_x(ch, depth + 1)
+                           for ch in node.get("_children_full", []) or [])
+            if _has_close_x(tree or {}):
+                return "modal"
+    except Exception:
+        pass
+    return ""
+
+
+def _enforce_root_min_height(root_id: str, screen_type: Optional[str] = None) -> None:
     """루트 height 정책 — 콘텐츠 길이에 따라 두 가지 분기 (2026-05-24):
 
     A) **콘텐츠 ≤ ROOT_MIN_HEIGHT (852) 인 짧은 화면**
@@ -5240,8 +5532,27 @@ def _enforce_root_min_height(root_id: str) -> None:
        - root layoutSizingVertical = HUG → 콘텐츠 + 하단 바 모두 포함하도록 자동 확장.
        - ABSOLUTE pin 그대로 두면 BAB 가 콘텐츠를 덮어 잘려보임(2026-05-24 v14 회귀).
 
-    FAB 는 floating button 이므로 두 케이스 모두 ABSOLUTE 유지.
+    C) **Modal / Bottom-sheet (`screen_type` in {modal, bottom-sheet})** — 2026-05-28 사용자 분노
+       ("또 컨텐츠가 다 안보인 상태에서 잘려있다 ... 시스템에 박아"):
+       - root layoutSizingVertical = **HUG** (FIXED 금지) → 콘텐츠 전체를 항상 포함.
+       - CLAUDE.md 절대 규칙 2-D: "모달 root 가 FIXED(852)면 하단 CTA 가 잘린다".
+       - **Why FIXED 가 잘리나**: 이 함수는 호출 시점의 content_bottom 을 측정해 FIXED 로
+         박는데, 이후 단계(auto-bind / text-style / FILL 재배치 / 수동 fix)에서 카드 높이가
+         늘어나면 root 는 그대로라 하단이 clip 됨. 모달엔 pin 할 하단 바도 없으므로 852
+         floor 가 무의미 — HUG 가 유일하게 안전 (어떤 후속 변경에도 자동 확장).
+       - return early — A/B 분기 타지 않음.
+
+    FAB 는 floating button 이므로 A/B 케이스 모두 ABSOLUTE 유지.
     """
+    if _is_hug_screen_type(screen_type):
+        st = (screen_type or "").strip().lower()
+        try:
+            call_tool("set_layout_sizing", {"nodeId": root_id, "vertical": "HUG"})
+            print(f"[규칙] 모달/바텀시트(screen_type={st}) — root vertical HUG 강제 "
+                  f"(FIXED 시 후속 height 증가로 하단 clip — CLAUDE.md 2-D)")
+        except Exception as e:
+            print(f"  [모달 HUG] 실패 (무시): {e}")
+        return
     try:
         info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
         result = parse_content(info)
@@ -5569,8 +5880,13 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     _enforce_button_border_on_same_bg(root_node_id)
 
     # ⚠️ 시스템 규칙: 루트 minHeight=852 + 하단 바 bottom-pin (2026-05-24)
+    # 모달/바텀시트는 HUG (2026-05-28 사용자 "또 잘려있다 ... 시스템에 박아").
+    # screen_type 우선순위: original_blueprint → injected_blueprint → latest_build → 트리 구조 휴리스틱.
+    _screen_type = _resolve_screen_type(
+        root_node_id, tree, original_blueprint, injected_blueprint,
+    )
     print("\n[규칙] 루트 minHeight=852 + 하단 바 bottom-pin 적용 중...")
-    _enforce_root_min_height(root_node_id)
+    _enforce_root_min_height(root_node_id, screen_type=_screen_type)
 
     # ⚠️ 2026-05-24 사용자 분노 fix — root export clip blind spot
     # CTA overflow / icon button 시인성 / small text center 자동 검출 + fix
@@ -5823,6 +6139,26 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     except Exception as e:
         print(f"  [ds-instance-text] 실패 (무시하고 계속): {e}")
 
+    # DS "Horizontal tabs" 모드 탭 trim (2026-05-29 사용자 "Tabs 컴포넌트 써라" + "사이즈 왜케
+    # 길지"). 컨테이너 인스턴스(탭 10개 고정)를 _dsModeTabs.labels 개수로 trim + 라벨 + HUG.
+    # plugin set_node_visible 추가로 full 자동화. [[ds-mode-tabs-component]]
+    print("\n[규칙] DS Horizontal tabs 모드 탭 trim/label 적용 중...")
+    try:
+        _mt_bp = injected_blueprint
+        if _mt_bp is None:
+            _latest = _load_latest_build()
+            _bpp = _latest.get("blueprintPath")
+            if _bpp and os.path.exists(_bpp):
+                with open(_bpp) as _f:
+                    _mt_bp = json.load(_f)
+        _mt_cfg = _collect_mode_tabs_config(_mt_bp) if _mt_bp else None
+        if _mt_cfg:
+            _configure_ds_mode_tabs(root_node_id, _mt_cfg)
+        else:
+            print("  [mode-tabs] _dsModeTabs 마커 없음 — skip")
+    except Exception as e:
+        print(f"  [mode-tabs] 실패 (무시하고 계속): {e}")
+
     # ⚠️ HARD-ENFORCE (2026-05-28 사용자 명시 "룰 말고 무조건 실행 코드"):
     # cmd_post_fix 끝에 무조건 호출. 가드 최소화, 회귀 차단.
     try:
@@ -5840,6 +6176,17 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
               else "  [size-invariant] OK — 찌그러진 고정 사이즈 노드 없음")
     except Exception as e:
         print(f"  [size-invariant] 실패 (무시): {e}")
+
+    # ⚠️ 시스템 규칙 (2026-05-28 사용자 "padding, gap 절대값인데 spacing- 토큰 바인딩 안돼. 박아"
+    # / 2026-05-29 사용자 "primitive(Spacing/) 쓰면 안돼. 3. Spacing 의 spacing- 토큰으로 바인딩"):
+    # 모든 레이아웃 강제가 끝난 *가장 마지막* 에 padding/gap 라이브 최종 값을 "3. Spacing"
+    # 컬렉션의 시맨틱 spacing-* DS 변수에 바인딩. 스케일 정확 일치 값만 (시각 변화 0). 중간
+    # 룰이 padding/gap 을 바꿔도 최종 값 기준이라 안전. 라이브 트리 기준.
+    print("\n[규칙] padding/gap → 3. Spacing/spacing-* DS 변수 바인딩 적용 중...")
+    try:
+        _bind_spacing_tokens_live(root_node_id)
+    except Exception as e:
+        print(f"  [spacing-bind] 실패 (무시): {e}")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
@@ -5897,6 +6244,132 @@ def _load_fontsize_map() -> Dict[float, str]:
                 pass
     _fontsize_map_cache = out
     return out
+
+
+_spacing_map_cache: Optional[Dict[float, str]] = None
+
+def _load_spacing_map() -> Dict[float, str]:
+    """spacing px 값 → 시맨틱 spacing 토큰 figmaPath (예: 8.0 → 'spacing-md').
+
+    🔴 "3. Spacing" 컬렉션의 시맨틱 토큰(spacing-none/xxs/xs/sm/md/lg/xl/2xl...11xl)만
+    사용한다. primitive 스케일('Spacing/5 (20px)' 등)은 **절대 금지** — 2026-05-29 사용자
+    명시: "primitive 값(Spacing/) 쓰면 안돼. 3. Spacing 의 spacing- 토큰으로 바인딩해야 한다."
+    figmaPath 가 소문자 'spacing-' 로 시작하는 토큰이 시맨틱(3. Spacing), 'Spacing/' 는 primitive.
+    값 매핑: 0=none 2=xxs 4=xs 6=sm 8=md 12=lg 16=xl 20=2xl 24=3xl 32=4xl 40=5xl 48=6xl
+            64=7xl 80=8xl 96=9xl 128=10xl 160=11xl (각 값 고유 — 충돌 없음).
+    """
+    global _spacing_map_cache
+    if _spacing_map_cache is not None:
+        return _spacing_map_cache
+    out: Dict[float, str] = {}
+    for k, v in load_token_map().items():
+        fp = v.get("figmaPath", "")
+        # 시맨틱 spacing 토큰만: figmaPath 가 소문자 'spacing-' 로 시작 (primitive 'Spacing/' 제외)
+        if v.get("type") == "NUMBER" and isinstance(fp, str) and fp.startswith("spacing-"):
+            try:
+                out[float(v["value"])] = fp
+            except (ValueError, TypeError, KeyError):
+                pass
+    _spacing_map_cache = out
+    return out
+
+
+# Figma node.setBoundVariable 가 지원하는 auto-layout spacing 필드
+_SPACING_BIND_FIELDS = (
+    "paddingLeft", "paddingRight", "paddingTop", "paddingBottom",
+    "itemSpacing", "counterAxisSpacing",
+)
+
+
+def _collect_spacing_bindings(node: dict, spacing_map: Dict[float, str],
+                              jobs: list, off_scale: set) -> None:
+    """라이브 트리 1노드의 padding/gap 절대값 중 Spacing 토큰에 정확히 일치하는 것만 수집.
+
+    순수 함수(네트워크 X) — 단위 테스트 가능. jobs/off_scale 를 in-place 갱신.
+    - DS 인스턴스(type INSTANCE) + 인스턴스 내부 노드(id 에 ';') 는 제외 (컴포넌트가 spacing 제어).
+    - layoutMode 가 HORIZONTAL/VERTICAL 인 frame 만 (auto-layout 아니면 padding/gap 무의미).
+    - 스케일 밖 값(14/18/28 등)은 off_scale 에 기록 후 리터럴 유지 — 임의 snap 금지.
+    """
+    if not isinstance(node, dict):
+        return
+    nid = node.get("id") or ""
+    ntype = (node.get("type") or "").upper()
+    lm = (node.get("layoutMode") or "").upper()
+    if ntype == "INSTANCE" or ";" in nid or lm not in ("HORIZONTAL", "VERTICAL"):
+        return
+    binds: Dict[str, str] = {}
+    for field in _SPACING_BIND_FIELDS:
+        val = node.get(field)
+        if not isinstance(val, (int, float)) or isinstance(val, bool):
+            continue
+        fv = round(float(val), 3)
+        fp = spacing_map.get(fv)
+        if fp is None and abs(fv - round(fv)) < 1e-6:
+            fp = spacing_map.get(float(round(fv)))  # 20.0 vs 20 정규화
+        if fp:
+            binds[field] = fp
+        elif fv > 0:
+            off_scale.add(fv)
+    if binds and nid:
+        jobs.append({"nodeId": nid, "bindings": binds})
+
+
+def _bind_spacing_tokens_live(root_id: str) -> int:
+    """라이브 트리의 auto-layout padding/gap 절대값을 Spacing/* DS 변수에 바인딩.
+
+    2026-05-28 사용자: "padding, gap 값이 그냥 절대값으로 들어가 있는데 spacing- 토큰이
+    바인딩 되어있지않아. 바인딩 되게 시스템 수정해".
+
+    post-fix 가 padding/gap 을 여러 단계에서 조정하므로 blueprint 값이 아닌 **라이브
+    최종 값**을 읽어, 디자인 스케일에 정확히 일치하는 값만 매칭 Spacing 토큰에 바인딩한다
+    (토큰 value == 현재 값 이므로 시각 변화 0). 스케일 밖 값(14/18/28 등)은 리터럴 유지 —
+    임의 snap 으로 사용자가 막 승인한 레이아웃을 바꾸지 않는다.
+
+    cmd_post_fix 끝에서 자동 호출 → 새 세션/standalone post-fix 모두 커버.
+    """
+    spacing_map = _load_spacing_map()
+    if not spacing_map:
+        print("  [spacing-bind] Spacing 토큰 없음 — skip")
+        return 0
+    try:
+        tree = _collect_tree(root_id)
+    except Exception as e:
+        print(f"  [spacing-bind] 트리 수집 실패: {e}")
+        return 0
+
+    jobs: list = []
+    off_scale: set = set()
+
+    def _walk(n: dict):
+        _collect_spacing_bindings(n, spacing_map, jobs, off_scale)
+        for c in (n.get("_children_full") or []):
+            _walk(c)
+    _walk(tree)
+
+    if not jobs:
+        print("  [spacing-bind] 바인딩할 on-scale spacing 값 없음")
+        return 0
+
+    ok = 0
+    field_count = 0
+    for i, job in enumerate(jobs):
+        try:
+            call_tool("set_bound_variables",
+                      {"nodeId": job["nodeId"], "bindings": job["bindings"]},
+                      msg_id=i + 1)
+            ok += 1
+            field_count += len(job["bindings"])
+        except Exception as e:
+            if ok < 3:
+                print(f"    [spacing-bind] FAIL {job['nodeId']}: {e}")
+    print(f"  [spacing-bind] ✓ spacing 토큰 바인딩 — {ok}개 노드 / {field_count}개 필드 "
+          f"(padding·gap 절대값 → 3. Spacing/spacing-*)")
+    if off_scale:
+        vals = ", ".join(
+            str(int(v) if float(v).is_integer() else v) for v in sorted(off_scale))
+        print(f"  [spacing-bind] ⚠️ 스케일 밖 값(토큰 없음, 리터럴 유지): {vals}px "
+              f"— 스케일(2/4/6/8/12/16/20/24/32...)로 맞추면 바인딩됨")
+    return ok
 
 
 def _collect_bindings(bp_node: Any, built_node: Any, out: list, by_name: bool = False):
@@ -6045,12 +6518,32 @@ def apply_image_queries(root_id: str, original_blueprint: dict) -> int:
         if not nid:
             continue
         kw = _imagequery_to_keywords(job.get("query", ""))
-        url = f"https://loremflickr.com/600/600/{kw}"
-        try:
-            req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            data = _ur.urlopen(req, timeout=25).read()
-            if len(data) < 2000:  # 에러 페이지/빈 이미지
+        # loremflickr 가 콤마 다중태그 URL 에 HTTP 500 을 반환하는 회귀(2026-05-29 확인) —
+        # 다중태그 → 단일태그 폴백 체인으로 graceful degrade. 마지막은 항상 단일 'product'.
+        first_kw = kw.split(",")[0] if kw else "product"
+        url_candidates = []
+        for c in (kw, first_kw, "product"):
+            u = f"https://loremflickr.com/600/600/{c}"
+            if u not in url_candidates:
+                url_candidates.append(u)
+        data = None
+        used_url = None
+        for url in url_candidates:
+            try:
+                req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                buf = _ur.urlopen(req, timeout=25).read()
+                if len(buf) < 2000:  # 에러 페이지/빈 이미지
+                    continue
+                data = buf
+                used_url = url
+                break
+            except Exception as e:
+                last_err = e
                 continue
+        if not data:
+            print(f"  [apply-images] '{kw}' {nid} 실패(placeholder 유지): {last_err if 'last_err' in dir() else 'no image'}")
+            continue
+        try:
             b64 = _b64.b64encode(data).decode()
             call_tool("set_image_fill", {"nodeId": nid, "imageData": b64})
             # placeholder icon 자식 제거 (실사진 위 보라 gift 아이콘 등)
@@ -6060,9 +6553,9 @@ def apply_image_queries(root_id: str, original_blueprint: dict) -> int:
                 except Exception:
                     pass
             applied += 1
-            print(f"  [apply-images] '{kw}' → {nid} ({len(data)}b)")
+            print(f"  [apply-images] '{used_url.rsplit('/',1)[-1]}' → {nid} ({len(data)}b)")
         except Exception as e:
-            print(f"  [apply-images] '{kw}' {nid} 실패(placeholder 유지): {e}")
+            print(f"  [apply-images] '{kw}' {nid} set_image_fill 실패(placeholder 유지): {e}")
     if applied:
         print(f"  [apply-images] ✓ 실사진 {applied}개 적용 (imageQuery)")
     return applied
@@ -7479,23 +7972,28 @@ def _apply_ds_text_styles(root_id: str) -> None:
                 d = it.get("document") or it
                 stored_map[d.get("id")] = bool(_stored_text_style_id(d))
             unset = [e for e in entries if not stored_map.get(e["nodeId"])]
-            if unset:
-                print(f"  [text-style] ⚠️ silent fail 검출 {len(unset)}건 — 재시도 중...")
-                retry_ok = 0
+            # ⚠️ 2026-05-28 사용자 분노 fix: 빌드 직후엔 Pretendard 폰트가 cold 라
+            # importStyleByKeyAsync+setTextStyleIdAsync 가 27건 전부 실패하는데, 폰트가
+            # warm 해지면(=import 시도들이 폰트를 로드) 성공한다. 1회 재시도는 같은
+            # tick 이라 여전히 cold → 실패. 여러 pass 로 폰트가 warm 될 때까지 반복.
+            attempt = 0
+            while unset and attempt < 4:
+                attempt += 1
+                print(f"  [text-style] ⚠️ 미적용 {len(unset)}건 — 재시도 pass {attempt}...")
                 for e in unset:
                     try:
                         call_tool("set_text_style_id", {"nodeId": e["nodeId"], "textStyleId": e["textStyleId"]})
-                        retry_ok += 1
                     except Exception:
                         pass
                 verify2 = parse_content(call_tool("get_nodes_info", {"nodeIds": [e["nodeId"] for e in unset]})).get("json")
-                still_unset = 0
+                still = {}
                 if isinstance(verify2, list):
                     for it in verify2:
                         d = it.get("document") or it
-                        if not _stored_text_style_id(d):
-                            still_unset += 1
-                print(f"  [text-style] 재시도 결과 — {retry_ok}건 호출, {still_unset}건 여전히 미적용")
+                        still[d.get("id")] = bool(_stored_text_style_id(d))
+                unset = [e for e in unset if not still.get(e["nodeId"])]
+            if unset:
+                print(f"  [text-style] ❌ {len(unset)}건 끝내 미적용 (폰트 로드 실패 가능)")
             else:
                 print(f"  [text-style] ✓ stored 검증 OK — {len(applied_ids)}건 모두 styles.text 에 적용 확인")
     except Exception as e:

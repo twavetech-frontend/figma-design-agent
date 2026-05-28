@@ -1,0 +1,35 @@
+{
+  "rootId": "17394:55785",
+  "screenName": "transaction_schedule_modal",
+  "ref_wireframe": "17015:73114",
+  "verifiedAt": "2026-05-28",
+  "screenType": "modal",
+  "exported_sections": [
+    {"id":"17394:55786","name":"Status Bar"},
+    {"id":"17394:55800","name":"Stage Progress Card Wrap"},
+    {"id":"17394:55833","name":"Month Cell Jan Active (fix 적용)"},
+    {"id":"17394:55866","name":"Empty State"}
+  ],
+  "live_fixes": [
+    {"id":"17394:55833","field":"fill","value":"bg-brand-solid","reason":"빌드 후 Jan active 보라 fill 누락 → 흰 위 흰 텍스트로 안 보임 (QA log: 대비 1.02). live fix + bg-brand-solid 바인딩"}
+  ],
+  "checklist": [
+    {"id":"C01","item":"루트 fill = bg-primary 흰","status":"PASS","evidence":"전체 export 배경 흰. modal pattern은 root bg-primary 유지"},
+    {"id":"C02","item":"브랜드 액센트 절제","status":"PASS","evidence":"brand 사용 3곳만: Jan active cell fill / 이번달 caption text / 아임인과 함께... empty CTA link. 그 외 모두 neutral grey"},
+    {"id":"C03","item":"시맨틱 컬러","status":"NA","evidence":"이 modal에는 시맨틱 컬러 미사용 (empty/onboarding 시나리오)"},
+    {"id":"C04","item":"텍스트/아이콘 가시성","status":"PASS","evidence":"Jan active fix 후 흰 'Jan/1' 텍스트 보라 위 가시. 나머지 모두 fg-primary/secondary/tertiary 토큰 대비 OK"},
+    {"id":"C05","item":"타이포 위계","status":"PASS","evidence":"Calendar Title 18px Bold / Header 17px Bold / Period 16px Bold / value 16px Bold / label 12-14 Medium. 위계 명확"},
+    {"id":"C06","item":"drop shadow 없음","status":"PASS","evidence":"post-fix log '[no-shadow] OK — drop-shadow 가진 frame 없음'"},
+    {"id":"C07","item":"흰 카드 + border-secondary 1px","status":"PASS","evidence":"Stage Progress Card 흰 + border 1px 가시. _enforce_white_card_border_live 적용"},
+    {"id":"C08","item":"Status Bar 자동 삽입","status":"PASS","evidence":"17394:55786 export '9:41 ⋯ 신호 wifi 배터리'. R24 자동"},
+    {"id":"C09","item":"Tab Bar 없음","status":"NA","evidence":"Modal pattern — _enforce_modal_pattern 적용. tabBar 없음 (와이어 의도)"},
+    {"id":"C10","item":"FAB 없음","status":"NA","evidence":"Modal pattern — FAB 없음 (와이어 의도, [feedback_wireframe_is_truth])"},
+    {"id":"C11","item":"Modal pattern (X 닫기만)","status":"PASS","evidence":"NavBar primaryAxisAlignItems=MAX (우측 정렬), Close Icon Wrap만 자식. Footer/Tab Bar/non-X icons 모두 없음"},
+    {"id":"C12","item":"와이어 콘텐츠 매치","status":"PASS","evidence":"빌드 log [QA-wc] ✓ 29개 중 25개 빌드 트리에서 발견 (86%). 헤더 X / 카드 0건/0원 / 캘린더 7개월 strip / 이번달 / 납입 filter / summary 3-col 0원 / 2026년 1월 / 총 0건 / empty title + CTA 모두 와이어와 1:1"},
+    {"id":"D01","item":"DETAIL — Summary Grid 3-col 정렬","status":"WARN","evidence":"R28 carousel-align auto-fix가 Summary Grid paddingLeft=0 → 컬럼 라벨 baseline이 살짝 어긋남 (납입 완료액만 약간 우측 이동). 콘텐츠는 보임. 회색 카드 안 padding 20으로 가려져 minor"}
+  ],
+  "summary": {"PASS": 9, "WARN": 1, "FAIL": 0, "NA": 3},
+  "actionItems": [
+    "D01: Summary Grid 라벨 baseline 정렬 minor — R28 가 SPACE_BETWEEN+FILL 케이스에서 too aggressive. 후속 fix 후보 (사용자가 직접 검토 권장)"
+  ]
+}

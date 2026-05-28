@@ -1,0 +1,33 @@
+{
+  "rootId": "17394:56038",
+  "screenName": "recommend_stages",
+  "ref_wireframe": "사용자 캡처 이미지 (스테이지 추천 화면)",
+  "verifiedAt": "2026-05-28",
+  "live_fixes_applied": [
+    {"id": "I17394:56059;...", "issue": "Filter Dropdown DS instance default 'Account'", "fix": "set_text_content '한 달에 약 100만원 13개월 모으기'"},
+    {"id": "17394:56133", "issue": "50,000P bonus pill brand-solid (R23 swap)", "fix": "fill bg-brand-primary + text-brand-primary"},
+    {"id": "17394:56170 + 5 children", "issue": "Tab Bar 자식 HUG → 라벨 두 줄 wrap", "fix": "각 Tab frame FILL + 라벨 textAutoResize=HEIGHT + 부모 MIN itemSpacing=0"}
+  ],
+  "code_committed": [
+    "_enforce_tab_bar_children_fill_live (line ~6261) — cmd_post_fix chain 박힘. 새 빌드 자동 적용",
+    "CLAUDE.md 룰 2-E-4 신설",
+    "메모리 feedback_tab_bar_children_fill.md"
+  ],
+  "checklist": [
+    {"id":"C01","item":"루트 fill = bg-primary","status":"PASS","evidence":"전체 export 배경 흰"},
+    {"id":"C02","item":"브랜드 액센트 절제","status":"PASS","evidence":"brand 사용: 빠른 시작 active outline + 1·7회차 active + amount-pill brand-light + 1,900,288원 brand text + 50,000P pill brand-light + Tab 스테이지 active + Top Tab 추천 underline 2px brand. 7곳"},
+    {"id":"C03","item":"시맨틱 컬러","status":"NA","evidence":"이 화면 시맨틱 컬러 미사용 (empty + 추천 시나리오)"},
+    {"id":"C04","item":"텍스트 가시성","status":"PASS","evidence":"50,000P fix 후 brand-primary on brand-light 가시. 모든 텍스트 fg-primary/secondary/tertiary 토큰 대비 OK"},
+    {"id":"C05","item":"타이포 위계","status":"PASS","evidence":"Top Tab 추천 22px Bold / Filter Dropdown 18px Bold / rec-date+amount 18px Bold (hero) / monthly 13px / round 12px / tab-label 10px. 5단 위계"},
+    {"id":"C06","item":"drop shadow 없음","status":"PASS","evidence":"post-fix log no-shadow OK"},
+    {"id":"C07","item":"흰 카드 + border","status":"PASS","evidence":"추천 #1/#2 카드 bg-primary + border 1px"},
+    {"id":"C08","item":"Status Bar","status":"PASS","evidence":"9:41 + 신호 자동 삽입"},
+    {"id":"C09","item":"Bottom Tab Bar 5개","status":"PASS","evidence":"홈/커뮤니티/스테이지 active(brand)/라운지/나 5개 균등 분배, 라벨 한 줄 (텍스트 wrap fix 후), 스테이지 active brand icon + label + 2px brand underline (R35 inject)"},
+    {"id":"C10","item":"FAB 없음","status":"NA","evidence":"와이어에 FAB 없음 (스테이지 탭) — 의도된 부재"},
+    {"id":"C11","item":"Top Tabs underline v2","status":"WARN","evidence":"R35 inject가 추천 active 위에 brand underline 추가 시도. VERIFY 로그 'underline tab nav active item still missing brand bottom stroke (sb=0)' — 부분 적용. 사용자 안 보고함. 후속 fix 후보"},
+    {"id":"C12","item":"와이어 콘텐츠 매치","status":"PASS","evidence":"추천/전체 탭 / Filter '한 달에 약 100만원 13개월 모으기' / 4 pills / 0개 + 혜택 많은 순 / empty banner 2줄 / 추천 #1 (12월 25일 / 20,529,600원 / 1회차 / 1-13 / 1,725,376원 + 1,900,288원 / 50,000P + 10만원) / 추천 #2 (27년 6월 25일 / 20,800,000원 / 7회차 / 1,600,000원 + 0원) / Bottom Tab 5개 — 모두 와이어와 1:1"},
+    {"id":"D01","item":"Detail — 1회차/7회차 tooltip 정렬","status":"WARN","evidence":"와이어는 1번/7번 cell 위 작은 callout. 빌드는 row 위 width FILL 가운데 정렬 banner 형. 정보는 보임. 후속 fix 후보 (ABSOLUTE 위치 정밀 조정)"},
+    {"id":"D02","item":"Detail — Rec Card 2 hero 줄바꿈","status":"WARN","evidence":"27년 6월 25일에 + amount-pill + 받아요 가 layoutWrap=WRAP으로 두 줄. 와이어는 한 줄. 글자 길이상 정상 wrap (393 width 안에 다 못 들어감)"}
+  ],
+  "summary": {"PASS": 9, "WARN": 3, "FAIL": 0, "NA": 2}
+}

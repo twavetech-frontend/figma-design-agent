@@ -1,0 +1,162 @@
+{
+  "_note": "Onboarding 1 v4 — 창의적 + 시각 리듬. 금액 hero 분리(1,000만원 크게/모으기 도전 작게), 가라앉은 무채색 톤(실패 서사), 타임라인 카드 위계.",
+  "name": "onboarding_savings_pain",
+  "type": "frame",
+  "width": 393,
+  "fill": "$token(bg-primary)",
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "paddingTop": 0, "paddingBottom": 32, "paddingLeft": 0, "paddingRight": 0,
+    "itemSpacing": 0, "primaryAxisAlignItems": "MIN", "counterAxisAlignItems": "MIN"
+  },
+  "layoutSizingHorizontal": "FIXED",
+  "layoutSizingVertical": "HUG",
+  "references": [
+    {
+      "app": "toss", "section": "Hero 좌 굵은 메시지 + 우 icon",
+      "ref": "uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png",
+      "thumbPath": "scripts/ref_thumbnails/cm7k1itvy003wjy0csv1fjcv4.png",
+      "extract": "흰 카드 hero 큰 일러스트 + 굵은 2줄.",
+      "copyNotes": "Hero 좌 26 Bold 2줄 + 우 brand icon box. 와이어 layout 보존, 폰트 위계 강화.",
+      "_searchLog": {"queries":["toss 온보딩 hero","toss empathy","toss illust hero"],"candidates":["uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png","uibowl/toss/cm7k1x3q2002yl50c6ec5ppi8.png","uibowl/kakaopay/cmgnnffkk0003l704et0djiho.png"],"chosen":"uibowl/toss/cm7k1itvy003wjy0csv1fjcv4.png","copyNotes":"empathy hero + 일러스트 우측. 메시지 굵게."}
+    },
+    {
+      "app": "toss", "section": "List card wrap + 금액 hero 위계 + trailing pill",
+      "ref": "uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png",
+      "thumbPath": "scripts/ref_thumbnails/cm7k1itym0040jy0ctugpfpp1.png",
+      "extract": "흰 카드 wrap + 좌 avatar + 큰 금액(22 Bold) + sub label + trailing pill. 금액이 hero.",
+      "copyNotes": "각 row 금액을 22px Bold hero 로, 설명을 13 sub 로 차등 → 시각 리듬. toss 통장 list 의 큰 금액 패턴 차용.",
+      "_searchLog": {"queries":["toss 계좌 금액","toss avatar row","toss balance hero"],"candidates":["uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png","uibowl/toss/cm7k1itwb003yjy0cj2xhoy5x.png","uibowl/toss/cm7k1ityy0042jy0c1h55iy98.png"],"chosen":"uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png","copyNotes":"toss 통장 list 금액 hero(22 Bold) + 라벨 sub 위계."}
+    },
+    {
+      "app": "toss", "section": "Trailing pill 상태 (실패 = 회색)",
+      "ref": "uibowl/toss/cm7k1ityy0042jy0c1h55iy98.png",
+      "thumbPath": "scripts/ref_thumbnails/cm7k1ityy0042jy0c1h55iy98.png",
+      "extract": "trailing pill bg-secondary + dark text.",
+      "copyNotes": "실패 = bg-secondary 회색 pill (가라앉은 톤, 실패 서사). 컬러 절제.",
+      "_searchLog": {"queries":["toss 상태 pill","kakaopay 결과","toss 배지"],"candidates":["uibowl/toss/cm7k1ityy0042jy0c1h55iy98.png","uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png","uibowl/kakaopay/cmgnnd2j50005gy04dpx0012m.png"],"chosen":"uibowl/toss/cm7k1ityy0042jy0c1h55iy98.png","copyNotes":"회색 pill 실패 톤."}
+    }
+  ],
+  "children": [
+    {
+      "name": "Hero Section", "type": "frame",
+      "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG",
+      "autoLayout": {"layoutMode":"HORIZONTAL","paddingTop":32,"paddingBottom":32,"paddingLeft":24,"paddingRight":24,"itemSpacing":12,"primaryAxisAlignItems":"SPACE_BETWEEN","counterAxisAlignItems":"CENTER"},
+      "children": [
+        {
+          "name": "Hero Title Stack", "type": "frame",
+          "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG",
+          "autoLayout": {"layoutMode":"VERTICAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":4,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MIN"},
+          "children": [
+            {"name":"hero-line-1","type":"text","characters":"돈을 모으는 것은","fontFamily":"Pretendard","fontWeight":700,"fontSize":26,"fontColor":"$token(text-primary)"},
+            {"name":"hero-line-2","type":"text","characters":"참 힘든 일이에요.","fontFamily":"Pretendard","fontWeight":700,"fontSize":26,"fontColor":"$token(text-primary)"}
+          ]
+        },
+        {
+          "name":"Hero Icon Box","type":"frame","width":72,"height":72,
+          "layoutSizingHorizontal":"FIXED","layoutSizingVertical":"FIXED","cornerRadius":20,"fill":"$token(bg-brand-section)",
+          "autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":0,"primaryAxisAlignItems":"CENTER","counterAxisAlignItems":"CENTER"},
+          "children":[{"type":"icon","iconName":"piggy-bank-01","size":40,"iconColor":"$token(text-brand-primary)"}]
+        }
+      ]
+    },
+    {
+      "name":"Progress Wrap","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG",
+      "autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":0,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"CENTER"},
+      "children":[
+        {"name":"Progress Done","type":"frame","width":131,"height":4,"layoutSizingHorizontal":"FIXED","layoutSizingVertical":"FIXED","fill":"$token(bg-brand-solid)","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":0,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MIN"},"children":[]},
+        {"name":"Progress Rest","type":"frame","height":4,"layoutSizingHorizontal":"FILL","layoutSizingVertical":"FIXED","fill":"$token(border-secondary)","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":0,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MIN"},"children":[]}
+      ]
+    },
+    {
+      "name":"Section Header Wrap","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG",
+      "autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":40,"paddingBottom":14,"paddingLeft":24,"paddingRight":24,"itemSpacing":8,"primaryAxisAlignItems":"SPACE_BETWEEN","counterAxisAlignItems":"CENTER"},
+      "children":[
+        {"name":"section-title","type":"text","characters":"지난 도전 기록","fontFamily":"Pretendard","fontWeight":700,"fontSize":15,"fontColor":"$token(text-primary)"},
+        {"name":"section-count","type":"text","characters":"3번 모두 실패","fontFamily":"Pretendard","fontWeight":600,"fontSize":13,"fontColor":"$token(text-tertiary)"}
+      ]
+    },
+    {
+      "name":"Timeline Card Wrap","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG",
+      "autoLayout":{"layoutMode":"VERTICAL","paddingTop":0,"paddingBottom":0,"paddingLeft":16,"paddingRight":16,"itemSpacing":0,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MIN"},
+      "children":[
+        {
+          "name":"Timeline Card","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG","cornerRadius":20,"fill":"$token(bg-primary)","strokeColor":"$token(border-secondary)","strokeWeight":1,
+          "autoLayout":{"layoutMode":"VERTICAL","paddingTop":4,"paddingBottom":4,"paddingLeft":6,"paddingRight":6,"itemSpacing":0,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MIN"},
+          "children":[
+            {
+              "name":"Entry 1 Row","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG",
+              "autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":16,"paddingBottom":16,"paddingLeft":12,"paddingRight":12,"itemSpacing":14,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"CENTER"},
+              "children":[
+                {"name":"e1-circle","type":"frame","width":44,"height":44,"layoutSizingHorizontal":"FIXED","layoutSizingVertical":"FIXED","cornerRadius":999,"fill":"$token(bg-brand-section)","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":0,"primaryAxisAlignItems":"CENTER","counterAxisAlignItems":"CENTER"},"children":[{"type":"icon","iconName":"calendar","size":22,"iconColor":"$token(text-brand-primary)"}]},
+                {"name":"e1-body","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG","autoLayout":{"layoutMode":"VERTICAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":3,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MIN"},"children":[
+                  {"name":"e1-eyebrow","type":"text","characters":"1년 전","fontFamily":"Pretendard","fontWeight":500,"fontSize":11,"fontColor":"$token(text-tertiary)"},
+                  {"name":"e1-amount-row","type":"frame","layoutSizingHorizontal":"HUG","layoutSizingVertical":"HUG","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":5,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"BASELINE"},"children":[
+                    {"name":"e1-amount","type":"text","characters":"1,000만원","fontFamily":"Pretendard","fontWeight":700,"fontSize":20,"fontColor":"$token(text-primary)"},
+                    {"name":"e1-label","type":"text","characters":"모으기 도전","fontFamily":"Pretendard","fontWeight":500,"fontSize":13,"fontColor":"$token(text-secondary)"}
+                  ]},
+                  {"name":"e1-reason","type":"text","characters":"갑자기 사고 싶은 게 생겨서","fontFamily":"Pretendard","fontWeight":500,"fontSize":12,"fontColor":"$token(text-tertiary)"}
+                ]},
+                {"name":"e1-status-pill","type":"frame","layoutSizingHorizontal":"HUG","layoutSizingVertical":"HUG","cornerRadius":999,"fill":"$token(bg-secondary)","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":5,"paddingBottom":5,"paddingLeft":11,"paddingRight":11,"itemSpacing":0,"primaryAxisAlignItems":"CENTER","counterAxisAlignItems":"CENTER"},"children":[{"name":"e1-status-text","type":"text","characters":"실패","fontFamily":"Pretendard","fontWeight":600,"fontSize":11,"fontColor":"$token(text-tertiary)"}]}
+              ]
+            },
+            {
+              "name":"Entry 2 Row","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG",
+              "autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":16,"paddingBottom":16,"paddingLeft":12,"paddingRight":12,"itemSpacing":14,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"CENTER"},
+              "children":[
+                {"name":"e2-circle","type":"frame","width":44,"height":44,"layoutSizingHorizontal":"FIXED","layoutSizingVertical":"FIXED","cornerRadius":999,"fill":"$token(bg-brand-section)","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":0,"primaryAxisAlignItems":"CENTER","counterAxisAlignItems":"CENTER"},"children":[{"type":"icon","iconName":"calendar","size":22,"iconColor":"$token(text-brand-primary)"}]},
+                {"name":"e2-body","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG","autoLayout":{"layoutMode":"VERTICAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":3,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MIN"},"children":[
+                  {"name":"e2-eyebrow","type":"text","characters":"2달 전","fontFamily":"Pretendard","fontWeight":500,"fontSize":11,"fontColor":"$token(text-tertiary)"},
+                  {"name":"e2-amount-row","type":"frame","layoutSizingHorizontal":"HUG","layoutSizingVertical":"HUG","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":5,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"BASELINE"},"children":[
+                    {"name":"e2-amount","type":"text","characters":"200만원","fontFamily":"Pretendard","fontWeight":700,"fontSize":20,"fontColor":"$token(text-primary)"},
+                    {"name":"e2-label","type":"text","characters":"모으기 도전","fontFamily":"Pretendard","fontWeight":500,"fontSize":13,"fontColor":"$token(text-secondary)"}
+                  ]},
+                  {"name":"e2-reason","type":"text","characters":"이게 다 무슨 의미인가 싶어서","fontFamily":"Pretendard","fontWeight":500,"fontSize":12,"fontColor":"$token(text-tertiary)"}
+                ]},
+                {"name":"e2-status-pill","type":"frame","layoutSizingHorizontal":"HUG","layoutSizingVertical":"HUG","cornerRadius":999,"fill":"$token(bg-secondary)","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":5,"paddingBottom":5,"paddingLeft":11,"paddingRight":11,"itemSpacing":0,"primaryAxisAlignItems":"CENTER","counterAxisAlignItems":"CENTER"},"children":[{"name":"e2-status-text","type":"text","characters":"실패","fontFamily":"Pretendard","fontWeight":600,"fontSize":11,"fontColor":"$token(text-tertiary)"}]}
+              ]
+            },
+            {
+              "name":"Entry 3 Row","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG",
+              "autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":16,"paddingBottom":16,"paddingLeft":12,"paddingRight":12,"itemSpacing":14,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"CENTER"},
+              "children":[
+                {"name":"e3-circle","type":"frame","width":44,"height":44,"layoutSizingHorizontal":"FIXED","layoutSizingVertical":"FIXED","cornerRadius":999,"fill":"$token(bg-brand-section)","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":0,"primaryAxisAlignItems":"CENTER","counterAxisAlignItems":"CENTER"},"children":[{"type":"icon","iconName":"calendar","size":22,"iconColor":"$token(text-brand-primary)"}]},
+                {"name":"e3-body","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG","autoLayout":{"layoutMode":"VERTICAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":3,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MIN"},"children":[
+                  {"name":"e3-eyebrow","type":"text","characters":"1주일 전","fontFamily":"Pretendard","fontWeight":500,"fontSize":11,"fontColor":"$token(text-tertiary)"},
+                  {"name":"e3-amount-row","type":"frame","layoutSizingHorizontal":"HUG","layoutSizingVertical":"HUG","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":5,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"BASELINE"},"children":[
+                    {"name":"e3-amount","type":"text","characters":"50만원","fontFamily":"Pretendard","fontWeight":700,"fontSize":20,"fontColor":"$token(text-primary)"},
+                    {"name":"e3-label","type":"text","characters":"모으기 도전","fontFamily":"Pretendard","fontWeight":500,"fontSize":13,"fontColor":"$token(text-secondary)"}
+                  ]},
+                  {"name":"e3-reason","type":"text","characters":"이유가 기억도 안나게","fontFamily":"Pretendard","fontWeight":500,"fontSize":12,"fontColor":"$token(text-tertiary)"}
+                ]},
+                {"name":"e3-status-pill","type":"frame","layoutSizingHorizontal":"HUG","layoutSizingVertical":"HUG","cornerRadius":999,"fill":"$token(bg-secondary)","autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":5,"paddingBottom":5,"paddingLeft":11,"paddingRight":11,"itemSpacing":0,"primaryAxisAlignItems":"CENTER","counterAxisAlignItems":"CENTER"},"children":[{"name":"e3-status-text","type":"text","characters":"실패","fontFamily":"Pretendard","fontWeight":600,"fontSize":11,"fontColor":"$token(text-tertiary)"}]}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name":"Insight Wrap","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG",
+      "autoLayout":{"layoutMode":"VERTICAL","paddingTop":44,"paddingBottom":8,"paddingLeft":24,"paddingRight":24,"itemSpacing":6,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MIN"},
+      "children":[
+        {"name":"insight-1","type":"text","characters":"필요한 목돈은 늘 생기지만","fontFamily":"Pretendard","fontWeight":500,"fontSize":16,"fontColor":"$token(text-secondary)"},
+        {"name":"insight-2","type":"text","characters":"혼자 만든 목표는 지키기가 어렵죠.","fontFamily":"Pretendard","fontWeight":600,"fontSize":16,"fontColor":"$token(text-primary)"}
+      ]
+    },
+    {
+      "name":"Choice Row","type":"frame","layoutSizingHorizontal":"FILL","layoutSizingVertical":"HUG",
+      "autoLayout":{"layoutMode":"HORIZONTAL","paddingTop":40,"paddingBottom":24,"paddingLeft":24,"paddingRight":24,"itemSpacing":16,"primaryAxisAlignItems":"SPACE_BETWEEN","counterAxisAlignItems":"START"},
+      "children":[
+        {"name":"Choice No","type":"frame","layoutSizingHorizontal":"HUG","layoutSizingVertical":"HUG","autoLayout":{"layoutMode":"VERTICAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":2,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MIN"},"children":[
+          {"name":"no-line-1","type":"text","characters":"아니요?","fontFamily":"Pretendard","fontWeight":500,"fontSize":14,"fontColor":"$token(text-tertiary)"},
+          {"name":"no-line-2","type":"text","characters":"전 늘 성공해요.","fontFamily":"Pretendard","fontWeight":500,"fontSize":14,"fontColor":"$token(text-tertiary)"}
+        ]},
+        {"name":"Choice Yes Active","type":"frame","layoutSizingHorizontal":"HUG","layoutSizingVertical":"HUG","autoLayout":{"layoutMode":"VERTICAL","paddingTop":0,"paddingBottom":0,"paddingLeft":0,"paddingRight":0,"itemSpacing":2,"primaryAxisAlignItems":"MIN","counterAxisAlignItems":"MAX"},"children":[
+          {"name":"yes-line-1","type":"text","characters":"맞아요.","fontFamily":"Pretendard","fontWeight":700,"fontSize":14,"fontColor":"$token(text-brand-primary)","textAlignHorizontal":"RIGHT"},
+          {"name":"yes-line-2","type":"text","characters":"매번 실패해요.","fontFamily":"Pretendard","fontWeight":700,"fontSize":14,"fontColor":"$token(text-brand-primary)","textAlignHorizontal":"RIGHT"}
+        ]}
+      ]
+    }
+  ]
+}

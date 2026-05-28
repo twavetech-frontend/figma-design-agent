@@ -1,0 +1,426 @@
+{
+  "schema": "imin-frontend-layout-spec/v1",
+  "description": "Framework-neutral layout spec. colors = {token, value}; layout = flexbox(direction/gap/padding/justify/align/sizing).",
+  "screen": {
+    "type": "frame",
+    "name": "button_test",
+    "size": {
+      "width": 393,
+      "height": 852
+    },
+    "layout": {
+      "direction": "column",
+      "gap": 20,
+      "padding": [
+        40,
+        24,
+        40,
+        24
+      ],
+      "justify": "start",
+      "align": "start",
+      "sizingHorizontal": "fixed",
+      "sizingVertical": "fixed"
+    },
+    "style": {
+      "background": {
+        "token": "bg-primary",
+        "value": "#FCFCFD"
+      }
+    },
+    "children": [
+      {
+        "type": "instance",
+        "name": "Status Bar",
+        "size": {
+          "width": 345,
+          "height": 64
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 154,
+          "padding": [
+            21,
+            24,
+            19,
+            24
+          ],
+          "justify": "center",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "children": [
+          {
+            "type": "frame",
+            "name": "Time",
+            "size": {
+              "width": 72,
+              "height": 24
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 10,
+              "padding": [
+                1.5,
+                0,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "Time",
+                "size": {
+                  "width": 37,
+                  "height": 22
+                },
+                "text": {
+                  "content": "9:41"
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Levels",
+            "size": {
+              "width": 72,
+              "height": 22
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 7,
+              "padding": [
+                1,
+                1,
+                0,
+                0
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "fill",
+              "sizingVertical": "fixed"
+            },
+            "children": [
+              {
+                "type": "icon",
+                "name": "Cellular Connection",
+                "size": {
+                  "width": 19,
+                  "height": 12
+                }
+              },
+              {
+                "type": "icon",
+                "name": "Wifi",
+                "size": {
+                  "width": 17,
+                  "height": 12
+                }
+              },
+              {
+                "type": "frame",
+                "name": "Frame",
+                "size": {
+                  "width": 27,
+                  "height": 13
+                },
+                "children": [
+                  {
+                    "type": "frame",
+                    "name": "Border",
+                    "size": {
+                      "width": 25,
+                      "height": 13
+                    },
+                    "style": {
+                      "border": {
+                        "width": 1,
+                        "color": {
+                          "token": "Primary",
+                          "value": "#000000"
+                        },
+                        "align": "inside"
+                      },
+                      "borderRadius": 4.300000190734863,
+                      "opacity": 0.3499999940395355
+                    }
+                  },
+                  {
+                    "type": "icon",
+                    "name": "Cap",
+                    "size": {
+                      "width": 1,
+                      "height": 4
+                    },
+                    "style": {
+                      "background": {
+                        "token": "Primary",
+                        "value": "#000000"
+                      },
+                      "opacity": 0.4000000059604645
+                    }
+                  },
+                  {
+                    "type": "frame",
+                    "name": "Capacity",
+                    "size": {
+                      "width": 21,
+                      "height": 9
+                    },
+                    "style": {
+                      "background": {
+                        "token": "Primary",
+                        "value": "#000000"
+                      },
+                      "borderRadius": 2.5
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "name": "title",
+        "size": {
+          "width": 345,
+          "height": 30
+        },
+        "style": {},
+        "text": {
+          "content": "버튼 테스트",
+          "fontSize": 20,
+          "fontFamily": "Pretendard",
+          "fontWeight": "Bold",
+          "align": "left",
+          "lineHeight": 30,
+          "color": {
+            "token": "text-primary",
+            "value": "#2C3744"
+          }
+        }
+      },
+      {
+        "type": "instance",
+        "name": "Primary CTA",
+        "size": {
+          "width": 345,
+          "height": 36
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 4,
+          "padding": [
+            8,
+            12,
+            8,
+            0
+          ],
+          "justify": "center",
+          "align": "center",
+          "sizingHorizontal": "fill",
+          "sizingVertical": "hug"
+        },
+        "style": {
+          "background": {
+            "token": "bg-brand-solid",
+            "value": "#7700FF"
+          },
+          "borderRadius": 8
+        },
+        "children": [
+          {
+            "type": "instance",
+            "name": "placeholder",
+            "size": {
+              "width": 20,
+              "height": 20
+            },
+            "children": [
+              {
+                "type": "icon",
+                "name": "Icon (Stroke)",
+                "size": {
+                  "width": 18,
+                  "height": 18
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Text padding",
+            "size": {
+              "width": 79,
+              "height": 20
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                0,
+                2,
+                0,
+                2
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "hug",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "Text",
+                "size": {
+                  "width": 75,
+                  "height": 20
+                },
+                "text": {
+                  "content": "Button CTA"
+                }
+              }
+            ]
+          },
+          {
+            "type": "instance",
+            "name": "placeholder",
+            "size": {
+              "width": 20,
+              "height": 20
+            },
+            "children": [
+              {
+                "type": "icon",
+                "name": "Icon (Stroke)",
+                "size": {
+                  "width": 18,
+                  "height": 18
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "instance",
+        "name": "Secondary Btn",
+        "size": {
+          "width": 200,
+          "height": 36
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 4,
+          "padding": [
+            8,
+            14,
+            8,
+            0
+          ],
+          "justify": "center",
+          "align": "center",
+          "sizingHorizontal": "fixed",
+          "sizingVertical": "hug"
+        },
+        "style": {
+          "background": {
+            "token": "bg-primary",
+            "value": "#FCFCFD"
+          },
+          "border": {
+            "width": 1,
+            "color": {
+              "token": "border-secondary",
+              "value": "#E6E8EA"
+            },
+            "align": "inside"
+          },
+          "borderRadius": 8
+        },
+        "children": [
+          {
+            "type": "instance",
+            "name": "placeholder",
+            "size": {
+              "width": 20,
+              "height": 20
+            },
+            "children": [
+              {
+                "type": "icon",
+                "name": "Icon (Stroke)",
+                "size": {
+                  "width": 18,
+                  "height": 18
+                }
+              }
+            ]
+          },
+          {
+            "type": "frame",
+            "name": "Text padding",
+            "size": {
+              "width": 79,
+              "height": 20
+            },
+            "layout": {
+              "direction": "row",
+              "gap": 0,
+              "padding": [
+                0,
+                2,
+                0,
+                2
+              ],
+              "justify": "center",
+              "align": "center",
+              "sizingHorizontal": "hug",
+              "sizingVertical": "hug"
+            },
+            "children": [
+              {
+                "type": "text",
+                "name": "Text",
+                "size": {
+                  "width": 75,
+                  "height": 20
+                },
+                "text": {
+                  "content": "Button CTA"
+                }
+              }
+            ]
+          },
+          {
+            "type": "instance",
+            "name": "placeholder",
+            "size": {
+              "width": 20,
+              "height": 20
+            },
+            "children": [
+              {
+                "type": "icon",
+                "name": "Icon (Stroke)",
+                "size": {
+                  "width": 18,
+                  "height": 18
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

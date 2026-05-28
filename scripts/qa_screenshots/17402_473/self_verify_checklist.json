@@ -1,0 +1,33 @@
+{
+  "root_id": "17402:473",
+  "blueprint_name": "imin_home_1",
+  "scenario": "active (와이어는 empty 0건/0원이지만 HARD-ENFORCE 룰대로 active mock 대시보드로 빌드)",
+  "verified_sections": [
+    {"label": "Mode Tabs", "nodeId": "17402:492"},
+    {"label": "Day Strip", "nodeId": "17402:535"},
+    {"label": "Recommend Stage Card", "nodeId": "17402:587"},
+    {"label": "Participation Grid", "nodeId": "17402:653"},
+    {"label": "Lounge Carousel", "nodeId": "17402:700"},
+    {"label": "Tab Bar", "nodeId": "17402:771"},
+    {"label": "FAB", "nodeId": "17402:768"},
+    {"label": "Full screen", "nodeId": "17402:473"}
+  ],
+  "checklist": [
+    {"id": "C01-content-1to1", "status": "PASS", "evidence": "기획서 8개 섹션(헤더/모드탭/진행현황/출석/추천스테이지/참여중/라운지/탭바) 모두 존재. 와이어 고유 콘텐츠(round selector 1~13, 추천 전체 보기(13개), 예치금 312,490원, 회사정보 티웨이브) 1:1 반영. 0건/0원 empty 와이어는 룰대로 active mock 치환"},
+    {"id": "C02-no-grey-placeholder", "status": "PASS", "evidence": "모든 카드에 실 콘텐츠. 빈 회색 placeholder 박스 없음 (라운지·참여그리드·추천카드 전부 채워짐)"},
+    {"id": "C03-real-image-cards", "status": "PASS", "evidence": "라운지 카드에 실사진 적용 — 올리브영 스킨케어/스타벅스 라떼/고디바 초콜릿 실제 product 사진"},
+    {"id": "C04-cell-row-alignment", "status": "PASS", "evidence": "Day Strip 4 cell(화12/토18/수22/금25) weekday·day·value·status 모두 중앙정렬, 높이 일치"},
+    {"id": "C05-hero-28plus", "status": "PASS", "evidence": "추천카드 hero '1,300,000원' 보라 대형 Bold, 진행현황 hero '1,240,000원' 42px Bold"},
+    {"id": "C06-tabbar-label-order", "status": "PASS", "evidence": "탭바 홈/라운지/스테이지/커뮤니티/전체 — 와이어 순서 정확 일치, 라벨 wrap 없음"},
+    {"id": "C07-tabbar-icon-match", "status": "PASS", "evidence": "홈=home / 라운지=building / 스테이지=coins-stacked / 커뮤니티=users / 전체=menu — 의미 매핑 적절"},
+    {"id": "C08-underline-width", "status": "PASS", "evidence": "Underline Tab v2 — 거래현황 active 보라 underline + 누적거래 inactive 회색 underline 같은 폭. (R35 ERROR는 RECTANGLE underline v2 패턴이라 strokeBottom=0 false-positive)"},
+    {"id": "C09-stepper-icons", "status": "PASS", "evidence": "추천카드 stepper 월/기간 각각 minus(회색) + plus(보라 outline) 아이콘 명확히 보임"},
+    {"id": "C10-fab-icon-correct", "status": "PASS", "evidence": "FAB 흰 '+' on 브랜드 보라 원형. 이모티콘 아님. (빌드 직후 56×24로 찌그러진 것 → 56×56 원형으로 라이브 fix)"},
+    {"id": "C11-card-hierarchy", "status": "PASS", "evidence": "흰 카드 + border, 금액 hero Bold vs 보조 grey 위계. 참여그리드 status pill 시맨틱 컬러(진행중=brand/곧지급=warning/신규=success/예정=grey)"},
+    {"id": "C12-polished-not-wire", "status": "PASS", "evidence": "와이어 회색박스 1:1 복제 아님 — 시맨틱 액센트, hero 위계, 실사진, top alert, 출석배너 등 polish 적용된 디자인"}
+  ],
+  "minor_issues": [
+    "참여그리드 progress bar fill 폭이 진행률(38/91/16/0%) 차이를 시각적으로 충분히 반영 못함 — mock 데코, 와이어 자체가 empty라 저우선"
+  ],
+  "summary": {"pass": 12, "fail": 0, "na": 0}
+}

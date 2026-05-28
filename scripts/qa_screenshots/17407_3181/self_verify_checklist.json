@@ -1,0 +1,24 @@
+{
+  "root_id": "17407:3181",
+  "blueprint_name": "transaction_schedule_modal",
+  "verified_by": "claude",
+  "exported_sections": [
+    {"label": "Full", "nodeId": "17407:3181"},
+    {"label": "Empty_or_List", "nodeId": "17407:3250", "name": "Empty State"}
+  ],
+  "checklist": [
+    {"id": "C01-content-1to1", "status": "PASS", "evidence": "와이어 텍스트 전부 1:1: '진행중인 0건의 스테이지 내역', 모은 금액 +0원 / 빌린 금액 -0원, info 2줄, '거래 스케줄', '납입 v', 10~4월(1월 active), '이번달', 월/완료/남은 납입액 0원, '2026년 1월'/'총 0건', '납입할 금액이 없습니다.'/'아임인과 함께 목돈 모으기를 시작해보세요.'"},
+    {"id": "C02-no-grey-placeholder", "status": "PASS", "evidence": "bg-secondary 회색면은 info note(실 텍스트 2줄)와 summary grid(라벨+0원 값) — 빈 placeholder 박스 없음"},
+    {"id": "C03-real-image-cards", "status": "NA", "evidence": "모달에 이미지/상품 카드 없음 (스테이지 내역 + 스케줄 캘린더만)"},
+    {"id": "C04-cell-row-alignment", "status": "PASS", "evidence": "월 셀 7개 FILL 균등분배(각 ~34px), 텍스트 CENTER, 1월 active 브랜드 pill 정렬 — 수정 후 재확인됨 (이전 1월 crush 버그 해소)"},
+    {"id": "C05-hero-28plus", "status": "NA", "evidence": "이 모달엔 hero 수치 섹션 없음 — +0원/-0원은 와이어대로 row value(20px)"},
+    {"id": "C06-tabbar-label-order", "status": "NA", "evidence": "full modal — Tab Bar 없음 (R58 모달 패턴)"},
+    {"id": "C07-tabbar-icon-match", "status": "NA", "evidence": "Tab Bar 없음"},
+    {"id": "C08-underline-width", "status": "NA", "evidence": "underline tab 없음"},
+    {"id": "C09-stepper-icons", "status": "NA", "evidence": "stepper 없음"},
+    {"id": "C10-fab-icon-correct", "status": "NA", "evidence": "full modal — FAB 없음"},
+    {"id": "C11-card-hierarchy", "status": "PASS", "evidence": "흰 카드 2개 + border-secondary, 헤더 18px Bold vs body 14px, summary grid/info note는 bg-secondary inset로 위계 차등"},
+    {"id": "C12-polished-not-wire", "status": "PASS", "evidence": "active 월에 브랜드 보라 pill(의미 액센트), 흰 카드+보더, 회색 inset 그리드, 깔끔한 타이포 — 회색박스 1:1 복제 아님"}
+  ],
+  "summary": {"pass": 5, "fail": 0, "na": 7, "result": "PASS — FAIL 0건"}
+}
