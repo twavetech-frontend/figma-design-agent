@@ -73,6 +73,18 @@ COMPONENT_KEYS = {
     # ── Divider ────────────────────────────────────────────────
     "Divider":               "643b56de33f422bdf0c7611555210a08b25e21a8",
 
+    # ── Link (text link, 2026-05-28 사용자 제공 node 16572:310388) ──
+    "Link md":               "4ea3f73a0528550d1bdcdbffeeb5bb2f1f91852b",  # Size=md Color=Link color Default
+    "Link md gray":          "b46cabe302d52e4926a63d9ee6f857e4ec114c5d",  # Size=md Color=Link gray Default
+    "Link lg":               "6b5ee63ad1c6859224db24f9f500dbc5b8243b85",  # Size=lg Color=Link color Default
+    "Link sm":               "4ea3f73a0528550d1bdcdbffeeb5bb2f1f91852b",  # fallback md
+
+    # ── Modal (2026-05-28 사용자 제공 node 172:4293, Breakpoint=Mobile) ──
+    "Modal":                 "2fbf6f2a1b5e98d72073baefc64c5790c36626dd",  # Stacked left aligned Mobile
+    "Modal Warning":         "a50f41e12825a0e7294a9a9387d60c0f98c4bc05",
+    "Modal Destructive":     "0d444a64241a7cbd19c580754d709bf8b45021cb",
+    "Modal Horizontal":      "774a3de5d96ed5df283c6bec0c1ace374fb3cac4",
+
     # ── IMIN composite components (camelCase 내부 컴포넌트, 이름 매칭) ──
     # 2026-05-28 사용자: "컴포넌트 목록 없어?" — DS 전체에서 추출한 IMIN 고유 컴포넌트.
     # composite 라 shape 검출 안 되고 이름 매칭으로만 swap (blueprint 이름이 role 과 일치 시).
@@ -155,6 +167,7 @@ DS_PATTERNS = [
     (re.compile(r"\b(?:Action\s*)?Button\b", re.I), "Button"),
     (re.compile(r"\bAvatar\b",       re.I),  "Avatar"),
     (re.compile(r"\bChip\b",         re.I),  "Chip/Tag"),
+    (re.compile(r"\bLink\b",         re.I),  "Link"),
 ]
 
 
@@ -199,6 +212,9 @@ _NAME_RESOLVERS: list[Tuple[re.Pattern, str]] = [
     (re.compile(r"^gray\s+pill(?:\s+\S+)?$",                  re.I), "Pill md Gray blue"),
     # Pill with content suffix e.g. "Gray Pill 10만원" — match the prefix form
     (re.compile(r"^pill(?:\s+\S+)?$",                         re.I), "Pill md Gray blue"),
+
+    # Text link — name ends with " Link" (e.g. "더보기 Link", "Detail Link")
+    (re.compile(r"\blink$",                                   re.I), "Link md"),
 
     # Badges — must end with " Badge"
     (re.compile(r"^verified\s+badge$",                        re.I), "Icon verified"),
