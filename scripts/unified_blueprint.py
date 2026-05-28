@@ -581,7 +581,7 @@ def _gen_stage_progress_card(data: dict, scenario: str) -> dict:
         return {
             "name": f"Day Cell {cell.get('day', '')}{' today' if is_today else ''}",
             "type": "frame",
-            "width": 64,
+            "width": 76,
             "layoutSizingHorizontal": "FIXED",
             "layoutSizingVertical": "HUG",
             "fill": f"$token({bg})",
@@ -1200,9 +1200,11 @@ def _gen_lounge_section(data: dict, scenario: str) -> dict:
         return {
             "name": f"Lounge Card {p.get('brand', '')}",
             "type": "frame",
-            "width": 148, "height": 200,
+            "width": 148,
             "layoutSizingHorizontal": "FIXED",
-            "layoutSizingVertical": "FIXED",
+            # 세로는 HUG — Image(120)+Body 콘텐츠에 맞게 자람. FIXED 200 으로 박으면
+            # clipsContent(rounded card 필수)에 의해 하단 가격 텍스트가 잘림 (2026-05-28).
+            "layoutSizingVertical": "HUG",
             "cornerRadius": 16,
             "fill": "$token(bg-primary)",
             "strokeColor": "$token(border-secondary)",

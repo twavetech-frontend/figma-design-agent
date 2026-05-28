@@ -4387,11 +4387,23 @@ def _enforce_vertical_hug(root_id: str) -> int:
             # ABSOLUTE 노드도 제외
             if node.get("layoutPositioning") == "ABSOLUTE":
                 skip = True
-            # 2026-05-28 fix: 부모가 HORIZONTAL carousel (clipsContent=true) 인 경우,
-            # 자식 카드의 FIXED height 는 의도된 디자인 (Lounge Card 200px 등).
-            # → 손대지 않음. 박을 시 라운지 카드 42px 회귀.
+            # 부모가 HORIZONTAL carousel (clipsContent=true) 인 카드: FIXED height 는
+            # 보통 의도된 디자인이라 손대지 않는다(HUG 시 빈 카드 42px collapse 회귀).
+            # 단, 콘텐츠가 카드 height 를 **넘쳐 잘리는** 경우(Lounge Card: Image120+
+            # Body84 > FIXED200 → 하단 가격 잘림, 2026-05-28 사용자 분노)는 예외 —
+            # overflow 면 HUG 로 풀어 콘텐츠가 다 보이게 한다.
             if parent_mode == "HORIZONTAL" and parent_clips:
                 skip = True
+                cbb = node.get("absoluteBoundingBox") or {}
+                card_bottom = (cbb.get("y") or 0) + (cbb.get("height") or 0)
+                child_bottom = card_bottom
+                for ch in node.get("children", []) or []:
+                    chbb = ch.get("absoluteBoundingBox") or {}
+                    cb = (chbb.get("y") or 0) + (chbb.get("height") or 0)
+                    if cb > child_bottom:
+                        child_bottom = cb
+                if child_bottom > card_bottom + 1.5:  # 콘텐츠 overflow → HUG 허용
+                    skip = False
             # 2026-05-27 확장: FILL 도 잡는다. 카드(HUG) 안의 Body(FILL) 가
             # 부모 height 에 맞춰 0px 로 collapse 되어 stage_list 회귀 재발.
             if (not skip and layout_mode == "VERTICAL"
