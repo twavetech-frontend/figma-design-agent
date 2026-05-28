@@ -4814,6 +4814,111 @@ def _enforce_icon_on_brand_bg_contrast(root_id: str) -> int:
     return fixed[0]
 
 
+def _build_button_label_map(blueprint: Optional[dict]) -> dict:
+    """blueprint 의 button-shape frame name → label 맵. post-fix 가 swap 된
+    DS 버튼 인스턴스의 더미 'Button CTA' 텍스트를 원래 라벨로 교정하는 데 사용."""
+    m = {}
+    if not blueprint:
+        return m
+    try:
+        from design_rules.ds_catalog import detect_button_shape
+    except Exception:
+        return m
+    root = blueprint.get("root") or blueprint
+
+    def walk(n):
+        if isinstance(n, dict):
+            try:
+                b = detect_button_shape(n)
+                if b and b[2]:
+                    m[(n.get("name") or "")] = b[2]
+            except Exception:
+                pass
+            for c in (n.get("children") or n.get("_originalChildren") or []):
+                walk(c)
+        elif isinstance(n, list):
+            for c in n:
+                walk(c)
+    walk(root)
+    return m
+
+
+def _enforce_ds_button_sizing(root_id: str, label_map: Optional[dict] = None) -> int:
+    """DS Action Button 인스턴스 라이브 교정 (2026-05-28 사용자 "버튼이 제일 중요").
+
+    R23 가 버튼 raw frame → DS 'Action Button' 인스턴스로 auto-swap 한 뒤 남는
+    3대 문제를 한 번에 교정:
+      1. sizing 붕괴 — width < 60 → VERTICAL 부모면 FILL / HORIZONTAL 이면 HUG,
+         height < 40 → FIXED 48 (md 표준)
+      2. leading/trailing 아이콘 노출 — Icon leading/trailing BOOLEAN prop → false
+      3. 더미 'Button CTA' 라벨 — blueprint 의 원래 label 로 내부 TEXT 교체
+    """
+    label_map = label_map or {}
+    fixed = [0]
+
+    def _fix_instance(nid, name, w, h, parent_layout):
+        # 1) sizing
+        try:
+            if w < 60:
+                horiz = "FILL" if parent_layout == "VERTICAL" else "HUG"
+                call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": horiz})
+            if h < 40:
+                call_tool("set_layout_sizing", {"nodeId": nid, "vertical": "FIXED"})
+                call_tool("resize_node", {"nodeId": nid,
+                                          "width": max(w, 100) if w >= 60 else 200, "height": 48})
+        except Exception as e:
+            print(f"  [ds-button-sizing] sizing '{nid}' fail: {e}")
+        # 2) icon off — BOOLEAN props named icon leading/trailing → false
+        try:
+            props = parse_content(call_tool("get_instance_properties", {"nodeId": nid})).get("json") or {}
+            pdict = props.get("properties") or {}
+            off = {}
+            for pname, pinfo in pdict.items():
+                pl = pname.lower()
+                if isinstance(pinfo, dict) and pinfo.get("type") == "BOOLEAN" \
+                        and ("icon leading" in pl or "icon trailing" in pl) and pinfo.get("value"):
+                    off[pname] = False
+            if off:
+                call_tool("set_instance_properties", {"nodeId": nid, "properties": off})
+        except Exception as e:
+            print(f"  [ds-button-sizing] icon-off '{nid}' fail: {e}")
+        # 3) label override — 더미 텍스트 → blueprint label
+        label = label_map.get(name)
+        if label:
+            try:
+                scan = parse_content(call_tool("scan_text_nodes", {"nodeId": nid})).get("json") or {}
+                tnodes = scan.get("textNodes") or []
+                if tnodes:
+                    call_tool("set_text_content", {"nodeId": tnodes[0]["id"], "text": label})
+            except Exception as e:
+                print(f"  [ds-button-sizing] label '{nid}' fail: {e}")
+        fixed[0] += 1
+
+    def _walk(node, parent_layout=""):
+        if not isinstance(node, dict):
+            return
+        ntype = (node.get("type") or "").upper()
+        name = node.get("name") or ""
+        nl = name.lower()
+        is_btn = ntype == "INSTANCE" and ("action button" in nl or nl == "button"
+                                          or nl.endswith(" button") or nl.endswith(" btn")
+                                          or nl.endswith(" cta") or "cta" in nl)
+        if is_btn:
+            _fix_instance(node["id"], name, node.get("width") or 0,
+                          node.get("height") or 0, parent_layout)
+        cur_layout = (node.get("layoutMode") or "").upper()
+        for c in node.get("children", []) or []:
+            _walk(c, cur_layout)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            _walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [ds-button-sizing] root fetch fail: {e}")
+    return fixed[0]
+
+
 def _enforce_root_min_height(root_id: str) -> None:
     """루트 height 정책 — 콘텐츠 길이에 따라 두 가지 분기 (2026-05-24):
 
@@ -5357,6 +5462,27 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
             print("  [icon-on-brand] OK — brand bg 안 icon 대비 충분")
     except Exception as e:
         print(f"  [icon-on-brand] 실패 (무시하고 계속): {e}")
+
+    # 2026-05-28 사용자 "제일 중요한 컴포넌트는 버튼" — R23 가 버튼을 DS Action Button
+    # 인스턴스로 auto-swap 하게 켰는데, DS 버튼이 공유 row 에서 1px 로 붕괴하거나
+    # height 가 텍스트만큼 줄어드는 sizing 버그가 있음. 라이브에서 교정.
+    print("\n[규칙] DS 버튼 sizing + icon off + label 교정 적용 중...")
+    try:
+        _btn_bp = original_blueprint
+        if _btn_bp is None:
+            _latest = _load_latest_build()
+            _bp_path = _latest.get("blueprintPath")
+            if _bp_path and os.path.exists(_bp_path):
+                with open(_bp_path) as _f:
+                    _btn_bp = json.load(_f)
+        _label_map = _build_button_label_map(_btn_bp)
+        n_btn = _enforce_ds_button_sizing(root_node_id, _label_map)
+        if n_btn:
+            print(f"  [ds-button-sizing] ✓ Action Button 인스턴스 {n_btn}건 교정 (sizing/icon/label)")
+        else:
+            print("  [ds-button-sizing] OK — DS 버튼 없음")
+    except Exception as e:
+        print(f"  [ds-button-sizing] 실패 (무시하고 계속): {e}")
 
     # ⚠️ HARD-ENFORCE (2026-05-28 사용자 명시 "룰 말고 무조건 실행 코드"):
     # cmd_post_fix 끝에 무조건 호출. 가드 최소화, 회귀 차단.

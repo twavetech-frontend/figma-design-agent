@@ -73,6 +73,19 @@ COMPONENT_KEYS = {
     # ── Divider ────────────────────────────────────────────────
     "Divider":               "643b56de33f422bdf0c7611555210a08b25e21a8",
 
+    # ── IMIN composite components (camelCase 내부 컴포넌트, 이름 매칭) ──
+    # 2026-05-28 사용자: "컴포넌트 목록 없어?" — DS 전체에서 추출한 IMIN 고유 컴포넌트.
+    # composite 라 shape 검출 안 되고 이름 매칭으로만 swap (blueprint 이름이 role 과 일치 시).
+    "Month Cell":            "657f41d0a19bbba151bd0ce6051a202cfbe6645a",  # monthCell
+    "Stats Strip 3Col":      "32352a3ed6aadd5ed86ab3035492c53dc2a459b2",  # statsStrip3Col
+    "Stepper Card Row":      "dbd51e5df3a46f92dbbf7bfc679d61abfc2312bd",  # stepperCardRow
+    "Summary Card Link Row": "b68bf5f0c85c53b935cf9c91977465c1063f166f",  # summaryCardLinkRow
+    "Transaction Timeline Row": "5e616eafb8665fde02b37a62c3bf46e9d0294975",  # transactionTimelineRow
+    "Filter Chip":           "32d787ba259b9055a67098ecbb83616c4138b87d",  # filterChip
+    "Card default":          "fd8bfe2911f0fd86868aaad298d285455e954352",  # Type=Card default Mobile
+    "Button group":          "6eeac5347bb698e42d184eb6de21103e0c7357fd",  # Type=Button group Single line
+    "Avatar group md":       "cbf96575fc618ab0c481b96a8bd8cadad4709dae",  # Type=Avatar group md
+
     # ── Tabs ───────────────────────────────────────────────────
     "Underline Tab Item":   "2fd0d4316087ce3d04816dc5f2eb8c421e43588f",
 
@@ -328,6 +341,9 @@ def _v_padding(node: dict) -> float:
 _STATUS_WORDS = (
     "미납", "연체", "완료", "진행중", "진행", "지급예정", "지급", "예정", "오늘 납입",
     "납입 완료", "납입완료", "신규", "new", "hot", "done", "active", "pending",
+    # 2026-05-28 — onboarding 성공/실패 후기 status. 이전엔 누락되어 status pill 이
+    # button 으로 오인 → WARN-only raw frame. 이제 badge 로 confident swap.
+    "성공", "실패", "달성", "도전", "참여", "마감", "대기", "성공!", "success", "fail", "failed",
 )
 
 
@@ -389,6 +405,10 @@ def detect_button_shape(node: dict) -> Optional[Tuple[str, str, str]]:
             return None
     label = _is_label_only_children(node)
     if not label:
+        return None
+    # status word label (성공/실패/완료/미납 …) → 버튼 아님, badge 로 양보 (2026-05-28)
+    ll = label.strip().lower()
+    if any(w.lower() in ll for w in _STATUS_WORDS):
         return None
     if _corner_radius(node) < 6:
         return None
@@ -454,9 +474,10 @@ def button_variant_props(node: dict) -> dict:  # noqa: D401
 
 # Status-badge / tag colors → DS Badge sm component
 _BADGE_COLOR_ROLE = [
-    (("success", "진행", "완료", "납입 완료", "지급"), "Badge sm Success"),
-    (("warning", "예정", "곧", "오늘"), "Badge sm Warning"),
-    (("error", "미납", "연체", "긴급"), "Badge sm Warning"),  # no error badge → warning
+    (("success", "진행", "완료", "납입 완료", "지급", "성공", "달성"), "Badge sm Success"),
+    (("warning", "예정", "곧", "오늘", "대기", "마감"), "Badge sm Warning"),
+    (("error", "미납", "연체", "긴급", "실패"), "Badge sm Warning"),  # no error badge → warning
+    (("도전", "참여", "신규", "new"), "Badge sm Brand"),
     (("purple",), "Badge sm Purple"),
 ]
 
@@ -784,7 +805,10 @@ def detect_ds_role_structural(node: dict):
     #    exists, buttons stay raw styled frames (render fine) + WARN.
     b = detect_button_shape(node)
     if b:
-        return (b[0], b[1], b[2], False)
+        # 2026-05-28 — 버튼 auto-swap 활성화 (사용자: "제일 중요한 컴포넌트는 버튼").
+        # 이전엔 confident=False (DS 버튼이 row 에서 1px 붕괴) → post-fix
+        # _enforce_ds_button_sizing 이 sizing/icon 을 라이브 교정하므로 이제 swap.
+        return (b[0], b[1], b[2], True)
     # 1.5) avatar — confident auto-swap (2026-05-28). person/user icon 든 원형
     #      프로필. badge 검출보다 먼저 — user circle 이 badge 로 오인 안 되게.
     av = detect_avatar_shape(node)

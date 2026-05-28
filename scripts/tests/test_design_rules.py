@@ -198,18 +198,36 @@ def test_r23_inject_swaps_pill_to_instance():
 
 
 def test_r23_lint_blocks_unresolvable_ds_pattern():
-    """A name matching a DS pattern with no catalog match must ERROR."""
+    """A name matching a DS pattern with no catalog match must ERROR.
+
+    2026-05-28: Avatar 는 이제 catalog 에 key + detect_avatar_shape 가 있어
+    resolve/swap 되므로, 여전히 미등록인 'Chip' 패턴으로 검증한다."""
     bp = make_root()
-    bp["children"].append({"name": "ZZZ Avatar custom unknown", "type": "frame"})
+    bp["children"].append({"name": "ZZZ Chip custom unknown", "type": "frame"})
     # First inject (no resolver match) → still raw frame
     REGISTRY.run_inject(bp)
-    avatar = next(c for c in bp["children"] if "Avatar" in c["name"])
-    assert avatar["type"] == "frame", "no resolver → no swap"
+    chip = next(c for c in bp["children"] if "Chip" in c["name"])
+    assert chip["type"] == "frame", "no resolver → no swap"
     # Then lint → expect ERROR
     violations = REGISTRY.run_lint(bp)
     errs = [v for v in violations if v.severity == Severity.ERROR
             and v.rule_id == "R23-ds-unresolvable"]
     assert errs, "unresolvable DS pattern should hard-block build"
+
+
+def test_r23_avatar_name_swaps_to_ds_instance():
+    """2026-05-28 — avatar 회피 차단: avatar-named 원형 frame 은 DS Avatar
+    인스턴스로 swap (이름을 circle 로 바꿔 회피하던 것 차단)."""
+    bp = make_root()
+    bp["children"].append({
+        "name": "Member Avatar", "type": "frame",
+        "width": 40, "height": 40, "cornerRadius": 20,
+        "children": [{"type": "icon", "iconName": "user-01", "size": 20}],
+    })
+    REGISTRY.run_inject(bp)
+    av = next(c for c in bp["children"] if "Avatar" in c["name"])
+    assert av["type"] == "instance", "avatar-named frame → DS Avatar instance"
+    assert av.get("componentKey"), "avatar instance must carry a DS componentKey"
 
 
 def test_r23_container_left_as_frame():
