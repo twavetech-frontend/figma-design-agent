@@ -5055,6 +5055,24 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
                 fixed[0] += 1
             except Exception as e:
                 print(f"  [size-invariant] circle '{nid}' fail: {e}")
+        # 카드 padding 복원 (batch_build 가 grid row 안 카드의 padding 을 누락 →
+        # 요소가 경계에 붙음). VERTICAL 카드(cornerRadius>=12 + 자식 3+)의 paddingLeft<12
+        # 면 16 복원. layoutMode 동일 재설정이라 자식 sizing 영향 최소.
+        elif (ntype == "FRAME" and node.get("componentKey") is None
+              and (node.get("cornerRadius") or 0) >= 12
+              and (node.get("layoutMode") or "").upper() == "VERTICAL"
+              and len(node.get("children") or []) >= 3
+              and (node.get("width") or 0) >= 140  # day cell(48) 등 작은 셀 제외
+              and (node.get("paddingLeft") or 0) < 12):
+            try:
+                call_tool("set_auto_layout", {
+                    "nodeId": nid, "layoutMode": "VERTICAL",
+                    "paddingLeft": 16, "paddingRight": 16,
+                    "paddingTop": 16, "paddingBottom": 16,
+                })
+                fixed[0] += 1
+            except Exception as e:
+                print(f"  [size-invariant] card-pad '{nid}' fail: {e}")
         for c in node.get("children", []) or []:
             walk(c)
 

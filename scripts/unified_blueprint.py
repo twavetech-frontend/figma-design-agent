@@ -547,40 +547,72 @@ def _gen_stage_progress_card(data: dict, scenario: str) -> dict:
         }
 
     def day_cell(cell: dict) -> dict:
-        is_today = cell.get("type") == "today"
-        bg = "bg-fg-primary-solid" if is_today else "bg-secondary"
-        text_color = "fg-white" if is_today else "text-secondary"
+        # 2026-05-28 레퍼런스(가로 스크롤 여유 블록): 요일 + 날짜(Bold) + 금액(색상) +
+        # 상태. 미납=빨강tint / 오늘=다크 / 지급(+)=초록 / 납입(-)=중립.
+        t = cell.get("type", "default")
+        val = cell.get("value", "")
+        is_today = t == "today"
+        is_overdue = t == "overdue"
+        is_receive = t == "receive" or val.startswith("+")
+        if is_today:
+            bg = "bg-fg-primary-solid"
+        elif is_overdue:
+            bg = "bg-error-secondary"
+        else:
+            bg = "bg-secondary"
+        # 요일/상태 색
+        if is_today:
+            sub_color = "fg-white"
+        elif is_overdue:
+            sub_color = "text-error-primary"
+        else:
+            sub_color = "text-tertiary"
+        # 날짜 색
+        day_color = "fg-white" if is_today else ("text-error-primary" if is_overdue else "text-primary")
+        # 금액 색 (마이너스 빨강 / 플러스 초록 / today 흰)
+        if is_today:
+            val_color = "fg-white"
+        elif is_receive:
+            val_color = "text-success-primary"
+        elif is_overdue or val.startswith("-"):
+            val_color = "text-error-primary"
+        else:
+            val_color = "text-secondary"
         return {
             "name": f"Day Cell {cell.get('day', '')}{' today' if is_today else ''}",
             "type": "frame",
-            "width": 48,
+            "width": 64,
             "layoutSizingHorizontal": "FIXED",
             "layoutSizingVertical": "HUG",
             "fill": f"$token({bg})",
-            "cornerRadius": 12,
+            "cornerRadius": 16,
             "autoLayout": {
                 "layoutMode": "VERTICAL",
-                "paddingTop": 10, "paddingBottom": 10,
-                "paddingLeft": 4, "paddingRight": 4,
-                "itemSpacing": 4,
+                "paddingTop": 14, "paddingBottom": 14,
+                "paddingLeft": 8, "paddingRight": 8,
+                "itemSpacing": 6,
                 "counterAxisAlignItems": "CENTER",
             },
             "children": [
+                {"name": "day-weekday", "type": "text",
+                 "characters": cell.get("weekday", ""),
+                 "fontSize": 11, "fontWeight": 500,
+                 "fill": f"$token({sub_color})",
+                 "textAlignHorizontal": "CENTER"},
                 {"name": "day-num", "type": "text",
                  "characters": cell.get("day", ""),
-                 "fontSize": 11, "fontWeight": 500,
-                 "fill": f"$token({text_color})",
+                 "fontSize": 20, "fontWeight": 700,
+                 "fill": f"$token({day_color})",
                  "textAlignHorizontal": "CENTER"},
                 {"name": "day-val", "type": "text",
-                 "characters": cell.get("value", ""),
-                 "fontSize": 15 if not is_today else 15,
-                 "fontWeight": 700 if is_today else 600,
-                 "fill": f"$token({text_color})",
+                 "characters": val,
+                 "fontSize": 13, "fontWeight": 700,
+                 "fill": f"$token({val_color})",
                  "textAlignHorizontal": "CENTER"},
                 {"name": "day-status", "type": "text",
                  "characters": cell.get("status", ""),
-                 "fontSize": 10, "fontWeight": 500,
-                 "fill": f"$token({text_color if is_today else 'text-tertiary'})",
+                 "fontSize": 11, "fontWeight": 500,
+                 "fill": f"$token({sub_color})",
                  "textAlignHorizontal": "CENTER"},
             ],
         }
@@ -653,16 +685,20 @@ def _gen_stage_progress_card(data: dict, scenario: str) -> dict:
                  "layoutSizingHorizontal": "FILL"},
                 # Day strip
                 {
-                    "name": "Day Strip",
+                    # 가로 스크롤 day strip (레퍼런스): cell 여유 간격 + clipsContent
+                    # 로 마지막 셀 peek → 스와이프 탐색 힌트. name 'Carousel' 로 R45
+                    # (clip 해제)·R36(peek) 룰에 carousel 로 인식되게.
+                    "name": "Day Strip Carousel",
                     "type": "frame",
                     "layoutSizingHorizontal": "FILL",
                     "autoLayout": {
                         "layoutMode": "HORIZONTAL",
                         "primaryAxisAlignItems": "MIN",
                         "counterAxisAlignItems": "CENTER",
-                        "itemSpacing": 4,
+                        "itemSpacing": 8,
                     },
-                    "clipsContent": False,
+                    "clipsContent": True,
+                    "_repetitionAllowed": "day strip 일정 셀 — 가로 스크롤 탐색",
                     "children": [day_cell(c) for c in day_strip],
                 },
             ],

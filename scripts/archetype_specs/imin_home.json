@@ -24,40 +24,46 @@
       ],
       "day_strip": [
         {
-          "day": "14일",
-          "value": "+24만",
-          "status": "예정",
-          "type": "default"
+          "weekday": "화",
+          "day": "12",
+          "value": "-32만",
+          "status": "미납",
+          "type": "overdue"
         },
         {
-          "day": "15일",
-          "value": "+18만",
-          "status": "오늘",
+          "weekday": "토",
+          "day": "18",
+          "value": "-45만",
+          "status": "오늘 납입",
           "type": "today"
         },
         {
-          "day": "16일",
-          "value": "+30만",
-          "status": "예정",
+          "weekday": "수",
+          "day": "22",
+          "value": "-30만",
+          "status": "납입",
           "type": "default"
         },
         {
-          "day": "17일",
-          "value": "+15만",
-          "status": "예정",
+          "weekday": "금",
+          "day": "25",
+          "value": "+260만",
+          "status": "지급",
+          "type": "receive"
+        },
+        {
+          "weekday": "월",
+          "day": "28",
+          "value": "-45만",
+          "status": "납입",
           "type": "default"
         },
         {
-          "day": "18일",
-          "value": "+22만",
-          "status": "예정",
-          "type": "default"
-        },
-        {
-          "day": "19일",
-          "value": "+28만",
-          "status": "예정",
-          "type": "default"
+          "weekday": "수",
+          "day": "30",
+          "value": "+18만",
+          "status": "지급",
+          "type": "receive"
         }
       ],
       "day_strip_title": "이번 달 일정"
