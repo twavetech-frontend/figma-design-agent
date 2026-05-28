@@ -24,11 +24,6 @@
     "value": 12,
     "type": "NUMBER"
   },
-  "--radius-lg": {
-    "figmaPath": "radius-lg",
-    "value": 12,
-    "type": "NUMBER"
-  },
   "--fontSize-2": {
     "figmaPath": "fontSize/2",
     "value": 16,

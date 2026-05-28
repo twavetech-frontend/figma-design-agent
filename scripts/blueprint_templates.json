@@ -64,7 +64,7 @@
     "TabBar": {
       "_description": "하단 탭 바. 5개 탭(홈/커뮤니티/스테이지/라운지/나). post-fix에서 ABSOLUTE 배치 + individual stroke 자동 적용.",
       "_variables": [
-        "activeTab: 활성 탭 이름 (활성 탭은 fg-brand-primary + SemiBold, 비활성은 fg-quaternary + Medium)",
+        "activeTab: 활성 탭 이름 (활성 탭은 fg-brand-primary + SemiBold, 비활성은 fg-secondary + Medium — fg-quaternary는 #f9fafb 거의 흰색이라 금지)",
         "tabIcons: 각 탭의 아이콘 이름 (기본: home-line, users-01, coins-stacked-01, building-08, user-01)",
         "tabLabels: 각 탭의 라벨 텍스트 (기본: 홈, 커뮤니티, 스테이지, 라운지, 나)"
       ],
@@ -138,7 +138,7 @@
                 "type": "icon",
                 "iconName": "users-01",
                 "size": 24,
-                "iconColor": "$token(fg-quaternary)"
+                "iconColor": "$token(fg-secondary)"
               },
               {
                 "name": "tab-comm-label",
@@ -146,7 +146,7 @@
                 "text": "커뮤니티",
                 "fontSize": 11,
                 "fontName": { "family": "Pretendard", "style": "Medium" },
-                "fontColor": "$token(fg-quaternary)",
+                "fontColor": "$token(fg-secondary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
               }
@@ -169,7 +169,7 @@
                 "type": "icon",
                 "iconName": "coins-stacked-01",
                 "size": 24,
-                "iconColor": "$token(fg-quaternary)"
+                "iconColor": "$token(fg-secondary)"
               },
               {
                 "name": "tab-stage-label",
@@ -177,7 +177,7 @@
                 "text": "스테이지",
                 "fontSize": 11,
                 "fontName": { "family": "Pretendard", "style": "Medium" },
-                "fontColor": "$token(fg-quaternary)",
+                "fontColor": "$token(fg-secondary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
               }
@@ -200,7 +200,7 @@
                 "type": "icon",
                 "iconName": "building-08",
                 "size": 24,
-                "iconColor": "$token(fg-quaternary)"
+                "iconColor": "$token(fg-secondary)"
               },
               {
                 "name": "tab-lounge-label",
@@ -208,7 +208,7 @@
                 "text": "라운지",
                 "fontSize": 11,
                 "fontName": { "family": "Pretendard", "style": "Medium" },
-                "fontColor": "$token(fg-quaternary)",
+                "fontColor": "$token(fg-secondary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
               }
@@ -231,7 +231,7 @@
                 "type": "icon",
                 "iconName": "user-01",
                 "size": 24,
-                "iconColor": "$token(fg-quaternary)"
+                "iconColor": "$token(fg-secondary)"
               },
               {
                 "name": "tab-me-label",
@@ -239,7 +239,7 @@
                 "text": "나",
                 "fontSize": 11,
                 "fontName": { "family": "Pretendard", "style": "Medium" },
-                "fontColor": "$token(fg-quaternary)",
+                "fontColor": "$token(fg-secondary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
               }
@@ -250,50 +250,41 @@
     },
 
     "FAB": {
-      "_description": "플로팅 액션 버튼. pill 형태 (120x44, cornerRadius 22). post-fix에서 ABSOLUTE 배치 자동 적용.",
+      "_description": "플로팅 액션 버튼. icon-only 원형 (56x56, cornerRadius 28). post-fix에서 ABSOLUTE 배치 자동 적용 (2026-05-27 사용자 룰).",
       "_variables": [
         "iconName: FAB 아이콘 (기본: wallet-02)",
-        "label: FAB 텍스트 (기본: 마이 월렛)",
         "fill: 배경색 (기본: $token(bg-brand-solid) — PRD에 특정 색상 지정 시 오버라이드)",
-        "textColor: 텍스트/아이콘 색상 (기본: $token(fg-white))"
+        "iconColor: 아이콘 색상 (기본: $token(fg-white))"
       ],
       "_notes": [
-        "post-fix가 자동 처리: ABSOLUTE 배치, x=253, 루트 하단 Tab Bar 위에 위치",
-        "56x56 원형 사용 금지 — 텍스트가 잘림. 반드시 pill 형태 120x44 사용",
-        "layoutSizingHorizontal은 HUG 유지 (post-fix가 width 복원)"
+        "post-fix가 자동 처리: ABSOLUTE 배치, x = root_width - 56 - 20 = 317 (우측 20px), y = (Tab Bar_y or content_bottom) - 56 - 20 (상단 20px gap)",
+        "icon-only 56x56 원형이 표준 (2026-05-27). 라벨 필요 시 별도 pill variant 사용",
+        "Tab Bar 있으면 그 위 20px gap, 없으면 마지막 bottom 요소 위 20px gap"
       ],
       "template": {
         "name": "FAB",
         "type": "frame",
-        "width": 120,
-        "height": 44,
-        "cornerRadius": 22,
+        "width": 56,
+        "height": 56,
+        "cornerRadius": 28,
         "fill": "$token(bg-brand-solid)",
         "autoLayout": {
           "layoutMode": "HORIZONTAL",
           "primaryAxisAlignItems": "CENTER",
           "counterAxisAlignItems": "CENTER",
-          "paddingTop": 13,
-          "paddingBottom": 13,
-          "paddingLeft": 16,
-          "paddingRight": 16,
-          "itemSpacing": 6
+          "paddingTop": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "paddingRight": 0,
+          "itemSpacing": 0
         },
         "children": [
           {
             "name": "fab-icon",
             "type": "icon",
             "iconName": "wallet-02",
-            "size": 18,
+            "size": 24,
             "iconColor": "$token(fg-white)"
-          },
-          {
-            "name": "fab-text",
-            "type": "text",
-            "text": "마이 월렛",
-            "fontSize": 14,
-            "fontName": { "family": "Pretendard", "style": "Bold" },
-            "fontColor": "$token(fg-white)"
           }
         ]
       }
@@ -305,7 +296,6 @@
         "bannerCount: 배너 카드 수 (기본: 3)",
         "bannerHeight: 배너 높이 (기본: 180, 범위 162~200)",
         "bannerCards[].fill: 각 배너 배경색 (서로 다른 색상 사용)",
-        "bannerCards[].imageGen: 각 배너 이미지 프롬프트",
         "bannerCards[].tag: 태그 텍스트 (EVENT, HOT, NEW 등)",
         "bannerCards[].subText: 서브 텍스트",
         "bannerCards[].title: 메인 제목",
@@ -316,8 +306,7 @@
         "Hero Section paddingLeft/Right=0 — 좌우 패딩은 Carousel의 paddingLeft=20으로 대체",
         "Banner Carousel clipsContent: true 필수 — 2번째 배너가 우측에 8px peek",
         "배너 카드는 FIXED 사이징 (353xbannerHeight) — FILL 사용 금지",
-        "배너 텍스트 width: 160 — 우측 이미지 영역과 겹침 방지",
-        "imageGen.isHero: true — 반드시 Banner Card에 적용, Section이나 Carousel에 적용 금지"
+        "배너 텍스트 width: 160 — 우측 이미지 영역과 겹침 방지"
       ],
       "template": {
         "name": "Hero Section",
@@ -368,10 +357,6 @@
                   "itemSpacing": 6,
                   "primaryAxisAlignItems": "MIN",
                   "counterAxisAlignItems": "MIN"
-                },
-                "imageGen": {
-                  "prompt": "{{VARIABLE: 히어로 이미지 프롬프트. right side composition, left half empty 포함 필수}}",
-                  "isHero": true
                 },
                 "children": [
                   {
@@ -435,10 +420,6 @@
                   "primaryAxisAlignItems": "MIN",
                   "counterAxisAlignItems": "MIN"
                 },
-                "imageGen": {
-                  "prompt": "{{VARIABLE: 히어로 이미지 프롬프트}}",
-                  "isHero": true
-                },
                 "children": [
                   {
                     "name": "b2-tag",
@@ -500,10 +481,6 @@
                   "itemSpacing": 6,
                   "primaryAxisAlignItems": "MIN",
                   "counterAxisAlignItems": "MIN"
-                },
-                "imageGen": {
-                  "prompt": "{{VARIABLE: 히어로 이미지 프롬프트}}",
-                  "isHero": true
                 },
                 "children": [
                   {

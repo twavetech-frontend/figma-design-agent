@@ -1,12 +1,12 @@
 {
   "source": "https://twavetech-frontend.github.io/design-system-docs",
-  "lastFetched": "2026-04-21T03:11:46.750Z",
+  "lastFetched": "2026-05-27T10:17:03.203Z",
   "foundation": [
     {
       "name": "Colors",
       "category": "foundation",
       "path": "/design-system-docs/foundation/colors",
-      "description": "클릭하면 ���을 복사할 수 있습니다.",
+      "description": "클릭하면 값을 복사할 수 있습니다.",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -28,7 +28,7 @@
       "name": "Typography",
       "category": "foundation",
       "path": "/design-system-docs/foundation/typography",
-      "description": "DS-1의 타이포그래피 시스템은 Pretendard 폰트를 기반으로 하며,",
+      "description": "아임인의 타이포그래피 시스템은 Pretendard 폰트를 기반으로 하며,",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -39,7 +39,7 @@
       "name": "Spacing",
       "category": "foundation",
       "path": "/design-system-docs/foundation/spacing",
-      "description": "DS-1의 간격 시스템은 4px 배수 기반의 Primitive와 용도 기반 Semantic 토큰으로 구성됩니다.",
+      "description": "아임인의 간격 시스템은 4px 배수 기반의 Primitive와 용도 기반 Semantic 토큰으로 구성됩니다.",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -50,7 +50,7 @@
       "name": "Radius",
       "category": "foundation",
       "path": "/design-system-docs/foundation/radius",
-      "description": "DS-1의 모서리 둥글기(Border Radius) 토큰입니다.",
+      "description": "아임인의 모서리 둥글기(Border Radius) 토큰입니다.",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -61,7 +61,7 @@
       "name": "Grid & Layout",
       "category": "foundation",
       "path": "/design-system-docs/foundation/grid",
-      "description": "DS-1의 반응형 그리드 시스템입니다.",
+      "description": "아임인의 반응형 그리드 시스템입니다.",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -72,7 +72,7 @@
       "name": "Effects",
       "category": "foundation",
       "path": "/design-system-docs/foundation/effects",
-      "description": "DS-1의 이펙트 시스템은 Shadows, Focus Rings, Backdrop Blurs로 구성됩니다.",
+      "description": "아임인의 이펙트 시스템은 Shadows, Focus Rings, Backdrop Blurs로 구성됩니다.",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -96,7 +96,7 @@
       "name": "Action Button",
       "category": "components",
       "path": "/design-system-docs/components/buttons/action-button",
-      "description": "가장 일반적으��� 사용되는 버튼 컴포넌트입니다.",
+      "description": "가장 일반적으로 사용되는 버튼 컴포넌트입니다.",
       "figmaComponentName": "Buttons/Button",
       "variants": [
         {
@@ -123,13 +123,13 @@
       "props": [
         {
           "name": "variant",
-          "type": "primary | secondary | tertiary | link-color | link-gray",
+          "type": "primary | secondary | tertiary | outline | ghost",
           "values": [
             "primary",
             "secondary",
             "tertiary",
-            "link-color",
-            "link-gray"
+            "outline",
+            "ghost"
           ],
           "default": "primary"
         },
@@ -146,10 +146,11 @@
         },
         {
           "name": "state",
-          "type": "default | hover | focused | disabled",
+          "type": "default | hover | active | focused | disabled",
           "values": [
             "default",
             "hover",
+            "active",
             "focused",
             "disabled"
           ],
@@ -194,8 +195,8 @@
       ],
       "figmaVariants": [
         "Size: sm md lg xl",
-        "Hierarchy: Primary Secondary Tertiary Link color Link gray",
-        "State: Default Hover Focused Disabled Loading",
+        "Hierarchy: Primary Secondary Tertiary Outline Ghost",
+        "State: Default Hover Active Focused Disabled Loading",
         "Icon only: True False"
       ],
       "usageGuidelines": null
@@ -205,7 +206,7 @@
       "category": "components",
       "path": "/design-system-docs/components/buttons/destructive-button",
       "description": "삭제, 해제, 초기화 등 되돌리기 어려운 위험한 액션 에 사용하는 버튼입니다.",
-      "figmaComponentName": "Buttons/Button destructive",
+      "figmaComponentName": "Buttons/destructive",
       "variants": [
         {
           "name": "Hierarchy",
@@ -226,12 +227,12 @@
       "props": [
         {
           "name": "variant",
-          "type": "destructive-primary | destructive-secondary | destructive-tertiary | destructive-link",
+          "type": "destructive-primary | destructive-secondary | destructive-tertiary | destructive-ghost",
           "values": [
             "destructive-primary",
             "destructive-secondary",
             "destructive-tertiary",
-            "destructive-link"
+            "destructive-ghost"
           ],
           "default": null
         },
@@ -245,6 +246,18 @@
             "xl"
           ],
           "default": "md"
+        },
+        {
+          "name": "state",
+          "type": "default | hover | active | focused | disabled",
+          "values": [
+            "default",
+            "hover",
+            "active",
+            "focused",
+            "disabled"
+          ],
+          "default": "default"
         },
         {
           "name": "disabled",
@@ -267,8 +280,8 @@
       ],
       "figmaVariants": [
         "Size: sm md lg xl",
-        "Hierarchy: Primary Secondary Tertiary Link",
-        "State: Default Hover Focused Disabled Loading",
+        "Hierarchy: Primary Secondary Tertiary Ghost",
+        "State: Default Hover Active Focused Disabled Loading",
         "Icon only: True False"
       ],
       "usageGuidelines": null
@@ -343,6 +356,11 @@
           "subVariants": []
         },
         {
+          "name": "Size",
+          "description": "",
+          "subVariants": []
+        },
+        {
           "name": "States - Secondary",
           "description": "",
           "subVariants": []
@@ -383,6 +401,157 @@
         "Size: xs sm",
         "Hierarchy: Secondary Tertiary",
         "State: Default Hover Focused Disabled"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Social Button",
+      "category": "components",
+      "path": "/design-system-docs/components/buttons/social-button",
+      "description": "OAuth 소셜 로그인 플로우에 사용하는 버튼입니다. Google, Facebook, Apple, X(Twitter)를 지원합니다.",
+      "figmaComponentName": "Social button",
+      "variants": [
+        {
+          "name": "Theme",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Icon Only",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "States",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Groups",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "social",
+          "type": "google | facebook | apple | twitter",
+          "values": [
+            "google",
+            "facebook",
+            "apple",
+            "twitter"
+          ],
+          "default": "google"
+        },
+        {
+          "name": "theme",
+          "type": "brand | color | gray",
+          "values": [
+            "brand",
+            "color",
+            "gray"
+          ],
+          "default": "brand"
+        },
+        {
+          "name": "supportingText",
+          "type": "boolean",
+          "values": [],
+          "default": "true"
+        },
+        {
+          "name": "state",
+          "type": "default | hover | focused | disabled",
+          "values": [
+            "default",
+            "hover",
+            "focused",
+            "disabled"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "values": [],
+          "default": null
+        }
+      ],
+      "figmaVariants": [
+        "Social: Google Facebook Apple Twitter",
+        "Theme: Brand Color Gray",
+        "Supporting text: True False",
+        "State: Default Hover Focused",
+        "Style: Buttons Icons",
+        "Theme: Brand Color Gray"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "App Store Button",
+      "category": "components",
+      "path": "/design-system-docs/components/buttons/app-store-button",
+      "description": "모바일 앱 배포 링크에 사용하는 뱃지형 버튼입니다. Google Play, App Store, Mac App Store, Galaxy Store, AppGallery를 지원합니다.",
+      "figmaComponentName": "Mobile app store badge",
+      "variants": [
+        {
+          "name": "Store",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Style",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Size",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "주의사항",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "store",
+          "type": "google-play | app-store | mac-app-store | galaxy-store | appgallery",
+          "values": [
+            "google-play",
+            "app-store",
+            "mac-app-store",
+            "galaxy-store",
+            "appgallery"
+          ],
+          "default": "google-play"
+        },
+        {
+          "name": "style",
+          "type": "brand | outline",
+          "values": [
+            "brand",
+            "outline"
+          ],
+          "default": "brand"
+        },
+        {
+          "name": "size",
+          "type": "md | lg",
+          "values": [
+            "md",
+            "lg"
+          ],
+          "default": "md"
+        }
+      ],
+      "figmaVariants": [
+        "Store: Google Play App Store Mac App Store Galaxy Store AppGallery",
+        "Style: Brand Outline",
+        "Size: md lg"
       ],
       "usageGuidelines": null
     },
@@ -483,6 +652,100 @@
         "Icon: False Leading Dot Only",
         "State: Default Hover Focused Disabled",
         "Icon: False Leading Only"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Link",
+      "category": "components",
+      "path": "/design-system-docs/components/link",
+      "description": "텍스트 형태의 링크 컴포넌트입니다. 본문 흐름 중간, 푸터, 카드 등 별도의 컨테이너 없이 액션을 제공할 때 사용합니다.",
+      "figmaComponentName": "Base components → Link",
+      "variants": [
+        {
+          "name": "Color",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Size",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "States",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Icon 없는 경우",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "color",
+          "type": "brand | gray",
+          "values": [
+            "brand",
+            "gray"
+          ],
+          "default": "brand"
+        },
+        {
+          "name": "destructive",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "size",
+          "type": "sm | md | lg | xl",
+          "values": [
+            "sm",
+            "md",
+            "lg",
+            "xl"
+          ],
+          "default": "md"
+        },
+        {
+          "name": "state",
+          "type": "default | hover | focused | disabled",
+          "values": [
+            "default",
+            "hover",
+            "focused",
+            "disabled"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "showIcon",
+          "type": "boolean",
+          "values": [],
+          "default": "true"
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;#&#x27;"
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "values": [],
+          "default": "&#x27;Click to Download&#x27;"
+        }
+      ],
+      "figmaVariants": [
+        "Size: sm md lg xl",
+        "Color: Link color Link gray",
+        "State: Default Hover Focused Disabled",
+        "Size: sm md lg xl",
+        "State: Default Hover Focused Disabled"
       ],
       "usageGuidelines": null
     },
@@ -671,6 +934,18 @@
           "default": "5"
         },
         {
+          "name": "avatarSrc",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "flagSrc",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
           "name": "onClose",
           "type": "() =&gt; void",
           "values": [],
@@ -721,6 +996,11 @@
         },
         {
           "name": "Textarea",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Verification Code Input",
           "description": "",
           "subVariants": []
         }
@@ -828,8 +1108,11 @@
         },
         {
           "name": "tags",
-          "type": "string[]",
-          "values": [],
+          "type": "Array&lt;string | { label: string, avatarSrc?: string }&gt;",
+          "values": [
+            "Array&lt;string",
+            "{ label: string, avatarSrc?: string }&gt;"
+          ],
           "default": "[]"
         },
         {
@@ -899,6 +1182,59 @@
           "type": "string[]",
           "values": [],
           "default": "[]"
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;&#x27;"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;sm&#x27; | &#x27;md&#x27; | &#x27;lg&#x27;",
+          "values": [
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;",
+            "&#x27;lg&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "digits",
+          "type": "4 | 6",
+          "values": [
+            "4",
+            "6"
+          ],
+          "default": "4"
+        },
+        {
+          "name": "state",
+          "type": "&#x27;default&#x27; | &#x27;focused&#x27; | &#x27;disabled&#x27;",
+          "values": [
+            "&#x27;default&#x27;",
+            "&#x27;focused&#x27;",
+            "&#x27;disabled&#x27;"
+          ],
+          "default": "&#x27;default&#x27;"
+        },
+        {
+          "name": "destructive",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "hint",
+          "type": "string",
+          "values": [],
+          "default": null
         }
       ],
       "figmaVariants": [
@@ -908,7 +1244,9 @@
         "State: Placeholder Filled Focused Disabled",
         "Type: Default Tags",
         "Destructive: True False",
-        "State: Placeholder Default Focused Disabled"
+        "State: Placeholder Default Focused Disabled",
+        "Size: sm md lg",
+        "Digits: 4 6"
       ],
       "usageGuidelines": null
     },
@@ -990,6 +1328,127 @@
         "Pressed: True False",
         "State: Default Hover Focus Disabled",
         "Text: True False"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Sliders",
+      "category": "components",
+      "path": "/design-system-docs/components/sliders",
+      "description": "Slider는 최솟값~최댓값 범위에서 단일 값 또는 범위를 선택하는 컴포넌트입니다. 트랙을 클릭하거나 핸들을 드래그해서 값을 조정할 수 있습니다.",
+      "figmaComponentName": "Slider",
+      "variants": [
+        {
+          "name": "Single value",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Range",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Label",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Handle types",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Min / Max / Step",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "number | [number, number]",
+          "values": [
+            "number",
+            "[number, number]"
+          ],
+          "default": null
+        },
+        {
+          "name": "defaultValue",
+          "type": "number | [number, number]",
+          "values": [
+            "number",
+            "[number, number]"
+          ],
+          "default": "50 / [25, 75]"
+        },
+        {
+          "name": "range",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "values": [],
+          "default": "0"
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "values": [],
+          "default": "100"
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "values": [],
+          "default": "1"
+        },
+        {
+          "name": "label",
+          "type": "false | &#x27;bottom&#x27; | &#x27;top-floating&#x27;",
+          "values": [
+            "false",
+            "&#x27;bottom&#x27;",
+            "&#x27;top-floating&#x27;"
+          ],
+          "default": "false"
+        },
+        {
+          "name": "handleType",
+          "type": "&#x27;plain&#x27; | &#x27;text&#x27; | &#x27;tooltip&#x27;",
+          "values": [
+            "&#x27;plain&#x27;",
+            "&#x27;text&#x27;",
+            "&#x27;tooltip&#x27;"
+          ],
+          "default": "&#x27;plain&#x27;"
+        },
+        {
+          "name": "width",
+          "type": "number | string",
+          "values": [
+            "number",
+            "string"
+          ],
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "type": "(value) =&gt; void",
+          "values": [],
+          "default": null
+        }
+      ],
+      "figmaVariants": [
+        "Label: False Bottom Top floating",
+        "Right control: 25% 50% 75% 100%",
+        "Left control: 0% 25% 50% 75%",
+        "Type: False Text Tooltip",
+        "State: Default Hover Focused"
       ],
       "usageGuidelines": null
     },
@@ -1090,16 +1549,6 @@
           "name": "Dropdown Menu",
           "description": "",
           "subVariants": []
-        },
-        {
-          "name": "Select",
-          "description": "",
-          "subVariants": []
-        },
-        {
-          "name": "Select Menu Items",
-          "description": "",
-          "subVariants": []
         }
       ],
       "props": [
@@ -1127,6 +1576,12 @@
         },
         {
           "name": "avatarText",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "avatarSrc",
           "type": "string",
           "values": [],
           "default": null
@@ -1164,9 +1619,89 @@
             "disabled"
           ],
           "default": "default"
+        }
+      ],
+      "figmaVariants": [
+        "Type: Button Icon Avatar",
+        "Open: True False",
+        "Icon: True False",
+        "Checkbox: True False",
+        "State: Default Hover/active Disabled",
+        "Divider: True False",
+        "Type: Avatar group Header"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Selects",
+      "category": "components",
+      "path": "/design-system-docs/components/selects",
+      "description": "Select는 사용자가 정해진 목록에서 값을 선택하는 입력 컴포넌트입니다. 라벨, 컨트롤(input), 힌트 텍스트로 구성되며, 펼친 상태에서는 아래에 메뉴 패널이 부착됩니다.",
+      "figmaComponentName": null,
+      "variants": [
+        {
+          "name": "사이즈",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "상태",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "타입",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Select Menu Item",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "size",
+          "type": "&#x27;sm&#x27; | &#x27;md&#x27;",
+          "values": [
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "state",
+          "type": "&#x27;default&#x27; | &#x27;placeholder&#x27; | &#x27;focused&#x27; | &#x27;disabled&#x27; | &#x27;open&#x27;",
+          "values": [
+            "&#x27;default&#x27;",
+            "&#x27;placeholder&#x27;",
+            "&#x27;focused&#x27;",
+            "&#x27;disabled&#x27;",
+            "&#x27;open&#x27;"
+          ],
+          "default": "자동"
         },
         {
           "name": "label",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "helpIcon",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "hint",
           "type": "string",
           "values": [],
           "default": null
@@ -1184,24 +1719,10 @@
           "default": null
         },
         {
-          "name": "size",
-          "type": "sm | md",
-          "values": [
-            "sm",
-            "md"
-          ],
-          "default": "md"
-        },
-        {
-          "name": "state",
-          "type": "default | focused | disabled | open",
-          "values": [
-            "default",
-            "focused",
-            "disabled",
-            "open"
-          ],
-          "default": "default"
+          "name": "supportingText",
+          "type": "string",
+          "values": [],
+          "default": null
         },
         {
           "name": "leadingIcon",
@@ -1211,13 +1732,13 @@
         },
         {
           "name": "leadingAvatar",
-          "type": "boolean",
+          "type": "string (URL)",
           "values": [],
-          "default": "false"
+          "default": null
         },
         {
           "name": "leadingDot",
-          "type": "string",
+          "type": "string (color)",
           "values": [],
           "default": null
         },
@@ -1228,10 +1749,47 @@
           "default": "false"
         },
         {
-          "name": "tags",
-          "type": "string[]",
+          "name": "shortcut",
+          "type": "string",
           "values": [],
-          "default": "[]"
+          "default": null
+        },
+        {
+          "name": "tags",
+          "type": "(string | { label, avatar })[]",
+          "values": [
+            "(string",
+            "{ label, avatar })[]"
+          ],
+          "default": null
+        },
+        {
+          "name": "maxHeight",
+          "type": "string | number",
+          "values": [
+            "string",
+            "number"
+          ],
+          "default": "320px"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;sm&#x27; | &#x27;md&#x27;",
+          "values": [
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "state",
+          "type": "&#x27;default&#x27; | &#x27;hover&#x27; | &#x27;disabled&#x27;",
+          "values": [
+            "&#x27;default&#x27;",
+            "&#x27;hover&#x27;",
+            "&#x27;disabled&#x27;"
+          ],
+          "default": "&#x27;default&#x27;"
         },
         {
           "name": "selected",
@@ -1258,6 +1816,12 @@
           "default": null
         },
         {
+          "name": "avatarSrc",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
           "name": "dot",
           "type": "string",
           "values": [],
@@ -1271,8 +1835,6 @@
         }
       ],
       "figmaVariants": [
-        "Type: Button Icon Avatar",
-        "Open: True False",
         "Size: sm md",
         "Type: Default Icon leading Avatar leading Dot leading Search Tags",
         "State: Default Placeholder Focused Disabled Open",
@@ -1280,6 +1842,1686 @@
         "Selected: True False",
         "Type: Default Icon leading Avatar leading Dot leading",
         "State: Default Hover Disabled"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Checkboxes",
+      "category": "components",
+      "path": "/design-system-docs/components/checkboxes",
+      "description": "Checkbox는 사용자가 하나 이상의 항목을 선택하거나 옵션을 켜고 끌 수 있는 컨트롤입니다.",
+      "figmaComponentName": "Base components/Checkboxes",
+      "variants": [
+        {
+          "name": "Type: Checkbox",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Type: Radio",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Size",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Indeterminate",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "type",
+          "type": "&#x27;checkbox&#x27; | &#x27;radio&#x27;",
+          "values": [
+            "&#x27;checkbox&#x27;",
+            "&#x27;radio&#x27;"
+          ],
+          "default": "&#x27;checkbox&#x27;"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;sm&#x27; | &#x27;md&#x27;",
+          "values": [
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;"
+          ],
+          "default": "&#x27;sm&#x27;"
+        },
+        {
+          "name": "checked",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "indeterminate",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "state",
+          "type": "&#x27;default&#x27; | &#x27;hover&#x27; | &#x27;focus&#x27; | &#x27;disabled&#x27;",
+          "values": [
+            "&#x27;default&#x27;",
+            "&#x27;hover&#x27;",
+            "&#x27;focus&#x27;",
+            "&#x27;disabled&#x27;"
+          ],
+          "default": "&#x27;default&#x27;"
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "values": [],
+          "default": null
+        }
+      ],
+      "figmaVariants": [
+        "Checked: True False",
+        "Indeterminate: True False",
+        "Size: sm md",
+        "Type: Checkbox Radio",
+        "Text: True False",
+        "State: Default Hover Focused Disabled"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Radio Group",
+      "category": "components",
+      "path": "/design-system-docs/components/radio-group",
+      "description": "라디오 그룹은 여러 선택지 중 하나만 고를 수 있는 입력 컴포넌트입니다. 각 옵션은 카드 형태로 제목, 설명, 가격 등 부가 정보를 표시할 수 있습니다.",
+      "figmaComponentName": "Radio group",
+      "variants": [
+        {
+          "name": "Radio button",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Icon simple",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Icon card",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Disabled",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "type",
+          "type": "&#x27;radio&#x27; | &#x27;icon-simple&#x27; | &#x27;icon-card&#x27;",
+          "values": [
+            "&#x27;radio&#x27;",
+            "&#x27;icon-simple&#x27;",
+            "&#x27;icon-card&#x27;"
+          ],
+          "default": "&#x27;radio&#x27;"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;sm&#x27; | &#x27;md&#x27;",
+          "values": [
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;"
+          ],
+          "default": "&#x27;sm&#x27;"
+        },
+        {
+          "name": "items",
+          "type": "Item[]",
+          "values": [],
+          "default": "[]"
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "defaultValue",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "type": "(value, item) =&gt; void",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "subTitle",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "icon",
+          "type": "ReactNode",
+          "values": [],
+          "default": "기본 SVG"
+        },
+        {
+          "name": "price",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "pricePeriod",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "badge",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "selected",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        }
+      ],
+      "figmaVariants": [
+        "Type: Radio button Checkbox Icon simple Icon card Avatar Payment icon",
+        "Size: sm md",
+        "Selected: True False",
+        "State: Default Hover Focused Disabled",
+        "Breakpoint: Desktop Mobile"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Segmented Control",
+      "category": "components",
+      "path": "/design-system-docs/components/segmented-control",
+      "description": "세그먼티드 컨트롤은 서로 배타적인 옵션 중 하나를 선택하는 컴포넌트입니다. 짧은 옵션 그룹에서 현재 선택을 명확히 보여줄 때 적합합니다.",
+      "figmaComponentName": "Segmented_control",
+      "variants": [
+        {
+          "name": "Hug",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Fill",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Number of segments",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Sizes",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "items",
+          "type": "{ label: string, current?: boolean }[]",
+          "values": [],
+          "default": "[]"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;sm&#x27; | &#x27;md&#x27;",
+          "values": [
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "fullWidth",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "onChange",
+          "type": "(item, index) =&gt; void",
+          "values": [],
+          "default": null
+        }
+      ],
+      "figmaVariants": [
+        "Style: hug fill",
+        "Size: sm md",
+        "Active: on off"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Avatars",
+      "category": "components",
+      "path": "/design-system-docs/components/avatars",
+      "description": "아바타는 사용자나 조직을 시각적으로 식별하는 작은 이미지/이니셜입니다. 프로필, 댓글, 멤버 목록 등에서 사용합니다.",
+      "figmaComponentName": "Avatar",
+      "variants": [
+        {
+          "name": "Sizes",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Initials",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Placeholder",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Status indicator",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Avatar Group",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Avatar Label Group",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "src",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "alt",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "initials",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "size",
+          "type": "&#x27;xs&#x27; | &#x27;sm&#x27; | &#x27;md&#x27; | &#x27;lg&#x27; | &#x27;xl&#x27; | &#x27;2xl&#x27;",
+          "values": [
+            "&#x27;xs&#x27;",
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;",
+            "&#x27;lg&#x27;",
+            "&#x27;xl&#x27;",
+            "&#x27;2xl&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "status",
+          "type": "&#x27;online&#x27; | &#x27;verified&#x27; | &#x27;company&#x27;",
+          "values": [
+            "&#x27;online&#x27;",
+            "&#x27;verified&#x27;",
+            "&#x27;company&#x27;"
+          ],
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "avatars",
+          "type": "AvatarItem[]",
+          "values": [],
+          "default": "[]"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;xs&#x27; | &#x27;sm&#x27; | &#x27;md&#x27; | &#x27;lg&#x27; | &#x27;xl&#x27; | &#x27;2xl&#x27;",
+          "values": [
+            "&#x27;xs&#x27;",
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;",
+            "&#x27;lg&#x27;",
+            "&#x27;xl&#x27;",
+            "&#x27;2xl&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "values": [],
+          "default": "5"
+        },
+        {
+          "name": "showAddButton",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "onAdd",
+          "type": "() =&gt; void",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "src",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "initials",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "size",
+          "type": "&#x27;sm&#x27; | &#x27;md&#x27; | &#x27;lg&#x27; | &#x27;xl&#x27; | &#x27;2xl&#x27;",
+          "values": [
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;",
+            "&#x27;lg&#x27;",
+            "&#x27;xl&#x27;",
+            "&#x27;2xl&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "status",
+          "type": "&#x27;online&#x27; | &#x27;verified&#x27; | &#x27;company&#x27;",
+          "values": [
+            "&#x27;online&#x27;",
+            "&#x27;verified&#x27;",
+            "&#x27;company&#x27;"
+          ],
+          "default": null
+        },
+        {
+          "name": "placeholder",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        }
+      ],
+      "figmaVariants": [
+        "Size: xs sm md lg xl 2xl",
+        "Placeholder: True False",
+        "Text: True False (이니셜 표시 여부)",
+        "Status icon: False Online indicator Company Verified",
+        "Breakpoint: Desktop Mobile"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Tooltip",
+      "category": "components",
+      "path": "/design-system-docs/components/tooltip",
+      "description": "툴팁은 요소에 마우스를 올리거나 포커스했을 때 짧은 설명을 보여주는 작은 팝오버입니다. 아이콘의 의미, 기능, 단축키 같은 부가 정보를 간결하게 전달할 때 사용합니다.",
+      "figmaComponentName": "Tooltip",
+      "variants": [
+        {
+          "name": "Default",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "With supporting text",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Placements",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Without arrow",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Always open",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "placement",
+          "type": "&#x27;top&#x27; | &#x27;top-start&#x27; | &#x27;top-end&#x27; | &#x27;bottom&#x27; | &#x27;bottom-start&#x27; | &#x27;bottom-end&#x27; | &#x27;left&#x27; | &#x27;right&#x27;",
+          "values": [
+            "&#x27;top&#x27;",
+            "&#x27;top-start&#x27;",
+            "&#x27;top-end&#x27;",
+            "&#x27;bottom&#x27;",
+            "&#x27;bottom-start&#x27;",
+            "&#x27;bottom-end&#x27;",
+            "&#x27;left&#x27;",
+            "&#x27;right&#x27;"
+          ],
+          "default": "&#x27;top&#x27;"
+        },
+        {
+          "name": "arrow",
+          "type": "boolean",
+          "values": [],
+          "default": "true"
+        },
+        {
+          "name": "open",
+          "type": "boolean",
+          "values": [],
+          "default": null
+        }
+      ],
+      "figmaVariants": [
+        "Supporting text: True False",
+        "Arrow: None Top center Bottom center Top left Top right Bottom left Bottom right Left Right"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Date Pickers",
+      "category": "components",
+      "path": "/design-system-docs/components/date-pickers",
+      "description": "날짜 또는 기간을 선택하는 컴포넌트입니다. 단일 날짜 선택과 기간(시작/종료) 선택 두 가지 형태를 제공합니다.",
+      "figmaComponentName": "Date pickers",
+      "variants": [
+        {
+          "name": "Single date",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Dual dates",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Trigger (input)",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Calendar cell variants",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "type",
+          "type": "&#x27;single&#x27; | &#x27;dual&#x27;",
+          "values": [
+            "&#x27;single&#x27;",
+            "&#x27;dual&#x27;"
+          ],
+          "default": "&#x27;single&#x27;"
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;Select dates&#x27;"
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "defaultOpen",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "type",
+          "type": "&#x27;single&#x27; | &#x27;dual&#x27;",
+          "values": [
+            "&#x27;single&#x27;",
+            "&#x27;dual&#x27;"
+          ],
+          "default": "&#x27;single&#x27;"
+        },
+        {
+          "name": "initialMonth",
+          "type": "Date",
+          "values": [],
+          "default": "Jan 2025"
+        },
+        {
+          "name": "initialDate",
+          "type": "Date",
+          "values": [],
+          "default": "Jan 10, 2025"
+        },
+        {
+          "name": "initialRange",
+          "type": "[Date, Date]",
+          "values": [],
+          "default": "[Jan 10, Jan 16]"
+        },
+        {
+          "name": "selectedPreset",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;Last week&#x27;"
+        },
+        {
+          "name": "today",
+          "type": "Date",
+          "values": [],
+          "default": "Jan 1, 2025"
+        },
+        {
+          "name": "dotDates",
+          "type": "Date[]",
+          "values": [],
+          "default": "[]"
+        }
+      ],
+      "figmaVariants": [
+        "Type: Single date Dual dates",
+        "Breakpoint: Desktop Mobile",
+        "Opened: True False",
+        "Type: Single date Dual dates",
+        "State: Placeholder Active",
+        "Breakpoint: Desktop Mobile",
+        "Type: Default Today&#x27;s date Selected Active",
+        "State: Default Hover Disabled",
+        "Selected: True False",
+        "State: Default Hover Focused"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Table",
+      "category": "components",
+      "path": "/design-system-docs/components/table",
+      "description": "테이블은 정렬·필터링·선택 가능한 행 형태로 데이터를 표시하는 컴포넌트입니다. 사용자, 회사, 파일, 거래 내역 등 구조화된 데이터를 한눈에 보여줄 때 사용합니다.",
+      "figmaComponentName": "Table",
+      "variants": [
+        {
+          "name": "Default",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Selectable rows",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Sizes",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Custom cell render",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Sortable header",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Empty state",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "StatusBadge",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "columns",
+          "type": "Column[]",
+          "values": [],
+          "default": "[]"
+        },
+        {
+          "name": "data",
+          "type": "object[]",
+          "values": [],
+          "default": "[]"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;sm&#x27; | &#x27;md&#x27; | &#x27;lg&#x27;",
+          "values": [
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;",
+            "&#x27;lg&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "selectable",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "onSelect",
+          "type": "(indices: number[]) =&gt; void",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "emptyText",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;데이터가 없습니다.&#x27;"
+        },
+        {
+          "name": "key",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "header",
+          "type": "ReactNode",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "render",
+          "type": "(row, index) =&gt; ReactNode",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "align",
+          "type": "&#x27;left&#x27; | &#x27;center&#x27; | &#x27;right&#x27;",
+          "values": [
+            "&#x27;left&#x27;",
+            "&#x27;center&#x27;",
+            "&#x27;right&#x27;"
+          ],
+          "default": "&#x27;left&#x27;"
+        },
+        {
+          "name": "width",
+          "type": "string | number",
+          "values": [
+            "string",
+            "number"
+          ],
+          "default": null
+        },
+        {
+          "name": "sort",
+          "type": "&#x27;asc&#x27; | &#x27;desc&#x27; | &#x27;none&#x27;",
+          "values": [
+            "&#x27;asc&#x27;",
+            "&#x27;desc&#x27;",
+            "&#x27;none&#x27;"
+          ],
+          "default": null
+        },
+        {
+          "name": "variant",
+          "type": "&#x27;gray&#x27; | &#x27;success&#x27; | &#x27;warning&#x27; | &#x27;error&#x27; | &#x27;brand&#x27; | &#x27;info&#x27;",
+          "values": [
+            "&#x27;gray&#x27;",
+            "&#x27;success&#x27;",
+            "&#x27;warning&#x27;",
+            "&#x27;error&#x27;",
+            "&#x27;brand&#x27;",
+            "&#x27;info&#x27;"
+          ],
+          "default": "&#x27;gray&#x27;"
+        },
+        {
+          "name": "dot",
+          "type": "boolean",
+          "values": [],
+          "default": "true"
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "src",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "initials",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "avatarSize",
+          "type": "number",
+          "values": [],
+          "default": "32"
+        }
+      ],
+      "figmaVariants": [
+        "Size: sm md lg",
+        "Cell type: Text Avatar Badge Badges multiple Avatar group Action buttons Action icons Trend positive Trend negative Progress bar Star ratings Select dropdown Calendar File type icon Payment method",
+        "Header: Text=True/False Checkbox=True/False Help icon Arrow=Up/Down/Chevron",
+        "Dividers: Divider line Alternating fills",
+        "Breakpoint: Desktop Mobile"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Pagination",
+      "category": "components",
+      "path": "/design-system-docs/components/pagination",
+      "description": "Pagination은 긴 목록이나 검색 결과를 여러 페이지로 나눠 탐색하는 네비게이션 컴포넌트입니다.",
+      "figmaComponentName": "Pagination",
+      "variants": [
+        {
+          "name": "Page",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Card",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Shape",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Interactive",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "type",
+          "type": "&#x27;page-default&#x27; | &#x27;page-minimal&#x27; | &#x27;card-default&#x27; | &#x27;card-minimal&#x27; | &#x27;card-button-group&#x27;",
+          "values": [
+            "&#x27;page-default&#x27;",
+            "&#x27;page-minimal&#x27;",
+            "&#x27;card-default&#x27;",
+            "&#x27;card-minimal&#x27;",
+            "&#x27;card-button-group&#x27;"
+          ],
+          "default": "&#x27;page-default&#x27;"
+        },
+        {
+          "name": "align",
+          "type": "&#x27;left&#x27; | &#x27;center&#x27; | &#x27;right&#x27;",
+          "values": [
+            "&#x27;left&#x27;",
+            "&#x27;center&#x27;",
+            "&#x27;right&#x27;"
+          ],
+          "default": "&#x27;center&#x27;"
+        },
+        {
+          "name": "shape",
+          "type": "&#x27;square&#x27; | &#x27;circle&#x27;",
+          "values": [
+            "&#x27;square&#x27;",
+            "&#x27;circle&#x27;"
+          ],
+          "default": "&#x27;square&#x27;"
+        },
+        {
+          "name": "currentPage",
+          "type": "number",
+          "values": [],
+          "default": "1"
+        },
+        {
+          "name": "totalPages",
+          "type": "number",
+          "values": [],
+          "default": "10"
+        },
+        {
+          "name": "onPageChange",
+          "type": "(page: number) =&gt; void",
+          "values": [],
+          "default": null
+        }
+      ],
+      "figmaVariants": [
+        "Type: Page default Page minimal center aligned Card default Card minimal right aligned Card minimal left aligned Card minimal center aligned Card button group right aligned Card button group left aligned Card button group center aligned",
+        "Shape: Square Circle",
+        "Breakpoint: Desktop Mobile"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Modal",
+      "category": "components",
+      "path": "/design-system-docs/components/modal",
+      "description": "모달은 사용자에게 중요한 정보를 전달하거나 확인을 요청할 때 사용하는 다이얼로그입니다. 화면 위에 떠 있는 카드 형태로 표시되어 사용자의 주의를 집중시킵니다.",
+      "figmaComponentName": "Modal",
+      "variants": [
+        {
+          "name": "Horizontal",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Stacked",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Centered",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "With Overlay",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Vertical actions",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "type",
+          "type": "&#x27;horizontal&#x27; | &#x27;stacked&#x27; | &#x27;centered&#x27;",
+          "values": [
+            "&#x27;horizontal&#x27;",
+            "&#x27;stacked&#x27;",
+            "&#x27;centered&#x27;"
+          ],
+          "default": "&#x27;horizontal&#x27;"
+        },
+        {
+          "name": "variant",
+          "type": "&#x27;default&#x27; | &#x27;warning&#x27; | &#x27;destructive&#x27;",
+          "values": [
+            "&#x27;default&#x27;",
+            "&#x27;warning&#x27;",
+            "&#x27;destructive&#x27;"
+          ],
+          "default": "&#x27;default&#x27;"
+        },
+        {
+          "name": "icon",
+          "type": "ReactNode",
+          "values": [],
+          "default": "variant별 기본 아이콘"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;모�� 제목&#x27;"
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "showClose",
+          "type": "boolean",
+          "values": [],
+          "default": "true"
+        },
+        {
+          "name": "showCheckbox",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "checkboxLabel",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;다시 보지 않기&#x27;"
+        },
+        {
+          "name": "checkboxChecked",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "cancelText",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;취소&#x27;"
+        },
+        {
+          "name": "confirmText",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;확인&#x27;"
+        },
+        {
+          "name": "actions",
+          "type": "&#x27;horizontal&#x27; | &#x27;vertical&#x27;",
+          "values": [
+            "&#x27;horizontal&#x27;",
+            "&#x27;vertical&#x27;"
+          ],
+          "default": "&#x27;horizontal&#x27;"
+        },
+        {
+          "name": "showOverlay",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "onClose",
+          "type": "() =&gt; void",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "onCancel",
+          "type": "() =&gt; void",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "onConfirm",
+          "type": "() =&gt; void",
+          "values": [],
+          "default": null
+        }
+      ],
+      "figmaVariants": [
+        "Type: Horizontal Warning horizontal Destructive horizontal Stacked left aligned Warning stacked left aligned Destructive stacked left aligned Centered ...",
+        "Breakpoint: Desktop Mobile"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Alerts & Notifications",
+      "category": "components",
+      "path": "/design-system-docs/components/alerts",
+      "description": "알림은 사용자에게 시스템 상태나 작업 결과를 전달하는 컴포넌트입니다. Alert 는 페이지 안에 인라인으로 배치되어 정보를 알리고, Notification 은 토스트 카드 형태로 일시적으로 떠 있다가 사라집니다.",
+      "figmaComponentName": "Alert",
+      "variants": [
+        {
+          "name": "Alert",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Notification",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "color",
+          "type": "&#x27;default&#x27; | &#x27;brand&#x27; | &#x27;gray&#x27; | &#x27;error&#x27; | &#x27;warning&#x27; | &#x27;success&#x27;",
+          "values": [
+            "&#x27;default&#x27;",
+            "&#x27;brand&#x27;",
+            "&#x27;gray&#x27;",
+            "&#x27;error&#x27;",
+            "&#x27;warning&#x27;",
+            "&#x27;success&#x27;"
+          ],
+          "default": "&#x27;default&#x27;"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;floating&#x27; | &#x27;full-width&#x27;",
+          "values": [
+            "&#x27;floating&#x27;",
+            "&#x27;full-width&#x27;"
+          ],
+          "default": "&#x27;floating&#x27;"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "icon",
+          "type": "ReactNode",
+          "values": [],
+          "default": "color별 기본 SVG"
+        },
+        {
+          "name": "actions",
+          "type": "ReactNode",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "dismissible",
+          "type": "boolean",
+          "values": [],
+          "default": "true"
+        },
+        {
+          "name": "onDismiss",
+          "type": "() =&gt; void",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "type",
+          "type": "&#x27;primary&#x27; | &#x27;success&#x27; | &#x27;warning&#x27; | &#x27;error&#x27; | &#x27;gray&#x27; | &#x27;avatar&#x27; | &#x27;no-icon&#x27;",
+          "values": [
+            "&#x27;primary&#x27;",
+            "&#x27;success&#x27;",
+            "&#x27;warning&#x27;",
+            "&#x27;error&#x27;",
+            "&#x27;gray&#x27;",
+            "&#x27;avatar&#x27;",
+            "&#x27;no-icon&#x27;"
+          ],
+          "default": "&#x27;primary&#x27;"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "icon",
+          "type": "ReactNode",
+          "values": [],
+          "default": "type별 기본 solid 아이콘"
+        },
+        {
+          "name": "avatarSrc",
+          "type": "string",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "actions",
+          "type": "ReactNode",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "dismissible",
+          "type": "boolean",
+          "values": [],
+          "default": "true"
+        },
+        {
+          "name": "onDismiss",
+          "type": "() =&gt; void",
+          "values": [],
+          "default": null
+        }
+      ],
+      "figmaVariants": [
+        "Color: Default Brand Gray Error Warning Success",
+        "Size: Floating Full-width",
+        "Breakpoint: Desktop Mobile",
+        "Type: Primary icon Success icon Warning icon Error icon Gray icon Avatar No icon Image Progress indicator",
+        "Breakpoint: Desktop Mobile"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Loading Indicators",
+      "category": "components",
+      "path": "/design-system-docs/components/loading-indicators",
+      "description": "Loading Indicator는 비동기 작업의 진행 상태를 시각적으로 표현하는 컴포넌트입니다. 3가지 스타일과 4가지 사이즈를 제공합니다.",
+      "figmaComponentName": "Loading indicator",
+      "variants": [
+        {
+          "name": "Style",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Without supporting text",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Custom label",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "style",
+          "type": "&#x27;line-simple&#x27; | &#x27;line-spinner&#x27; | &#x27;dot-circle&#x27;",
+          "values": [
+            "&#x27;line-simple&#x27;",
+            "&#x27;line-spinner&#x27;",
+            "&#x27;dot-circle&#x27;"
+          ],
+          "default": "&#x27;line-simple&#x27;"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;sm&#x27; | &#x27;md&#x27; | &#x27;lg&#x27; | &#x27;xl&#x27;",
+          "values": [
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;",
+            "&#x27;lg&#x27;",
+            "&#x27;xl&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "supportingText",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;Loading...&#x27;"
+        }
+      ],
+      "figmaVariants": [
+        "Style: Line simple Line spinner Dot circle",
+        "Size: sm md lg xl",
+        "Supporting text: True False"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Progress Indicators",
+      "category": "components",
+      "path": "/design-system-docs/components/progress-indicators",
+      "description": "진행 상태를 시각적으로 표현하는 컴포넌트입니다. 가로 막대 형태의 Progress bar 와 원형 형태의 Progress circle 을 제공합니다.",
+      "figmaComponentName": "Progress bar",
+      "variants": [
+        {
+          "name": "Progress Bar",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Progress Circle",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "number",
+          "values": [],
+          "default": "0"
+        },
+        {
+          "name": "label",
+          "type": "&#x27;right&#x27; | &#x27;bottom&#x27; | &#x27;top-floating&#x27; | &#x27;bottom-floating&#x27; | false",
+          "values": [
+            "&#x27;right&#x27;",
+            "&#x27;bottom&#x27;",
+            "&#x27;top-floating&#x27;",
+            "&#x27;bottom-floating&#x27;",
+            "false"
+          ],
+          "default": "&#x27;right&#x27;"
+        },
+        {
+          "name": "width",
+          "type": "number | string",
+          "values": [
+            "number",
+            "string"
+          ],
+          "default": null
+        },
+        {
+          "name": "value",
+          "type": "number",
+          "values": [],
+          "default": "40"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;xxs&#x27; | &#x27;xs&#x27; | &#x27;sm&#x27; | &#x27;md&#x27; | &#x27;lg&#x27;",
+          "values": [
+            "&#x27;xxs&#x27;",
+            "&#x27;xs&#x27;",
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;",
+            "&#x27;lg&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "shape",
+          "type": "&#x27;circle&#x27; | &#x27;half-circle&#x27;",
+          "values": [
+            "&#x27;circle&#x27;",
+            "&#x27;half-circle&#x27;"
+          ],
+          "default": "&#x27;circle&#x27;"
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;Active users&#x27;"
+        },
+        {
+          "name": "showLabel",
+          "type": "boolean",
+          "values": [],
+          "default": "true"
+        }
+      ],
+      "figmaVariants": [
+        "Progress: 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%",
+        "Label: False Right Bottom Top floating Bottom floating",
+        "Shape: Circle Half circle",
+        "Size: xxs xs sm md lg"
+      ],
+      "usageGuidelines": null
+    },
+    {
+      "name": "Charts",
+      "category": "components",
+      "path": "/design-system-docs/components/charts",
+      "description": "차트는 데이터의 시각적 흐름을 전달하는 컴포넌트입니다. 디자인 시스템은 라인/바, Activity gauge, Pie, Radar 네 가지 차트 스타일과 공용 마커를 제공합니다.",
+      "figmaComponentName": "Line and bar chart",
+      "variants": [
+        {
+          "name": "Line chart",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Bar chart",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Activity gauge",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Pie chart",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Radar chart",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Chart marker",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "data",
+          "type": "number[][]",
+          "values": [],
+          "default": "3 series sample"
+        },
+        {
+          "name": "labels",
+          "type": "string[]",
+          "values": [],
+          "default": "Jan ~ Dec"
+        },
+        {
+          "name": "axisLabels",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "legend",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "filled",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "yMax",
+          "type": "number",
+          "values": [],
+          "default": "1000"
+        },
+        {
+          "name": "yStep",
+          "type": "number",
+          "values": [],
+          "default": "200"
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "values": [],
+          "default": "240"
+        },
+        {
+          "name": "data",
+          "type": "number[][]",
+          "values": [],
+          "default": "3 series sample"
+        },
+        {
+          "name": "labels",
+          "type": "string[]",
+          "values": [],
+          "default": "Jan ~ Dec"
+        },
+        {
+          "name": "axisLabels",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "legend",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "yMax",
+          "type": "number",
+          "values": [],
+          "default": "1000"
+        },
+        {
+          "name": "yStep",
+          "type": "number",
+          "values": [],
+          "default": "200"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;xs&#x27; | &#x27;sm&#x27; | &#x27;md&#x27; | &#x27;lg&#x27;",
+          "values": [
+            "&#x27;xs&#x27;",
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;",
+            "&#x27;lg&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "values",
+          "type": "number[]",
+          "values": [],
+          "default": "[0.85, 0.66, 0.42]"
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;Active users&#x27;"
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "values": [],
+          "default": "&#x27;1,000&#x27;"
+        },
+        {
+          "name": "legend",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "legendPosition",
+          "type": "&#x27;bottom&#x27; | &#x27;right&#x27;",
+          "values": [
+            "&#x27;bottom&#x27;",
+            "&#x27;right&#x27;"
+          ],
+          "default": "&#x27;bottom&#x27;"
+        },
+        {
+          "name": "size",
+          "type": "&#x27;xxs&#x27; | &#x27;xs&#x27; | &#x27;sm&#x27; | &#x27;md&#x27; | &#x27;lg&#x27;",
+          "values": [
+            "&#x27;xxs&#x27;",
+            "&#x27;xs&#x27;",
+            "&#x27;sm&#x27;",
+            "&#x27;md&#x27;",
+            "&#x27;lg&#x27;"
+          ],
+          "default": "&#x27;md&#x27;"
+        },
+        {
+          "name": "hole",
+          "type": "&#x27;0%&#x27; | &#x27;25%&#x27; | &#x27;50%&#x27; | &#x27;75%&#x27;",
+          "values": [
+            "&#x27;0%&#x27;",
+            "&#x27;25%&#x27;",
+            "&#x27;50%&#x27;",
+            "&#x27;75%&#x27;"
+          ],
+          "default": "&#x27;50%&#x27;"
+        },
+        {
+          "name": "data",
+          "type": "{ name, value }[]",
+          "values": [],
+          "default": "6 series sample"
+        },
+        {
+          "name": "legend",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "data",
+          "type": "{ name, color, values }[]",
+          "values": [],
+          "default": "3 series sample"
+        },
+        {
+          "name": "axes",
+          "type": "string[]",
+          "values": [],
+          "default": "[&#x27;Mon&#x27; ~ &#x27;Sun&#x27;]"
+        },
+        {
+          "name": "rings",
+          "type": "number[]",
+          "values": [],
+          "default": "[200, 400, 600, 800, 1000]"
+        },
+        {
+          "name": "legend",
+          "type": "&#x27;right&#x27; | &#x27;bottom&#x27; | &#x27;none&#x27;",
+          "values": [
+            "&#x27;right&#x27;",
+            "&#x27;bottom&#x27;",
+            "&#x27;none&#x27;"
+          ],
+          "default": "&#x27;right&#x27;"
+        },
+        {
+          "name": "type",
+          "type": "&#x27;line&#x27; | &#x27;dash&#x27; | &#x27;minimal&#x27;",
+          "values": [
+            "&#x27;line&#x27;",
+            "&#x27;dash&#x27;",
+            "&#x27;minimal&#x27;"
+          ],
+          "default": "&#x27;line&#x27;"
+        }
+      ],
+      "figmaVariants": [
+        "Chart style: Line Bar",
+        "Axis labels: True False",
+        "Legend: False Top Right",
+        "Breakpoint: Desktop Mobile",
+        "Size: xs sm md lg",
+        "Legend: False Bottom Right",
+        "Size: xxs xs sm md lg",
+        "Hole: False 25% 50% 75%",
+        "Legend: False True",
+        "Legend: False Right Bottom",
+        "Type: Line Dash Minimal"
       ],
       "usageGuidelines": null
     }

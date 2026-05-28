@@ -1,5 +1,4 @@
 {
-  "model": "claude-opus-4-7",
   "permissions": {
     "allow": [
       "Bash",
@@ -19,17 +18,8 @@
   "enabledMcpjsonServers": [
     "figma-tools"
   ],
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/julee/imin/figma-design-agent/.claude/hooks/auto-bridge.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
+  "env": {
+    "FIGMA_MCP_SKIP_ENHANCE": "1",
+    "FIGMA_MCP_REQUEST_TIMEOUT": "600"
   }
 }

@@ -1,0 +1,3281 @@
+{
+  "rootName": "imin Stage Tab",
+  "name": "imin Stage Tab",
+  "type": "frame",
+  "width": 393,
+  "height": 2050,
+  "fill": "$token(bg-primary)",
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "itemSpacing": 0,
+    "paddingTop": 0,
+    "paddingBottom": 0,
+    "paddingLeft": 0,
+    "paddingRight": 0
+  },
+  "children": [
+    {
+      "name": "NavBar",
+      "type": "frame",
+      "width": 393,
+      "height": 56,
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "CENTER",
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingTop": 12,
+        "paddingBottom": 12
+      },
+      "children": [
+        {
+          "name": "Logo Placeholder",
+          "type": "frame",
+          "width": 80,
+          "height": 32,
+          "_comment": "빌드 후 create_component_instance(componentKey='81efeddd245e95f31a2724aa370ee54d3caf93d0') → insert_child로 교체"
+        },
+        {
+          "name": "Nav Right",
+          "type": "frame",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "itemSpacing": 16,
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "name": "icon-bell",
+              "type": "icon",
+              "iconName": "bell-01",
+              "size": 24,
+              "iconColor": "$token(fg-primary)"
+            },
+            {
+              "name": "icon-chat",
+              "type": "icon",
+              "iconName": "message-chat-circle",
+              "size": 24,
+              "iconColor": "$token(fg-primary)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Filter Pill Row",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "counterAxisAlignItems": "CENTER",
+        "itemSpacing": 8,
+        "paddingTop": 4,
+        "paddingBottom": 12,
+        "paddingLeft": 20,
+        "paddingRight": 20
+      },
+      "children": [
+        {
+          "name": "Tag Recommend",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "counterAxisAlignItems": "CENTER",
+            "primaryAxisAlignItems": "CENTER",
+            "paddingTop": 6,
+            "paddingBottom": 6,
+            "paddingLeft": 14,
+            "paddingRight": 14
+          },
+          "fill": "$token(bg-tertiary)",
+          "cornerRadius": 999,
+          "children": [
+            {
+              "name": "tag-text",
+              "type": "text",
+              "text": "추천",
+              "fontSize": 13,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": "$token(fg-primary)",
+              "letterSpacing": {
+                "value": -2,
+                "unit": "PERCENT"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Filter Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingTop": 4,
+        "paddingBottom": 4,
+        "paddingLeft": 20,
+        "paddingRight": 20
+      },
+      "children": [
+        {
+          "name": "Stepper Filter Card",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "paddingTop": 6,
+            "paddingBottom": 6,
+            "paddingLeft": 16,
+            "paddingRight": 16
+          },
+          "fill": "$token(bg-secondary)",
+          "cornerRadius": 14,
+          "children": [
+            {
+              "name": "Row Monthly",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 12,
+                "paddingBottom": 12
+              },
+              "stroke": "$token(border-tertiary)",
+              "strokeWeight": 1,
+              "strokeTopWeight": 0,
+              "strokeBottomWeight": 1,
+              "strokeLeftWeight": 0,
+              "strokeRightWeight": 0,
+              "children": [
+                {
+                  "name": "row-label",
+                  "type": "text",
+                  "text": "월 납입 금액",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": "$token(fg-secondary)"
+                },
+                {
+                  "name": "Stepper Controls",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 14
+                  },
+                  "children": [
+                    {
+                      "name": "Minus Button",
+                      "type": "frame",
+                      "width": 26,
+                      "height": 26,
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "fill": "$token(bg-primary)",
+                      "stroke": "$token(border-primary)",
+                      "strokeWeight": 1,
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "minus",
+                          "type": "icon",
+                          "iconName": "minus",
+                          "size": 14,
+                          "iconColor": "$token(fg-secondary)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value Display",
+                      "type": "frame",
+                      "width": 90,
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "BASELINE",
+                        "itemSpacing": 2
+                      },
+                      "children": [
+                        {
+                          "name": "v",
+                          "type": "text",
+                          "text": "150 만원대",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Pretendard",
+                            "style": "Bold"
+                          },
+                          "fontColor": "$token(fg-primary)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Plus Button",
+                      "type": "frame",
+                      "width": 26,
+                      "height": 26,
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "fill": "$token(bg-primary)",
+                      "stroke": "$token(border-primary)",
+                      "strokeWeight": 1,
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "plus",
+                          "type": "icon",
+                          "iconName": "plus",
+                          "size": 14,
+                          "iconColor": "$token(fg-secondary)"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Row Payout",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 12,
+                "paddingBottom": 12
+              },
+              "stroke": "$token(border-tertiary)",
+              "strokeWeight": 1,
+              "strokeTopWeight": 0,
+              "strokeBottomWeight": 1,
+              "strokeLeftWeight": 0,
+              "strokeRightWeight": 0,
+              "children": [
+                {
+                  "name": "row-label",
+                  "type": "text",
+                  "text": "목돈 필요 시점",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": "$token(fg-secondary)"
+                },
+                {
+                  "name": "Stepper Controls",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 14
+                  },
+                  "children": [
+                    {
+                      "name": "Minus Button",
+                      "type": "frame",
+                      "width": 26,
+                      "height": 26,
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "fill": "$token(bg-primary)",
+                      "stroke": "$token(border-primary)",
+                      "strokeWeight": 1,
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "minus",
+                          "type": "icon",
+                          "iconName": "minus",
+                          "size": 14,
+                          "iconColor": "$token(fg-secondary)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value Display",
+                      "type": "frame",
+                      "width": 90,
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "BASELINE",
+                        "itemSpacing": 2
+                      },
+                      "children": [
+                        {
+                          "name": "v",
+                          "type": "text",
+                          "text": "13개월 내",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Pretendard",
+                            "style": "Bold"
+                          },
+                          "fontColor": "$token(fg-primary)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Plus Button",
+                      "type": "frame",
+                      "width": 26,
+                      "height": 26,
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "fill": "$token(bg-primary)",
+                      "stroke": "$token(border-primary)",
+                      "strokeWeight": 1,
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "plus",
+                          "type": "icon",
+                          "iconName": "plus",
+                          "size": 14,
+                          "iconColor": "$token(fg-secondary)"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Row Duration",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 12,
+                "paddingBottom": 12
+              },
+              "children": [
+                {
+                  "name": "row-label",
+                  "type": "text",
+                  "text": "납입 기간",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": "$token(fg-secondary)"
+                },
+                {
+                  "name": "Stepper Controls",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 14
+                  },
+                  "children": [
+                    {
+                      "name": "Minus Button",
+                      "type": "frame",
+                      "width": 26,
+                      "height": 26,
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "fill": "$token(bg-primary)",
+                      "stroke": "$token(border-primary)",
+                      "strokeWeight": 1,
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "minus",
+                          "type": "icon",
+                          "iconName": "minus",
+                          "size": 14,
+                          "iconColor": "$token(fg-secondary)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value Display",
+                      "type": "frame",
+                      "width": 90,
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "BASELINE",
+                        "itemSpacing": 2
+                      },
+                      "children": [
+                        {
+                          "name": "v",
+                          "type": "text",
+                          "text": "13개월 내",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Pretendard",
+                            "style": "Bold"
+                          },
+                          "fontColor": "$token(fg-primary)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Plus Button",
+                      "type": "frame",
+                      "width": 26,
+                      "height": 26,
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "fill": "$token(bg-primary)",
+                      "stroke": "$token(border-primary)",
+                      "strokeWeight": 1,
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "plus",
+                          "type": "icon",
+                          "iconName": "plus",
+                          "size": 14,
+                          "iconColor": "$token(fg-secondary)"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Avatar Scroller",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "itemSpacing": 16,
+        "paddingTop": 12,
+        "paddingBottom": 18,
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "clipsContent": true
+      },
+      "fill": "$token(bg-primary)",
+      "children": [
+        {
+          "name": "Add Avatar",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 6
+          },
+          "children": [
+            {
+              "name": "Add Circle",
+              "type": "frame",
+              "width": 52,
+              "height": 52,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "fill": "$token(bg-primary)",
+              "stroke": "$token(border-primary)",
+              "strokeWeight": 1.5,
+              "dashPattern": [
+                4,
+                4
+              ],
+              "cornerRadius": 999,
+              "children": [
+                {
+                  "name": "plus",
+                  "type": "icon",
+                  "iconName": "plus",
+                  "size": 22,
+                  "iconColor": "$token(fg-quaternary)"
+                }
+              ]
+            },
+            {
+              "name": "label",
+              "type": "text",
+              "text": "추가",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Medium"
+              },
+              "fontColor": "$token(fg-quaternary)"
+            }
+          ]
+        },
+        {
+          "name": "Avatar 1",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 6
+          },
+          "children": [
+            {
+              "name": "Avatar Circle",
+              "type": "frame",
+              "width": 52,
+              "height": 52,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "fill": {
+                "r": 0.94,
+                "g": 0.74,
+                "b": 0.45,
+                "a": 1
+              },
+              "cornerRadius": 999,
+              "children": [
+                {
+                  "name": "emoji",
+                  "type": "text",
+                  "text": "🌟",
+                  "fontSize": 22,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Text Group",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 1
+              },
+              "children": [
+                {
+                  "name": "name",
+                  "type": "text",
+                  "text": "닉네임여덟자까지",
+                  "fontSize": 10,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": "$token(fg-secondary)",
+                  "letterSpacing": {
+                    "value": -2,
+                    "unit": "PERCENT"
+                  }
+                },
+                {
+                  "name": "lv",
+                  "type": "text",
+                  "text": "(lv.1202)",
+                  "fontSize": 9,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": "$token(fg-quaternary)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Avatar 2 Crown",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 6
+          },
+          "children": [
+            {
+              "name": "Avatar Circle",
+              "type": "frame",
+              "width": 52,
+              "height": 52,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "fill": {
+                "r": 0.6,
+                "g": 0.4,
+                "b": 0.95,
+                "a": 1
+              },
+              "cornerRadius": 999,
+              "children": [
+                {
+                  "name": "emoji",
+                  "type": "text",
+                  "text": "🎯",
+                  "fontSize": 22,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Text Group",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 1
+              },
+              "children": [
+                {
+                  "name": "name",
+                  "type": "text",
+                  "text": "닉네임여덟자까지",
+                  "fontSize": 10,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": "$token(fg-brand-secondary)",
+                  "letterSpacing": {
+                    "value": -2,
+                    "unit": "PERCENT"
+                  }
+                },
+                {
+                  "name": "lv",
+                  "type": "text",
+                  "text": "(lv.39)",
+                  "fontSize": 9,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": "$token(fg-brand-secondary)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Avatar 3",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 6
+          },
+          "children": [
+            {
+              "name": "Avatar Circle",
+              "type": "frame",
+              "width": 52,
+              "height": 52,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "fill": {
+                "r": 0.4,
+                "g": 0.78,
+                "b": 0.65,
+                "a": 1
+              },
+              "cornerRadius": 999,
+              "children": [
+                {
+                  "name": "emoji",
+                  "type": "text",
+                  "text": "🥗",
+                  "fontSize": 22,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Text Group",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 1
+              },
+              "children": [
+                {
+                  "name": "name",
+                  "type": "text",
+                  "text": "닉네임여덟자까지",
+                  "fontSize": 10,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": "$token(fg-secondary)",
+                  "letterSpacing": {
+                    "value": -2,
+                    "unit": "PERCENT"
+                  }
+                },
+                {
+                  "name": "lv",
+                  "type": "text",
+                  "text": "(lv.492)",
+                  "fontSize": 9,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": "$token(fg-quaternary)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Avatar 4",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 6
+          },
+          "children": [
+            {
+              "name": "Avatar Circle",
+              "type": "frame",
+              "width": 52,
+              "height": 52,
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "fill": {
+                "r": 0.97,
+                "g": 0.55,
+                "b": 0.55,
+                "a": 1
+              },
+              "cornerRadius": 999,
+              "children": [
+                {
+                  "name": "emoji",
+                  "type": "text",
+                  "text": "🌸",
+                  "fontSize": 22,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Text Group",
+              "type": "frame",
+              "layoutSizingHorizontal": "HUG",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": 1
+              },
+              "children": [
+                {
+                  "name": "name",
+                  "type": "text",
+                  "text": "닉네임여덟자까지",
+                  "fontSize": 10,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Bold"
+                  },
+                  "fontColor": "$token(fg-secondary)",
+                  "letterSpacing": {
+                    "value": -2,
+                    "unit": "PERCENT"
+                  }
+                },
+                {
+                  "name": "lv",
+                  "type": "text",
+                  "text": "(lv.77)",
+                  "fontSize": 9,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": "$token(fg-quaternary)"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Stage Cards Stack",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "itemSpacing": 12,
+        "paddingTop": 4,
+        "paddingBottom": 24,
+        "paddingLeft": 20,
+        "paddingRight": 20
+      },
+      "children": [
+        {
+          "name": "Stage Card 1 Brand",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 10,
+            "paddingTop": 16,
+            "paddingBottom": 14,
+            "paddingLeft": 16,
+            "paddingRight": 16
+          },
+          "fill": "$token(bg-brand-solid)",
+          "cornerRadius": 14,
+          "children": [
+            {
+              "name": "header-text",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "→ 월 105,120원 씩 13개월 모으기",
+              "fontSize": 13,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "SemiBold"
+              },
+              "fontColor": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 0.92
+              },
+              "textAlignHorizontal": "CENTER",
+              "letterSpacing": {
+                "value": -2,
+                "unit": "PERCENT"
+              }
+            },
+            {
+              "name": "Timeline Strip",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "itemSpacing": 2
+              },
+              "children": [
+                {
+                  "name": "cell-1-payout",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-tertiary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "1",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-primary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-2",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "2",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-3",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "3",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-4",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "4",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-5",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "5",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-6",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "6",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-7",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "7",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-8",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "8",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-9",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "9",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-10",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "10",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-11",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "11",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-12",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "12",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-13",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.18
+                  },
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "13",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "info-text",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "▲ 1회차 납입 후 목돈 수령",
+              "fontSize": 12,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "SemiBold"
+              },
+              "fontColor": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 0.95
+              },
+              "textAlignHorizontal": "CENTER",
+              "letterSpacing": {
+                "value": -1,
+                "unit": "PERCENT"
+              }
+            },
+            {
+              "name": "Amount Summary",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 6,
+                "paddingTop": 12
+              },
+              "stroke": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 0.2
+              },
+              "strokeWeight": 1,
+              "strokeTopWeight": 1,
+              "strokeBottomWeight": 0,
+              "strokeLeftWeight": 0,
+              "strokeRightWeight": 0,
+              "children": [
+                {
+                  "name": "Payout Row",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "SPACE_BETWEEN",
+                    "counterAxisAlignItems": "BASELINE"
+                  },
+                  "children": [
+                    {
+                      "name": "label",
+                      "type": "text",
+                      "text": "목돈 (1회차 납입 후 수령)",
+                      "fontSize": 13,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "type": "text",
+                      "text": "1,092,200원",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Interest Row",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "SPACE_BETWEEN",
+                    "counterAxisAlignItems": "BASELINE"
+                  },
+                  "children": [
+                    {
+                      "name": "label",
+                      "type": "text",
+                      "text": "총 이자",
+                      "fontSize": 13,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.85
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "type": "text",
+                      "text": "-129,100원",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 0.78,
+                        "b": 0.78,
+                        "a": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Benefit Band",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 8,
+                "paddingBottom": 8,
+                "paddingLeft": 10,
+                "paddingRight": 10
+              },
+              "fill": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 0.12
+              },
+              "cornerRadius": 8,
+              "children": [
+                {
+                  "name": "label",
+                  "type": "text",
+                  "text": "추가 혜택 (스테이지 시작시 지급)",
+                  "fontSize": 11,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 0.85
+                  }
+                },
+                {
+                  "name": "Pills",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 6
+                  },
+                  "children": [
+                    {
+                      "name": "Points Pill",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "counterAxisAlignItems": "CENTER",
+                        "paddingTop": 3,
+                        "paddingBottom": 3,
+                        "paddingLeft": 8,
+                        "paddingRight": 8
+                      },
+                      "fill": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      },
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "t",
+                          "type": "text",
+                          "text": "Ⓟ 500P",
+                          "fontSize": 11,
+                          "fontName": {
+                            "family": "Pretendard",
+                            "style": "Bold"
+                          },
+                          "fontColor": "$token(fg-brand-secondary)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Fee Pill",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "counterAxisAlignItems": "CENTER",
+                        "paddingTop": 3,
+                        "paddingBottom": 3,
+                        "paddingLeft": 8,
+                        "paddingRight": 8
+                      },
+                      "fill": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 0.18
+                      },
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "t",
+                          "type": "text",
+                          "text": "💳 0원",
+                          "fontSize": 11,
+                          "fontName": {
+                            "family": "Pretendard",
+                            "style": "Bold"
+                          },
+                          "fontColor": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Stage Card 2",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 10,
+            "paddingTop": 16,
+            "paddingBottom": 14,
+            "paddingLeft": 16,
+            "paddingRight": 16
+          },
+          "fill": "$token(bg-secondary)",
+          "cornerRadius": 14,
+          "children": [
+            {
+              "name": "header-text",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "→ 월 105,120원 씩 13개월 모으기",
+              "fontSize": 13,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "SemiBold"
+              },
+              "fontColor": "$token(fg-secondary)",
+              "textAlignHorizontal": "CENTER",
+              "letterSpacing": {
+                "value": -2,
+                "unit": "PERCENT"
+              }
+            },
+            {
+              "name": "Timeline Strip",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "itemSpacing": 2
+              },
+              "children": [
+                {
+                  "name": "cell-1-payout",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-solid)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "1",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-2",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "2",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-3",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "3",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-4",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "4",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-5",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "5",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-6",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "6",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-7",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "7",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-8",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "8",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-9",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "9",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-10",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "10",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-11",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "11",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-12",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "12",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-13",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "13",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "info-text",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "▲ 1회차 납입 후 목돈 수령",
+              "fontSize": 12,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "SemiBold"
+              },
+              "fontColor": "$token(fg-secondary)",
+              "textAlignHorizontal": "CENTER",
+              "letterSpacing": {
+                "value": -1,
+                "unit": "PERCENT"
+              }
+            },
+            {
+              "name": "Amount Summary",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 6,
+                "paddingTop": 12
+              },
+              "stroke": "$token(border-tertiary)",
+              "strokeWeight": 1,
+              "strokeTopWeight": 1,
+              "strokeBottomWeight": 0,
+              "strokeLeftWeight": 0,
+              "strokeRightWeight": 0,
+              "children": [
+                {
+                  "name": "Payout Row",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "SPACE_BETWEEN",
+                    "counterAxisAlignItems": "BASELINE"
+                  },
+                  "children": [
+                    {
+                      "name": "label",
+                      "type": "text",
+                      "text": "목돈 (1회차 납입 후 수령)",
+                      "fontSize": 13,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": "$token(fg-tertiary)"
+                    },
+                    {
+                      "name": "value",
+                      "type": "text",
+                      "text": "1,092,200원",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-primary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "Interest Row",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "SPACE_BETWEEN",
+                    "counterAxisAlignItems": "BASELINE"
+                  },
+                  "children": [
+                    {
+                      "name": "label",
+                      "type": "text",
+                      "text": "총 이자",
+                      "fontSize": 13,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": "$token(fg-tertiary)"
+                    },
+                    {
+                      "name": "value",
+                      "type": "text",
+                      "text": "-129,100원",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-error-primary)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Benefit Band",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 8,
+                "paddingBottom": 8,
+                "paddingLeft": 10,
+                "paddingRight": 10
+              },
+              "fill": "$token(bg-primary)",
+              "cornerRadius": 8,
+              "children": [
+                {
+                  "name": "label",
+                  "type": "text",
+                  "text": "추가 혜택 (스테이지 시작시 지급)",
+                  "fontSize": 11,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": "$token(fg-tertiary)"
+                },
+                {
+                  "name": "Pills",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 6
+                  },
+                  "children": [
+                    {
+                      "name": "Points Pill",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "counterAxisAlignItems": "CENTER",
+                        "paddingTop": 3,
+                        "paddingBottom": 3,
+                        "paddingLeft": 8,
+                        "paddingRight": 8
+                      },
+                      "fill": "$token(bg-brand-primary)",
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "t",
+                          "type": "text",
+                          "text": "Ⓟ 500P",
+                          "fontSize": 11,
+                          "fontName": {
+                            "family": "Pretendard",
+                            "style": "Bold"
+                          },
+                          "fontColor": "$token(fg-brand-primary)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Fee Pill",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "counterAxisAlignItems": "CENTER",
+                        "paddingTop": 3,
+                        "paddingBottom": 3,
+                        "paddingLeft": 8,
+                        "paddingRight": 8
+                      },
+                      "fill": "$token(bg-primary)",
+                      "stroke": "$token(border-primary)",
+                      "strokeWeight": 1,
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "t",
+                          "type": "text",
+                          "text": "💳 0원",
+                          "fontSize": 11,
+                          "fontName": {
+                            "family": "Pretendard",
+                            "style": "Bold"
+                          },
+                          "fontColor": "$token(fg-tertiary)"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Stage Card 3",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 10,
+            "paddingTop": 16,
+            "paddingBottom": 14,
+            "paddingLeft": 16,
+            "paddingRight": 16
+          },
+          "fill": "$token(bg-secondary)",
+          "cornerRadius": 14,
+          "children": [
+            {
+              "name": "header-text",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "→ 월 105,120원 씩 13개월 모으기",
+              "fontSize": 13,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "SemiBold"
+              },
+              "fontColor": "$token(fg-secondary)",
+              "textAlignHorizontal": "CENTER",
+              "letterSpacing": {
+                "value": -2,
+                "unit": "PERCENT"
+              }
+            },
+            {
+              "name": "Timeline Strip",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "itemSpacing": 2
+              },
+              "children": [
+                {
+                  "name": "cell-1-payout",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-solid)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "1",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-2",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "2",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-3",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "3",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-4",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "4",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-5",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "5",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-6",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "6",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-7",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "7",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-8",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "8",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-9",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "9",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-10",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "10",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-11",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "11",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-12",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "12",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "cell-13",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "height": 22,
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "fill": "$token(bg-brand-primary)",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "name": "n",
+                      "type": "text",
+                      "text": "13",
+                      "fontSize": 9,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-brand-secondary)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "info-text",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "▲ 1회차 납입 후 목돈 수령",
+              "fontSize": 12,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "SemiBold"
+              },
+              "fontColor": "$token(fg-secondary)",
+              "textAlignHorizontal": "CENTER",
+              "letterSpacing": {
+                "value": -1,
+                "unit": "PERCENT"
+              }
+            },
+            {
+              "name": "Amount Summary",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "itemSpacing": 6,
+                "paddingTop": 12
+              },
+              "stroke": "$token(border-tertiary)",
+              "strokeWeight": 1,
+              "strokeTopWeight": 1,
+              "strokeBottomWeight": 0,
+              "strokeLeftWeight": 0,
+              "strokeRightWeight": 0,
+              "children": [
+                {
+                  "name": "Payout Row",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "SPACE_BETWEEN",
+                    "counterAxisAlignItems": "BASELINE"
+                  },
+                  "children": [
+                    {
+                      "name": "label",
+                      "type": "text",
+                      "text": "목돈 (1회차 납입 후 수령)",
+                      "fontSize": 13,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": "$token(fg-tertiary)"
+                    },
+                    {
+                      "name": "value",
+                      "type": "text",
+                      "text": "1,092,200원",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-primary)"
+                    }
+                  ]
+                },
+                {
+                  "name": "Interest Row",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "primaryAxisAlignItems": "SPACE_BETWEEN",
+                    "counterAxisAlignItems": "BASELINE"
+                  },
+                  "children": [
+                    {
+                      "name": "label",
+                      "type": "text",
+                      "text": "총 이자",
+                      "fontSize": 13,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Medium"
+                      },
+                      "fontColor": "$token(fg-tertiary)"
+                    },
+                    {
+                      "name": "value",
+                      "type": "text",
+                      "text": "-129,100원",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Pretendard",
+                        "style": "Bold"
+                      },
+                      "fontColor": "$token(fg-error-primary)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Benefit Band",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+                "counterAxisAlignItems": "CENTER",
+                "paddingTop": 8,
+                "paddingBottom": 8,
+                "paddingLeft": 10,
+                "paddingRight": 10
+              },
+              "fill": "$token(bg-primary)",
+              "cornerRadius": 8,
+              "children": [
+                {
+                  "name": "label",
+                  "type": "text",
+                  "text": "추가 혜택 (스테이지 시작시 지급)",
+                  "fontSize": 11,
+                  "fontName": {
+                    "family": "Pretendard",
+                    "style": "Medium"
+                  },
+                  "fontColor": "$token(fg-tertiary)"
+                },
+                {
+                  "name": "Pills",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {
+                    "layoutMode": "HORIZONTAL",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": 6
+                  },
+                  "children": [
+                    {
+                      "name": "Points Pill",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "counterAxisAlignItems": "CENTER",
+                        "paddingTop": 3,
+                        "paddingBottom": 3,
+                        "paddingLeft": 8,
+                        "paddingRight": 8
+                      },
+                      "fill": "$token(bg-brand-primary)",
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "t",
+                          "type": "text",
+                          "text": "Ⓟ 500P",
+                          "fontSize": 11,
+                          "fontName": {
+                            "family": "Pretendard",
+                            "style": "Bold"
+                          },
+                          "fontColor": "$token(fg-brand-primary)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Fee Pill",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "counterAxisAlignItems": "CENTER",
+                        "paddingTop": 3,
+                        "paddingBottom": 3,
+                        "paddingLeft": 8,
+                        "paddingRight": 8
+                      },
+                      "fill": "$token(bg-primary)",
+                      "stroke": "$token(border-primary)",
+                      "strokeWeight": 1,
+                      "cornerRadius": 999,
+                      "children": [
+                        {
+                          "name": "t",
+                          "type": "text",
+                          "text": "💳 0원",
+                          "fontSize": 11,
+                          "fontName": {
+                            "family": "Pretendard",
+                            "style": "Bold"
+                          },
+                          "fontColor": "$token(fg-tertiary)"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Legal Footer",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "itemSpacing": 12,
+        "paddingTop": 18,
+        "paddingBottom": 24,
+        "paddingLeft": 20,
+        "paddingRight": 20
+      },
+      "stroke": "$token(border-tertiary)",
+      "strokeWeight": 1,
+      "strokeTopWeight": 1,
+      "strokeBottomWeight": 0,
+      "strokeLeftWeight": 0,
+      "strokeRightWeight": 0,
+      "children": [
+        {
+          "name": "Links Row 1",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "itemSpacing": 12
+          },
+          "children": [
+            {
+              "name": "l1",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "이용약관",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": "$token(fg-secondary)"
+            },
+            {
+              "name": "l2",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "스테이지이용약관",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": "$token(fg-secondary)"
+            },
+            {
+              "name": "l3",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "서비스운영정책",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": "$token(fg-secondary)"
+            }
+          ]
+        },
+        {
+          "name": "Links Row 2",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "itemSpacing": 12
+          },
+          "children": [
+            {
+              "name": "l4",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "개인정보처리방침",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": "$token(fg-secondary)"
+            },
+            {
+              "name": "l5",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "쇼핑이용약관",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Bold"
+              },
+              "fontColor": "$token(fg-secondary)"
+            },
+            {
+              "name": "l6-spacer",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": " ",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Regular"
+              },
+              "fontColor": "$token(fg-quaternary)"
+            }
+          ]
+        },
+        {
+          "name": "Company Block",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 4,
+            "paddingTop": 4
+          },
+          "children": [
+            {
+              "name": "c1",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "(주)티웨이브 역삼지점     사업자등록번호: 291-85-01499",
+              "fontSize": 10,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Regular"
+              },
+              "fontColor": "$token(fg-quaternary)"
+            },
+            {
+              "name": "c2",
+              "type": "text",
+              "layoutSizingHorizontal": "FILL",
+              "text": "대표: 서재준    통신판매신고: 2021-서울강남-05837",
+              "fontSize": 10,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Regular"
+              },
+              "fontColor": "$token(fg-quaternary)"
+            }
+          ]
+        },
+        {
+          "name": "Disclaimer",
+          "type": "text",
+          "layoutSizingHorizontal": "FILL",
+          "text": "(주)티웨이브 역삼지점은 통신판매중개자로 거래 당사자가 아니므로 판매자가 등록한 상품정보 및 거래 등에 대해 책임을 지지 않습니다. 단, (주)티웨이브 역삼지점이 판매자로 등록 판매한 상품은 판매자로서 책임을 부담합니다.",
+          "fontSize": 10,
+          "fontName": {
+            "family": "Pretendard",
+            "style": "Regular"
+          },
+          "fontColor": "$token(fg-quaternary)",
+          "lineHeight": {
+            "value": 160,
+            "unit": "PERCENT"
+          }
+        },
+        {
+          "name": "Copyright",
+          "type": "text",
+          "layoutSizingHorizontal": "FILL",
+          "text": "Copyright ⓒ TWAVE. All Rights Reserved.",
+          "fontSize": 10,
+          "fontName": {
+            "family": "Pretendard",
+            "style": "Regular"
+          },
+          "fontColor": "$token(fg-quaternary)"
+        }
+      ]
+    },
+    {
+      "name": "FAB",
+      "type": "frame",
+      "width": 120,
+      "height": 44,
+      "cornerRadius": 22,
+      "fill": "$token(bg-brand-solid)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisAlignItems": "CENTER",
+        "counterAxisAlignItems": "CENTER",
+        "paddingTop": 13,
+        "paddingBottom": 13,
+        "paddingLeft": 16,
+        "paddingRight": 16,
+        "itemSpacing": 6
+      },
+      "children": [
+        {
+          "name": "fab-icon",
+          "type": "icon",
+          "iconName": "plus",
+          "size": 18,
+          "iconColor": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        },
+        {
+          "name": "fab-text",
+          "type": "text",
+          "text": "스테이지",
+          "fontSize": 14,
+          "fontName": {
+            "family": "Pretendard",
+            "style": "Bold"
+          },
+          "fontColor": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tab Bar",
+      "type": "frame",
+      "width": 393,
+      "height": 73,
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "CENTER",
+        "paddingTop": 8,
+        "paddingBottom": 24,
+        "paddingLeft": 0,
+        "paddingRight": 0
+      },
+      "children": [
+        {
+          "name": "Tab Home",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 4
+          },
+          "children": [
+            {
+              "name": "tab-home-icon",
+              "type": "icon",
+              "iconName": "home-line",
+              "size": 24,
+              "iconColor": "$token(fg-quaternary)"
+            },
+            {
+              "name": "tab-home-label",
+              "type": "text",
+              "text": "홈",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Medium"
+              },
+              "fontColor": "$token(fg-quaternary)",
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            }
+          ]
+        },
+        {
+          "name": "Tab Community",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 4
+          },
+          "children": [
+            {
+              "name": "tab-comm-icon",
+              "type": "icon",
+              "iconName": "users-01",
+              "size": 24,
+              "iconColor": "$token(fg-quaternary)"
+            },
+            {
+              "name": "tab-comm-label",
+              "type": "text",
+              "text": "커뮤니티",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Medium"
+              },
+              "fontColor": "$token(fg-quaternary)",
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            }
+          ]
+        },
+        {
+          "name": "Tab Stage",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 4
+          },
+          "children": [
+            {
+              "name": "tab-stage-icon",
+              "type": "icon",
+              "iconName": "coins-stacked-01",
+              "size": 24,
+              "iconColor": "$token(fg-brand-primary)"
+            },
+            {
+              "name": "tab-stage-label",
+              "type": "text",
+              "text": "스테이지",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "SemiBold"
+              },
+              "fontColor": "$token(fg-brand-primary)",
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            }
+          ]
+        },
+        {
+          "name": "Tab Lounge",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 4
+          },
+          "children": [
+            {
+              "name": "tab-lounge-icon",
+              "type": "icon",
+              "iconName": "building-08",
+              "size": 24,
+              "iconColor": "$token(fg-quaternary)"
+            },
+            {
+              "name": "tab-lounge-label",
+              "type": "text",
+              "text": "라운지",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Medium"
+              },
+              "fontColor": "$token(fg-quaternary)",
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            }
+          ]
+        },
+        {
+          "name": "Tab Me",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "layoutSizingVertical": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 4
+          },
+          "children": [
+            {
+              "name": "tab-me-icon",
+              "type": "icon",
+              "iconName": "user-01",
+              "size": 24,
+              "iconColor": "$token(fg-quaternary)"
+            },
+            {
+              "name": "tab-me-label",
+              "type": "text",
+              "text": "나",
+              "fontSize": 11,
+              "fontName": {
+                "family": "Pretendard",
+                "style": "Medium"
+              },
+              "fontColor": "$token(fg-quaternary)",
+              "textAlignHorizontal": "CENTER",
+              "layoutSizingHorizontal": "FILL"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

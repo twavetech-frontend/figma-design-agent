@@ -1,0 +1,407 @@
+{
+  "name": "onboarding_2026_0526_screen2",
+  "rootName": "Onboarding 2/2 · 아임인 99.6% 성공 (2026-0526)",
+  "type": "frame",
+  "width": 393,
+  "height": 852,
+  "fill": "$token(bg-primary)",
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "paddingTop": 0,
+    "paddingBottom": 0,
+    "paddingLeft": 0,
+    "paddingRight": 0,
+    "itemSpacing": 0
+  },
+  "discoverySource": "wireframe-2026-0526 onboarding screen 2 (성공 리스트)",
+  "references": [
+    {
+      "section": "Onboarding hero + 100% progress + success bubble list",
+      "ref": "uibowl/toss/cm7k1iuc80058jy0cuo2zni7v.png",
+      "extract": "Hero title + check icon, fully-filled progress bar, vertical avatar+bubble list",
+      "_searchLog": {
+        "queries": ["성공 리스트 아바타 버블", "회원 후기", "온보딩 confirmation"],
+        "candidates": [
+          "uibowl/toss/cm7k1iuc80058jy0cuo2zni7v.png",
+          "uibowl/kakaopay/cmgnnjxlu001hk304jovej98k.png",
+          "uibowl/toss/f5jwhzp4i2ukpx7ijy3l2kk7.png"
+        ],
+        "chosen": "uibowl/toss/cm7k1iuc80058jy0cuo2zni7v.png",
+        "copyNotes": "각 항목에 small avatar(이전 화면과 동일 회색 user icon) + bubble + 우측 '성공' 텍스트. 분기 아이콘 없이 stacked list."
+      }
+    }
+  ],
+  "children": [
+    {
+      "name": "Header Block",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingLeft": 24,
+        "paddingRight": 24,
+        "paddingTop": 32,
+        "paddingBottom": 28,
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "MIN",
+        "itemSpacing": 12
+      },
+      "children": [
+        {
+          "name": "Hero Title",
+          "type": "text",
+          "characters": "하지만 아임인에선\n99.6%가 목표 금액을\n모으는데 성공해요.",
+          "fontSize": 26,
+          "fontWeight": 700,
+          "fontColor": "$token(text-primary)",
+          "lineHeight": 36,
+          "layoutSizingHorizontal": "FILL"
+        },
+        {
+          "name": "Check Icon Wrap",
+          "type": "frame",
+          "width": 48,
+          "height": 48,
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "FIXED",
+          "cornerRadius": 999,
+          "stroke": "$token(border-secondary)",
+          "strokeWeight": 2,
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "name": "check-icon",
+              "type": "icon",
+              "iconName": "check",
+              "size": 28,
+              "iconColor": "$token(fg-primary)"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Progress Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingLeft": 0,
+        "paddingRight": 0,
+        "paddingTop": 0,
+        "paddingBottom": 0,
+        "itemSpacing": 0
+      },
+      "children": [
+        {
+          "name": "Progress Track",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "height": 3,
+          "fill": "$token(fg-primary)"
+        }
+      ]
+    },
+
+    {
+      "name": "Success List Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 24,
+        "paddingRight": 24,
+        "paddingTop": 28,
+        "paddingBottom": 0,
+        "itemSpacing": 14
+      },
+      "children": [
+        {
+          "name": "list-headline",
+          "type": "text",
+          "characters": "어제 0000명의 회원이 목표 금액 달성!",
+          "fontSize": 13,
+          "fontWeight": 600,
+          "fontColor": "$token(text-secondary)",
+          "layoutSizingHorizontal": "FILL"
+        },
+
+        {
+          "name": "SL Item 1",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 12, "counterAxisAlignItems": "CENTER"},
+          "children": [
+            {
+              "name": "sl1-avatar",
+              "type": "frame",
+              "width": 32, "height": 32,
+              "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+              "cornerRadius": 999,
+              "fill": "$token(bg-secondary)",
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+              "children": [{"name": "sl1-icon", "type": "icon", "iconName": "user-01", "size": 16, "iconColor": "$token(fg-tertiary)"}]
+            },
+            {
+              "name": "sl1-bubble",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "fill": "$token(bg-secondary)",
+              "cornerRadius": 14,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 14, "paddingRight": 14, "paddingTop": 12, "paddingBottom": 12, "itemSpacing": 12, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {
+                  "name": "sl1-texts",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 2},
+                  "children": [
+                    {"name": "sl1-title", "type": "text", "characters": "1,000만원 모으기 도전", "fontSize": 14, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                    {"name": "sl1-sub", "type": "text", "characters": "이건 실패할 수가 없다.", "fontSize": 12, "fontWeight": 400, "fontColor": "$token(text-tertiary)"}
+                  ]
+                },
+                {"name": "sl1-tag", "type": "text", "characters": "성공", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-brand-primary)"}
+              ]
+            }
+          ]
+        },
+
+        {
+          "name": "SL Item 2",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 12, "counterAxisAlignItems": "CENTER"},
+          "children": [
+            {
+              "name": "sl2-avatar",
+              "type": "frame",
+              "width": 32, "height": 32,
+              "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+              "cornerRadius": 999,
+              "fill": "$token(bg-secondary)",
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+              "children": [{"name": "sl2-icon", "type": "icon", "iconName": "user-01", "size": 16, "iconColor": "$token(fg-tertiary)"}]
+            },
+            {
+              "name": "sl2-bubble",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "fill": "$token(bg-secondary)",
+              "cornerRadius": 14,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 14, "paddingRight": 14, "paddingTop": 12, "paddingBottom": 12, "itemSpacing": 12, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {
+                  "name": "sl2-texts",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 2},
+                  "children": [
+                    {"name": "sl2-title", "type": "text", "characters": "200만원 모으기 도전", "fontSize": 14, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                    {"name": "sl2-sub", "type": "text", "characters": "충동구매가 저절로 없어져요.", "fontSize": 12, "fontWeight": 400, "fontColor": "$token(text-tertiary)"}
+                  ]
+                },
+                {"name": "sl2-tag", "type": "text", "characters": "성공", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-brand-primary)"}
+              ]
+            }
+          ]
+        },
+
+        {
+          "name": "SL Item 3",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 12, "counterAxisAlignItems": "CENTER"},
+          "children": [
+            {
+              "name": "sl3-avatar",
+              "type": "frame",
+              "width": 32, "height": 32,
+              "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+              "cornerRadius": 999,
+              "fill": "$token(bg-secondary)",
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+              "children": [{"name": "sl3-icon", "type": "icon", "iconName": "user-01", "size": 16, "iconColor": "$token(fg-tertiary)"}]
+            },
+            {
+              "name": "sl3-bubble",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "fill": "$token(bg-secondary)",
+              "cornerRadius": 14,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 14, "paddingRight": 14, "paddingTop": 12, "paddingBottom": 12, "itemSpacing": 12, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {
+                  "name": "sl3-texts",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 2},
+                  "children": [
+                    {"name": "sl3-title", "type": "text", "characters": "1,000만원 모으기 도전", "fontSize": 14, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                    {"name": "sl3-sub", "type": "text", "characters": "태어나서 처음으로 성공했어요.", "fontSize": 12, "fontWeight": 400, "fontColor": "$token(text-tertiary)"}
+                  ]
+                },
+                {"name": "sl3-tag", "type": "text", "characters": "성공", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-brand-primary)"}
+              ]
+            }
+          ]
+        },
+
+        {
+          "name": "SL Item 4",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 12, "counterAxisAlignItems": "CENTER"},
+          "children": [
+            {
+              "name": "sl4-avatar",
+              "type": "frame",
+              "width": 32, "height": 32,
+              "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+              "cornerRadius": 999,
+              "fill": "$token(bg-secondary)",
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+              "children": [{"name": "sl4-icon", "type": "icon", "iconName": "user-01", "size": 16, "iconColor": "$token(fg-tertiary)"}]
+            },
+            {
+              "name": "sl4-bubble",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "fill": "$token(bg-secondary)",
+              "cornerRadius": 14,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 14, "paddingRight": 14, "paddingTop": 12, "paddingBottom": 12, "itemSpacing": 12, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {
+                  "name": "sl4-texts",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 2},
+                  "children": [
+                    {"name": "sl4-title", "type": "text", "characters": "50만원 모으기 도전", "fontSize": 14, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                    {"name": "sl4-sub", "type": "text", "characters": "책임감 때문에 안낼 수가 없습니다.", "fontSize": 12, "fontWeight": 400, "fontColor": "$token(text-tertiary)"}
+                  ]
+                },
+                {"name": "sl4-tag", "type": "text", "characters": "성공", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-brand-primary)"}
+              ]
+            }
+          ]
+        },
+
+        {
+          "name": "SL Item 5",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 12, "counterAxisAlignItems": "CENTER"},
+          "children": [
+            {
+              "name": "sl5-avatar",
+              "type": "frame",
+              "width": 32, "height": 32,
+              "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+              "cornerRadius": 999,
+              "fill": "$token(bg-secondary)",
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+              "children": [{"name": "sl5-icon", "type": "icon", "iconName": "user-01", "size": 16, "iconColor": "$token(fg-tertiary)"}]
+            },
+            {
+              "name": "sl5-bubble",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "fill": "$token(bg-secondary)",
+              "cornerRadius": 14,
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 14, "paddingRight": 14, "paddingTop": 12, "paddingBottom": 12, "itemSpacing": 12, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {
+                  "name": "sl5-texts",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 2},
+                  "children": [
+                    {"name": "sl5-title", "type": "text", "characters": "2,000만원 모으기 도전", "fontSize": 14, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                    {"name": "sl5-sub", "type": "text", "characters": "드디어 큰돈 생겨서 든든해요.", "fontSize": 12, "fontWeight": 400, "fontColor": "$token(text-tertiary)"}
+                  ]
+                },
+                {"name": "sl5-tag", "type": "text", "characters": "성공", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-brand-primary)"}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Footer Copy Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 24,
+        "paddingRight": 24,
+        "paddingTop": 36,
+        "paddingBottom": 0,
+        "itemSpacing": 8
+      },
+      "children": [
+        {"name": "fc2-line1", "type": "text", "characters": "일단 시작만 해보세요.", "fontSize": 14, "fontWeight": 500, "fontColor": "$token(text-secondary)", "layoutSizingHorizontal": "FILL"},
+        {"name": "fc2-line2", "type": "text", "characters": "실패하기가 더 어려울 정도에요.", "fontSize": 14, "fontWeight": 500, "fontColor": "$token(text-secondary)", "layoutSizingHorizontal": "FILL"}
+      ]
+    },
+
+    {
+      "name": "Bottom Choice Row",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingLeft": 24,
+        "paddingRight": 24,
+        "paddingTop": 28,
+        "paddingBottom": 36,
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "MIN",
+        "itemSpacing": 16
+      },
+      "children": [
+        {
+          "name": "Choice Left",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 4},
+          "children": [
+            {"name": "cl2-line1", "type": "text", "characters": "이전으로", "fontSize": 16, "fontWeight": 500, "fontColor": "$token(text-tertiary)"},
+            {"name": "cl2-line2", "type": "text", "characters": "갈래요.", "fontSize": 16, "fontWeight": 500, "fontColor": "$token(text-tertiary)"}
+          ]
+        },
+        {
+          "name": "Choice Right",
+          "type": "frame",
+          "layoutSizingHorizontal": "HUG",
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 4, "counterAxisAlignItems": "MAX"},
+          "children": [
+            {"name": "cr2-line1", "type": "text", "characters": "비결이 너무", "fontSize": 16, "fontWeight": 700, "fontColor": "$token(text-brand-primary)", "textAlignHorizontal": "RIGHT"},
+            {"name": "cr2-line2", "type": "text", "characters": "궁금해요.", "fontSize": 16, "fontWeight": 700, "fontColor": "$token(text-brand-primary)", "textAlignHorizontal": "RIGHT"}
+          ]
+        }
+      ]
+    }
+  ]
+}

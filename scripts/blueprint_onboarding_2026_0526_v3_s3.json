@@ -1,0 +1,411 @@
+{
+  "name": "onboarding_v3_s3_2026_0526",
+  "rootName": "Onboarding v3 3/3 · 함께 약속 1순번 (2026-0526)",
+  "type": "frame",
+  "width": 393,
+  "height": 852,
+  "fill": "$token(bg-primary)",
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "paddingTop": 0,
+    "paddingBottom": 0,
+    "paddingLeft": 0,
+    "paddingRight": 0,
+    "itemSpacing": 0
+  },
+  "discoverySource": "v3 — STEP 3 함께 약속 educational scenario, 5명 5개월 stage 시뮬레이션 1순번",
+  "references": [
+    {
+      "section": "Educational onboarding w/ pill selector + quote",
+      "ref": "uibowl/payhere/cmnfn8r540011l304n26o7f06.png",
+      "extract": "AI brand tag + multi-line bold hero w/ brand 2nd-line + sub gray + 풀폭 brand pill CTA / heydealer 필터 chip row 패턴 / kakaopay onboarding flow",
+      "_searchLog": {
+        "queries": ["다단계 설명 안내", "단계 선택 pill", "약관 동의", "혜택 안내 카드", "필터 칩"],
+        "candidates": [
+          "uibowl/payhere/cmnfn8r4b000zl304sal4b60l.png (AI 지출장부 1 — STEP/title/CTA)",
+          "uibowl/payhere/cmnfn8r540011l304n26o7f06.png (AI 지출장부 2 — brand tag chip + 2-line hero + brand 2nd-line)",
+          "uibowl/payhere/cmnfn8r5y0013l30474i40j6a.png (AI 지출장부 3)",
+          "uibowl/kakaopay/cmgnmw6qu0003l904wzbwqthc.png (kakaopay 약관동의 — 다단계 onboarding flow)",
+          "uibowl/heydealer/cmliq1flb00f6jf04lmjboxyt.png (heydealer 후기 — brand-color key number)",
+          "uibowl/heydealer/cmliqih6y001gle04i462r1ac.png (heydealer 필터 — 가로 pill chip row)",
+          "uibowl/payhere/cmnfmw4vv0011le04a6nppl3v.png (payhere splash — multi-line hero + 풀폭 brand pill)"
+        ],
+        "chosen": "payhere AI 지출장부 + heydealer 필터 + payhere splash 합성",
+        "copyNotes": "도입 패턴: (1) payhere 'AI' tag → 'STEP 3 · 함께 약속' brand tag. (2) payhere multi-line bold hero (2번째 줄 brand emphasis 가능) → 와이어프레임 hero text 그대로 (브랜드 강조 적용은 절제 — 전체 검정). (3) heydealer 필터 pill chip 가로 row → 5개 회차 pill selector (active dark fill / inactive outline). (4) payhere/kakaopay 풀폭 brand pill CTA → '지금 바로 시작해볼래요'. (5) v3 s1/s2 와 일관된 STEP tag brand color + dual choice → secondary link + 풀폭 CTA. Quote explanation 의 left vertical bar 패턴은 reference 직접 매칭 없음 — 일반 typographic convention 으로 직접 작성."
+      }
+    }
+  ],
+  "children": [
+    {
+      "name": "Hero Block",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "paddingTop": 32,
+        "paddingBottom": 28,
+        "itemSpacing": 10
+      },
+      "children": [
+        {
+          "name": "step-tag",
+          "type": "text",
+          "characters": "STEP 3 · 함께 약속",
+          "fontSize": 12,
+          "fontWeight": 700,
+          "fontColor": "$token(text-brand-primary)",
+          "letterSpacing": 1.5,
+          "layoutSizingHorizontal": "FILL"
+        },
+        {
+          "name": "Hero Title Row",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "MAX",
+            "paddingTop": 8,
+            "itemSpacing": 12
+          },
+          "children": [
+            {
+              "name": "Hero Title",
+              "type": "text",
+              "characters": "비결은 함께 약속해서\n돈을 모으는 거예요.",
+              "fontSize": 30,
+              "fontWeight": 700,
+              "fontColor": "$token(text-primary)",
+              "lineHeight": 40,
+              "letterSpacing": -0.8,
+              "layoutSizingHorizontal": "FILL"
+            },
+            {
+              "name": "Hero Icon Wrap",
+              "type": "frame",
+              "width": 72,
+              "height": 72,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "cornerRadius": 999,
+              "fill": "$token(bg-secondary)",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {"name": "users-icon", "type": "icon", "iconName": "users-01", "size": 36, "iconColor": "$token(fg-secondary)"}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Progress Section",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "itemSpacing": 6
+      },
+      "children": [
+        {"name": "Progress Seg 1", "type": "frame", "height": 4, "layoutSizingHorizontal": "FILL", "cornerRadius": 4, "fill": "$token(fg-primary)"},
+        {"name": "Progress Seg 2", "type": "frame", "height": 4, "layoutSizingHorizontal": "FILL", "cornerRadius": 4, "fill": "$token(fg-primary)"},
+        {"name": "Progress Seg 3", "type": "frame", "height": 4, "layoutSizingHorizontal": "FILL", "cornerRadius": 4, "fill": "$token(bg-tertiary)"}
+      ]
+    },
+
+    {
+      "name": "Context Block",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "paddingTop": 32,
+        "paddingBottom": 0,
+        "itemSpacing": 8
+      },
+      "children": [
+        {
+          "name": "ctx-1",
+          "type": "text",
+          "characters": "5명이 참여한 스테이지를 가정했어요.",
+          "fontSize": 15,
+          "fontWeight": 500,
+          "fontColor": "$token(text-secondary)",
+          "lineHeight": 24,
+          "layoutSizingHorizontal": "FILL"
+        },
+        {
+          "name": "ctx-2",
+          "type": "text",
+          "characters": "이 스테이지는 총 50만원을 모으기 위해 월 10만원씩 5개월을 납입할 사람들이에요.",
+          "fontSize": 15,
+          "fontWeight": 500,
+          "fontColor": "$token(text-secondary)",
+          "lineHeight": 24,
+          "layoutSizingHorizontal": "FILL"
+        }
+      ]
+    },
+
+    {
+      "name": "Scenario Block",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "paddingTop": 28,
+        "paddingBottom": 0,
+        "itemSpacing": 14
+      },
+      "children": [
+        {
+          "name": "scenario-caption",
+          "type": "text",
+          "characters": "첫 달에 모두 납입한 10만원을 모아 50만원을 받아요.",
+          "fontSize": 14,
+          "fontWeight": 600,
+          "fontColor": "$token(text-tertiary)",
+          "lineHeight": 22,
+          "textAlignHorizontal": "CENTER",
+          "layoutSizingHorizontal": "FILL"
+        },
+        {
+          "name": "Pill Row",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 8
+          },
+          "children": [
+            {
+              "name": "Pill 1 active",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "cornerRadius": 999,
+              "fill": "$token(bg-brand-section)",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "paddingLeft": 16,
+                "paddingRight": 16,
+                "paddingTop": 9,
+                "paddingBottom": 9,
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {"name": "p1-text", "type": "text", "characters": "1순번", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-primary_on-brand)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}
+              ]
+            },
+            {
+              "name": "Pill 2",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "cornerRadius": 999,
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "paddingLeft": 16,
+                "paddingRight": 16,
+                "paddingTop": 9,
+                "paddingBottom": 9,
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {"name": "p2-text", "type": "text", "characters": "2순번", "fontSize": 13, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}
+              ]
+            },
+            {
+              "name": "Pill 3",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "cornerRadius": 999,
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "paddingLeft": 16,
+                "paddingRight": 16,
+                "paddingTop": 9,
+                "paddingBottom": 9,
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {"name": "p3-text", "type": "text", "characters": "3순번", "fontSize": 13, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}
+              ]
+            },
+            {
+              "name": "Pill 4",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "cornerRadius": 999,
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "paddingLeft": 16,
+                "paddingRight": 16,
+                "paddingTop": 9,
+                "paddingBottom": 9,
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {"name": "p4-text", "type": "text", "characters": "4순번", "fontSize": 13, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}
+              ]
+            },
+            {
+              "name": "Pill 5",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "HUG",
+              "cornerRadius": 999,
+              "stroke": "$token(border-secondary)",
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "paddingLeft": 16,
+                "paddingRight": 16,
+                "paddingTop": 9,
+                "paddingBottom": 9,
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {"name": "p5-text", "type": "text", "characters": "5순번", "fontSize": 13, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Quote Block",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "paddingTop": 24,
+        "paddingBottom": 0,
+        "itemSpacing": 14,
+        "counterAxisAlignItems": "MIN"
+      },
+      "children": [
+        {
+          "name": "Quote Bar",
+          "type": "frame",
+          "width": 2,
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "FILL",
+          "fill": "$token(bg-brand-section)",
+          "cornerRadius": 2
+        },
+        {
+          "name": "Quote Text Column",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "itemSpacing": 8
+          },
+          "children": [
+            {"name": "qt-1", "type": "text", "characters": "목표한 금액 50만원을 첫달에 바로 만든 셈이죠.", "fontSize": 14, "fontWeight": 500, "fontColor": "$token(text-primary)", "lineHeight": 22, "layoutSizingHorizontal": "FILL"},
+            {"name": "qt-2", "type": "text", "characters": "대신 뒷 순번보다 더 많은 돈을 매월 납입해요.", "fontSize": 14, "fontWeight": 500, "fontColor": "$token(text-primary)", "lineHeight": 22, "layoutSizingHorizontal": "FILL"},
+            {"name": "qt-3", "type": "text", "characters": "신용 대출보다 간편하고 빠르게, 급한 목적 자금으로 활용하기 가장 좋은 순번이에요.", "fontSize": 14, "fontWeight": 500, "fontColor": "$token(text-primary)", "lineHeight": 22, "layoutSizingHorizontal": "FILL"}
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Closing Quote",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 28,
+        "paddingRight": 28,
+        "paddingTop": 28,
+        "paddingBottom": 0,
+        "itemSpacing": 4
+      },
+      "children": [
+        {"name": "cq1", "type": "text", "characters": "각자의 상황에 따라 똑똑하게", "fontSize": 15, "fontWeight": 500, "fontColor": "$token(text-secondary)", "layoutSizingHorizontal": "FILL"},
+        {"name": "cq2", "type": "text", "characters": "목돈을 마련할 수 있어요.", "fontSize": 15, "fontWeight": 700, "fontColor": "$token(text-primary)", "layoutSizingHorizontal": "FILL"}
+      ]
+    },
+
+    {
+      "name": "Bottom Action Bar",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingTop": 24,
+        "paddingBottom": 28,
+        "itemSpacing": 14,
+        "counterAxisAlignItems": "CENTER"
+      },
+      "children": [
+        {
+          "name": "secondary-link",
+          "type": "text",
+          "characters": "이전으로 갈래요.",
+          "fontSize": 14,
+          "fontWeight": 500,
+          "fontColor": "$token(text-tertiary)",
+          "textAlignHorizontal": "CENTER",
+          "layoutSizingHorizontal": "FILL"
+        },
+        {
+          "name": "Primary CTA",
+          "type": "instance",
+          "componentKey": "ed0032bcf28f03da97e4b3006f54d30a0fbe5914",
+          "properties": {
+            "Size": "lg",
+            "label": "지금 바로 시작해볼래요"
+          },
+          "layoutSizingHorizontal": "FILL"
+        }
+      ]
+    }
+  ]
+}

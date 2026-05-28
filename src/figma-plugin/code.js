@@ -122,10 +122,64 @@ function updateSettings(settings) {
 }
 
 // Handle commands from UI
+// Force Figma to reflow stale auto-layout positions by selecting every
+// FRAME / INSTANCE / GROUP / COMPONENT under a root, then clearing the
+// selection. Without this, freshly built nodes can render at outdated
+// positions until a user clicks one (the act of selecting triggers
+// Figma's internal layout recalculation). 2026-05-08 fix per user
+// observation: "5월" text drifted right in Schedule Title row until
+// the row was double-clicked, after which it snapped back.
+async function triggerLayoutReflow(params) {
+  const rootId = params && params.nodeId;
+  if (!rootId) {
+    throw new Error("trigger_reflow: missing nodeId");
+  }
+  const root = await figma.getNodeByIdAsync(rootId);
+  if (!root) {
+    throw new Error("trigger_reflow: node not found: " + rootId);
+  }
+  // Walk parents until we find the node's PAGE so we can switch to it
+  // before mutating selection (selection must be on currentPage).
+  let pageNode = root;
+  while (pageNode && pageNode.type !== "PAGE") {
+    pageNode = pageNode.parent;
+  }
+  if (pageNode && figma.currentPage !== pageNode) {
+    await figma.setCurrentPageAsync(pageNode);
+  }
+  const all = [];
+  function walk(n) {
+    if (!n) return;
+    const t = n.type;
+    if (t === "FRAME" || t === "INSTANCE" || t === "GROUP" || t === "COMPONENT" || t === "COMPONENT_SET") {
+      all.push(n);
+    }
+    if ("children" in n) {
+      for (var i = 0; i < n.children.length; i++) {
+        walk(n.children[i]);
+      }
+    }
+  }
+  walk(root);
+  // Bulk-select to flush layout cache, then restore previous selection.
+  const prev = figma.currentPage.selection || [];
+  try {
+    figma.currentPage.selection = all;
+    // Brief tick so Figma processes the selection change
+    await new Promise(function (r) { setTimeout(r, 30); });
+  } finally {
+    figma.currentPage.selection = prev;
+  }
+  return { reflowedFrames: all.length };
+}
+
+
 async function handleCommand(command, params) {
   switch (command) {
     case "ping_check":
       return { ok: true, timestamp: Date.now() };
+    case "trigger_reflow":
+      return await triggerLayoutReflow(params);
     case "get_document_info":
       return await getDocumentInfo();
     case "get_selection":
@@ -403,7 +457,6 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
 
   // Layout positioning (AUTO or ABSOLUTE)
   if ("layoutPositioning" in node) info.layoutPositioning = node.layoutPositioning;
-  if ("clipsContent" in node) info.clipsContent = node.clipsContent;
 
   // Fills & strokes
   if ("fills" in node) {
@@ -421,21 +474,8 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
   }
   if ("strokes" in node) {
     try {
-      var strokes = node.strokes;
-      if (strokes !== figma.mixed && Array.isArray(strokes)) {
-        info.strokes = strokes.map(function(s) {
-          var stroke = { type: s.type, visible: s.visible };
-          if (s.color) stroke.color = { r: s.color.r, g: s.color.g, b: s.color.b };
-          if (s.opacity !== undefined) stroke.opacity = s.opacity;
-          return stroke;
-        });
-      }
-      if (node.strokeWeight !== figma.mixed) info.strokeWeight = node.strokeWeight;
-      if ("strokeAlign" in node && node.strokeAlign !== figma.mixed) info.strokeAlign = node.strokeAlign;
-      if ("strokeTopWeight" in node && node.strokeTopWeight !== figma.mixed) info.strokeTopWeight = node.strokeTopWeight;
-      if ("strokeBottomWeight" in node && node.strokeBottomWeight !== figma.mixed) info.strokeBottomWeight = node.strokeBottomWeight;
-      if ("strokeLeftWeight" in node && node.strokeLeftWeight !== figma.mixed) info.strokeLeftWeight = node.strokeLeftWeight;
-      if ("strokeRightWeight" in node && node.strokeRightWeight !== figma.mixed) info.strokeRightWeight = node.strokeRightWeight;
+      info.strokes = node.strokes;
+      info.strokeWeight = node.strokeWeight;
     } catch (e) { /* mixed strokes */ }
   }
 
@@ -461,7 +501,10 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
       if (node.lineHeight !== figma.mixed) info.lineHeight = node.lineHeight;
       if (node.letterSpacing !== figma.mixed) info.letterSpacing = node.letterSpacing;
       if (node.textAutoResize) info.textAutoResize = node.textAutoResize;
-      if (node.textStyleId !== figma.mixed && node.textStyleId) info.textStyleId = node.textStyleId;
+      // 2026-05-24 — textStyleId 응답에 포함 (post-fix 검증용)
+      if (node.textStyleId !== undefined && node.textStyleId !== figma.mixed) {
+        info.textStyleId = node.textStyleId || "";
+      }
     } catch (e) { /* mixed text props */ }
   }
 
@@ -506,25 +549,10 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
     }
   }
 
-  // Effects (sanitize — Figma effect objects may contain Symbol props or
-  // figma.mixed in nested fields; copy only known plain props)
-  if ("effects" in node) {
-    try {
-      var effects = node.effects;
-      if (effects !== figma.mixed && Array.isArray(effects)) {
-        info.effects = effects.map(function(ef) {
-          var e = { type: ef.type, visible: ef.visible };
-          if (ef.color) e.color = { r: ef.color.r, g: ef.color.g, b: ef.color.b, a: ef.color.a };
-          if (ef.offset) e.offset = { x: ef.offset.x, y: ef.offset.y };
-          if (ef.radius !== undefined) e.radius = ef.radius;
-          if (ef.spread !== undefined) e.spread = ef.spread;
-          if (ef.blendMode) e.blendMode = ef.blendMode;
-          return e;
-        });
-      }
-    } catch (e) { /* mixed effects */ }
+  // Effects
+  if ("effects" in node && Array.isArray(node.effects)) {
+    info.effects = node.effects;
   }
-  if (node.effectStyleId && node.effectStyleId !== figma.mixed) info.effectStyleId = node.effectStyleId;
 
   // Opacity & blend
   if ("opacity" in node) info.opacity = node.opacity;
@@ -918,8 +946,14 @@ async function setStrokeColor(params) {
     throw new Error("Invalid stroke weight - must be a valid number");
   }
 
-  // strokeWeight=0 이면 stroke 완전 제거
-  if (strokeWeightParsed === 0) {
+  // strokeWeight=0 이면 stroke 완전 제거 — 단, individual side weight가
+  // 명시된 경우는 예외 (bottom-only underline 등)
+  var hasIndividualNonZero =
+    (params.strokeTopWeight !== undefined && parseFloat(params.strokeTopWeight) > 0) ||
+    (params.strokeBottomWeight !== undefined && parseFloat(params.strokeBottomWeight) > 0) ||
+    (params.strokeLeftWeight !== undefined && parseFloat(params.strokeLeftWeight) > 0) ||
+    (params.strokeRightWeight !== undefined && parseFloat(params.strokeRightWeight) > 0);
+  if (strokeWeightParsed === 0 && !hasIndividualNonZero) {
     node.strokes = [];
     if ("strokeWeight" in node) node.strokeWeight = 0;
     return { id: node.id, name: node.name, strokes: [], strokeWeight: 0 };
@@ -942,14 +976,6 @@ async function setStrokeColor(params) {
     node.strokeWeight = strokeWeightParsed;
   }
 
-  // Stroke alignment (INSIDE / OUTSIDE / CENTER) — clipsContent 부모에 잘리는 버그 방지
-  if (params.strokeAlign !== undefined && "strokeAlign" in node) {
-    var alignVal = String(params.strokeAlign).toUpperCase();
-    if (alignVal === "INSIDE" || alignVal === "OUTSIDE" || alignVal === "CENTER") {
-      node.strokeAlign = alignVal;
-    }
-  }
-
   // Individual stroke weights (bottom-only border 등)
   // 개별 stroke weight 설정 시 strokeWeight가 figma.mixed(Symbol)로 변환됨
   var hasIndividual = params.strokeTopWeight !== undefined || params.strokeBottomWeight !== undefined || params.strokeLeftWeight !== undefined || params.strokeRightWeight !== undefined;
@@ -969,7 +995,6 @@ async function setStrokeColor(params) {
     name: node.name,
     strokes: node.strokes,
     strokeWeight: safeStrokeWeight,
-    strokeAlign: "strokeAlign" in node ? node.strokeAlign : undefined,
     strokeTopWeight: "strokeTopWeight" in node && typeof node.strokeTopWeight === "number" ? node.strokeTopWeight : undefined,
     strokeBottomWeight: "strokeBottomWeight" in node && typeof node.strokeBottomWeight === "number" ? node.strokeBottomWeight : undefined,
     strokeLeftWeight: "strokeLeftWeight" in node && typeof node.strokeLeftWeight === "number" ? node.strokeLeftWeight : undefined,
@@ -2916,6 +2941,11 @@ async function setAutoLayout(params) {
   // Configure layout mode
   if (layoutMode === "NONE") {
     node.layoutMode = "NONE";
+    // clipsContent도 NONE 케이스에서 처리해야 함 (R45 — 2026-05-24)
+    // 단순 wrapper frame(아이콘/divider)도 clipsContent 강제 변경 가능
+    if (clipsContent !== undefined) {
+      node.clipsContent = clipsContent;
+    }
   } else {
     // Set auto layout properties
     node.layoutMode = layoutMode;
@@ -3813,19 +3843,7 @@ async function setEffects(params) {
 
 // Set Effect Style ID Tool
 async function setEffectStyleId(params) {
-  var { nodeId, effectStyleId, effectStyleName } = params || {};
-
-  // [NEW] Resolve by name if id not supplied
-  if (!effectStyleId && effectStyleName) {
-    var allEffectStyles = await figma.getLocalEffectStylesAsync();
-    for (var i = 0; i < allEffectStyles.length; i++) {
-      if (allEffectStyles[i].name === effectStyleName) {
-        effectStyleId = allEffectStyles[i].id;
-        break;
-      }
-    }
-  }
-  // [/NEW]
+  const { nodeId, effectStyleId } = params || {};
 
   if (!nodeId) {
     throw new Error("Missing nodeId parameter");
@@ -3857,24 +3875,53 @@ async function setEffectStyleId(params) {
         throw new Error(`Node with ID ${nodeId} does not support effect styles`);
       }
 
-      // Try to validate the effect style exists before applying
-      console.log(`Fetching effect styles to validate style ID: ${effectStyleId}`);
+      // Remote/library style format: S:key,nodeId — mirror setTextStyleId pattern
+      var remoteMatch = effectStyleId.match(/^S:([^,]+),(.+)$/);
+      if (remoteMatch) {
+        var styleKey = remoteMatch[1];
+        console.log("Importing remote effect style with key: " + styleKey);
+        var importedStyle = await figma.importStyleByKeyAsync(styleKey);
+        if (!importedStyle) {
+          throw new Error("Failed to import remote effect style with key: " + styleKey);
+        }
+        console.log("Imported effect style: " + importedStyle.name + " (id: " + importedStyle.id + ")");
+        if (typeof node.setEffectStyleIdAsync === "function") {
+          await node.setEffectStyleIdAsync(importedStyle.id);
+        } else {
+          node.effectStyleId = importedStyle.id;
+        }
+        return {
+          id: node.id,
+          name: node.name,
+          effectStyleId: node.effectStyleId,
+          styleName: importedStyle.name,
+          appliedEffects: node.effects
+        };
+      }
+
+      // Local style fallback — accept either style.id or style.key
+      console.log(`Fetching local effect styles to validate style ID: ${effectStyleId}`);
       const effectStyles = await figma.getLocalEffectStylesAsync();
-      const foundStyle = effectStyles.find(style => style.id === effectStyleId);
+      const foundStyle = effectStyles.find(function(style) { return style.id === effectStyleId || style.key === effectStyleId; });
 
       if (!foundStyle) {
         throw new Error(`Effect style not found with ID: ${effectStyleId}. Available styles: ${effectStyles.length}`);
       }
 
-      console.log(`Effect style found, applying to node...`);
+      console.log(`Effect style "${foundStyle.name}" found, applying to node...`);
 
       // Apply the effect style to the node
-      node.effectStyleId = effectStyleId;
+      if (typeof node.setEffectStyleIdAsync === "function") {
+        await node.setEffectStyleIdAsync(foundStyle.id);
+      } else {
+        node.effectStyleId = foundStyle.id;
+      }
 
       return {
         id: node.id,
         name: node.name,
         effectStyleId: node.effectStyleId,
+        styleName: foundStyle.name,
         appliedEffects: node.effects
       };
     })();
@@ -5463,30 +5510,6 @@ async function batchSetTextStyleId(params) {
     throw new Error("Missing or empty items array parameter");
   }
 
-  // [NEW] Resolve textStyleName → textStyleId where needed (alias for callers
-  // that send a Figma style name instead of an internal style ID).
-  var needsNameLookup = false;
-  for (var ni = 0; ni < items.length; ni++) {
-    if (!items[ni].textStyleId && items[ni].textStyleName) {
-      needsNameLookup = true;
-      break;
-    }
-  }
-  if (needsNameLookup) {
-    var allLocalStyles = await figma.getLocalTextStylesAsync();
-    var nameToId = {};
-    for (var sj = 0; sj < allLocalStyles.length; sj++) {
-      nameToId[allLocalStyles[sj].name] = allLocalStyles[sj].id;
-    }
-    for (var nj = 0; nj < items.length; nj++) {
-      if (!items[nj].textStyleId && items[nj].textStyleName) {
-        var resolved = nameToId[items[nj].textStyleName];
-        if (resolved) items[nj].textStyleId = resolved;
-      }
-    }
-  }
-  // [/NEW] — rest of function below is unchanged
-
   // Phase 0: Collect unique style IDs and import/load each ONCE
   var uniqueStyleIds = {};
   for (var ui = 0; ui < items.length; ui++) {
@@ -5882,32 +5905,26 @@ async function batchBuildScreen(params) {
         var weight = spec.fontWeight || 400;
         styleName = getFontStyle(weight);
       }
-      // Pre-load font before assigning fontName (prevents race condition that causes empty text nodes)
-      var finalFont = { family: family, style: styleName };
       try {
-        await figma.loadFontAsync(finalFont);
-      } catch (e) {
-        var altStyle = FONT_STYLE_ALTS[styleName];
-        var altLoaded = false;
-        if (altStyle) {
-          try {
-            finalFont = { family: family, style: altStyle };
-            await figma.loadFontAsync(finalFont);
-            altLoaded = true;
-          } catch (e2) { /* alt also failed */ }
-        }
-        if (!altLoaded) {
-          try {
-            finalFont = { family: "Inter", style: "Regular" };
-            await figma.loadFontAsync(finalFont);
-          } catch (e3) { /* ignore — font set below may throw */ }
-        }
-      }
-      try {
-        node.fontName = finalFont;
+        node.fontName = { family, style: styleName };
         if (spec.fontSize) node.fontSize = parseInt(spec.fontSize);
       } catch (e) {
-        console.warn("[batch_build] fontName set failed for '" + (spec.name || "text") + "': " + e.message);
+        // Try alternative style name (SemiBold vs Semi Bold, etc.)
+        var altStyle = FONT_STYLE_ALTS[styleName];
+        var fontSet = false;
+        if (altStyle) {
+          try {
+            node.fontName = { family, style: altStyle };
+            if (spec.fontSize) node.fontSize = parseInt(spec.fontSize);
+            fontSet = true;
+          } catch (e2) { /* alt also failed */ }
+        }
+        if (!fontSet) {
+          try {
+            node.fontName = { family: "Inter", style: "Regular" };
+            if (spec.fontSize) node.fontSize = parseInt(spec.fontSize);
+          } catch (e3) { /* ignore */ }
+        }
       }
 
       // Convert <br> to soft line break (U+2028) for Figma text
@@ -5932,26 +5949,16 @@ async function batchBuildScreen(params) {
       // Text auto resize — default to WIDTH_AND_HEIGHT so text doesn't wrap vertically
       node.textAutoResize = spec.textAutoResize || "WIDTH_AND_HEIGHT";
 
-      // Line height — accept number (PIXELS), {value, unit} object, or {unit:"AUTO"}
+      // Line height
       if (spec.lineHeight !== undefined) {
         if (typeof spec.lineHeight === "number") {
           node.lineHeight = { value: spec.lineHeight, unit: "PIXELS" };
-        } else if (spec.lineHeight && typeof spec.lineHeight === "object") {
-          if (spec.lineHeight.unit === "AUTO") {
-            node.lineHeight = { unit: "AUTO" };
-          } else if (spec.lineHeight.value !== undefined) {
-            node.lineHeight = { value: spec.lineHeight.value, unit: spec.lineHeight.unit || "PIXELS" };
-          }
         }
       }
 
-      // Letter spacing — accept number (PIXELS) or {value, unit} object
+      // Letter spacing
       if (spec.letterSpacing !== undefined) {
-        if (typeof spec.letterSpacing === "number") {
-          node.letterSpacing = { value: spec.letterSpacing, unit: "PIXELS" };
-        } else if (spec.letterSpacing && typeof spec.letterSpacing === "object" && spec.letterSpacing.value !== undefined) {
-          node.letterSpacing = { value: spec.letterSpacing.value, unit: spec.letterSpacing.unit || "PIXELS" };
-        }
+        node.letterSpacing = { value: spec.letterSpacing, unit: "PIXELS" };
       }
 
       // Layout sizing — DEFERRED until after appendChild
@@ -6049,13 +6056,6 @@ async function batchBuildScreen(params) {
         var iconW = spec.width || 24;
         var iconH = spec.height || 24;
         node.resize(iconW, iconH);
-        // Icon wrappers must NEVER carry a background fill — the visible color
-        // is on the inner VECTOR's stroke/fill (handled by colorizeVectors).
-        // createNodeFromSvg sometimes leaves the SVG container with a default
-        // fill, which then gets matched to bg-* tokens (bg-secondary_hover
-        // etc.) and produces "why is there a bg fill on my icon?!" bug.
-        // User policy 2026-05-01: icons are vectors only, no wrapper bg.
-        try { if ("fills" in node) node.fills = []; } catch (_) {}
         // Apply icon color by changing all vector children's fills/strokes
         if (spec.iconColor) {
           var color = { r: spec.iconColor.r || 0, g: spec.iconColor.g || 0, b: spec.iconColor.b || 0 };
@@ -6133,16 +6133,6 @@ async function batchBuildScreen(params) {
       }
     } else {
       figma.currentPage.appendChild(node);
-    }
-
-    // ★ Honor explicit layoutPositioning from blueprint (e.g. Tab Bar / FAB ABSOLUTE)
-    //   This MUST run AFTER appendChild so the parent's auto-layout context is set.
-    //   Without this, blueprint authors and the enhancer cannot float nodes out of
-    //   normal flow — Tab Bar / FAB always end up stacked in the column.
-    if (spec.layoutPositioning === "ABSOLUTE" || spec.layoutPositioning === "AUTO") {
-      try { node.layoutPositioning = spec.layoutPositioning; } catch (e) {
-        console.warn("[batch_build] layoutPositioning failed:", e && e.message);
-      }
     }
 
     // Apply deferred layoutSizing AFTER appendChild
@@ -6287,8 +6277,7 @@ async function batchBuildScreen(params) {
         try { await page.loadAsync(); } catch (e) { /* ignore load error */ }
         var found = page.findOne(function(n) {
           var nm = (n.name || "").toLowerCase();
-          // substring 매칭 — "Status bar - iPhone" 등 suffix 있는 이름도 매칭 (2026-04-23)
-          return (nm.indexOf("status bar") >= 0 || nm.indexOf("statusbar") >= 0 || nm.indexOf("status_bar") >= 0) &&
+          return (nm === "status bar" || nm === "statusbar" || nm === "status_bar") &&
             (n.type === "COMPONENT" || n.type === "INSTANCE" || n.type === "FRAME");
         });
         if (found) {

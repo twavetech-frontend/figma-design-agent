@@ -1,10 +1,20 @@
 #!/usr/bin/env node
 /**
  * Patch @hono/mcp to remove Accept header validation.
- * Claude Code's HTTP MCP client doesn't send Accept: text/event-stream,
- * causing 406 Not Acceptable errors.
  *
- * Run via: npm run postinstall (or node scripts/patch-hono-mcp.js)
+ * The Python MCP client (scripts/figma_mcp_client.py) and Claude Code's HTTP
+ * MCP client send `Accept: application/json` only — not `text/event-stream`.
+ * @hono/mcp rejects those with 406 "Not Acceptable". The bridge runs the
+ * transport with `enableJsonResponse: true`, so it replies with plain JSON
+ * regardless — the Accept check is the only thing in the way.
+ *
+ * This patch neuters both Accept checks (POST handlePostRequest + GET
+ * handleGetRequest) by replacing their `if (...)` conditions with `if (false)`.
+ * It is idempotent and version-tolerant: it targets the stable condition
+ * expressions, not surrounding formatting.
+ *
+ * Runs automatically via `npm run postinstall`. Re-run manually with:
+ *   node scripts/patch-hono-mcp.js
  */
 const fs = require('fs');
 const path = require('path');
@@ -17,16 +27,37 @@ if (!fs.existsSync(filePath)) {
 }
 
 let content = fs.readFileSync(filePath, 'utf-8');
+const original = content;
 
-// Remove the Accept header check in handlePostRequest
-const pattern = /const acceptHeader = ctx\.req\.header\("Accept"\);\s*if \(!acceptHeader\?\.includes\("application\/json"\) \|\| !acceptHeader\.includes\("text\/event-stream"\)\) throw new hono_http_exception\.HTTPException\(406,\s*\{[^}]+\{[^}]+\{[^}]+\}[^}]+\}[^}]+\}\s*\)\s*\);/;
+// POST handler (handlePostRequest): requires both application/json AND text/event-stream
+const postCheck =
+  'if (!acceptHeader?.includes("application/json") || !acceptHeader.includes("text/event-stream")) throw';
+// GET handler (handleGetRequest): requires text/event-stream
+const getCheck =
+  'if (!ctx.req.header("Accept")?.includes("text/event-stream")) throw';
 
-if (pattern.test(content)) {
-  content = content.replace(pattern, 'const acceptHeader = ctx.req.header("Accept");\n\t\t\t// Accept header check disabled for Claude Code compatibility');
+let postPatched = false;
+let getPatched = false;
+
+if (content.includes(postCheck)) {
+  content = content.split(postCheck).join('if (false) throw');
+  postPatched = true;
+}
+if (content.includes(getCheck)) {
+  content = content.split(getCheck).join('if (false) throw');
+  getPatched = true;
+}
+
+if (content !== original) {
   fs.writeFileSync(filePath, content);
-  console.log('[patch] @hono/mcp: Accept header check removed (Claude Code compat)');
-} else if (content.includes('Accept header check disabled')) {
+  console.log(
+    `[patch] @hono/mcp: Accept header check removed (POST=${postPatched}, GET=${getPatched})`
+  );
+} else if (content.includes('if (false) throw')) {
   console.log('[patch] @hono/mcp: already patched');
 } else {
-  console.log('[patch] @hono/mcp: pattern not found, may need manual update');
+  console.log(
+    '[patch] @hono/mcp: Accept-check pattern not found — @hono/mcp may have changed; ' +
+      'update scripts/patch-hono-mcp.js'
+  );
 }

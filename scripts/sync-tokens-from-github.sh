@@ -40,6 +40,9 @@ fi
 TOKEN_COUNT=$(python3 -c "import json; d=json.load(open('$TMP_DIR/tokens.json')); print(sum(1 for k in d if not k.startswith('\$')))" 2>/dev/null || echo "?")
 echo "Downloaded tokens.json ($TOKEN_COUNT token sets)"
 
+# 1-1. sync-to-agent.js 패치: DS "Dark" 컬러 모드 제외 (필터 버그 — agent 기본은 Light 모드)
+node "$SCRIPT_DIR/patch-sync-agent.js" "$TMP_DIR/sync-to-agent.js"
+
 # 2. sync-to-agent.js 실행 → DESIGN_TOKENS.md + TOKEN_MAP.json 생성
 echo "Generating DESIGN_TOKENS.md and TOKEN_MAP.json..."
 cd "$TMP_DIR"

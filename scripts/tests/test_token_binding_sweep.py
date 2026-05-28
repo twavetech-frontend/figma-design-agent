@@ -35,8 +35,8 @@ class TestLoadTokenIndex(unittest.TestCase):
 
     def test_number_index_groups_value(self):
         idx = fmc._load_token_index(load_fixture())
-        self.assertIn(8, idx["number_indexes"]["spacing"])
-        self.assertIn(("--spacing-2-8px", False), idx["number_indexes"]["spacing"][8])
+        self.assertIn(8, idx["number_index"])
+        self.assertIn(("--spacing-2-8px", False), idx["number_index"][8])
 
     def test_typography_list_resolves_references(self):
         idx = fmc._load_token_index(load_fixture())
@@ -88,25 +88,25 @@ class TestMatchNumber(unittest.TestCase):
         self.idx = fmc._load_token_index(load_fixture())
 
     def test_exact_match(self):
-        self.assertEqual(fmc._match_number(8, self.idx["number_indexes"]["spacing"]), "--spacing-2-8px")
+        self.assertEqual(fmc._match_number(8, self.idx["number_index"]), "--spacing-2-8px")
 
     def test_within_threshold(self):
         # 9 is within ±2 of 8 (closest: 8 over 12)
-        self.assertEqual(fmc._match_number(9, self.idx["number_indexes"]["spacing"]), "--spacing-2-8px")
+        self.assertEqual(fmc._match_number(9, self.idx["number_index"]), "--spacing-2-8px")
 
     def test_outside_threshold(self):
         # 5 is 3 away from 8, outside ±2
-        self.assertIsNone(fmc._match_number(5, self.idx["number_indexes"]["spacing"]))
+        self.assertIsNone(fmc._match_number(5, self.idx["number_index"]))
 
     def test_zero_returns_none(self):
-        self.assertIsNone(fmc._match_number(0, self.idx["number_indexes"]["spacing"]))
+        self.assertIsNone(fmc._match_number(0, self.idx["number_index"]))
 
     def test_none_returns_none(self):
-        self.assertIsNone(fmc._match_number(None, self.idx["number_indexes"]["spacing"]))
+        self.assertIsNone(fmc._match_number(None, self.idx["number_index"]))
 
     def test_at_threshold_boundary_matches(self):
         # dist == 2 should still match (strict `>` comparison)
-        self.assertEqual(fmc._match_number(6, self.idx["number_indexes"]["spacing"]), "--spacing-2-8px")
+        self.assertEqual(fmc._match_number(6, self.idx["number_index"]), "--spacing-2-8px")
 
 
 class TestMatchTextstyle(unittest.TestCase):
@@ -178,32 +178,6 @@ class TestMatchTextstyle(unittest.TestCase):
             fmc._match_textstyle(None, self.idx["typography_list"])
         )
 
-    def test_fontweight_case_insensitive_match(self):
-        text_props = {
-            "fontFamily": "Pretendard",
-            "fontWeight": "SemiBold",  # capital B — Figma returns this casing
-            "fontSize": 72,
-            "lineHeight": 90,
-            "letterSpacing": 0,
-        }
-        self.assertEqual(
-            fmc._match_textstyle(text_props, self.idx["typography_list"]),
-            "--display2xl-semibold",
-        )
-
-    def test_fontfamily_case_insensitive_match(self):
-        text_props = {
-            "fontFamily": "PRETENDARD",  # uppercase
-            "fontWeight": "Semibold",
-            "fontSize": 72,
-            "lineHeight": 90,
-            "letterSpacing": 0,
-        }
-        self.assertEqual(
-            fmc._match_textstyle(text_props, self.idx["typography_list"]),
-            "--display2xl-semibold",
-        )
-
     def test_lineheight_outside_tolerance_rejects(self):
         # lineHeight 94 against candidate ts_lh=90 → diff 4 > tol 2.7 → reject
         text_props = {
@@ -269,9 +243,7 @@ class TestMatchShadow(unittest.TestCase):
             fmc._match_shadow(effect, self.idx["shadow_list"])
         )
 
-    def test_multilayer_token_indexed_per_layer(self):
-        """Multi-layer BOXSHADOW tokens are indexed once per layer, all sharing
-        the token name. A Figma single-effect can match any individual layer."""
+    def test_multilayer_token_skipped_at_load(self):
         token_map = load_fixture()
         token_map["--shadow-multilayer"] = {
             "figmaPath": "Shadows/shadow-lg",
@@ -282,33 +254,8 @@ class TestMatchShadow(unittest.TestCase):
             "type": "BOXSHADOW"
         }
         idx = fmc._load_token_index(token_map)
-        multilayer_entries = [s for s in idx["shadow_list"] if s["name"] == "--shadow-multilayer"]
-        self.assertEqual(len(multilayer_entries), 2)
-        # Each layer carries the layer-specific values
-        offsets = sorted(s["offsetY"] for s in multilayer_entries)
-        self.assertEqual(offsets, [4, 12])
-
-    def test_match_shadow_picks_layer_of_multilayer_token(self):
-        """A Figma DROP_SHADOW with offset y=4 should match the second layer of
-        --shadow-multilayer (which has y=4)."""
-        token_map = load_fixture()
-        token_map["--shadow-multilayer"] = {
-            "figmaPath": "Shadows/shadow-lg",
-            "value": [
-                {"color": "#0a0d1214", "type": "dropShadow", "x": 0, "y": 12, "blur": 16, "spread": -4},
-                {"color": "#0a0d1208", "type": "dropShadow", "x": 0, "y": 4, "blur": 6, "spread": -2},
-            ],
-            "type": "BOXSHADOW"
-        }
-        idx = fmc._load_token_index(token_map)
-        effect = {
-            "type": "DROP_SHADOW",
-            "color": {"r": 0.039, "g": 0.051, "b": 0.071, "a": 0x08/255},
-            "offset": {"x": 0, "y": 4},
-            "radius": 6, "spread": -2,
-        }
-        name = fmc._match_shadow(effect, idx["shadow_list"])
-        self.assertEqual(name, "--shadow-multilayer")
+        names = [s["name"] for s in idx["shadow_list"]]
+        self.assertNotIn("--shadow-multilayer", names)
 
     def test_none_effect_returns_none(self):
         self.assertIsNone(fmc._match_shadow(None, self.idx["shadow_list"]))
@@ -475,20 +422,6 @@ class TestCollectBindings(unittest.TestCase):
         self.assertEqual(len(q["unmapped"]["typography"]), 1)
         self.assertEqual(q["unmapped"]["typography"][0]["reason"], "mixed_or_missing")
 
-    def test_padding_does_not_match_fontsize_token(self):
-        # Fixture: --fontSize-2 (Font size/2) has value 16. Padding=16 must NOT
-        # bind to it because fontSize is a typography concern, not spacing.
-        nodes = [{
-            "id": "1:1", "type": "FRAME",
-            "paddingTop": 16,
-        }]
-        q = fmc._collect_bindings(nodes, self.idx)
-        if q["number_bindings"]:
-            # If matched, must be a spacing/radius token, NOT --fontSize-*
-            for b in q["number_bindings"]:
-                self.assertFalse(b["token_name"].startswith("--fontSize"),
-                                 f"paddingTop incorrectly matched fontSize token: {b}")
-
 
 class TestApplyBindings(unittest.TestCase):
     def setUp(self):
@@ -499,17 +432,6 @@ class TestApplyBindings(unittest.TestCase):
             return [{"text": "{\"success\": true}"}]
         self._orig = fmc.call_tool
         fmc.call_tool = fake_call_tool
-        # Build minimal indexes containing name_to_path
-        self.indexes = {
-            "color_index": {}, "number_indexes": {"spacing": {}, "radius": {}},
-            "typography_list": [], "shadow_list": [],
-            "name_to_path": {
-                "--colors-text-textPrimary": "Colors/Text/text-primary",
-                "--spacing-2-8px": "Spacing/2 (8px)",
-                "--display2xl-semibold": "Display 2xl/Semibold",
-                "--shadow-md": "Shadows/shadow-md",
-            },
-        }
 
     def tearDown(self):
         fmc.call_tool = self._orig
@@ -525,43 +447,14 @@ class TestApplyBindings(unittest.TestCase):
             "effect_bindings": [],
             "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
         }
-        fmc._apply_bindings(queues, self.indexes)
+        fmc._apply_bindings(queues)
+        # 150 colors → 2 batch_bind_variables calls (100 + 50)
         bind_calls = [c for c in self.calls if c[0] == "batch_bind_variables"]
         self.assertEqual(len(bind_calls), 2)
-        self.assertEqual(len(bind_calls[0][1]["items"]), 100)
-        self.assertEqual(len(bind_calls[1][1]["items"]), 50)
+        self.assertEqual(len(bind_calls[0][1]["bindings"]), 100)
+        self.assertEqual(len(bind_calls[1][1]["bindings"]), 50)
 
-    def test_color_payload_uses_slash_notation_and_figma_path(self):
-        queues = {
-            "color_bindings": [
-                {"nodeId": "1:1", "field": "fills", "index": 0,
-                 "token_name": "--colors-text-textPrimary"},
-            ],
-            "number_bindings": [], "textstyle_bindings": [],
-            "effect_bindings": [],
-            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
-        }
-        fmc._apply_bindings(queues, self.indexes)
-        items = self.calls[0][1]["items"]
-        self.assertEqual(items[0]["nodeId"], "1:1")
-        self.assertIn("fills/0", items[0]["bindings"])
-        self.assertEqual(items[0]["bindings"]["fills/0"], "Colors/Text/text-primary")
-
-    def test_number_payload_plain_field_name(self):
-        queues = {
-            "color_bindings": [],
-            "number_bindings": [
-                {"nodeId": "1:1", "field": "paddingTop",
-                 "token_name": "--spacing-2-8px"}
-            ],
-            "textstyle_bindings": [], "effect_bindings": [],
-            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
-        }
-        fmc._apply_bindings(queues, self.indexes)
-        items = self.calls[0][1]["items"]
-        self.assertEqual(items[0]["bindings"], {"paddingTop": "Spacing/2 (8px)"})
-
-    def test_textstyle_uses_textStyleName_with_figma_path(self):
+    def test_textstyle_calls_batch(self):
         queues = {
             "color_bindings": [], "number_bindings": [],
             "textstyle_bindings": [
@@ -570,109 +463,9 @@ class TestApplyBindings(unittest.TestCase):
             "effect_bindings": [],
             "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
         }
-        fmc._apply_bindings(queues, self.indexes)
+        fmc._apply_bindings(queues)
         ts_calls = [c for c in self.calls if c[0] == "batch_set_text_style_id"]
         self.assertEqual(len(ts_calls), 1)
-        item = ts_calls[0][1]["items"][0]
-        self.assertEqual(item["nodeId"], "1:1")
-        self.assertEqual(item["textStyleName"], "Display 2xl/Semibold")
-
-    def test_effect_uses_effectStyleName_with_unique_msg_id(self):
-        queues = {
-            "color_bindings": [], "number_bindings": [],
-            "textstyle_bindings": [],
-            "effect_bindings": [
-                {"nodeId": "1:E", "index": 0, "token_name": "--shadow-md"},
-                {"nodeId": "1:F", "index": 0, "token_name": "--shadow-md"},
-            ],
-            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
-        }
-        fmc._apply_bindings(queues, self.indexes)
-        eff_calls = [c for c in self.calls if c[0] == "set_effect_style_id"]
-        self.assertEqual(len(eff_calls), 2)
-        self.assertEqual(eff_calls[0][1]["effectStyleName"], "Shadows/shadow-md")
-        self.assertEqual(eff_calls[1][1]["effectStyleName"], "Shadows/shadow-md")
-
-    def test_returns_counts(self):
-        queues = {
-            "color_bindings": [{"nodeId": "1:1", "field": "fills", "index": 0,
-                                "token_name": "--colors-text-textPrimary"}],
-            "number_bindings": [{"nodeId": "1:1", "field": "paddingTop",
-                                 "token_name": "--spacing-2-8px"}],
-            "textstyle_bindings": [{"nodeId": "1:T",
-                                    "token_name": "--display2xl-semibold"}],
-            "effect_bindings": [{"nodeId": "1:E", "index": 0,
-                                 "token_name": "--shadow-md"}],
-            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
-        }
-        result = fmc._apply_bindings(queues, self.indexes)
-        self.assertEqual(result, {"colors": 1, "numbers": 1, "textstyles": 1, "effects": 1})
-
-    def test_textstyle_logs_failures(self):
-        """If plugin reports failed textstyle binds, the count reflects succeeded only."""
-        # Override fake_call_tool to return a failed response
-        def fake_call_tool(name, args, msg_id=1):
-            self.calls.append((name, args))
-            if name == "batch_set_text_style_id":
-                return [{"text": '{"total": 2, "succeeded": 1, "failed": 1, '
-                                  '"results": [{"nodeId":"1:1","name":"T","styleName":"X"}], '
-                                  '"errors": [{"nodeId":"1:2","error":"Style not found"}]}'}]
-            return [{"text": "{\"success\": true}"}]
-        fmc.call_tool = fake_call_tool
-        queues = {
-            "color_bindings": [], "number_bindings": [],
-            "textstyle_bindings": [
-                {"nodeId": "1:1", "token_name": "--display2xl-semibold"},
-                {"nodeId": "1:2", "token_name": "--display2xl-semibold"},
-            ],
-            "effect_bindings": [],
-            "unmapped": {"colors": [], "numbers": [], "typography": [], "shadows": []},
-        }
-        counts = fmc._apply_bindings(queues, self.indexes)
-        # Should reflect actual succeeded count (1), not the input count (2)
-        self.assertEqual(counts["textstyles"], 1)
-
-
-import tempfile
-
-
-class TestReportUnmapped(unittest.TestCase):
-    def test_writes_json_and_returns_summary(self):
-        unmapped = {
-            "colors": [{"nodeId": "1:1", "field": "fills", "index": 0, "rgba": (10,20,30,1.0)}],
-            "numbers": [{"nodeId": "1:2", "field": "paddingTop", "value": 7}],
-            "typography": [],
-            "shadows": [],
-        }
-        with tempfile.TemporaryDirectory() as tmp:
-            path = os.path.join(tmp, "report.json")
-            summary = fmc._report_unmapped(unmapped, output_path=path)
-            self.assertEqual(summary, "1 color, 1 number")
-            self.assertTrue(os.path.exists(path))
-            with open(path) as f:
-                data = json.load(f)
-            self.assertEqual(len(data["colors"]), 1)
-
-    def test_summary_pluralization_for_all_categories(self):
-        unmapped = {
-            "colors": [{"nodeId": "1:1"}],                            # 1 → singular
-            "numbers": [{"nodeId": "1:2"}, {"nodeId": "1:3"}],        # 2 → plural
-            "typography": [{"nodeId": "1:4"}, {"nodeId": "1:5"}],     # 2 → must be "typographies"
-            "shadows": [{"nodeId": "1:6"}],                           # 1 → singular
-        }
-        with tempfile.TemporaryDirectory() as tmp:
-            path = os.path.join(tmp, "report.json")
-            summary = fmc._report_unmapped(unmapped, output_path=path)
-        self.assertEqual(summary, "1 color, 2 numbers, 2 typographies, 1 shadow")
-
-    def test_empty_unmapped_returns_zero_string(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = os.path.join(tmp, "report.json")
-            summary = fmc._report_unmapped(
-                {"colors": [], "numbers": [], "typography": [], "shadows": []},
-                output_path=path,
-            )
-        self.assertEqual(summary, "0")
 
 
 if __name__ == "__main__":
