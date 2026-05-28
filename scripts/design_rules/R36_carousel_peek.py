@@ -118,6 +118,31 @@ def _is_horizontal_carousel_tree(node: dict) -> bool:
     layout = (node.get("layoutMode") or "")
     if layout != "HORIZONTAL":
         return False
+    # ── Guards applied to ALL carousel signals (clipsContent OR overflow) ──
+    # (2026-05-28 회귀 fix: clipsContent early-return 가 아래 자식-개수 / TEXT-자식
+    # 가드를 건너뛰어 FAB(자식 1개) · icon-wrap · CTA 처럼 HORIZONTAL+clipsContent 인
+    # 단일/라벨 프레임을 carousel 로 오인 → V=HUG 강제 → FAB 56×56 이 56×24 로 crush.
+    # 이제 가드를 clipsContent 판정 전에 둬서 양쪽 경로 모두 보호.)
+    name = (node.get("name") or "").strip().lower()
+    # FAB / icon-only 고정 사이즈 프레임은 절대 carousel 아님.
+    if name == "fab" or name.endswith(" fab"):
+        return False
+    kids = [k for k in (node.get("_children_full") or node.get("children") or [])
+            if isinstance(k, dict)]
+    # A real card carousel has >=2 card children. icon-only frames (FAB,
+    # *icon-wrap) have a single child — never a carousel even if clipsContent=true.
+    if len(kids) < 2:
+        return False
+    # Reject text-row patterns (e.g. Stage Tab Row "참여 중인 스테이지 |
+    # 찜한 스테이지" + tiny divider) and CTA frames (text + trailing icon).
+    # A real card carousel has no TEXT children at the top level; labels
+    # live inside frame cards. If any direct child is a TEXT node, this is a
+    # label/tab/CTA row, not a carousel — bail before the V=HUG / width-shrink
+    # autofix touches it. (Regression 2026-05-08: Stage Tab Row mis-classified;
+    # 2026-05-28: 'Recommend All CTA' V=HUG via clipsContent shortcut.)
+    for k in kids:
+        if (k.get("type") or "").upper() == "TEXT":
+            return False
     if node.get("clipsContent"):
         return True
     # Fallback: even when clipsContent flag is not present in the
@@ -125,22 +150,6 @@ def _is_horizontal_carousel_tree(node: dict) -> bool:
     # any HORIZONTAL frame whose total card-width exceeds its own width
     # as a scroll carousel — it WILL clip its overflowing children at
     # paint time regardless of the property's reported value.
-    kids = node.get("_children_full") or node.get("children") or []
-    if len(kids) < 2:
-        return False
-    # Reject text-row patterns (e.g. Stage Tab Row "참여 중인 스테이지 |
-    # 찜한 스테이지" + tiny divider). A real card carousel has no TEXT
-    # children at the top level; labels live inside frame cards. If any
-    # direct child is a TEXT node, this is a label/tab row, not a
-    # carousel — bail before the V=HUG / width-shrink autofix touches it.
-    # (Regression observed 2026-05-08: R36 mis-classified Stage Tab Row,
-    # forced V=HUG + treated tiny divider as "card", flipped the row to
-    # SPACE_BETWEEN visually.)
-    for k in kids:
-        if not isinstance(k, dict):
-            return False
-        if (k.get("type") or "").upper() == "TEXT":
-            return False
     own_w = node.get("width") or 0
     if not own_w:
         return False

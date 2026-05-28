@@ -459,6 +459,50 @@ def test_s20_bypass_with_skipped_reason():
     assert not errs
 
 
+# ── R36 carousel detection — FAB / icon-wrap / CTA 오탐 회귀 (2026-05-28) ──
+# R36 AUTO_FIX 가 carousel 로 오인한 frame 을 V=HUG 로 만들어 FAB(56×56)가 56×24 로
+# 찌그러진 사고. clipsContent early-return 이 자식-개수/TEXT-자식 가드를 우회했던 게 원인.
+
+def test_r36_does_not_classify_fab_as_carousel():
+    from design_rules.R36_carousel_peek import _is_horizontal_carousel_tree as f
+    fab = {"name": "FAB", "layoutMode": "HORIZONTAL", "clipsContent": True,
+           "width": 56, "children": [{"type": "FRAME", "name": "fab-icon", "width": 24}]}
+    assert f(fab) is False
+
+
+def test_r36_does_not_classify_single_child_icon_wrap():
+    from design_rules.R36_carousel_peek import _is_horizontal_carousel_tree as f
+    iw = {"name": "Att Icon Wrap", "layoutMode": "HORIZONTAL", "clipsContent": True,
+          "width": 40, "children": [{"type": "VECTOR", "width": 24}]}
+    assert f(iw) is False
+
+
+def test_r36_does_not_classify_cta_with_text_child():
+    from design_rules.R36_carousel_peek import _is_horizontal_carousel_tree as f
+    cta = {"name": "Recommend All CTA", "layoutMode": "HORIZONTAL", "clipsContent": True,
+           "width": 300, "children": [{"type": "TEXT", "width": 100},
+                                       {"type": "FRAME", "width": 24}]}
+    assert f(cta) is False
+
+
+def test_r36_still_detects_real_carousel():
+    from design_rules.R36_carousel_peek import _is_horizontal_carousel_tree as f
+    # clipsContent + >=2 fixed card children, no TEXT child → real carousel
+    car = {"name": "Lounge Carousel", "layoutMode": "HORIZONTAL", "clipsContent": True,
+           "width": 353, "children": [
+               {"type": "FRAME", "width": 160, "layoutSizingHorizontal": "FIXED"},
+               {"type": "FRAME", "width": 160, "layoutSizingHorizontal": "FIXED"},
+               {"type": "FRAME", "width": 160, "layoutSizingHorizontal": "FIXED"}]}
+    assert f(car) is True
+    # overflow signal (no clip flag echoed) still detected
+    car2 = {"name": "Day Strip", "layoutMode": "HORIZONTAL", "width": 353, "itemSpacing": 8,
+            "children": [
+                {"type": "FRAME", "width": 120, "layoutSizingHorizontal": "FIXED"},
+                {"type": "FRAME", "width": 120, "layoutSizingHorizontal": "FIXED"},
+                {"type": "FRAME", "width": 120, "layoutSizingHorizontal": "FIXED"}]}
+    assert f(car2) is True
+
+
 def test_s20_accepts_proper_references():
     bp = {"name": "X", "type": "frame", "width": 393, "statusBar": True,
           "references": [

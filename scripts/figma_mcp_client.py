@@ -3342,6 +3342,21 @@ def cmd_build(blueprint_file: str):
         except Exception as e:
             print(f"  [design_rules:post] dispatcher 실패 — 무시하고 계속: {e}")
 
+    # ⚠️ Step E.7.6 — 고정 사이즈 invariant 최종 재강제 (2026-05-28 회귀 fix).
+    # design_rules AUTO_FIX phase (E.7.5) 는 cmd_post_fix 의 final invariant *이후* 에
+    # 돌기 때문에, R36(carousel-vfix) 같은 룰이 FAB/원형 frame 의 vertical 을 HUG 로
+    # 바꿔 56×56 → 56×24 로 다시 찌그러뜨릴 수 있다 (실측: 'R36 carousel-vfix: FAB
+    # V=HUG'). post-fix 뒤 어떤 룰이 또 건드려도 56×56 이 마지막 말이 되도록 여기서
+    # 순서 무관하게 최종 보장. (R36 detection 자체도 FAB 제외하도록 고쳤지만, 다른
+    # 룰의 미래 회귀까지 막는 defense-in-depth.)
+    if root_id:
+        try:
+            n_inv2 = _enforce_fixed_size_invariants_final(root_id)
+            if n_inv2:
+                print(f"\n[Step E.7.6] 고정 사이즈 invariant 재강제 {n_inv2}건 (AUTO_FIX 후 회귀 차단)")
+        except Exception as e:
+            print(f"  [size-invariant-2] 실패 (무시): {e}")
+
     # Step G: NavBar 로고 인스턴스 교체
     if node_map and "Logo Placeholder" in node_map:
         print("\n🔲 NavBar 로고 교체 중...")
