@@ -19,6 +19,7 @@
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@untitledui/icons": "^0.0.21",
     "hono": "^4.7.0",
+    "sharp": "^0.34.5",
     "uuid": "^11.1.0",
     "ws": "^8.18.0",
     "yoga-layout": "^3.2.1",
