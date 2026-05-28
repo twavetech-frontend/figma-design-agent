@@ -28,6 +28,21 @@ import re
 import requests
 from typing import Any, Optional, List, Dict
 
+# Unified Content Model (Refactor A — 2026-05-28)
+# archetype spec + wire_content → blueprint 단일 경로
+_scripts_dir_for_unified = os.path.dirname(os.path.abspath(__file__))
+if _scripts_dir_for_unified not in sys.path:
+    sys.path.insert(0, _scripts_dir_for_unified)
+try:
+    from unified_blueprint import (  # type: ignore
+        build_unified_blueprint as _unified_build,
+        load_archetype_spec as _unified_load_spec,
+    )
+    _UNIFIED_AVAILABLE = True
+except Exception as _e:
+    _UNIFIED_AVAILABLE = False
+    print(f"[unified] import 실패 — legacy mode only: {_e}")
+
 # 127.0.0.1 사용 — localhost는 Windows에서 IPv6(::1) 우선 해석 후 IPv4 폴백이라 호출마다 지연
 MCP_URL = "http://127.0.0.1:8769/mcp"
 # HTTP keep-alive — MCP 호출마다 새 TCP 연결을 열지 않도록 세션 재사용
@@ -564,6 +579,1459 @@ def cmd_call(tool_name: str, args_json: str):
         print(f"\n[{len(result['images'])} image(s) returned]")
 
 
+# ⚠️ Step A (2026-05-28) — 사용자 결정형 polished 디자인 자동 export
+# imin_home archetype 빌드 시 [feedback_user_modified_design_rules] 의 16941:51284
+# (사용자가 직접 polish 한 holy-grail 디자인) 을 build 직전 PNG export 해서
+# Claude 가 빌드 진행 전 시각 reference 를 갱신하도록 강제. 새 세션 회귀 차단.
+
+_CANONICAL_REFS = {
+    "imin_home": {
+        "node_id": "16941:51284",
+        "file_key": "SsgiLsXVMkf0wv8OhRGwks",
+        "memo": ("사용자가 직접 polish 한 imin_home 결정형 reference. "
+                 "카드 위계, brand bg 위 sub-component, Pill 패턴, "
+                 "텍스트 컬러 룰 — 이 시각을 reference 로 디자인하라."),
+    },
+}
+
+
+def _auto_export_canonical_reference(blueprint: dict) -> None:
+    """archetype 별로 사용자 결정형 reference 노드를 PNG export 하고 경로 알림.
+
+    Claude 가 빌드 직전에 export 된 PNG 를 Read 해서 시각 풍부함을
+    학습 후 blueprint 작성하도록 시스템에 박힌 hook.
+    """
+    if not isinstance(blueprint, dict):
+        return
+    root_name = (blueprint.get("rootName") or blueprint.get("name") or "").lower()
+    # archetype 매칭
+    matched = None
+    for archetype, ref in _CANONICAL_REFS.items():
+        if archetype in root_name:
+            matched = (archetype, ref)
+            break
+    if not matched:
+        return
+    archetype, ref = matched
+    node_id = ref["node_id"]
+    try:
+        result = call_tool("export_node_as_image", {
+            "nodeId": node_id,
+            "format": "PNG",
+            "scale": 1,
+        })
+        # 파일 경로 추정 — figma MCP 가 cache 에 저장
+        print(f"\n📐 [Step A] 결정형 reference auto-export: {archetype}")
+        print(f"  Node: {node_id}  (file: {ref['file_key']})")
+        print(f"  → Claude: 빌드 전 이 reference 이미지를 Read 해서 시각 풍부함 학습 필수")
+        print(f"  Memo: {ref['memo']}")
+    except Exception as e:
+        # reference 노드가 다른 파일에 있을 때 등 — fail soft
+        print(f"  [Step A] 결정형 reference export skipped ({e})")
+
+
+# ── Step A.0 — references/uibowl 자동 검색 (2026-05-28) ──────────────────────
+# 사용자 명시: "내가 레퍼런스 이미지를 수백장 첨부해놓은거 아니냐! 너 디자인 생성할때
+# 레퍼런스 이미지 검색은 하냐?" → archetype 매칭 PNG path 자동 출력 + Read 강제.
+
+def _auto_search_uibowl_references(blueprint: dict) -> None:
+    """archetype 인식해 references/uibowl 자동 검색 + thumbnail 생성.
+
+    빌드 진행 전 Claude 가 PNG path 들을 Read 강제 (CLAUDE.md 절대 규칙 0-G).
+    """
+    if not isinstance(blueprint, dict):
+        return
+    root_name = (blueprint.get("rootName") or blueprint.get("name") or "").lower()
+    if not root_name:
+        return
+
+    # archetype 추론 — root_name 에서 imin_xxx 패턴 추출
+    archetype = None
+    for kw in ["imin_home", "imin_stage", "imin_lounge", "imin_community",
+               "imin_payment", "imin_detail", "imin_onboarding", "imin_settings",
+               "imin_notification", "imin_search", "imin_history"]:
+        if kw in root_name:
+            archetype = kw
+            break
+
+    if not archetype:
+        return
+
+    import subprocess
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ref_script = os.path.join(project_root, "scripts", "ref_search.py")
+    if not os.path.exists(ref_script):
+        return
+
+    try:
+        result = subprocess.run(
+            ["python3", ref_script, "--archetype", archetype,
+             "--limit", "6", "--thumbnail", "--json"],
+            cwd=project_root,
+            capture_output=True, text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            print(f"  [Step A.0] ref_search 실패: {result.stderr[:200]}")
+            return
+        import json as _json
+        refs = _json.loads(result.stdout)
+        if not refs:
+            print(f"  [Step A.0] archetype '{archetype}' 매칭 reference 없음")
+            return
+
+        print(f"\n📚 [Step A.0] references/uibowl 자동 검색 — archetype '{archetype}'")
+        print("=" * 70)
+        for r in refs:
+            print(f"  [{r['app']:9s}] {r['patternCodeName']:14s} | {(r.get('patternName') or '-')[:20]:20s} | {r['thumbPath']}")
+        print()
+        print("📌 SECTION-REFERENCE-PNG ⚠️  Claude 강제 절차 (CLAUDE.md 절대 규칙 0-G):")
+        print("    1. 위 PNG 6장을 모두 Read 도구로 열어 시각 학습")
+        print("       (path 만 references[] 박지 말고 실제 이미지 시각 위계/리듬/컬러 매핑 참고)")
+        print("    2. 학습 결과를 _enrich_imin_home_polish 또는 라이브 fix 에 반영")
+        print("    3. references[] 의 ref/extract/copyNotes 에 실제 본 내용 박을 것")
+        print("=" * 70)
+    except Exception as e:
+        print(f"  [Step A.0] reference 검색 실패 (무시): {e}")
+
+
+# ── Step A.5 — imin_home polish baseline auto-inject (2026-05-28) ─────────────
+# [feedback_imin_home_polish_baseline] catalog 의 시각 패턴을 blueprint 에 자동
+# 박음. 17389:51811 의 폴리시 수준이 자동 baseline 으로 도달.
+
+# ═══════════════════════════════════════════════════════════════════
+# ⚠️ HARD-ENFORCED FUNCTIONS (2026-05-28 사용자 분노 후 무조건 실행 코드)
+# ═══════════════════════════════════════════════════════════════════
+# 룰 파일 (design_rules/R*.py) 은 phase 별 조건부 실행이라 회귀가 반복됨.
+# 아래 _HARD_* 함수들은 cmd_build / cmd_post_fix 에 무조건 호출되도록 박혀있음.
+# 가드 조건 최소화 — 사용자 명시 "룰 말고 무조건 실행 코드 만들어".
+
+
+# Day Strip cell 폭이 ~50px 이라 짧아야 함. 단독 "0원" 은 짧은 mock 으로.
+_MOCK_FILL_PATTERNS_LONG = [
+    # (regex_pattern, replacement) — large frame currency 용 (긴 mock)
+    (r"진행중인?\s*0건의?", "진행중인 3건의"),
+    (r"\+0원", "+1,240,000원"),
+    (r"-0원", "-340,000원"),
+    (r"연속\s*0일째", "연속 7일째"),
+    (r"^0개$", "3개"),
+    (r"^0건$", "3건"),
+]
+# Day Strip cell 같은 좁은 영역용 (≤ 6자 mock). 6개 cell 다른 수치로.
+_MOCK_DAY_STRIP_AMOUNTS = ["+24만", "+18만", "+30만", "+15만", "+22만", "+28만"]
+
+
+def _HARD_fill_mock_data_when_empty(blueprint: dict) -> None:
+    """⚠️ [DEPRECATED 2026-05-28 — Refactor A] 무조건 실행: empty state 시나리오
+    (0원/0건/0일) 감지되면 와이어 콘텐츠를 mock 활성 데이터로 자동 치환.
+
+    🚨 새 코드는 **unified spec** (`scripts/archetype_specs/imin_home.json`) +
+    `build_unified_blueprint()` 사용. 그쪽 generator 가 mock_data 를 직접 박음 —
+    regex 치환 없음. 이 함수는 legacy blueprint 입력 fallback 에서만 호출됨.
+    cmd_build 의 `_unified_mode` 분기에서 자동 skip.
+
+    Why (legacy): 사용자 "왜 자꾸 데이터가 없는 empty 화면으로만 생성하냐! 적절한
+    데이터가 보여진 화면으로 생성해야지 임마!!!!!". L1 와이어 1:1 룰 폐기 — 디자인은
+    "데이터 있는 활성 상태" 가 default.
+
+    Detection: _detect_empty_state_scenario 와 동일. archetype 검사 없음 (모든 화면).
+    """
+    import re
+    if not isinstance(blueprint, dict):
+        return
+    # imin_home 아니면 skip (다른 archetype 안전)
+    root_name = (blueprint.get("rootName") or blueprint.get("name") or "").lower()
+    if "imin_" not in root_name:
+        return
+    if not _detect_empty_state_scenario(blueprint):
+        return
+
+    fixed = 0
+    # Day Strip cell 의 "0원" 은 좁은 폭이라 짧은 mock 사용. cell index 별 다른 수치.
+    day_strip_idx = [0]
+    def walk(n, in_day_strip=False):
+        nonlocal fixed
+        if not isinstance(n, dict):
+            return
+        # Day Strip 안 진입
+        nm = (n.get("name") or "").lower()
+        if "day strip" in nm or "day-strip" in nm:
+            in_day_strip = True
+        if (n.get("type") or "").lower() == "text":
+            t = n.get("text") or n.get("characters") or ""
+            new_t = t
+            if in_day_strip and t.strip() in ("0원", "+0원", "-0원"):
+                # 좁은 cell 용 짧은 mock
+                idx = day_strip_idx[0] % len(_MOCK_DAY_STRIP_AMOUNTS)
+                new_t = _MOCK_DAY_STRIP_AMOUNTS[idx]
+                day_strip_idx[0] += 1
+            else:
+                # 일반 영역은 긴 mock
+                for pat, rep in _MOCK_FILL_PATTERNS_LONG:
+                    new_t = re.sub(pat, rep, new_t)
+            if new_t != t:
+                if "text" in n:
+                    n["text"] = new_t
+                if "characters" in n:
+                    n["characters"] = new_t
+                fixed += 1
+        for c in n.get("children", []) or []:
+            walk(c, in_day_strip)
+    walk(blueprint)
+
+    if fixed:
+        print(f"[HARD] empty state → mock data 자동 치환 {fixed}건 (사용자 명시 2026-05-28)")
+        # 치환 후엔 empty 신호가 사라져야 polish 가 풀데이터 모드로 작동
+        # _wireframeContent 도 mock 치환 알림
+        wc = blueprint.get("_wireframeContent")
+        if isinstance(wc, dict):
+            wc["_mockFilled"] = f"{fixed}건 0원/0건/0일 → mock 데이터 자동 치환 (2026-05-28 사용자 룰)"
+
+
+def _HARD_lounge_card_visual_after_build(root_node_id: str) -> int:
+    """⚠️ 무조건 실행 (2026-05-28 사용자 분노 fix): 빌드 트리의 Lounge Card 안
+    회색 빈 frame (자식 0~1개 + bg-secondary) 을 brand-section + center gift icon 으로
+    자동 치환. R50 placeholder 차단의 라이브 버전.
+
+    이전 R50/R52 는 build-time lint 만이라 polish 가 imageQuery 덮어쓰면 차단 못함.
+    이 함수는 빌드 후 트리를 직접 탐색해 placeholder shape 검출 → live fix.
+    """
+    fixed = 0
+    try:
+        root_info = call_tool("get_node_info", {"nodeId": root_node_id})
+    except Exception as e:
+        print(f"  [HARD-lounge] root info fail: {e}")
+        return 0
+
+    GREY_RGB = (0.95, 0.96, 0.96)  # bg-secondary approx
+
+    def is_greyish(fills):
+        if not fills:
+            return False
+        for f in fills:
+            if f.get("type") == "SOLID":
+                c = f.get("color") or {}
+                r, g, b = c.get("r", 0), c.get("g", 0), c.get("b", 0)
+                if 0.9 < r < 1 and 0.9 < g < 1 and 0.9 < b < 1:
+                    return True
+        return False
+
+    # Lounge 카드의 image frame 이름 패턴 (이름에 "image" / "photo" 포함)
+    def walk(node, in_lounge=False, lounge_card_root=False):
+        nonlocal fixed
+        if not isinstance(node, dict):
+            return
+        nm = (node.get("name") or "").lower()
+        # Lounge Card N (top-level card)
+        is_card_root = (
+            ("lounge" in nm and "card" in nm and "body" not in nm and "image" not in nm)
+        )
+        if is_card_root:
+            in_lounge = True
+            lounge_card_root = True
+        # placeholder 검출: in_lounge 자손 중 image-named frame OR 회색 큰 frame
+        if in_lounge and not lounge_card_root and node.get("type") == "FRAME":
+            children = node.get("children") or []
+            is_image_named = "image" in nm or "photo" in nm
+            w = node.get("width", 0) or 0
+            h = node.get("height", 0) or 0
+            # 회색 placeholder OR 이름이 image/photo 인데 image fill 없음
+            grey = is_greyish(node.get("fills"))
+            has_image_fill = any(
+                (f.get("type") in ("IMAGE",)) for f in (node.get("fills") or [])
+            )
+            should_fix = (
+                (is_image_named and not has_image_fill and h >= 60) or
+                (grey and len(children) == 0 and w >= 80 and h >= 60)
+            )
+            if should_fix:
+                # bg-brand-section + 가운데 gift icon 그릴 frame
+                try:
+                    bs = resolve_token_ref("$token(bg-brand-section)") or {"r":0.95,"g":0.92,"b":1,"a":1}
+                    call_tool("set_fill_color", {
+                        "nodeId": node["id"], "r": bs["r"], "g": bs["g"], "b": bs["b"], "a": bs.get("a",1.0),
+                    })
+                    fp = _token_to_figma_path("bg-brand-section")
+                    if fp:
+                        try:
+                            call_tool("set_bound_variables", {"nodeId": node["id"], "bindings": {"fills/0": fp}})
+                        except Exception:
+                            pass
+                    # autoLayout center
+                    try:
+                        call_tool("set_auto_layout", {
+                            "nodeId": node["id"], "layoutMode": "HORIZONTAL",
+                            "primaryAxisAlignItems": "CENTER",
+                            "counterAxisAlignItems": "CENTER",
+                            "paddingTop": 8, "paddingBottom": 8, "paddingLeft": 8, "paddingRight": 8,
+                        })
+                    except Exception:
+                        pass
+                    fixed += 1
+                except Exception as e:
+                    print(f"  [HARD-lounge] node {node.get('id')} fix fail: {e}")
+        for c in node.get("children") or []:
+            walk(c, in_lounge, False)
+
+    walk(root_info)
+    if fixed:
+        print(f"[HARD] Lounge 빈 회색 카드 → bg-brand-section + center 자동 fix {fixed}건")
+    return fixed
+
+
+def _HARD_empty_icon_circle_after_build(root_node_id: str) -> int:
+    """⚠️ 무조건 실행 (2026-05-28 사용자 분노 fix): Empty Icon Wrap 류 frame
+    (이름에 'empty icon' / 'inbox' / '없습니다' 부모 + icon-wrap 자식) 을
+    56×56 cornerRadius 28 HUG×HUG 원형으로 강제. FILL 가로 막대 회귀 차단.
+    """
+    fixed = 0
+    try:
+        root_info = call_tool("get_node_info", {"nodeId": root_node_id})
+    except Exception as e:
+        print(f"  [HARD-empty-icon] root info fail: {e}")
+        return 0
+
+    def walk(node):
+        nonlocal fixed
+        if not isinstance(node, dict):
+            return
+        nm = (node.get("name") or "").lower()
+        # icon-wrap 패턴: name contains "empty" + "icon" / "inbox" / "icon-wrap" + 가까운 형제에 "없습니다"
+        if (("empty" in nm and "icon" in nm) or
+            ("empty" in nm and "wrap" in nm) or
+            "inbox" in nm):
+            if node.get("type") == "FRAME":
+                try:
+                    call_tool("set_layout_sizing", {
+                        "nodeId": node["id"], "horizontal": "FIXED", "vertical": "FIXED",
+                    })
+                    call_tool("resize_node", {
+                        "nodeId": node["id"], "width": 56, "height": 56,
+                    })
+                    call_tool("set_corner_radius", {
+                        "nodeId": node["id"], "radius": 28,
+                    })
+                    fixed += 1
+                except Exception as e:
+                    print(f"  [HARD-empty-icon] {node.get('id')} fix fail: {e}")
+        for c in node.get("children") or []:
+            walk(c)
+
+    walk(root_info)
+    if fixed:
+        print(f"[HARD] Empty Icon Wrap 56×56 circle 강제 fix {fixed}건")
+    return fixed
+
+
+def _HARD_strip_duplicate_recommend_hero(root_node_id: str) -> int:
+    """⚠️ 무조건 실행 (2026-05-28 사용자 분노 fix): Recommend Stage Card 안에
+    동일 금액 hero text (예: '1,300만원') 가 2회 이상 있으면 두 번째부터 제거.
+    polish + 와이어 hero 중복 회귀 차단.
+    """
+    fixed = 0
+    try:
+        root_info = call_tool("get_node_info", {"nodeId": root_node_id})
+    except Exception as e:
+        print(f"  [HARD-dedupe-hero] root info fail: {e}")
+        return 0
+
+    def find_recommend(n):
+        if not isinstance(n, dict):
+            return None
+        nm = (n.get("name") or "").lower()
+        if "recommend" in nm and "card" in nm:
+            return n
+        for c in n.get("children") or []:
+            r = find_recommend(c)
+            if r:
+                return r
+        return None
+
+    card = find_recommend(root_info)
+    if not card:
+        return 0
+
+    seen = {}
+    to_delete = []
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        if node.get("type") == "TEXT":
+            t = (node.get("characters") or "").strip()
+            font_size = node.get("fontSize") or 0
+            # 금액 hero 패턴: "X만원" 또는 "X,XXX,XXX원" — fontSize >= 24
+            if (font_size >= 24 and "원" in t and
+                any(ch.isdigit() for ch in t)):
+                key = t
+                if key in seen:
+                    to_delete.append(node["id"])
+                else:
+                    seen[key] = node["id"]
+        for c in node.get("children") or []:
+            walk(c)
+    walk(card)
+
+    for nid in to_delete:
+        try:
+            call_tool("delete_node", {"nodeId": nid})
+            fixed += 1
+        except Exception as e:
+            print(f"  [HARD-dedupe-hero] delete {nid} fail: {e}")
+    if fixed:
+        print(f"[HARD] Recommend Card 중복 hero 제거 {fixed}건")
+    return fixed
+
+
+def _HARD_strip_redundant_join_cta(root_node_id: str) -> int:
+    """⚠️ 무조건 실행 (2026-05-28 사용자 분노 fix): Recommend Stage Card 안에
+    동일 브랜드 CTA 가 2개 이상이면 "참여하기" (polish-injected) 를 제거.
+    와이어에 명시되지 않은 CTA 자동 추가 차단.
+    """
+    fixed = 0
+    try:
+        root_info = call_tool("get_node_info", {"nodeId": root_node_id})
+    except Exception as e:
+        return 0
+
+    def find_recommend(n):
+        if not isinstance(n, dict):
+            return None
+        nm = (n.get("name") or "").lower()
+        if "recommend" in nm and "card" in nm:
+            return n
+        for c in n.get("children") or []:
+            r = find_recommend(c)
+            if r:
+                return r
+        return None
+
+    card = find_recommend(root_info)
+    if not card:
+        return 0
+
+    # brand-solid pill 카운트
+    brand_ctas = []
+    def walk(node, depth=0):
+        if not isinstance(node, dict):
+            return
+        nm = (node.get("name") or "").lower()
+        # "join action strip" = polish 가 박은 "참여하기" pill 이름
+        if "join action" in nm or "join-action" in nm:
+            # CTA 텍스트 확인
+            def has_text(n, target):
+                if (n.get("type") == "TEXT" and target in (n.get("characters") or "")):
+                    return True
+                for c in n.get("children") or []:
+                    if has_text(c, target):
+                        return True
+                return False
+            if has_text(node, "참여하기"):
+                brand_ctas.append(node["id"])
+        for c in node.get("children") or []:
+            walk(c, depth+1)
+    walk(card)
+
+    # "추천 전체 보기" CTA 이미 있으면 "참여하기" 는 중복 — 제거
+    has_show_all = False
+    def walk2(node):
+        nonlocal has_show_all
+        if not isinstance(node, dict):
+            return
+        if node.get("type") == "TEXT":
+            t = node.get("characters") or ""
+            if "추천 전체 보기" in t or "전체 보기" in t:
+                has_show_all = True
+        for c in node.get("children") or []:
+            walk2(c)
+    walk2(card)
+
+    if has_show_all and brand_ctas:
+        for nid in brand_ctas:
+            try:
+                call_tool("delete_node", {"nodeId": nid})
+                fixed += 1
+            except Exception as e:
+                print(f"  [HARD-strip-cta] delete {nid} fail: {e}")
+    if fixed:
+        print(f"[HARD] Recommend Card 중복 '참여하기' CTA 제거 {fixed}건 (와이어에 없음)")
+    return fixed
+
+
+def _HARD_ENFORCE_IMIN_HOME_INVARIANTS(root_node_id: str) -> None:
+    """⚠️ 무조건 실행 — cmd_post_fix 끝에서 호출. 사용자 명시 "룰 말고 무조건
+    실행 코드" (2026-05-28).
+    """
+    print("\n" + "="*60)
+    print("[HARD-ENFORCE] 사용자 명시 무조건 실행 룰 적용 중...")
+    print("="*60)
+    for fn, label in [
+        (_HARD_empty_icon_circle_after_build, "Empty Icon Wrap 56×56 circle"),
+        (_HARD_lounge_card_visual_after_build, "Lounge 빈 회색 카드 fix"),
+        (_HARD_strip_duplicate_recommend_hero, "Recommend 중복 hero 제거"),
+        (_HARD_strip_redundant_join_cta, "Recommend 중복 CTA 제거"),
+    ]:
+        try:
+            fn(root_node_id)
+        except Exception as e:
+            print(f"  [HARD] {label} 실패 (무시): {e}")
+
+
+def _enrich_imin_home_polish(blueprint: dict) -> None:
+    """⚠️ [DEPRECATED 2026-05-28 — Refactor A] imin_home archetype 자동 polish.
+
+    🚨 새 코드는 **unified spec** + `build_unified_blueprint()` 사용. 그쪽 generator
+    (`_gen_screen_hero` / `_gen_stage_progress_card` / `_gen_subcard_cta` 등) 가
+    polish baseline 을 직접 박음. 이 함수는 legacy blueprint 입력 fallback 전용 —
+    cmd_build 의 `_unified_mode` 분기에서 자동 skip.
+
+    Why (legacy 보존): 점진 마이그레이션 — 기존 손작성 blueprint 회귀 위험 차단.
+    unified spec 으로 전환되면 sub-함수 7개와 함께 제거 가능.
+
+    적용 항목:
+      P1. Top Alert Banner — NavBar 다음 자동 prepend (이미 있으면 skip)
+      P2. Hero Currency Screen-level — Progress Card 의 첫 currency text 를
+          카드 outside 화면 hero 로 추출 (42px Bold)
+      P3. Day Strip 4단계 — cell 마다 amount + status_label 자동 추가 +
+          시맨틱 색 매핑 (미납=danger, 지급=success, 오늘=dark)
+      P4. Sub-card CTA — Footer 직전 자동 prepend (포인트/혜택 sub-card)
+      P5. Attendance dot row — 출석 banner 가 텍스트만이면 7 dots 변환
+
+    archetype 미일치 시 무조건 no-op (다른 archetype 안전).
+    """
+    if not isinstance(blueprint, dict):
+        return
+    root_name = (blueprint.get("rootName") or blueprint.get("name") or "").lower()
+    if "imin_home" not in root_name:
+        return
+
+    enrichments = []
+
+    # 2026-05-28 시나리오 인지 (사용자 옵션 Z): 와이어 콘텐츠가 0건/0원 empty state
+    # 시나리오 면 mock polish (Top Alert / Hero 0원 / Day Strip status / 포인트 CTA)
+    # 비활성화 + invitation 패턴 대체. 와이어 풀데이터면 그대로 적용.
+    is_empty = _detect_empty_state_scenario(blueprint)
+
+    # P1. Top Alert Banner — 풀데이터 시나리오에서만 박음 (empty 면 skip — 모순 차단)
+    if not is_empty and not _has_top_alert_banner(blueprint):
+        _inject_top_alert_banner(blueprint)
+        enrichments.append("Top Alert Banner")
+
+    # P3. Day Strip 4단계 — empty state 면 status_label 박지 않음 (시맨틱 의미 없음)
+    n_cells = _enrich_day_strip_full(blueprint, is_empty=is_empty)
+    if n_cells:
+        label = "labels skipped (empty)" if is_empty else "4-layer"
+        enrichments.append(f"Day Strip {label} ({n_cells} cells)")
+
+    # P2. Hero — empty state 면 invitation hero ("스테이지 시작하기"), 풀데이터면 currency 42px
+    if not _has_screen_hero(blueprint):
+        _inject_screen_hero(blueprint, is_empty=is_empty)
+        enrichments.append("Screen Hero (invitation)" if is_empty else "Screen Hero (currency 42px)")
+
+    # P4. Sub-card CTA — empty 면 invitation, 풀데이터면 포인트 사용 CTA
+    if not _has_subcard_cta(blueprint):
+        _inject_subcard_cta(blueprint, is_empty=is_empty)
+        enrichments.append("Sub-card CTA (invitation)" if is_empty else "Sub-card CTA (Points)")
+
+    # P5 (2026-05-28 오후 2시 빌드 baseline): Recommend Stage Card 의 hero CTA polish
+    n = _polish_recommend_hero_cta(blueprint)
+    if n:
+        enrichments.append(f"Recommend Hero CTA (개인화 + currency brand + pill button)")
+
+    # P6: Participation Section 의 4-card grid (status pill + progress bar)
+    n = _polish_participation_grid(blueprint)
+    if n:
+        enrichments.append(f"Participation 4-card grid ({n} cards)")
+
+    # P7: Lounge cards 실 상품명 + 가격 + P 사용 hint
+    n = _polish_lounge_real_products(blueprint)
+    if n:
+        enrichments.append(f"Lounge 실 상품 ({n} cards)")
+
+    if enrichments:
+        print(f"\n🎨 [Step A.5] imin_home polish baseline injected: {', '.join(enrichments)}")
+        print(f"  [feedback_imin_home_polish_baseline] catalog 적용 — 17389:51811 reference")
+
+
+def _detect_empty_state_scenario(blueprint: dict) -> bool:
+    """와이어 콘텐츠가 0건/0원 empty state 시나리오인지 판단 (2026-05-28 사용자 옵션 Z).
+
+    Detection:
+      1. root._wireframeContent dict 안 "0개"/"0원"/"0건"/"없어요"/"empty" 키워드 우세
+      2. blueprint 안 text 노드 중 currency 텍스트 (₩/원) 가 모두 "+0원"/"-0원"/"0원"
+      3. "진행중 N건" 패턴에서 N=0
+    하나라도 강한 신호 있으면 empty state 로 판단.
+
+    Why: 와이어 0건 시나리오에 "납입 기한 지난 1건" alert / "0원" 42px hero / 미납·지급
+    상태 / "0P 기프티콘으로 바꿔보세요" 같은 mock polish 박는 게 콘텐츠 모순.
+    풀데이터 시나리오 (수치 있음) 면 polish 그대로.
+    """
+    if not isinstance(blueprint, dict):
+        return False
+
+    # 1) _wireframeContent dict 검사
+    wc = blueprint.get("_wireframeContent")
+    if isinstance(wc, dict):
+        wc_text = json.dumps(wc, ensure_ascii=False)
+        empty_signals = (
+            wc_text.count("0건") + wc_text.count("0개") +
+            wc_text.count("0원") + wc_text.count("없어요") +
+            wc_text.count("없습니다") + wc_text.count("empty")
+        )
+        if empty_signals >= 3:
+            return True
+
+    # 2) blueprint 안 text 노드 currency 분석
+    currencies = []
+    zero_currencies = 0
+
+    def walk(n):
+        nonlocal zero_currencies
+        if not isinstance(n, dict):
+            return
+        if (n.get("type") or "").lower() == "text":
+            t = n.get("text") or n.get("characters") or ""
+            if "원" in t and any(c.isdigit() or c in "+-" for c in t):
+                currencies.append(t)
+                # "0원" / "+0원" / "-0원" 패턴
+                stripped = t.replace("+", "").replace("-", "").replace(",", "").replace(" ", "")
+                if stripped.startswith("0원") or stripped == "0원":
+                    zero_currencies += 1
+        for c in n.get("children", []) or []:
+            walk(c)
+
+    walk(blueprint)
+
+    # currency 텍스트 ≥3 개이고 80%+ 가 0원 이면 empty state
+    if len(currencies) >= 3 and zero_currencies / len(currencies) >= 0.7:
+        return True
+
+    # 3) "진행중 0건" 같은 직접 패턴
+    def has_zero_count(n):
+        if not isinstance(n, dict):
+            return False
+        if (n.get("type") or "").lower() == "text":
+            t = n.get("text") or n.get("characters") or ""
+            if "0건" in t or "0개" in t:
+                return True
+        for c in n.get("children", []) or []:
+            if has_zero_count(c):
+                return True
+        return False
+
+    if has_zero_count(blueprint):
+        return True
+
+    return False
+
+
+def _has_node_by_name(blueprint: dict, *patterns: str) -> bool:
+    pats = tuple(p.lower() for p in patterns)
+    def walk(n):
+        nm = (n.get("name") or "").lower()
+        if any(p in nm for p in pats):
+            return True
+        for c in n.get("children", []) or []:
+            if walk(c):
+                return True
+        return False
+    return walk(blueprint)
+
+
+def _has_top_alert_banner(bp: dict) -> bool:
+    return _has_node_by_name(bp, "alert banner", "top alert", "alert-banner")
+
+
+def _has_screen_hero(bp: dict) -> bool:
+    return _has_node_by_name(bp, "screen hero", "screen-hero", "hero currency")
+
+
+def _has_subcard_cta(bp: dict) -> bool:
+    return _has_node_by_name(bp, "sub-card", "sub_card", "points card", "포인트")
+
+
+def _inject_top_alert_banner(bp: dict) -> None:
+    """NavBar 다음 자리에 Top Alert Banner 자동 prepend."""
+    children = bp.get("children") or []
+    if not children:
+        return
+    banner = {
+        "name": "Top Alert Banner",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "HUG",
+        "fill": "$token(bg-warning-secondary)",
+        "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "paddingLeft": 20, "paddingRight": 20,
+            "paddingTop": 12, "paddingBottom": 12,
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 8,
+        },
+        "children": [
+            {
+                "name": "alert-left",
+                "type": "frame",
+                "layoutSizingHorizontal": "HUG",
+                "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 8, "counterAxisAlignItems": "CENTER"},
+                "children": [
+                    {"type": "icon", "iconName": "alert-triangle", "size": 18, "iconColor": "$token(fg-warning-primary)"},
+                    {"type": "text", "text": "납입 기한이 지난 1건이 있어요", "fontSize": 14, "fontName": {"family":"Pretendard","style":"SemiBold"}, "fontColor": "$token(text-primary)"},
+                ],
+            },
+            {
+                "type": "text",
+                "text": "지금 납입 >",
+                "fontSize": 13,
+                "fontName": {"family": "Pretendard", "style": "Bold"},
+                "fontColor": "$token(text-warning-primary)",
+            },
+        ],
+    }
+    # NavBar 다음 자리에 prepend (NavBar 가 첫 자식이면 [1] 자리)
+    insert_idx = 0
+    for i, c in enumerate(children):
+        if "navbar" in (c.get("name") or "").lower() or "nav bar" in (c.get("name") or "").lower():
+            insert_idx = i + 1
+            break
+    children.insert(insert_idx, banner)
+    bp["children"] = children
+
+
+def _inject_screen_hero(bp: dict, is_empty: bool = False) -> None:
+    """Progress Section 위에 Screen Hero 자동 prepend.
+
+    is_empty=True: invitation hero ("스테이지 시작하기" 큰 텍스트 + 보조 메모) —
+      0원 hero 박는 모순 회피.
+    is_empty=False: currency hero (42px Bold black) — 풀데이터 임팩트.
+    """
+    children = bp.get("children") or []
+    prog_idx = None
+    for i, c in enumerate(children):
+        nm = (c.get("name") or "").lower()
+        if "progress" in nm or "summary" in nm:
+            prog_idx = i
+            break
+    if prog_idx is None:
+        return
+
+    if is_empty:
+        # invitation hero — 0건 사용자에게 적합
+        hero = {
+            "name": "Screen Hero",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "layoutSizingVertical": "HUG",
+            "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "paddingLeft": 20, "paddingRight": 20,
+                "paddingTop": 20, "paddingBottom": 12,
+                "itemSpacing": 6,
+            },
+            "children": [
+                {"name": "hero-caption",  "type": "text", "text": "안녕하세요 :)", "fontSize": 13, "fontName": {"family":"Pretendard","style":"Medium"}, "fontColor": "$token(text-tertiary)"},
+                {"name": "hero-title",    "type": "text", "text": "오늘부터 스테이지 시작해보세요", "fontSize": 24, "fontName": {"family":"Pretendard","style":"Bold"}, "fontColor": "$token(text-primary)"},
+                {"name": "hero-sub",      "type": "text", "text": "월 10만원으로 1300만원 모으기 도전", "fontSize": 13, "fontName": {"family":"Pretendard","style":"Medium"}, "fontColor": "$token(text-secondary)"},
+            ],
+        }
+    else:
+        # currency hero — 풀데이터 임팩트
+        hero = {
+            "name": "Screen Hero",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "layoutSizingVertical": "HUG",
+            "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "paddingLeft": 20, "paddingRight": 20,
+                "paddingTop": 20, "paddingBottom": 16,
+                "itemSpacing": 4,
+            },
+            "children": [
+                {"name": "hero-caption",  "type": "text", "text": "진행 중인 스테이지 3개", "fontSize": 13, "fontName": {"family":"Pretendard","style":"Medium"}, "fontColor": "$token(text-tertiary)"},
+                {"name": "hero-label",    "type": "text", "text": "모은 금액", "fontSize": 14, "fontName": {"family":"Pretendard","style":"Medium"}, "fontColor": "$token(text-secondary)"},
+                {"name": "hero-amount",   "type": "text", "text": "14,420,320원", "fontSize": 42, "fontName": {"family":"Pretendard","style":"Bold"}, "fontColor": "$token(text-primary)"},
+                {
+                    "name": "hero-footnote",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "FILL",
+                    "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 6, "counterAxisAlignItems": "CENTER", "paddingTop": 6},
+                    "children": [
+                        {"name": "footnote-dot", "type": "rectangle", "width": 6, "height": 6, "cornerRadius": 3, "fill": "$token(bg-success-solid)"},
+                        {"type": "text", "text": "이번 달 1,240,000원 수령했어요", "fontSize": 12, "fontName":{"family":"Pretendard","style":"Medium"}, "fontColor": "$token(text-secondary)"},
+                    ],
+                },
+            ],
+        }
+    children.insert(prog_idx, hero)
+    bp["children"] = children
+
+
+def _enrich_day_strip_full(bp: dict, is_empty: bool = False) -> int:
+    """Day Strip reference 패턴 자동 적용 (2026-05-28 사용자 reference 박힘).
+
+    Reference 시각 패턴:
+      - cell vertical stack: 요일(12px medium) / 일자(20px Bold) / 금액(12px SemiBold sign) / 상태(11px medium)
+      - cell bg 시맨틱:
+        * 미납: bg-error-secondary (peach) + text-error-primary
+        * 오늘: bg-fg-primary-solid (dark) + fg-white
+        * 납입: bg-secondary (light gray) + text-secondary/tertiary
+        * 지급: bg-secondary + text-success-primary green +sign
+        * 예정 (empty): bg-secondary 가벼운 + text-tertiary
+      - cell cornerRadius 12, paddingTop/Bottom 12 paddingLeft/Right 14
+      - Day Strip parent: HORIZONTAL, itemSpacing 8, paddingLeft 20 (peek scroll)
+
+    is_empty=True: 모든 cell 가벼운 회색 + 오늘만 dark, status="예정"/"오늘"
+    is_empty=False: 시맨틱 컬러 매핑 (미납 peach / 오늘 dark / 지급 green / 납입 gray)
+
+    + Day Strip 위에 section title row 자동 inject ("이번 달 일정" + "미납 N" pill)
+    """
+    fixed = 0
+
+    # 시나리오 별 cell spec — (status, status_color, bg_token, day_color)
+    if is_empty:
+        # 모든 cell 가벼운 회색, 오늘만 강조. 0원 데이터 보존.
+        FULL_SPECS = [
+            {"status": "예정",     "status_color": "text-tertiary", "bg": "bg-secondary",            "day_color": "text-tertiary",  "amount_color": "text-tertiary"},
+            {"status": "오늘",     "status_color": "fg-white",      "bg": "bg-fg-primary-solid",     "day_color": "fg-white",       "amount_color": "fg-white"},
+            {"status": "예정",     "status_color": "text-tertiary", "bg": "bg-secondary",            "day_color": "text-tertiary",  "amount_color": "text-tertiary"},
+            {"status": "예정",     "status_color": "text-tertiary", "bg": "bg-secondary",            "day_color": "text-tertiary",  "amount_color": "text-tertiary"},
+            {"status": "예정",     "status_color": "text-tertiary", "bg": "bg-secondary",            "day_color": "text-tertiary",  "amount_color": "text-tertiary"},
+            {"status": "예정",     "status_color": "text-tertiary", "bg": "bg-secondary",            "day_color": "text-tertiary",  "amount_color": "text-tertiary"},
+        ]
+        unpaid_count = 0  # empty 시 미납 0
+    else:
+        # 풀데이터 시맨틱 매핑
+        FULL_SPECS = [
+            {"status": "미납",     "status_color": "text-error-primary",   "bg": "bg-error-secondary",      "day_color": "text-error-primary",  "amount_color": "text-error-primary"},
+            {"status": "오늘 납입","status_color": "fg-white",             "bg": "bg-fg-primary-solid",     "day_color": "fg-white",            "amount_color": "fg-white"},
+            {"status": "납입",     "status_color": "text-tertiary",        "bg": "bg-secondary",            "day_color": "text-primary",        "amount_color": "text-secondary"},
+            {"status": "지급",     "status_color": "text-success-primary", "bg": "bg-secondary",            "day_color": "text-primary",        "amount_color": "text-success-primary"},
+            {"status": "납입",     "status_color": "text-tertiary",        "bg": "bg-secondary",            "day_color": "text-primary",        "amount_color": "text-secondary"},
+            {"status": "납입",     "status_color": "text-tertiary",        "bg": "bg-secondary",            "day_color": "text-primary",        "amount_color": "text-secondary"},
+        ]
+        unpaid_count = 1
+
+    def walk(node, parent=None):
+        nonlocal fixed
+        nm = (node.get("name") or "").lower()
+        if "day strip" in nm and isinstance(node.get("children"), list):
+            # 2026-05-28 cell 겹침 fix: SPACE_BETWEEN + HUG cells 합이 부모 폭 초과 시
+            # cells 가 음수 간격으로 overlap. MIN + itemSpacing 6 으로 강제 — peek scroll 의도.
+            al = node.setdefault("autoLayout", {})
+            al["layoutMode"] = "HORIZONTAL"
+            al["primaryAxisAlignItems"] = "MIN"
+            al["counterAxisAlignItems"] = "CENTER"
+            # ⚠️ 2026-05-28 wrap 회귀 fix: 6 cells * 48px + 5 itemSpacing * 4 = 308 < 313 (parent w).
+            # batch_build_screen 의 FILL 무시 버그 우회 — FIXED width 명시.
+            al["itemSpacing"] = 4
+            node["clipsContent"] = False
+            cells = node.get("children")
+            for i, cell in enumerate(cells):
+                if i >= len(FULL_SPECS):
+                    continue
+                spec = FULL_SPECS[i]
+                # cell 자체 bg + cornerRadius + padding 박음
+                cell["fill"] = f"$token({spec['bg']})"
+                cell["cornerRadius"] = 12
+                al = cell.setdefault("autoLayout", {})
+                al.setdefault("layoutMode", "VERTICAL")
+                al["paddingTop"] = 10
+                al["paddingBottom"] = 10
+                al["paddingLeft"] = 4   # was 14 — 6 cells × HUG overflow 회귀 fix (2026-05-28)
+                al["paddingRight"] = 4
+                al["itemSpacing"] = 4
+                al["counterAxisAlignItems"] = "CENTER"
+                # ⚠️ FIXED 48px (2026-05-28 사용자 분노 fix): batch_build_screen 이 FILL 무시 →
+                # HUG cells 합이 container 폭 초과 시 텍스트 한 글자씩 세로 wrap 회귀.
+                # FIXED 48px 명시로 우회 (6 cells × 48 + 5 × 4 = 308 < 313 parent inner).
+                cell["width"] = 48
+                cell["layoutSizingHorizontal"] = "FIXED"
+                cell["layoutSizingVertical"] = "HUG"
+
+                # cell 안 텍스트들 정리 + reference 4단계 스택 박음
+                text_kids = [c for c in (cell.get("children") or []) if (c.get("type") or "").lower() == "text"]
+                if len(text_kids) < 2:
+                    continue
+                # 요일/일자 보존 → 컬러+사이즈 reference 매칭
+                weekday = text_kids[0]
+                day_num = text_kids[1]
+                # ⚠️ 좁은 cell (~52px FILL) 용 fontSize 축소 (2026-05-28 wrap 회귀 fix)
+                weekday["fontSize"] = 11
+                weekday["fontName"] = {"family":"Pretendard","style":"Medium"}
+                weekday["fontColor"] = f"$token({spec['day_color']})"
+                weekday["name"] = "day-weekday"
+                weekday["textAlignHorizontal"] = "CENTER"
+                day_num["fontSize"] = 15  # was 20 — 좁은 cell wrap 회귀 fix
+                day_num["fontName"] = {"family":"Pretendard","style":"Bold"}
+                day_num["fontColor"] = f"$token({spec['day_color']})"
+                day_num["name"] = "day-number"
+                day_num["textAlignHorizontal"] = "CENTER"
+                # 기존 cells 안 "0원" 텍스트 → amount 로 보존 (3번째 있으면)
+                amount = text_kids[2] if len(text_kids) >= 3 else None
+                if amount:
+                    amount["fontSize"] = 10  # was 12 — 좁은 cell wrap 회귀 fix
+                    amount["fontName"] = {"family":"Pretendard","style":"SemiBold"}
+                    amount["fontColor"] = f"$token({spec['amount_color']})"
+                    amount["name"] = "day-amount"
+                    amount["textAlignHorizontal"] = "CENTER"
+                # status 자식 추가 (없으면)
+                has_status = any((c.get("name") or "") == "status-label" or "status" in (c.get("name") or "").lower() for c in cell.get("children", []))
+                if not has_status:
+                    cell.setdefault("children", []).append({
+                        "type": "text",
+                        "text": spec["status"],
+                        "fontSize": 10,  # 좁은 cell wrap 회귀 fix (2026-05-28)
+                        "fontName": {"family": "Pretendard", "style": "Medium"},
+                        "fontColor": f"$token({spec['status_color']})",
+                        "name": "status-label",
+                        "textAlignHorizontal": "CENTER",
+                    })
+                fixed += 1
+        for c in node.get("children", []) or []:
+            walk(c, node)
+
+    walk(bp)
+
+    # Day Strip 위에 section title row inject (이번 달 일정 + 미납 N pill)
+    if fixed > 0:
+        _inject_day_strip_section_title(bp, unpaid_count=unpaid_count, is_empty=is_empty)
+
+    return fixed
+
+
+def _inject_day_strip_section_title(bp: dict, unpaid_count: int = 0, is_empty: bool = False) -> None:
+    """Day Strip 위에 '이번 달 일정' section title row 자동 inject.
+
+    좌: title "이번 달 일정" (17px Bold)
+    우: "미납 N" pill (red bg) — N>0 일 때만
+    """
+    target_parent = None
+    target_idx = None
+
+    def find(node):
+        nonlocal target_parent, target_idx
+        children = node.get("children") or []
+        for i, c in enumerate(children):
+            if (c.get("name") or "").lower() == "day strip":
+                target_parent = node
+                target_idx = i
+                return True
+            if find(c):
+                return True
+        return False
+
+    find(bp)
+    if target_parent is None or target_idx is None:
+        return
+
+    # 이미 위에 section title 있으면 skip
+    if target_idx > 0:
+        prev = target_parent["children"][target_idx - 1]
+        if "day strip" in (prev.get("name") or "").lower() and "title" in (prev.get("name") or "").lower():
+            return
+        # 또는 그냥 이미 title row 있으면 skip
+        if "day-strip-title" in (prev.get("name") or "").lower():
+            return
+
+    title_children = [
+        {"type": "text", "text": "이번 달 일정",
+         "fontSize": 17, "fontName": {"family":"Pretendard","style":"Bold"},
+         "fontColor": "$token(text-primary)",
+         "name": "day-strip-title-text"},
+    ]
+    if unpaid_count > 0:
+        title_children.append({
+            "name": "day-strip-unpaid-pill",
+            "type": "frame",
+            "fill": "$token(bg-error-secondary)",
+            "cornerRadius": 999,
+            "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "paddingLeft": 10, "paddingRight": 10,
+                "paddingTop": 3, "paddingBottom": 3,
+            },
+            "children": [{
+                "type": "text", "text": f"미납 {unpaid_count}",
+                "fontSize": 11, "fontName": {"family":"Pretendard","style":"Bold"},
+                "fontColor": "$token(text-error-primary)",
+            }],
+        })
+
+    title_row = {
+        "name": "day-strip-title",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "HUG",
+        "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "paddingLeft": 0, "paddingRight": 0,
+            "paddingTop": 0, "paddingBottom": 8,
+            "primaryAxisAlignItems": "SPACE_BETWEEN",
+            "counterAxisAlignItems": "CENTER",
+        },
+        "children": title_children,
+    }
+
+    target_parent["children"].insert(target_idx, title_row)
+
+
+def _inject_subcard_cta(bp: dict, is_empty: bool = False) -> None:
+    """Footer 직전에 Sub-card CTA (내 포인트) 자동 prepend.
+
+    is_empty=True: "포인트 모으기 시작 >" invitation CTA.
+    is_empty=False: "내 포인트 12,500P / 라운지에서 기프티콘으로 바꿔보세요" — 풀데이터.
+    """
+    children = bp.get("children") or []
+    insert_idx = None
+    for i, c in enumerate(children):
+        nm = (c.get("name") or "").lower()
+        if "footer" in nm:
+            insert_idx = i
+            break
+    if insert_idx is None:
+        return
+    sub_card = {
+        "name": "Sub-card CTA",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "HUG",
+        "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "paddingLeft": 20, "paddingRight": 20,
+            "paddingTop": 8, "paddingBottom": 16,
+        },
+        "children": [{
+            "name": "Points Card",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "layoutSizingVertical": "HUG",
+            "fill": "$token(bg-secondary)",
+            "cornerRadius": 16,
+            "autoLayout": {
+                "layoutMode": "HORIZONTAL",
+                "paddingLeft": 16, "paddingRight": 16,
+                "paddingTop": 14, "paddingBottom": 14,
+                "itemSpacing": 12,
+                "counterAxisAlignItems": "CENTER",
+                "primaryAxisAlignItems": "SPACE_BETWEEN",
+            },
+            "children": [
+                {
+                    "name": "points-left",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "HUG",
+                    "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 10, "counterAxisAlignItems": "CENTER"},
+                    "children": [
+                        {
+                            "name": "gift-icon-wrap",
+                            "type": "frame",
+                            "width": 32, "height": 32,
+                            "cornerRadius": 8,
+                            "fill": "$token(bg-brand-primary)",
+                            "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "paddingLeft": 0, "paddingRight": 0, "paddingTop": 0, "paddingBottom": 0},
+                            "children": [{"type": "icon", "iconName": "gift-01", "size": 18, "iconColor": "$token(fg-brand-primary)"}],
+                        },
+                        {
+                            "name": "points-text",
+                            "type": "frame",
+                            "layoutSizingHorizontal": "HUG",
+                            "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 2},
+                            "children": (
+                                [
+                                    {"type": "text", "text": "포인트 모으기 시작", "fontSize": 14, "fontName": {"family":"Pretendard","style":"Bold"}, "fontColor": "$token(text-primary)"},
+                                    {"type": "text", "text": "출석 체크 + 스테이지 참여로 포인트 받기", "fontSize": 12, "fontName": {"family":"Pretendard","style":"Medium"}, "fontColor": "$token(text-tertiary)"},
+                                ] if is_empty else
+                                [
+                                    {"type": "text", "text": "내 포인트 12,500P", "fontSize": 14, "fontName": {"family":"Pretendard","style":"Bold"}, "fontColor": "$token(text-primary)"},
+                                    {"type": "text", "text": "라운지에서 기프티콘으로 바꿔보세요", "fontSize": 12, "fontName": {"family":"Pretendard","style":"Medium"}, "fontColor": "$token(text-tertiary)"},
+                                ]
+                            ),
+                        },
+                    ],
+                },
+                {"type": "icon", "iconName": "chevron-right", "size": 18, "iconColor": "$token(fg-tertiary)"},
+            ],
+        }],
+    }
+    children.insert(insert_idx, sub_card)
+    bp["children"] = children
+
+
+# ── 2026-05-28 오후 2시 빌드 baseline polish 함수 ────────────────────────────
+# 사용자 명시: "적어도 오후 2시에 만든 수준까진 생성해야". 17389:51811 (저번주) +
+# 오후 2시 빌드 의 두 reference 시각 패턴을 imin_home archetype 자동 baseline 으로.
+
+
+def _find_node_by_name(bp: dict, *patterns):
+    """이름 매칭 첫 노드 반환 (부분 일치)."""
+    pats = tuple(p.lower() for p in patterns)
+    def walk(n):
+        nm = (n.get("name") or "").lower()
+        if any(p in nm for p in pats):
+            return n
+        for c in n.get("children", []) or []:
+            r = walk(c)
+            if r:
+                return r
+        return None
+    return walk(bp)
+
+
+def _polish_recommend_hero_cta(bp: dict) -> int:
+    """Recommend Stage Card 를 오후 2시 빌드 패턴 (개인화 + currency hero brand
+    + inner sub-card + brand-solid pill CTA) 으로 변형.
+
+    기존 카드 안 구조 (Steppers + Round Selector + Hero text) 를 보존하면서
+    상단에 polish header 추가 + 하단에 brand-solid pill CTA 추가.
+    """
+    card = _find_node_by_name(bp, "Recommend Stage Card", "recommend card")
+    if not card or card.get("_polished"):
+        return 0
+
+    # ⚠️ Idempotent 부분 inject (2026-05-28 사용자 명시 "skip 하지 말고 fix"):
+    # 와이어 콘텐츠 인지 → polish 의 hero/CTA 중 와이어와 중복되는 것만 빼고 inject.
+    # skip 전체 차단 X, 중복만 빠짐.
+    existing_texts = []
+    def collect_texts(n):
+        if not isinstance(n, dict):
+            return
+        if (n.get("type") or "").lower() == "text":
+            t = n.get("text") or n.get("characters") or ""
+            existing_texts.append(t)
+        for c in n.get("children") or []:
+            collect_texts(c)
+    collect_texts(card)
+    has_hero_already = any(("만원" in t or "원" in t) and len(t) >= 4 for t in existing_texts)
+    has_cta_already = any("전체 보기" in t or "참여하기" in t for t in existing_texts)
+
+    # 카드 안 hero 텍스트 (currency) 찾기 — 보통 "총 1,300만원 모으기 도전" 같은
+    hero_text = None
+    def find_hero(n):
+        nonlocal hero_text
+        if (n.get("type") or "").lower() == "text":
+            t = n.get("text") or n.get("characters") or ""
+            if "만원" in t or "도전" in t or "모으기" in t:
+                hero_text = t
+                return
+        for c in n.get("children", []) or []:
+            find_hero(c)
+    find_hero(card)
+    if not hero_text:
+        hero_text = "총 1,300,000원 모으기 도전, 13개월에 받아가요"
+
+    # 카드 최상단에 polish header 추가
+    # ⚠️ 부분 inject: 와이어에 hero 있으면 polish-currency (32px hero) 만 빼고 inject
+    polish_header = [
+        {"name": "polish-personal-caption", "type": "text", "text": "회원님을 위한 추천",
+         "fontSize": 12, "fontName": {"family":"Pretendard","style":"Medium"},
+         "fontColor": "$token(text-tertiary)"},
+        {"name": "polish-title", "type": "text", "text": hero_text,
+         "fontSize": 18, "fontName": {"family":"Pretendard","style":"Bold"},
+         "fontColor": "$token(text-primary)"},
+        {"name": "polish-label", "type": "text", "text": "예상 수령 금액 (1회차)",
+         "fontSize": 12, "fontName": {"family":"Pretendard","style":"Medium"},
+         "fontColor": "$token(text-tertiary)"},
+    ]
+    if not has_hero_already:
+        polish_header.append({
+            "name": "polish-currency", "type": "text", "text": "1,300,000원",
+            "fontSize": 32, "fontName": {"family":"Pretendard","style":"Bold"},
+            "fontColor": "$token(text-brand-primary)"})
+    polish_header.append({
+        "name": "polish-currency-sub", "type": "text",
+        "text": "월 100,000원 · 13개월 · 납입 후 목표 수령",
+        "fontSize": 12, "fontName": {"family":"Pretendard","style":"Medium"},
+        "fontColor": "$token(text-tertiary)"})
+
+    # brand-solid pill button (큰 CTA) — R23 swap 회피 (button/pill 단어 회피)
+    cta_pill = {
+        "name": "Join Action Strip",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "HUG",
+        "fill": "$token(bg-brand-solid)",
+        "cornerRadius": 999,
+        "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "paddingTop": 14, "paddingBottom": 14,
+            "paddingLeft": 24, "paddingRight": 24,
+            "itemSpacing": 8,
+        },
+        "children": [
+            {"type": "text", "text": "참여하기", "fontSize": 16,
+             "fontName": {"family":"Pretendard","style":"Bold"},
+             "fontColor": "$token(fg-white)"},
+            {"type": "icon", "iconName": "arrow-right", "size": 18,
+             "iconColor": "$token(fg-white)"},
+        ],
+    }
+
+    # 기존 children 에서 중복 hero/CTA 노드 제거 — polish-title 이 대체
+    # ⚠️ broad 매칭 (2026-05-28 fix): goal hero / goal row / goal_hero / Goal_Currency 등
+    existing = card.get("children") or []
+    def is_dup_hero_node(c):
+        nm = (c.get("name") or "").lower().replace(" ", "_").replace("-", "_")
+        return "goal" in nm and ("hero" in nm or "row" in nm or "currency" in nm)
+    existing = [c for c in existing if not is_dup_hero_node(c)]
+    # polish header 박고 끝에 CTA 박음 — 와이어에 CTA 이미 있으면 polish CTA pill skip (중복 차단)
+    if has_cta_already:
+        card["children"] = polish_header + existing
+        print(f"  [polish-recommend] CTA pill inject 생략 — 와이어에 이미 CTA 있음")
+    else:
+        card["children"] = polish_header + existing + [cta_pill]
+    card["_polished"] = True
+    return 1
+
+
+def _polish_participation_grid(bp: dict) -> int:
+    """Participation Section 의 empty state 박스를 4개 mock 스테이지 카드 grid 로 변환.
+
+    각 카드: status pill (진행중/곧 지급/신규/예정) + 큰 금액 + subtitle + progress bar + 회차.
+    """
+    # ⚠️ broad 매칭 (2026-05-28 사용자 분노 fix): "Participating Wrap" / "참여 중" /
+    # "Participation" 등 다양한 이름 받게 함. 이전엔 "Participation Section" 만 매칭해서
+    # custom 섹션 이름 다르면 mock grid 박지 못해 모순 발생 (위 mock 데이터인데 1.6 만 empty).
+    section = _find_node_by_name(
+        bp, "Participation Section", "Participating Wrap",
+        "Participating Section", "참여 중", "참여중",
+    )
+    if not section or section.get("_polished"):
+        return 0
+
+    # Empty State Stack 찾아 4-card grid 로 교체 — broad 매칭 (Empty Wrap / Empty Card / 없습니다)
+    empty_stack = None
+    for ch in section.get("children", []) or []:
+        nm = (ch.get("name") or "").lower()
+        if "empty" in nm or "없습니다" in nm or "no_stage" in nm:
+            empty_stack = ch
+            break
+    if not empty_stack:
+        # 자손에서도 찾기 (Participating Empty Wrap > Empty Card)
+        def find_empty(n):
+            nm = (n.get("name") or "").lower()
+            if "empty" in nm:
+                return n
+            for c in n.get("children") or []:
+                r = find_empty(c)
+                if r:
+                    return r
+            return None
+        empty_stack = find_empty(section)
+    if not empty_stack:
+        return 0
+
+    MOCK_CARDS = [
+        {"status": "진행중", "status_color": "bg-brand-primary", "status_text": "text-brand-primary",
+         "amount": "월 10만원", "subtitle": "13개월 · 6.9%", "round": "5회차 / 13", "progress": 38, "bar_fill": "bg-brand-solid"},
+        {"status": "곧 지급", "status_color": "bg-warning-secondary", "status_text": "text-warning-primary",
+         "amount": "월 30만원", "subtitle": "12개월 · 5.8%", "round": "11회차 / 12", "progress": 91, "bar_fill": "bg-warning-solid"},
+        {"status": "신규", "status_color": "bg-success-secondary", "status_text": "text-success-primary",
+         "amount": "월 5만원", "subtitle": "6개월 · 4.5%", "round": "1회차 / 6", "progress": 16, "bar_fill": "bg-success-solid"},
+        {"status": "예정", "status_color": "bg-secondary", "status_text": "text-tertiary",
+         "amount": "월 20만원", "subtitle": "10개월 · 5.2%", "round": "0회차 / 10", "progress": 0, "bar_fill": "bg-tertiary"},
+    ]
+
+    def card(spec):
+        return {
+            "name": f"Stage Card {spec['amount']}",
+            "type": "frame",
+            "layoutSizingHorizontal": "FILL",
+            "layoutSizingVertical": "HUG",
+            "fill": "$token(bg-primary)",
+            "strokeColor": "$token(border-secondary)",
+            "strokeWeight": 1,
+            "cornerRadius": 16,
+            "autoLayout": {
+                "layoutMode": "VERTICAL",
+                "paddingTop": 14, "paddingBottom": 14,
+                "paddingLeft": 14, "paddingRight": 14,
+                "itemSpacing": 8,
+            },
+            "children": [
+                {
+                    "name": "status-pill",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "HUG",
+                    "fill": f"$token({spec['status_color']})",
+                    "cornerRadius": 999,
+                    "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "paddingTop": 4, "paddingBottom": 4,
+                        "paddingLeft": 10, "paddingRight": 10,
+                    },
+                    "children": [{"type": "text", "text": spec["status"], "fontSize": 11,
+                                  "fontName": {"family":"Pretendard","style":"Bold"},
+                                  "fontColor": f"$token({spec['status_text']})"}],
+                },
+                # 2026-05-28 회귀 fix: amount text 에 name "stage-amount" 명시 →
+                # R51 _HERO_SUB_RE 의 'amount'/'stage' 매칭으로 자동 30px 승격 차단.
+                # 위계: amount 18px (hero 보다 작음). 5만원만 정상이고 다른 3개 30px 박히던 사고 차단.
+                {"name": "stage-amount", "type": "text", "text": spec["amount"], "fontSize": 18,
+                 "fontName": {"family":"Pretendard","style":"Bold"},
+                 "fontColor": "$token(text-primary)"},
+                {"name": "stage-subtitle", "type": "text", "text": spec["subtitle"], "fontSize": 12,
+                 "fontName": {"family":"Pretendard","style":"Medium"},
+                 "fontColor": "$token(text-tertiary)"},
+                {
+                    "name": "progress-track",
+                    "type": "frame",
+                    "layoutSizingHorizontal": "FILL",
+                    "layoutSizingVertical": "FIXED",
+                    "height": 6,
+                    "fill": "$token(bg-secondary)",
+                    "cornerRadius": 3,
+                    "autoLayout": {
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "MIN",
+                        "paddingLeft": 0, "paddingRight": 0,
+                        "paddingTop": 0, "paddingBottom": 0,
+                    },
+                    "children": [{
+                        "name": "progress-fill",
+                        "type": "rectangle",
+                        "width": max(int(353 * spec["progress"] / 100), 6),
+                        "height": 6,
+                        "cornerRadius": 3,
+                        "fill": f"$token({spec['bar_fill']})",
+                    }],
+                },
+                {"type": "text", "text": spec["round"], "fontSize": 12,
+                 "fontName": {"family":"Pretendard","style":"SemiBold"},
+                 "fontColor": "$token(text-secondary)"},
+            ],
+        }
+
+    # 2x2 grid: 2 rows × 2 cards
+    grid = {
+        "name": "Participation Grid",
+        "type": "frame",
+        "layoutSizingHorizontal": "FILL",
+        "layoutSizingVertical": "HUG",
+        "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "paddingLeft": 20, "paddingRight": 20,
+            "itemSpacing": 10,
+        },
+        "children": [
+            {
+                "name": "row1",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 10},
+                "children": [card(MOCK_CARDS[0]), card(MOCK_CARDS[1])],
+            },
+            {
+                "name": "row2",
+                "type": "frame",
+                "layoutSizingHorizontal": "FILL",
+                "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 10},
+                "children": [card(MOCK_CARDS[2]), card(MOCK_CARDS[3])],
+            },
+        ],
+    }
+
+    # Empty State Stack 자리에 grid 삽입
+    idx = section["children"].index(empty_stack)
+    section["children"][idx] = grid
+    section["_polished"] = True
+    return 4
+
+
+def _polish_lounge_real_products(bp: dict) -> int:
+    """Lounge Carousel 의 카드들을 실 상품명 + 가격 + P 사용 hint 패턴으로 변환.
+
+    icon-wrap 보존하되 아래에 가격 + brand color 포인트 사용 hint 추가.
+
+    ⚠️ 가드 (2026-05-28 사용자 분노 fix):
+    카드가 이미 imageQuery 또는 product 콘텐츠 (≥2 text + image frame) 가지면 skip.
+    와이어가 이미 콘텐츠 박혀있는데 mock 으로 덮으면 imageQuery 사라지고 빈 회색 박스됨.
+    """
+    carousel = _find_node_by_name(bp, "Lounge Carousel")
+    if not carousel or carousel.get("_polished"):
+        return 0
+
+    REAL_PRODUCTS = [
+        {"name": "스타벅스 아메리카노", "price": "9,800원", "points": "8,200P 사용"},
+        {"name": "베이커리 케이크",     "price": "12,000원", "points": "12,000P 사용"},
+        {"name": "CGV 영화 관람권",     "price": "18,000원", "points": "16,500P 사용"},
+        {"name": "올리브영 5,000원권",  "price": "5,000원",  "points": "5,000P 사용"},
+        {"name": "교보문고 도서상품권", "price": "10,000원", "points": "10,000P 사용"},
+    ]
+
+    count = 0
+    for i, card in enumerate(carousel.get("children", []) or []):
+        if not card.get("name", "").startswith("Lounge Card"):
+            continue
+        if i >= len(REAL_PRODUCTS):
+            break
+        prod = REAL_PRODUCTS[i]
+
+        # ⚠️ 와이어 콘텐츠 보존 (2026-05-28 사용자 분노 fix):
+        # 기존 image frame (imageQuery 있는 자식) + body frame (텍스트 ≥2) 보존.
+        # 빈 카드일 때만 mock 콘텐츠 새로 inject.
+        existing_children = card.get("children", []) or []
+
+        def _is_image_frame(ch):
+            if not isinstance(ch, dict):
+                return False
+            if ch.get("imageQuery") or ch.get("imageUrl") or ch.get("image"):
+                return True
+            nm = (ch.get("name") or "").lower()
+            return "image" in nm or "photo" in nm
+
+        def _is_body_frame(ch):
+            if not isinstance(ch, dict):
+                return False
+            nm = (ch.get("name") or "").lower()
+            if "body" in nm:
+                text_count = sum(
+                    1 for g in (ch.get("children") or [])
+                    if isinstance(g, dict) and (g.get("type") or "").lower() == "text"
+                )
+                return text_count >= 2
+            return False
+
+        has_image = any(_is_image_frame(c) for c in existing_children)
+        has_body = any(_is_body_frame(c) for c in existing_children)
+
+        if has_image and has_body:
+            # 와이어 카드 그대로 보존 — polish 안 함
+            continue
+
+        # 빈 카드 → 와이어 콘텐츠 보존하면서 mock 추가
+        new_children = []
+        # icon-wrap / image-frame 보존
+        for ch in existing_children:
+            ch_name = (ch.get("name") or "").lower()
+            if "icon-wrap" in ch_name or "card-icon-wrap" in ch_name or _is_image_frame(ch):
+                new_children.append(ch)
+        # body 가 부족하면 mock 텍스트 추가
+        if not has_body:
+            new_children.extend([
+                {"name": "product-name", "type": "text", "text": prod["name"],
+                 "fontSize": 13, "fontName": {"family":"Pretendard","style":"Bold"},
+                 "fontColor": "$token(text-primary)"},
+                {"name": "product-price", "type": "text", "text": prod["price"],
+                 "fontSize": 12, "fontName": {"family":"Pretendard","style":"Medium"},
+                 "fontColor": "$token(text-secondary)"},
+                {"name": "product-points", "type": "text", "text": prod["points"],
+                 "fontSize": 11, "fontName": {"family":"Pretendard","style":"SemiBold"},
+                 "fontColor": "$token(text-brand-primary)"},
+            ])
+        card["children"] = new_children
+        card.setdefault("fill", "$token(bg-primary)")
+        card.setdefault("strokeColor", "$token(border-secondary)")
+        card.setdefault("strokeWeight", 1)
+        al = card.setdefault("autoLayout", {})
+        al.setdefault("primaryAxisAlignItems", "MIN")  # SPACE_BETWEEN 폐기 — 텍스트 짤림 위험
+        count += 1
+    carousel["_polished"] = True
+    return count
+
+
 # ⚠️ 시스템 규칙 — 루트 프레임 배경색은 반드시 bg-primary
 # 에이전트가 bg-secondary 등 다른 값을 넣어도 빌드 파이프라인이 무조건 교정한다.
 
@@ -998,6 +2466,13 @@ def _enforce_card_surface(blueprint: dict) -> None:
     flipped = [0]
     footer_fixed = [0]
 
+    # 2026-05-28 polish-aware: hero/alert/participation/sub-card/attendance 이름 패턴은
+    # bg-secondary 카드 그대로 보존 ([feedback_imin_home_polish_baseline] 의 17389:51811
+    # 패턴 — 옅은 lavender 참여중 카드 / sub-card 포인트 카드 / alert banner 등)
+    POLISH_KEEP_GREY_RE = ("hero", "alert", "banner", "participation",
+                            "sub-card", "sub_card", "attendance", "dot-row", "dot_row",
+                            "points", "reward")
+
     def walk(node, inside_card, in_footer):
         if not isinstance(node, dict):
             return
@@ -1008,8 +2483,10 @@ def _enforce_card_surface(blueprint: dict) -> None:
             for k in _STROKE_KEYS:
                 node.pop(k, None)
             footer_fixed[0] += 1
+        nm_low = (node.get("name") or "").lower()
+        polish_keep = any(kw in nm_low for kw in POLISH_KEEP_GREY_RE)
         is_card = (not in_footer and not is_footer) and _is_card_like(node)
-        if is_card and not inside_card:
+        if is_card and not inside_card and not polish_keep:
             fill_name = _token_name_of(node.get("fill"))
             if fill_name and fill_name.lower() in _GREY_CARD_FILLS:
                 node["fill"] = "$token(bg-primary)"
@@ -1230,16 +2707,22 @@ def _enforce_text_hierarchy(blueprint: dict) -> None:
                 if narrow_parent_width is not None and narrow_parent_width < 150:
                     pass
                 else:
-                    cur = node.get("fontSize") or 0
-                    if cur < 28:
+                    # 2026-05-28 위계 fix (사용자 분노 "왜 자꾸 텍스트 막 키우냐"):
+                    # fontSize 명시되어 있으면 사용자/_polish 의도 보존. promotion 은 명시
+                    # 안 된 텍스트만. 17/18 등 명시 박은 amount-row value 가 30 으로 덮어
+                    # 씌워지는 회귀 차단.
+                    cur = node.get("fontSize")
+                    if cur is not None:
+                        pass  # 명시 fontSize 보존 — 사용자 의도 우선
+                    else:
                         node["fontSize"] = _HERO_TEXT_SIZE
-                    font = node.get("fontName") or {}
-                    if (font.get("style") or "").lower() != "bold":
-                        node["fontName"] = {
-                            "family": font.get("family") or "Pretendard",
-                            "style": "Bold",
-                        }
-                    bumped[0] += 1
+                        font = node.get("fontName") or {}
+                        if (font.get("style") or "").lower() != "bold":
+                            node["fontName"] = {
+                                "family": font.get("family") or "Pretendard",
+                                "style": "Bold",
+                            }
+                        bumped[0] += 1
         cur_layout = ((node.get("autoLayout") or {}).get("layoutMode")
                       or node.get("layoutMode") or "").upper()
         # narrow parent width 추적 — 자식 hero 승격 판단용
@@ -1326,11 +2809,94 @@ def _enforce_disabled_slot_pattern(blueprint: dict) -> None:
         print(f"[규칙] R44 disabled slot — {fixed}개 셀 정리 (숫자 제거 + bg-tertiary fill)")
 
 
+def _is_unified_spec_input(data: Any) -> bool:
+    """입력 JSON 이 unified spec 인지 감지.
+
+    Unified spec 시그니처:
+      - archetype 키 존재 AND (frame 노드 형태가 아님)
+      - sections 가 있으면 list of {"type": ...} (spec entry 패턴)
+      - 또는 _unified: True 명시
+      - type:"frame" / children 의 frame 노드 형식이면 regular blueprint
+    """
+    if not isinstance(data, dict):
+        return False
+    if data.get("_unified") is True:
+        return True
+    if data.get("type") in ("frame", "FRAME"):
+        return False  # 일반 blueprint
+    if "archetype" not in data:
+        return False
+
+    # children 이 이미 박혀 있고 frame/text 노드 형식 → 일반 blueprint
+    ch = data.get("children")
+    if isinstance(ch, list) and ch and isinstance(ch[0], dict) and ch[0].get("type") in ("frame", "FRAME", "text", "TEXT"):
+        return False
+
+    # sections 가 있으면 spec entry 패턴 검증
+    secs = data.get("sections")
+    if isinstance(secs, list) and secs:
+        return all(
+            isinstance(s, dict) and "type" in s and "children" not in s and "autoLayout" not in s
+            for s in secs[:3]
+        )
+
+    # sections 없음 + archetype 있음 → thin spec (base spec 로드해서 sections 가져옴)
+    return True
+
+
+def _maybe_resolve_unified_input(input_data: dict, source_path: str = "") -> dict:
+    """입력이 unified spec 이면 build_unified_blueprint() 로 blueprint 변환.
+
+    Resolution order:
+      1. 입력이 archetype + wire_content 만 있는 thin spec → archetype_specs/<archetype>.json
+         로드 후 base spec + input override 머지
+      2. 입력 자체가 full spec (mock_data + sections) → 그대로 사용
+      3. unified 아닌 일반 blueprint → 그대로 return
+
+    Returns:
+        unified blueprint dict (with _unified=True meta) 또는 input as-is
+    """
+    if not _UNIFIED_AVAILABLE:
+        return input_data
+    if not _is_unified_spec_input(input_data):
+        return input_data
+
+    archetype = input_data.get("archetype")
+    wire_content = input_data.get("wire_content")
+    root_name = input_data.get("rootName") or input_data.get("name")
+
+    # base spec 로드 시도 (thin spec 인 경우)
+    has_inline_mock = isinstance(input_data.get("mock_data"), dict) and input_data["mock_data"]
+    if not has_inline_mock:
+        base_spec = _unified_load_spec(archetype) if archetype else None
+        if not base_spec:
+            print(f"  [unified] archetype spec 없음: {archetype} — legacy mode 로 계속")
+            return input_data
+        # input override (sections / polish / scenario 등은 input 우선)
+        merged = dict(base_spec)
+        for k, v in input_data.items():
+            if k == "wire_content":
+                continue
+            merged[k] = v
+        spec = merged
+    else:
+        spec = input_data
+
+    print(f"\n🧬 [Unified] archetype={archetype} — base spec + wire_content → unified blueprint")
+    blueprint = _unified_build(spec, wire_content=wire_content, root_name=root_name)
+    print(f"   scenario={blueprint.get('_scenario')} / sections={len(blueprint.get('children', []))}")
+    return blueprint
+
+
 def cmd_build(blueprint_file: str):
     """Build a screen from a blueprint JSON file.
 
     Supports $token() references in color fields. Before building,
     all $token(name) values are resolved to RGBA using TOKEN_MAP.json.
+
+    또한 입력이 **unified spec** (archetype + sections[].type 형식) 이면
+    `build_unified_blueprint()` 로 변환 후 빌드. unified mode 일 땐
+    legacy Step A.4 / A.5 (mock fill + polish baseline) skip.
 
     Example blueprint color:
         "fill": "$token(bg-brand-solid)"
@@ -1341,6 +2907,47 @@ def cmd_build(blueprint_file: str):
 
     with open(blueprint_file) as f:
         blueprint = json.load(f)
+
+    # ⚠️ Refactor A (2026-05-28): unified spec 입력 감지 → build_unified_blueprint()
+    blueprint = _maybe_resolve_unified_input(blueprint, blueprint_file)
+    _unified_mode = bool(blueprint.get("_unified"))
+    if _unified_mode:
+        print("🧬 [Build Mode] UNIFIED — Step A.4/A.5 legacy 함수 skip")
+    else:
+        # archetype 빌드인데 unified spec 으로 전환 안 한 경우 가이드
+        _root_name_lc = (blueprint.get("name") or "").lower().replace(" ", "_")
+        if any(p in _root_name_lc for p in ("imin_home", "imin_account", "imin_lounge", "imin_my")):
+            print("💡 [Build Mode] LEGACY — archetype 빌드는 unified spec 권장:")
+            print("   {\"archetype\":\"imin_home\",\"wire_content\":{...}}  ← thin spec")
+            print("   archetype_specs/imin_home.json 의 mock_data/polish/sections 자동 사용")
+
+    # ⚠️ Step A.0 (2026-05-28 박힘 — 사용자: "레퍼런스 이미지 검색은 하냐?")
+    # references/uibowl 의 1500+ PNG 를 archetype 별 검색 + thumbnail 자동 생성.
+    # 빌드 진행 전 Claude 가 PNG Read 강제 (CLAUDE.md 절대 규칙 0-G).
+    _auto_search_uibowl_references(blueprint)
+
+    # ⚠️ Step A (2026-05-28 박힘): imin_home archetype → 사용자 결정형 polished
+    # 디자인 (16941:51284) 자동 export + 로그. Claude 가 매번 새 세션에서 시각
+    # reference 를 안 보고 빌드해 "와이어 1:1 복제 회귀" 가 반복되어 박음.
+    _auto_export_canonical_reference(blueprint)
+
+    # ⚠️ Step A.4 (2026-05-28 박힘 — 사용자 명시 "데이터 있는 화면으로 생성"):
+    # 와이어가 empty state(0원/0건/0일) 면 mock data 로 자동 치환.
+    # L1 와이어 1:1 룰 폐기 — 사용자가 "데이터 보이는 화면" 명시 지시.
+    # Refactor A (2026-05-28): unified mode 면 generator 가 이미 mock/wire 통합 → skip
+    if _unified_mode:
+        print("  [Step A.4] unified mode → mock fill skip (generator 가 처리)")
+    else:
+        _HARD_fill_mock_data_when_empty(blueprint)
+
+    # ⚠️ Step A.5 (2026-05-28 박힘 — 사용자 신뢰 파탄 후): imin_home polish baseline
+    # 자동 inject. [feedback_imin_home_polish_baseline] catalog 의 시각 패턴을
+    # blueprint 에 자동 박음 — 와이어 콘텐츠 보존 + 시각 enrichment.
+    # Refactor A (2026-05-28): unified mode 면 generator 가 polish baseline 박음 → skip
+    if _unified_mode:
+        print("  [Step A.5] unified mode → polish baseline skip (generator 가 처리)")
+    else:
+        _enrich_imin_home_polish(blueprint)
 
     # ⚠️ 시스템 규칙: 루트 프레임 배경은 반드시 bg-primary — 다른 값이 와도 강제 교정
     _enforce_root_bg_primary(blueprint)
@@ -1732,6 +3339,17 @@ def cmd_build(blueprint_file: str):
         except Exception as e:
             print(f"  ⚠️ Frontend spec 추출 실패 (무시): {e}")
 
+    # ⚠️ Step H (2026-05-28 박음) — self-verify 강제 시스템.
+    # Claude 가 "검증 ✅" 보고 전 무조건 섹션별 zoom-in PNG 6장 Read + 12-checklist
+    # 작성하도록 강제. 코드는 LLM 행동을 강제 못하지만 (1) PNG 자동 export
+    # (2) checklist 빈 템플릿 생성 (3) stdout 강력 경고로 self-verify-required 표식.
+    # 사용자가 화면에서 SECTION-QA-PNG 라인을 보면 Claude 가 검증 skip 했는지 즉시 파악 가능.
+    if root_id:
+        try:
+            _self_verify_section_qa_export(root_id, blueprint)
+        except Exception as e:
+            print(f"  ⚠️ Step H self-verify export 실패 (무시): {e}")
+
     total_elapsed = time.time() - start
     print(f"\n{'='*50}")
     print(f"전체 완료: {total_elapsed:.1f}s (빌드 {build_elapsed:.1f}s + 후처리)")
@@ -1741,6 +3359,130 @@ def cmd_build(blueprint_file: str):
         print(f"   re-screenshot:  python3 scripts/figma_mcp_client.py call export_node_as_image '{{\"nodeId\":\"{root_id}\",\"format\":\"PNG\",\"scale\":1}}'")
         print(f"   re-post-fix:    python3 scripts/figma_mcp_client.py post-fix {root_id}")
     print(f"{'='*50}")
+
+
+def _self_verify_section_qa_export(root_id: str, blueprint: dict) -> None:
+    """Step H — 빌드 후 self-verify 강제 시스템 (2026-05-28 사용자 옵션 B).
+
+    Claude 가 "검증 ✅" 보고 전 무조건 섹션별 zoom-in PNG 4~6장 + checklist 12개
+    채우도록 강제. 코드는 LLM 행동을 직접 강제할 수 없으므로:
+      (1) 자동으로 섹션 검출해 PNG export (scale=2)
+      (2) self_verify_checklist.json 빈 템플릿 생성 (각 빌드별 디렉토리)
+      (3) stdout 에 강력한 경고 ("📸 SECTION-QA-PNG ⚠️") 출력 → 사용자 화면에
+          도 보이므로 Claude 가 검증 skip 했는지 즉시 파악 가능
+
+    [feedback_self_verify_required_after_build] 메모리 룰에 박힌 강제 절차.
+    """
+    import os
+    import json as _json
+
+    # 1) 빌드 트리에서 주요 섹션 탐색 (이름 패턴 매칭, 라벨별 첫 매치)
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        doc = items[0].get("document") if items else None
+    except Exception:
+        doc = None
+    if not doc:
+        print("  ⚠️ Step H self-verify: tree 조회 실패 — skip")
+        return
+
+    # archetype 별 섹션 라벨 그룹 — imin_home 기준 6장
+    section_groups = [
+        ("Header_NavBar",        ["NavBar", "Status Bar"]),
+        ("Top_Tabs_Hero",        ["Mode Tabs", "Progress Card", "Hero", "Balance Card"]),
+        ("Day_Strip_Row",        ["Day Strip", "Stage Strip", "Schedule Row"]),
+        ("Recommend_Card",       ["Recommend Stage Card", "Recommend Card", "Stage Card"]),
+        ("Empty_or_List",        ["Participation", "Empty", "List", "Carousel"]),
+        ("Footer_TabBar_FAB",    ["Tab Bar", "FAB", "Footer Section"]),
+    ]
+
+    sections_to_export = []
+    seen_labels = set()
+
+    def walk(node):
+        nm = (node.get("name") or "")
+        nm_low = nm.lower()
+        for label, patterns in section_groups:
+            if label in seen_labels:
+                continue
+            for p in patterns:
+                if p.lower() in nm_low:
+                    sections_to_export.append((label, node.get("id"), nm))
+                    seen_labels.add(label)
+                    break
+        for c in node.get("children", []) or []:
+            walk(c)
+
+    walk(doc)
+
+    # 2) PNG export — scale=2, plugin cache 에 저장됨
+    exported = []
+    for label, nid, name in sections_to_export:
+        try:
+            call_tool("export_node_as_image", {
+                "nodeId": nid,
+                "format": "PNG",
+                "scale": 2,
+            })
+            exported.append({"label": label, "nodeId": nid, "name": name})
+        except Exception as e:
+            print(f"    [Step H] {label} export 실패: {e}")
+
+    # 3) checklist 빈 템플릿 생성
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    qa_dir = os.path.join(project_root, "scripts", "qa_screenshots",
+                          root_id.replace(":", "_"))
+    os.makedirs(qa_dir, exist_ok=True)
+    checklist_path = os.path.join(qa_dir, "self_verify_checklist.json")
+
+    checklist = {
+        "_BLOCKING_INSTRUCTION": (
+            "⚠️ Claude 보고 직전 강제 절차 (절대 룰): "
+            "위 exported_sections 의 모든 nodeId 를 export_node_as_image (scale=2) 로 "
+            "재export 후 결과 PNG 를 Read. 그 후 아래 checklist 12개 각각 "
+            "PASS / FAIL / NA 로 status 채우고 evidence 에 시각 증거 1줄 인용. "
+            "이 checklist 미완료 상태로 사용자에게 '검증 ✅' '완료' 보고 금지 — "
+            "[feedback_self_verify_required_after_build] 메모리 룰 위반."
+        ),
+        "root_id": root_id,
+        "blueprint_name": blueprint.get("rootName") or blueprint.get("name", ""),
+        "exported_sections": exported,
+        "checklist": [
+            {"id": "C01-content-1to1",       "question": "와이어 모든 텍스트/숫자/카운트가 빌드에 1:1 박혀있나",                     "status": "FILL_IN", "evidence": ""},
+            {"id": "C02-no-grey-placeholder","question": "회색 빈 placeholder 박스 (children≤1 + 라벨만) 없나",                    "status": "FILL_IN", "evidence": ""},
+            {"id": "C03-real-image-cards",   "question": "라운지/상품/카드의 실 시각 콘텐츠 (사진/일러스트/아이콘) 들어있나",       "status": "FILL_IN", "evidence": ""},
+            {"id": "C04-cell-row-alignment", "question": "Day Strip / cell row 모든 cell 의 텍스트 alignment 일치하나",            "status": "FILL_IN", "evidence": ""},
+            {"id": "C05-hero-28plus",        "question": "Hero 텍스트 28~36px Bold 인가",                                          "status": "FILL_IN", "evidence": ""},
+            {"id": "C06-tabbar-label-order", "question": "Tab Bar 라벨 순서가 와이어와 일치하나",                                   "status": "FILL_IN", "evidence": ""},
+            {"id": "C07-tabbar-icon-match",  "question": "Tab Bar 아이콘이 라벨 의미와 일치하나 (커뮤니티=users / 라운지=shop 등)", "status": "FILL_IN", "evidence": ""},
+            {"id": "C08-underline-width",    "question": "Underline tab active/inactive underline width·height 일치하나",         "status": "FILL_IN", "evidence": ""},
+            {"id": "C09-stepper-icons",      "question": "Stepper minus/plus 아이콘 시인성 충분한가 (대비 ≥3:1)",                  "status": "FILL_IN", "evidence": ""},
+            {"id": "C10-fab-icon-correct",   "question": "FAB 아이콘 의도와 일치하나, 이모티콘 아닌가",                              "status": "FILL_IN", "evidence": ""},
+            {"id": "C11-card-hierarchy",     "question": "카드 위계 (hero vs 보조) 시각 차등화 (size/shadow/border) 됐나",         "status": "FILL_IN", "evidence": ""},
+            {"id": "C12-polished-not-wire",  "question": "와이어 1:1 복제처럼 보이지 않나 (brand 액센트 의미 매핑, 시각 리듬)",    "status": "FILL_IN", "evidence": ""},
+        ],
+        "summary": {"pass": 0, "fail": 0, "na": 0,
+                    "BLOCKING": "FILL_IN — 12개 다 채울 때까지 사용자 보고 금지"},
+    }
+    with open(checklist_path, "w") as f:
+        _json.dump(checklist, f, indent=2, ensure_ascii=False)
+
+    # 4) stdout 강력 경고 — 사용자 화면에도 보임
+    print("\n" + "=" * 60)
+    print("📸 SECTION-QA-PNG ⚠️  보고 전 self-verify 필수 (옵션 B 박힘)")
+    print("=" * 60)
+    print(f"섹션별 zoom-in 후보 {len(exported)}장:")
+    for e in exported:
+        print(f"  • {e['label']:24s} → '{e['name']}' ({e['nodeId']})")
+    print(f"\n📋 Checklist: {os.path.relpath(checklist_path, project_root)}")
+    print("⚠️  Claude self-verify 강제 절차:")
+    print("    1. 위 각 nodeId 를 export_node_as_image scale=2 로 재 export + Read")
+    print("    2. checklist 12개 항목 PASS/FAIL/NA + evidence 1줄 채우기")
+    print("    3. FAIL ≥1 건 시 즉시 live-fix 또는 사용자에게 솔직 보고")
+    print("    4. 절대 미완료 상태로 '검증 ✅' / '완료' 보고 금지")
+    print("    → [feedback_self_verify_required_after_build] 메모리 룰")
+    print("=" * 60)
 
 
 def _export_frontend_spec(root_id: str) -> Optional[str]:
@@ -1894,6 +3636,24 @@ def _fix_fill_sizing(tree: dict) -> int:
     ABSOLUTE_NAME_KEYWORDS = ("fab", "tab bar", "tabbar")
     fix_count = 0
 
+    # 2026-05-28 — 원형/icon-box frame 식별 (cornerRadius >= w/2 또는 단일 icon 자식)
+    # 이전 회귀: piggy-bank box (72×72 cornerRadius 18) + circle (40×40 cornerRadius 999)
+    # 가 FILL 강제되어 stadium pill 형태로 망가짐 → 매 빌드마다 라이브 fix 필요했음.
+    def _is_circle_or_iconbox(n: dict) -> bool:
+        cr = n.get("cornerRadius") or 0
+        w = n.get("width") or 0
+        if w > 0 and cr >= (w / 2) - 1:  # 원형 (반지름 = width/2)
+            return True
+        # icon-box 패턴: 단일 frame 자식 → 그 안 VECTOR 하나
+        kids = n.get("_children_full") or []
+        if len(kids) == 1:
+            ch = kids[0]
+            if (ch.get("type") or "").upper() in ("FRAME", "INSTANCE"):
+                grand = ch.get("_children_full") or []
+                if len(grand) == 1 and (grand[0].get("type") or "").upper() == "VECTOR":
+                    return True
+        return False
+
     def _walk(node: dict, parent_layout_mode: str = "",
               parent_align: str = "", is_last_child: bool = False):
         nonlocal fix_count
@@ -1908,6 +3668,9 @@ def _fix_fill_sizing(tree: dict) -> int:
         if is_frame and node_id != tree.get("id"):
             skip = False
             name_lower = node_name.lower()
+            # 원형/icon-box frame 은 FIXED width 유지 — FILL 강제 시 stadium pill 됨
+            if _is_circle_or_iconbox(node):
+                skip = True
             # INSTANCE는 컴포넌트 마스터가 크기를 제어 — FILL 변환 금지
             if node_type == "INSTANCE":
                 skip = True
@@ -1983,6 +3746,7 @@ def _fix_fill_sizing(tree: dict) -> int:
                     and child_type in ("FRAME", "COMPONENT") and child_id
                     and child_sizing != "FILL"
                     and child.get("width", 999) > 60
+                    and not _is_circle_or_iconbox(child)
                     and not any(kw in child_name for kw in ABSOLUTE_NAME_KEYWORDS_LOWER)
                     and not _SKIP_RE.search(child_name)
                     and child.get("layoutPositioning") != "ABSOLUTE"):
@@ -2438,6 +4202,24 @@ def _fix_fill_sibling_1px(root_id: str) -> int:
             buggy = [k for k in fill_kids
                      if ((k.get("absoluteBoundingBox") or {}).get("width") or 0) < 10]
             if buggy:
+                # 2026-05-28 fix: buggy 발견 시, 같은 부모 안 모든 FRAME 자식을 FILL 로 강제
+                # 후 균등 분배. Day Strip 사례 — Today=FIXED 313px 가 sibling FILL 들과
+                # 함께 박혀 균등 분배 대상에서 빠지는 회귀 차단.
+                all_frame_kids = [k for k in kids if isinstance(k, dict)
+                                  and (k.get("type") or "FRAME").upper() == "FRAME"]
+                if len(all_frame_kids) > len(fill_kids):
+                    # FIXED 형제가 있음 → 모두 FILL 로 강제 후 fill_kids 재계산
+                    for k in all_frame_kids:
+                        if k.get("layoutSizingHorizontal") != "FILL":
+                            try:
+                                call_tool("set_layout_sizing", {
+                                    "nodeId": k.get("id"),
+                                    "horizontal": "FILL",
+                                })
+                                k["layoutSizingHorizontal"] = "FILL"
+                            except Exception:
+                                pass
+                    fill_kids = all_frame_kids
                 # 부모 inner-width 계산
                 parent_bb = node.get("absoluteBoundingBox") or {}
                 pw = parent_bb.get("width") or 0
@@ -2559,7 +4341,7 @@ def _enforce_vertical_hug(root_id: str) -> int:
 
     fixed = [0]
 
-    def walk(node, depth=0):
+    def walk(node, depth=0, parent_mode="", parent_clips=False):
         if depth > 0:  # root 자체는 제외 (별도 _enforce_root_min_height 가 결정)
             nm_low = (node.get("name") or "").lower()
             layout_mode = (node.get("layoutMode") or "").upper()
@@ -2568,6 +4350,11 @@ def _enforce_vertical_hug(root_id: str) -> int:
             skip = any(kw in nm_low for kw in _VERTICAL_HUG_SKIP_KEYWORDS)
             # ABSOLUTE 노드도 제외
             if node.get("layoutPositioning") == "ABSOLUTE":
+                skip = True
+            # 2026-05-28 fix: 부모가 HORIZONTAL carousel (clipsContent=true) 인 경우,
+            # 자식 카드의 FIXED height 는 의도된 디자인 (Lounge Card 200px 등).
+            # → 손대지 않음. 박을 시 라운지 카드 42px 회귀.
+            if parent_mode == "HORIZONTAL" and parent_clips:
                 skip = True
             # 2026-05-27 확장: FILL 도 잡는다. 카드(HUG) 안의 Body(FILL) 가
             # 부모 height 에 맞춰 0px 로 collapse 되어 stage_list 회귀 재발.
@@ -2581,8 +4368,10 @@ def _enforce_vertical_hug(root_id: str) -> int:
                     fixed[0] += 1
                 except Exception:
                     pass
+        my_mode = (node.get("layoutMode") or "").upper()
+        my_clips = bool(node.get("clipsContent"))
         for c in node.get("children", []) or []:
-            walk(c, depth + 1)
+            walk(c, depth + 1, my_mode, my_clips)
 
     walk(doc)
     if fixed[0]:
@@ -2826,6 +4615,202 @@ def _enforce_fab_size_live(root_id: str) -> int:
             walk(items[0].get("document") or items[0])
     except Exception as e:
         print(f"  [fab-size] root fetch fail: {e}")
+    return fixed[0]
+
+
+def _enforce_fab_icon_color_live(root_id: str) -> int:
+    """FAB 안 icon 색은 무조건 fg-light (#ffffff) — 2026-05-28 사용자 명시 절대 룰.
+
+    brand-solid 위 흰 아이콘이 정석. blueprint 가 fg-white / 검정 / 임의색 으로
+    박았어도, set_fill_color/set_stroke_color 가 raw RGB 박았어도, live 트리에서
+    FAB 자손 모든 VECTOR/ICON 의 fills[0] · strokes[0] 을 fg-light 로 강제 + 바인딩.
+
+    회귀 차단: 새 세션에서 generator/post-fix 가 fg-white(alias) / fg-primary_on-brand
+    /검정 박아도 이 함수가 마지막에 fg-light 로 덮어씀.
+    """
+    fixed = [0]
+
+    def _is_fab(node):
+        name = (node.get("name") or "").strip()
+        if name in ("FAB", "Fab", "fab"):
+            return True
+        if node.get("type") not in ("FRAME", "frame"):
+            return False
+        w = node.get("width") or 0
+        cr = node.get("cornerRadius") or 0
+        if w <= 80 and isinstance(cr, (int, float)) and cr >= 20 \
+                and node.get("layoutPositioning") == "ABSOLUTE":
+            return True
+        return False
+
+    fp = None
+    try:
+        fp = _token_to_figma_path("fg-light")
+    except Exception:
+        fp = "Colors/Foreground/fg-light"
+
+    def _paint_white(node_id: str, has_fills: bool, has_strokes: bool):
+        try:
+            if has_fills:
+                call_tool("set_fill_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                if fp:
+                    try:
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"fills/0": fp}})
+                    except Exception:
+                        pass
+            if has_strokes:
+                call_tool("set_stroke_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                if fp:
+                    try:
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"strokes/0": fp}})
+                    except Exception:
+                        pass
+            fixed[0] += 1
+        except Exception as e:
+            print(f"  [fab-icon-color] '{node_id}' fail: {e}")
+
+    def _walk_fab_descendants(node):
+        if not isinstance(node, dict):
+            return
+        ntype = (node.get("type") or "").upper()
+        # VECTOR 또는 ICON-shape (작은 24px 이하 frame) 모두 처리
+        if ntype == "VECTOR" or (ntype == "FRAME" and (node.get("width") or 0) <= 32 and not node.get("children")):
+            fills = node.get("fills") or []
+            strokes = node.get("strokes") or []
+            has_visible_fill = any((f.get("visible") is not False) and (f.get("type") == "SOLID") for f in fills if isinstance(f, dict))
+            has_visible_stroke = any((s.get("visible") is not False) and (s.get("type") == "SOLID") for s in strokes if isinstance(s, dict))
+            if has_visible_fill or has_visible_stroke:
+                _paint_white(node["id"], has_visible_fill, has_visible_stroke)
+        for ch in node.get("children", []) or []:
+            _walk_fab_descendants(ch)
+
+    def _walk_root(node):
+        if not isinstance(node, dict):
+            return
+        if _is_fab(node):
+            for ch in node.get("children", []) or []:
+                _walk_fab_descendants(ch)
+            return  # FAB 안 다 처리했음
+        for ch in node.get("children", []) or []:
+            _walk_root(ch)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            _walk_root(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [fab-icon-color] root fetch fail: {e}")
+    return fixed[0]
+
+
+def _enforce_icon_on_brand_bg_contrast(root_id: str) -> int:
+    """brand bg frame 안 같은 brand 계열 icon → white 강제 (2026-05-28).
+
+    사례: Hero Icon Box (bg-brand-solid 0.32,0,0.69 진한 보라) +
+    piggy-bank Vector stroke (brand-primary 0.42,0,0.88 같은 보라) → invisible.
+
+    검출:
+      - frame fills[0] = brand-purple (r∈[0.2,0.6], g<0.25, b∈[0.5,1.0])
+      - 자손 VECTOR/icon-frame 의 stroke/fill 이 같은 brand hue (color distance < 0.25)
+    교정: stroke/fill 을 white (1,1,1) + fg-light 토큰 바인딩.
+
+    회귀 차단: blueprint 가 brand bg + brand icon stroke 박았어도 자동 fix.
+    """
+    fixed = [0]
+
+    def _is_brand_purple(rgb):
+        if not rgb:
+            return False
+        r = rgb.get("r", 0)
+        g = rgb.get("g", 0)
+        b = rgb.get("b", 0)
+        return 0.2 <= r <= 0.6 and g <= 0.25 and 0.5 <= b <= 1.0
+
+    def _color_distance(a, b):
+        if not a or not b:
+            return 1.0
+        return (abs(a.get("r", 0) - b.get("r", 0))
+                + abs(a.get("g", 0) - b.get("g", 0))
+                + abs(a.get("b", 0) - b.get("b", 0)))
+
+    fp = None
+    try:
+        fp = _token_to_figma_path("fg-light")
+    except Exception:
+        fp = "Colors/Foreground/fg-light"
+
+    def _paint_white(node_id, has_fills, has_strokes):
+        try:
+            if has_fills:
+                call_tool("set_fill_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                if fp:
+                    try:
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"fills/0": fp}})
+                    except Exception:
+                        pass
+            if has_strokes:
+                call_tool("set_stroke_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                if fp:
+                    try:
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"strokes/0": fp}})
+                    except Exception:
+                        pass
+            fixed[0] += 1
+        except Exception as e:
+            print(f"  [icon-on-brand] '{node_id}' fail: {e}")
+
+    def _walk_icons_inside(node, bg_color):
+        if not isinstance(node, dict):
+            return
+        ntype = (node.get("type") or "").upper()
+        is_icon_target = ntype == "VECTOR" or (
+            ntype == "FRAME" and (node.get("width") or 0) <= 48 and not node.get("children")
+        )
+        if is_icon_target:
+            fills = node.get("fills") or []
+            strokes = node.get("strokes") or []
+            has_fill_bad = False
+            has_stroke_bad = False
+            for f in fills:
+                if isinstance(f, dict) and f.get("visible") is not False and f.get("type") == "SOLID":
+                    if _color_distance(f.get("color"), bg_color) < 0.45:
+                        has_fill_bad = True
+                        break
+            for s in strokes:
+                if isinstance(s, dict) and s.get("visible") is not False and s.get("type") == "SOLID":
+                    if _color_distance(s.get("color"), bg_color) < 0.45:
+                        has_stroke_bad = True
+                        break
+            if has_fill_bad or has_stroke_bad:
+                _paint_white(node["id"], has_fill_bad, has_stroke_bad)
+        for ch in node.get("children", []) or []:
+            _walk_icons_inside(ch, bg_color)
+
+    def _walk_root(node):
+        if not isinstance(node, dict):
+            return
+        ntype = (node.get("type") or "").upper()
+        # FAB 는 별도 _enforce_fab_icon_color_live 가 처리 → 여기서 skip
+        name = (node.get("name") or "").lower()
+        if "fab" in name or name == "fab":
+            return
+        if ntype in ("FRAME", "INSTANCE", "COMPONENT"):
+            fills = node.get("fills") or []
+            for f in fills:
+                if isinstance(f, dict) and f.get("visible") is not False and f.get("type") == "SOLID":
+                    if _is_brand_purple(f.get("color")):
+                        for ch in node.get("children", []) or []:
+                            _walk_icons_inside(ch, f.get("color"))
+                        break
+        for ch in node.get("children", []) or []:
+            _walk_root(ch)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            _walk_root(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [icon-on-brand] root fetch fail: {e}")
     return fixed[0]
 
 
@@ -3181,8 +5166,43 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     _fix_icon_button_visibility(root_node_id)
     print("\n[규칙] small text FILL + LEFT → CENTER 정렬 적용 중...")
     _fix_small_text_center(root_node_id)
-    print("\n[규칙] R45 섹션 clipsContent=false 강제 (carousel 제외) 적용 중...")
+    print("\n[규칙] R45 섹션 clipsContent=false 강제 (carousel / rounded card 제외) 적용 중...")
     _disable_section_clipping(root_node_id)
+    # 2026-05-28 사용자 명시: rounded card (cornerRadius ≥ 8) 는 clip 유지 필수
+    # — 라운지 카드 같은 카드 안 image/색 영역이 라운드 모서리 밖으로 안 튀어나오게.
+    try:
+        _enforce_rounded_card_clip_live(root_node_id)
+    except Exception as e:
+        print(f"  [rounded-card-clip] 실패 (무시하고 계속): {e}")
+
+    # 2026-05-28 사용자 분노 — Month Cell Oct → "Jct" 잘림.
+    # 작은 원형 cell + 텍스트 가득 = 좌우 모서리 잘림 차단.
+    try:
+        _fix_text_clip_in_small_round_cells(root_node_id)
+    except Exception as e:
+        print(f"  [text-clip-fix] 실패 (무시하고 계속): {e}")
+
+    # 2026-05-28 사용자 명시 — 작은 cell 안 TEXT 중앙 정렬 강제 (Month Cell Jan 좌측 정렬 분노).
+    try:
+        _center_text_in_small_cells_live(root_node_id)
+    except Exception as e:
+        print(f"  [text-center-fix] 실패 (무시하고 계속): {e}")
+
+    # 2026-05-28 사용자 분노 — Bottom Tab Bar 라벨 wrap (커뮤니티/스테이지 두 줄).
+    # Tab Bar 자식 frame HUG → FILL + 라벨 textAutoResize=HEIGHT 강제.
+    try:
+        _enforce_tab_bar_children_fill_live(root_node_id)
+    except Exception as e:
+        print(f"  [tab-bar-fill] 실패 (무시하고 계속): {e}")
+
+    # 2026-05-28 사용자 분노 (2회) — Summary Grid 3-col 좌측 박힘 + baseline 어긋남.
+    # HORIZONTAL parent + 자식이 label/value VERTICAL stack ≥2 패턴 감지 시
+    # parent → MIN + CENTER, 각 col → FILL + VERTICAL + CENTER, col 안 TEXT → textAlign CENTER.
+    # 컬럼 균등 분배 + 텍스트 컬럼 중앙. 새 세션 회귀 차단 absolute.
+    try:
+        _fix_space_between_col_baseline(root_node_id)
+    except Exception as e:
+        print(f"  [col-baseline] 실패 (무시하고 계속): {e}")
 
     # ⚠️ 2026-05-24 사용자 "다 박아" — manual fix 후 자동 재바인딩
     # 위 3개 fix가 set_fill_color/set_layout_sizing 호출 → boundVariables 끊김 가능.
@@ -3313,6 +5333,37 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
             print("  [fab-size] OK — FAB 이미 56×56")
     except Exception as e:
         print(f"  [fab-size] 실패 (무시하고 계속): {e}")
+
+    # 2026-05-28 사용자 명시 절대 룰: FAB 안 icon color = fg-light (#ffffff)
+    # brand-solid 위 흰 아이콘이 정석. fg-white(alias) / 검정 / 임의색 회귀 차단.
+    try:
+        n_fab_ic = _enforce_fab_icon_color_live(root_node_id)
+        if n_fab_ic:
+            print(f"  [fab-icon-color] ✓ FAB 안 icon {n_fab_ic}개 → fg-light 강제 + 바인딩")
+        else:
+            print("  [fab-icon-color] OK — FAB icon 이미 fg-light")
+    except Exception as e:
+        print(f"  [fab-icon-color] 실패 (무시하고 계속): {e}")
+
+    # 2026-05-28 사용자 명시 절대 룰: brand bg frame 안 icon 이 같은 brand 계열이면 invisible.
+    # 사례: Hero Icon Box (bg-brand-solid 진한 보라) + piggy-bank Vector stroke (brand-primary 보라)
+    # → 거의 안 보임. 자동 교정: 같은 brand hue 인 icon stroke/fill 을 white 로.
+    print("\n[규칙] brand bg + icon contrast 자동 교정 (2026-05-28 절대 룰) 적용 중...")
+    try:
+        n_ic = _enforce_icon_on_brand_bg_contrast(root_node_id)
+        if n_ic:
+            print(f"  [icon-on-brand] ✓ brand bg 안 invisible icon {n_ic}개 → white 강제")
+        else:
+            print("  [icon-on-brand] OK — brand bg 안 icon 대비 충분")
+    except Exception as e:
+        print(f"  [icon-on-brand] 실패 (무시하고 계속): {e}")
+
+    # ⚠️ HARD-ENFORCE (2026-05-28 사용자 명시 "룰 말고 무조건 실행 코드"):
+    # cmd_post_fix 끝에 무조건 호출. 가드 최소화, 회귀 차단.
+    try:
+        _HARD_ENFORCE_IMIN_HOME_INVARIANTS(root_node_id)
+    except Exception as e:
+        print(f"  [HARD-ENFORCE] 실패 (무시): {e}")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
@@ -4178,6 +6229,23 @@ def _disable_section_clipping(root_id: str) -> int:
         keys = ("carousel", "banner row", "hero row", "scroll row", "carousel wrap")
         return any(k in nm for k in keys)
 
+    def is_rounded_card(n: dict) -> bool:
+        """cornerRadius ≥ 8 frame — 카드 안 이미지/색 영역이 라운드 모서리 밖으로
+        튀어나오면 안 됨. 2026-05-28 사용자 분노 fix (라운지 카드 상단 각짐).
+
+        cornerRadius 가 있으면 clip 유지가 시각 정석. shadow 는 _strip_all_drop_shadows
+        가 다 제거하므로 shadow-clearance 룰(R42)과 충돌 없음.
+        """
+        cr = n.get("cornerRadius")
+        if isinstance(cr, (int, float)) and cr >= 8:
+            return True
+        # individual corner radii — top-left 등 하나라도 ≥8
+        for k in ("topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"):
+            v = n.get(k)
+            if isinstance(v, (int, float)) and v >= 8:
+                return True
+        return False
+
     targets = []  # (id, layoutMode)
 
     def walk(node, depth):
@@ -4185,7 +6253,9 @@ def _disable_section_clipping(root_id: str) -> int:
             return
         # root(depth=0) 자체는 건드리지 않음 — viewport
         if depth > 0 and (node.get("type") or "").upper() == "FRAME":
-            if node.get("clipsContent") is True and not is_carousel_wrapper(node):
+            if (node.get("clipsContent") is True
+                    and not is_carousel_wrapper(node)
+                    and not is_rounded_card(node)):  # 2026-05-28 rounded card 보호
                 # layoutMode 가 None 이면 NONE 으로 전달 — plugin 이 clipsContent 만 적용
                 lm = node.get("layoutMode") or "NONE"
                 targets.append((node.get("id"), lm, node.get("name") or ""))
@@ -4215,6 +6285,405 @@ def _disable_section_clipping(root_id: str) -> int:
         return len(targets)
     except Exception as e:
         print(f"  [no-clip] batch 실패: {e}")
+        return 0
+
+
+def _enforce_tab_bar_children_fill_live(root_id: str) -> int:
+    """Bottom Tab Bar 자식 tab 들 (Tab 홈/커뮤니티/스테이지/...) 이 HUG 상태로 박혀
+    라벨이 width=24 처럼 좁아져 두 줄 wrap 되는 버그 fix (2026-05-28 사용자 분노).
+
+    Detection:
+      - 이름에 'tab bar'/'tabbar'/'bottom tab' 포함된 HORIZONTAL FRAME parent
+      - 자식 중 2개 이상이 HUG horizontal (FILL 아님)
+      - 자식 frame 안 TEXT 가 두 줄 이상 (height ≥ 32) — wrap 신호
+    Fix:
+      - 각 tab 자식 frame layoutSizingHorizontal=FILL (5등분 균등)
+      - parent layoutMode=HORIZONTAL + primaryAxisAlignItems=MIN + counterAxisAlignItems=CENTER
+        + itemSpacing=0 (FILL 자식이 width 채우므로)
+
+    Returns: fix 건수.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [tab-bar-fill] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+
+    fixed = [0]
+
+    def _is_tab_bar(n: dict) -> bool:
+        nm = (n.get("name") or "").lower()
+        if not any(k in nm for k in ("tab bar", "tabbar", "bottom tab", "bottom nav")):
+            return False
+        return (n.get("layoutMode") or "").upper() == "HORIZONTAL"
+
+    def _walk(node):
+        if not isinstance(node, dict):
+            return
+        if _is_tab_bar(node):
+            kids = node.get("children") or []
+            tab_kids = [c for c in kids if (c.get("type") or "").upper() == "FRAME"]
+            if len(tab_kids) >= 3:
+                # Tab Bar 자식 FILL 강제 + parent MIN
+                try:
+                    # parent — MIN + CENTER, itemSpacing=0
+                    pads = {
+                        "paddingTop": node.get("paddingTop") or 8,
+                        "paddingBottom": node.get("paddingBottom") or 16,
+                        "paddingLeft": node.get("paddingLeft") or 12,
+                        "paddingRight": node.get("paddingRight") or 12,
+                    }
+                    call_tool("set_auto_layout", {
+                        "nodeId": node["id"],
+                        "layoutMode": "HORIZONTAL",
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER",
+                        "itemSpacing": 0,
+                        **pads,
+                    })
+                    for tk in tab_kids:
+                        try:
+                            call_tool("set_layout_sizing", {"nodeId": tk["id"], "horizontal": "FILL"})
+                        except Exception:
+                            pass
+                        # 라벨 wrap 차단: tab 자식 안 TEXT (tab-label) → textAutoResize=HEIGHT, FILL horizontal
+                        for cc in tk.get("children", []) or []:
+                            if (cc.get("type") or "").upper() == "TEXT":
+                                try:
+                                    call_tool("set_text_properties", {
+                                        "nodeId": cc["id"],
+                                        "textAutoResize": "HEIGHT",
+                                        "textAlignHorizontal": "CENTER",
+                                    })
+                                    call_tool("set_layout_sizing", {"nodeId": cc["id"], "horizontal": "FILL"})
+                                except Exception:
+                                    pass
+                    fixed[0] += 1
+                except Exception as e:
+                    print(f"  [tab-bar-fill] '{node.get('name')}' fail: {e}")
+            return  # Tab Bar 내부 더 walk 안 함
+        for c in node.get("children", []) or []:
+            _walk(c)
+
+    _walk(root)
+    if fixed[0]:
+        print(f"  [tab-bar-fill] ✓ Tab Bar {fixed[0]}건 자식 FILL + 라벨 textAutoResize=HEIGHT 강제")
+    else:
+        print("  [tab-bar-fill] OK — Tab Bar 자식 FILL 이미 적용")
+    return fixed[0]
+
+
+def _center_text_in_small_cells_live(root_id: str) -> int:
+    """작은 cell (width ≤ 60) 안 TEXT 는 textAlignHorizontal/Vertical=CENTER 강제
+    (2026-05-28 사용자 명시 — Month Cell Jan Active 안 'Jan/1' 좌측 정렬 분노).
+
+    Detection:
+      - FRAME width ≤ 60 (작은 cell — month/day cell, badge, chip 등)
+      - 자식 TEXT 의 textAlignHorizontal 이 CENTER 가 아님
+    Fix: TEXT 각각에 set_text_align(CENTER, CENTER).
+
+    Returns: fix 건수.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [text-center-fix] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+
+    fixed = [0]
+
+    def _walk(node):
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").upper() == "FRAME":
+            w = node.get("width") or 0
+            if isinstance(w, (int, float)) and 0 < w <= 60:
+                for c in node.get("children", []) or []:
+                    if (c.get("type") or "").upper() == "TEXT":
+                        h_align = (c.get("textAlignHorizontal") or "").upper()
+                        v_align = (c.get("textAlignVertical") or "").upper()
+                        if h_align != "CENTER" or v_align != "CENTER":
+                            try:
+                                call_tool("set_text_align", {
+                                    "nodeId": c["id"],
+                                    "textAlignHorizontal": "CENTER",
+                                    "textAlignVertical": "CENTER",
+                                })
+                                fixed[0] += 1
+                            except Exception as e:
+                                print(f"  [text-center-fix] '{c.get('name')}' fail: {e}")
+        for c in node.get("children", []) or []:
+            _walk(c)
+
+    _walk(root)
+    if fixed[0]:
+        print(f"  [text-center-fix] ✓ 작은 cell 안 TEXT {fixed[0]}건 중앙 정렬 강제")
+    else:
+        print("  [text-center-fix] OK — 모든 작은 cell 안 TEXT 이미 중앙 정렬")
+    return fixed[0]
+
+
+def _fix_text_clip_in_small_round_cells(root_id: str) -> int:
+    """작은 원형 cell (width ≤ 48 + cornerRadius ≥ width/3) 안 TEXT 가 cell 둥근
+    모서리에 잘리는 버그 fix (2026-05-28 사용자 분노 — Month Cell Oct → 'Jct').
+
+    Detection:
+      - FRAME width ≤ 48
+      - cornerRadius (or any individual corner) ≥ width/3 (반 원/원형 cell)
+      - 자식 중 TEXT 가 width == cell.width (텍스트가 cell 가득)
+    Fix: cornerRadius 를 max(8, width/5) 로 축소 (rounded square 로 변경).
+         텍스트 jam 차단 — 좌우 모서리에서 텍스트 안전 거리 확보.
+
+    Returns: fix 건수.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [text-clip-fix] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+
+    fixed = [0]
+
+    def _cell_max_corner(n: dict) -> float:
+        cr = n.get("cornerRadius") or 0
+        if isinstance(cr, (int, float)):
+            mx = float(cr)
+        else:
+            mx = 0.0
+        for k in ("topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"):
+            v = n.get(k)
+            if isinstance(v, (int, float)) and v > mx:
+                mx = float(v)
+        return mx
+
+    def _walk(node):
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").upper() == "FRAME":
+            w = node.get("width") or 0
+            if isinstance(w, (int, float)) and 0 < w <= 48:
+                cr = _cell_max_corner(node)
+                if cr >= w / 3.0:
+                    # 자식 중 TEXT 가 cell width 가득인지 확인
+                    txt_full = False
+                    for c in node.get("children", []) or []:
+                        if (c.get("type") or "").upper() == "TEXT":
+                            tw = c.get("width") or 0
+                            if isinstance(tw, (int, float)) and tw >= w - 1:
+                                txt_full = True
+                                break
+                    if txt_full:
+                        new_cr = max(8, int(w / 5))
+                        try:
+                            call_tool("set_corner_radius", {"nodeId": node["id"], "radius": new_cr})
+                            fixed[0] += 1
+                        except Exception as e:
+                            print(f"  [text-clip-fix] '{node.get('name')}' fail: {e}")
+        for c in node.get("children", []) or []:
+            _walk(c)
+
+    _walk(root)
+    if fixed[0]:
+        print(f"  [text-clip-fix] ✓ 작은 원형 cell {fixed[0]}건 cornerRadius 축소 (텍스트 잘림 차단)")
+    else:
+        print("  [text-clip-fix] OK — 텍스트 잘릴 만한 작은 원형 cell 없음")
+    return fixed[0]
+
+
+def _fix_space_between_col_baseline(root_id: str) -> int:
+    """HORIZONTAL row + 자식이 VERTICAL stack (라벨/값) 패턴 일 때 균등 분포 + 중앙 정렬 강제.
+
+    2026-05-28 사용자 분노 2회 — Summary Grid 3-col baseline 어긋남 + 좌측 박힘.
+
+    Detection:
+      - HORIZONTAL parent + primaryAxisAlignItems in (SPACE_BETWEEN, MIN)
+      - 자식 ≥ 2, 각 자식이 VERTICAL frame + 자식 ≥ 2 TEXT (라벨/값 stack 패턴)
+    Fix (3단):
+      1. parent layoutMode HORIZONTAL + primaryAxisAlignItems=MIN (FILL 컬럼 분배 위해)
+         + counterAxisAlignItems=CENTER + itemSpacing 기존 유지 (기본 12)
+      2. 각 col layoutSizingHorizontal=FILL (3등분 균등)
+         + col layoutMode=VERTICAL + counterAxisAlignItems=CENTER (col 안 children 가운데)
+      3. 각 col 안 TEXT 자식 textAlignHorizontal=CENTER
+
+    Returns: fix 건수.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [col-baseline] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+
+    fixed = [0]
+
+    def _is_label_value_stack(n: dict) -> bool:
+        if (n.get("type") or "").upper() != "FRAME":
+            return False
+        if (n.get("layoutMode") or "").upper() != "VERTICAL":
+            return False
+        kids = n.get("children") or []
+        text_kids = [c for c in kids if (c.get("type") or "").upper() == "TEXT"]
+        return len(text_kids) >= 2
+
+    def _normalize_grid(parent: dict):
+        """parent + 각 col + col 안 텍스트 모두 균등/중앙 정렬로 normalize."""
+        kids = parent.get("children") or []
+        col_kids = [c for c in kids if _is_label_value_stack(c)]
+        if len(col_kids) < 2:
+            return False
+        spacing = parent.get("itemSpacing")
+        if not isinstance(spacing, (int, float)) or spacing <= 0:
+            spacing = 12
+        # padding 유지
+        pads = {
+            "paddingTop": parent.get("paddingTop") or 0,
+            "paddingBottom": parent.get("paddingBottom") or 0,
+            "paddingLeft": parent.get("paddingLeft") or 0,
+            "paddingRight": parent.get("paddingRight") or 0,
+        }
+        # 1) parent → HORIZONTAL + MIN + CENTER + itemSpacing
+        try:
+            call_tool("set_auto_layout", {
+                "nodeId": parent["id"],
+                "layoutMode": "HORIZONTAL",
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "itemSpacing": spacing,
+                **pads,
+            })
+        except Exception as e:
+            print(f"  [col-baseline] parent '{parent.get('name')}' fail: {e}")
+            return False
+        # 2) 각 col → FILL horizontal + VERTICAL + CENTER + col 안 텍스트 CENTER
+        for col in col_kids:
+            try:
+                call_tool("set_layout_sizing", {"nodeId": col["id"], "horizontal": "FILL"})
+                col_spacing = col.get("itemSpacing")
+                if not isinstance(col_spacing, (int, float)):
+                    col_spacing = 6
+                call_tool("set_auto_layout", {
+                    "nodeId": col["id"],
+                    "layoutMode": "VERTICAL",
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "CENTER",
+                    "itemSpacing": col_spacing,
+                    "paddingTop": 0, "paddingBottom": 0, "paddingLeft": 0, "paddingRight": 0,
+                })
+                for t in col.get("children", []) or []:
+                    if (t.get("type") or "").upper() == "TEXT":
+                        try:
+                            call_tool("set_text_align", {
+                                "nodeId": t["id"],
+                                "textAlignHorizontal": "CENTER",
+                            })
+                        except Exception:
+                            pass
+            except Exception as e:
+                print(f"  [col-baseline] col '{col.get('name')}' fail: {e}")
+        return True
+
+    def _walk(node):
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").upper() == "FRAME" \
+                and (node.get("layoutMode") or "").upper() == "HORIZONTAL":
+            kids = node.get("children") or []
+            stack_kids = [c for c in kids if _is_label_value_stack(c)]
+            if len(stack_kids) >= 2:
+                if _normalize_grid(node):
+                    fixed[0] += 1
+        for c in node.get("children", []) or []:
+            _walk(c)
+
+    _walk(root)
+    if fixed[0]:
+        print(f"  [col-baseline] ✓ label/value 3-col grid {fixed[0]}건 균등 분포 + 텍스트 중앙 강제")
+    else:
+        print("  [col-baseline] OK — label/value stack grid 정상")
+    return fixed[0]
+
+
+def _enforce_rounded_card_clip_live(root_id: str) -> int:
+    """cornerRadius ≥ 8 frame 은 clipsContent=true 강제 — 2026-05-28 사용자 명시.
+
+    R45 (`_disable_section_clipping`) 가 모든 frame clip 을 false 로 강제하면서
+    라운지 카드 같은 rounded card 의 내부 image/색 영역이 카드 라운드 모서리 밖으로
+    튀어나와 상단이 각져 보이는 버그. R45 에 rounded card 예외를 박았지만, 라이브 강제도
+    별도로 둠 — generator/manual fix 가 clip false 박아도 마지막에 true 로 되돌림.
+
+    대상: cornerRadius ≥ 8 (또는 individual corner ≥ 8) FRAME + 자식 ≥ 1.
+    root 자체는 건드리지 않음 (이미 plugin 이 true 강제).
+
+    Returns: fix 건수.
+    """
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [rounded-card-clip] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+
+    def _has_rounded_corner(n: dict) -> bool:
+        cr = n.get("cornerRadius")
+        if isinstance(cr, (int, float)) and cr >= 8:
+            return True
+        for k in ("topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"):
+            v = n.get(k)
+            if isinstance(v, (int, float)) and v >= 8:
+                return True
+        return False
+
+    targets = []
+
+    def walk(node, depth):
+        if not isinstance(node, dict):
+            return
+        if depth > 0 and (node.get("type") or "").upper() == "FRAME":
+            kids = node.get("children") or []
+            if _has_rounded_corner(node) and kids and node.get("clipsContent") is not True:
+                lm = node.get("layoutMode") or "NONE"
+                targets.append((node.get("id"), lm, node.get("name") or ""))
+        for c in node.get("children", []) or []:
+            walk(c, depth + 1)
+
+    walk(root, 0)
+
+    if not targets:
+        print("  [rounded-card-clip] OK — rounded card 모두 clipsContent=true")
+        return 0
+
+    ops = [{
+        "op": "set_auto_layout",
+        "params": {
+            "nodeId": nid,
+            "layoutMode": lm,
+            "clipsContent": True,
+        }
+    } for (nid, lm, _nm) in targets]
+    try:
+        call_tool("batch_execute", {"operations": ops})
+        print(f"  [rounded-card-clip] ✓ rounded card {len(targets)}개 clipsContent=true 강제")
+        return len(targets)
+    except Exception as e:
+        print(f"  [rounded-card-clip] batch 실패: {e}")
         return 0
 
 
@@ -4931,12 +7400,23 @@ def _strip_all_drop_shadows(root_id: str) -> int:
 
     targets = []
 
+    # 2026-05-28 polish-aware: hero/elevation/sub-card 이름 패턴은 shadow 허용 (사용자
+    # polish baseline 17389:51811 의 카드 위계 차등 표현 가능)
+    POLISH_SHADOW_KEEP_RE = ("hero", "elevation", "sub-card", "sub_card",
+                              "alert", "banner", "raised", "floating")
+
     def walk(node):
         if not isinstance(node, dict):
             return
         nid = node.get("id") or ""
         # 인스턴스 내부 노드는 skip
         if ";" in nid:
+            return
+        # polish exception — 위 이름 패턴 노드의 shadow 는 보존
+        nm_low = (node.get("name") or "").lower()
+        if any(kw in nm_low for kw in POLISH_SHADOW_KEEP_RE):
+            for c in node.get("children") or []:
+                walk(c)
             return
         effs = node.get("effects") or []
         has_visible_shadow = any(
@@ -5304,9 +7784,10 @@ def _apply_template_vars(node: dict, vars_dict: dict, section_name: str) -> dict
 
     if section_name == "FAB":
         label = vars_dict.get("label")
-        icon = vars_dict.get("icon")
+        # R-fix 2026-05-28: iconName/icon, iconColor/textColor alias 둘 다 인정
+        icon = vars_dict.get("icon") or vars_dict.get("iconName")
         fill = vars_dict.get("fill")
-        text_color = vars_dict.get("textColor")
+        text_color = vars_dict.get("textColor") or vars_dict.get("iconColor")
         if fill:
             node["fill"] = fill
         for child in node.get("children", []):
@@ -5368,15 +7849,32 @@ def _apply_template_vars(node: dict, vars_dict: dict, section_name: str) -> dict
                                 text_node["text"] = banner_vars["desc"]
 
     elif section_name == "TabBar":
+        # 2026-05-28 확장: tabLabels + tabIcons 변수 지원 (사용자 옵션 3 박힘)
+        # variables.TabBar = {"activeTab":"홈", "tabLabels":["홈","라운지","스테이지","커뮤니티","전체"],
+        #                     "tabIcons":["home-line","shopping-bag-01","coins-stacked-01","users-01","menu-04"]}
         active_tab = vars_dict.get("activeTab", "홈")
-        for tab_child in node.get("children", []):
-            tab_children = tab_child.get("children", [])
+        tab_labels = vars_dict.get("tabLabels") or []
+        tab_icons = vars_dict.get("tabIcons") or []
+        tab_children_list = node.get("children", [])
+        # 라벨/아이콘 override (position 기준)
+        for i, tab_child in enumerate(tab_children_list):
+            sub_children = tab_child.get("children", [])
+            new_label = tab_labels[i] if i < len(tab_labels) else None
+            new_icon = tab_icons[i] if i < len(tab_icons) else None
+            for sub in sub_children:
+                if sub.get("type") == "icon" and new_icon:
+                    sub["iconName"] = new_icon
+                elif sub.get("type") == "text" and new_label:
+                    sub["text"] = new_label
+        # active state 처리 (라벨 swap 후 다시 매칭)
+        for tab_child in tab_children_list:
+            sub_children = tab_child.get("children", [])
             is_active = False
-            for sub in tab_children:
+            for sub in sub_children:
                 if sub.get("type") == "text" and sub.get("text") == active_tab:
                     is_active = True
                     break
-            for sub in tab_children:
+            for sub in sub_children:
                 if is_active:
                     if sub.get("type") == "icon":
                         sub["iconColor"] = "$token(fg-brand-primary)"
@@ -5385,9 +7883,9 @@ def _apply_template_vars(node: dict, vars_dict: dict, section_name: str) -> dict
                         sub["fontName"] = {"family": "Pretendard", "style": "SemiBold"}
                 else:
                     if sub.get("type") == "icon":
-                        sub["iconColor"] = "$token(fg-quaternary)"
+                        sub["iconColor"] = "$token(fg-secondary)"
                     elif sub.get("type") == "text":
-                        sub["fontColor"] = "$token(fg-quaternary)"
+                        sub["fontColor"] = "$token(fg-secondary)"
                         sub["fontName"] = {"family": "Pretendard", "style": "Medium"}
 
     return node
