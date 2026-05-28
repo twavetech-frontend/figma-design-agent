@@ -55,6 +55,24 @@ COMPONENT_KEYS = {
     "Action Button md (composite, do-not-use)": "c51e2ea849dccd8545523288c29a5edf25b5a88b",
     "Action Button sm":            "a8a4d7eb7874c469ab89105cc342fad85a3d28ce",
 
+    # ── Avatars (standalone circular, verified via create_component_instance 2026-05-28) ──
+    # Placeholder=False = image avatar (default photo); Placeholder=True = grey silhouette.
+    # Onboarding/list 익명 회원 → placeholder (silhouette). 그 외 size 별 image avatar.
+    "Avatar xs":             "41a67c754c1dc5cf9215b5b01d1fdfcefde0b1f1",  # 24
+    "Avatar sm":             "2ea40a42128815074ad25674746cae569e2ecc56",  # 32 ✓
+    "Avatar md":             "36bbd0bcaa2fffffc9fb836c08c35bd2cdd295d1",  # 40 ✓ (image)
+    "Avatar lg":             "7df978a75360c4eeddc2887645cf09bee1ed51d5",  # 48
+    "Avatar xl":             "1c46df6e93dfba27ce07a7ca5646ce7d71c17dba",  # 56
+    "Avatar 2xl":            "6c92320d202ea44b388ef92255b0c47aa386412c",  # 64
+    "Avatar placeholder md": "77ba27f9a412574b97843b5fedcbe032ef6679c0",  # 40 silhouette ✓ (익명 기본)
+
+    # ── Tags / Chips ───────────────────────────────────────────
+    "Tag md":                "fa59791b4002ab31b67ca4bb77f171c62ccd6ea3",
+    "Tag sm":                "7993e38b2b06048331d58dd6f588e419123ffece",
+
+    # ── Divider ────────────────────────────────────────────────
+    "Divider":               "643b56de33f422bdf0c7611555210a08b25e21a8",
+
     # ── Tabs ───────────────────────────────────────────────────
     "Underline Tab Item":   "2fd0d4316087ce3d04816dc5f2eb8c421e43588f",
 
@@ -109,7 +127,7 @@ COMPONENT_KEYS = {
 # Roles whose key is verified to instantiate as the right atomic control →
 # R23 may auto-swap a *shape-matched* raw frame to them. Button hierarchies
 # are handled separately (detect_button_shape). Everything else is WARN-only.
-_VERIFIED_AUTOSWAP_ROLES = {"Toggle", "Progress bar", "Checkbox", "Radio", "Input field", "Slider", "Tooltip", "Dropdown"}
+_VERIFIED_AUTOSWAP_ROLES = {"Toggle", "Progress bar", "Checkbox", "Radio", "Input field", "Slider", "Tooltip", "Dropdown", "Avatar"}
 
 
 # ── Pattern → category (for R23 lint detection) ─────────────────
@@ -443,6 +461,69 @@ _BADGE_COLOR_ROLE = [
 ]
 
 
+# Avatar: 원형 frame + person/user icon (또는 이니셜) 든 작은 프로필.
+# 2026-05-28 사용자 분노: avatar 를 raw circle 로 그리고, R23 검출을 이름을
+# 'circle' 로 바꿔 회피했음. 이제 shape 로 검출 → 이름 무관 강제. DS Avatar instance.
+_AVATAR_ICON_HINTS = ("user", "person", "avatar", "profile", "member", "프로필", "아바타", "회원")
+
+
+def _avatar_role_for_size(w) -> str:
+    """원형 폭 → DS Avatar size role. 익명(placeholder)이 기본 — onboarding/list."""
+    if not isinstance(w, (int, float)) or w <= 0:
+        return "Avatar placeholder md"
+    if w <= 28:
+        return "Avatar xs"
+    if w <= 36:
+        return "Avatar sm"
+    if w <= 46:
+        return "Avatar placeholder md"  # 40 안팎 = 익명 list avatar 기본 silhouette
+    if w <= 60:
+        return "Avatar lg"
+    return "Avatar xl"
+
+
+def detect_avatar_shape(node: dict) -> Optional[Tuple[str, str, Optional[str]]]:
+    """Detect a profile-avatar-shaped frame: near-circular (cornerRadius ≥ ~w/2),
+    24–80px, ~square, whose child is a user/person/avatar icon OR 1–2-char
+    initials text. Returns (role, componentKey, None) or None.
+
+    Name hints (avatar/profile/프로필/아바타) also qualify even without a circle.
+    Calendar/date/icon-only circles WITHOUT a person hint are NOT avatars."""
+    if not isinstance(node, dict):
+        return None
+    if (node.get("type") or "frame").lower() != "frame" or node.get("componentKey"):
+        return None
+    name = node.get("name") or ""
+    w, h = node.get("width"), node.get("height")
+    name_ok = _name_ends_with(node, "avatar", "프로필", "아바타") or _name_hints(node, "avatar", "profile")
+
+    # person/user icon 또는 이니셜 자식 검사
+    has_person_child = False
+    for c in _children(node):
+        cn = (c.get("name") or "").lower()
+        ic = (c.get("iconName") or "").lower()
+        if any(hh in cn or hh in ic for hh in _AVATAR_ICON_HINTS):
+            has_person_child = True
+            break
+        # 이니셜: 1~2자 텍스트
+        if (c.get("type") or "").lower() == "text":
+            txt = (c.get("characters") or c.get("text") or "").strip()
+            if 1 <= len(txt) <= 2 and txt.isalpha():
+                has_person_child = True
+                break
+
+    circular = _corner_radius(node) >= (min(w, h) / 2 - 3) if (
+        isinstance(w, (int, float)) and isinstance(h, (int, float))) else False
+    sized = (isinstance(w, (int, float)) and isinstance(h, (int, float))
+             and 20 <= w <= 80 and 20 <= h <= 80 and abs(w - h) <= 6)
+
+    if not ((circular and sized and has_person_child) or name_ok):
+        return None
+    role = _avatar_role_for_size(w)
+    key = COMPONENT_KEYS.get(role) or COMPONENT_KEYS["Avatar placeholder md"]
+    return (role, key, None)
+
+
 def detect_badge_shape(node: dict) -> Optional[Tuple[str, str, str]]:
     """Detect a small status-badge / tag-shaped frame: a frame with exactly one
     short text child, a cornerRadius, and small dimensions. Returns
@@ -643,6 +724,9 @@ def detect_progress_shape(node: dict):
 # Roles eligible for auto-swap require BOTH a verified key (above) AND that
 # the node carries the role's distinctive *shape* (not just a name hint).
 def _has_distinctive_shape(node: dict, role: str) -> bool:
+    if role and role.startswith("Avatar"):
+        # detect_avatar_shape 이미 원형+person/이니셜 검증함 → distinctive 인정
+        return True
     if role == "Toggle":
         w, h = node.get("width"), node.get("height")
         return (isinstance(w, (int, float)) and isinstance(h, (int, float))
@@ -701,6 +785,11 @@ def detect_ds_role_structural(node: dict):
     b = detect_button_shape(node)
     if b:
         return (b[0], b[1], b[2], False)
+    # 1.5) avatar — confident auto-swap (2026-05-28). person/user icon 든 원형
+    #      프로필. badge 검출보다 먼저 — user circle 이 badge 로 오인 안 되게.
+    av = detect_avatar_shape(node)
+    if av:
+        return (av[0], av[1], av[2], True)
     # 2) badge / tag — confident (auto-swap) if the name says so OR the label
     #    is a known short status word ("미납 1" / "완료" / "진행중" …): those
     #    tiny pills ARE badges by definition. (User: "미납1 은 badge로 표현.")
