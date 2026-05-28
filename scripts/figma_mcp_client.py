@@ -185,6 +185,8 @@ def validate_blueprint(blueprint: dict) -> list:
     issues = []
 
     def _check_node(node: dict, path: str = "root"):
+        if not isinstance(node, dict):
+            return  # non-dict (int 등) 노드 방어 — generator artifact
         # Check autoLayout
         al = node.get("autoLayout")
         if al:
@@ -280,6 +282,8 @@ def validate_blueprint(blueprint: dict) -> list:
 
         # Check children
         for i, child in enumerate(node.get("children", [])):
+            if not isinstance(child, dict):
+                continue  # non-dict (int 등) 잘못된 노드 — skip (sanitize 가 제거하지만 방어)
             child_name = child.get("name", f"child[{i}]")
             _check_node(child, f"{path}/{child_name}")
 
@@ -3014,6 +3018,24 @@ def cmd_build(blueprint_file: str):
     except Exception as e:
         print(f"  [design_rules] dispatcher 실패 — 무시하고 계속: {e}")
 
+    # 2026-05-28 — children 에 섞인 non-dict(int 등) 노드 sanitize. generator/inject/
+    # _enforce pre-process 중 어떤 경로가 children 리스트에 잘못된 int 를 넣어
+    # validate_blueprint 가 AttributeError 로 죽는 회귀 차단. 디자인 노드는 항상 dict.
+    _n_stripped = [0]
+    def _strip_non_dict_children(node):
+        if isinstance(node, dict):
+            ch = node.get("children")
+            if isinstance(ch, list):
+                clean = [c for c in ch if isinstance(c, dict)]
+                if len(clean) != len(ch):
+                    _n_stripped[0] += len(ch) - len(clean)
+                    node["children"] = clean
+                for c in clean:
+                    _strip_non_dict_children(c)
+    _strip_non_dict_children(blueprint)
+    if _n_stripped[0]:
+        print(f"  [sanitize] children 의 non-dict 노드 {_n_stripped[0]}개 제거 (generator artifact)")
+
     # Step 1: Validate blueprint before any processing
     issues = validate_blueprint(blueprint)
     issues = issues + archetype_issues + registry_issues  # 모든 이슈 합산
@@ -3187,9 +3209,9 @@ def cmd_build(blueprint_file: str):
             pass
         print("\n🔧 자동 후처리 실행 중...")
         sim_layout = sim_result.get("layout") if sim_result else None
-        cmd_post_fix(root_id, pre_computed_layout=sim_layout, original_blueprint=original_blueprint)
+        cmd_post_fix(root_id, pre_computed_layout=sim_layout, original_blueprint=original_blueprint, injected_blueprint=blueprint)
         print("\n🔧 후처리 2회차 (레이아웃 안정화 후 최종 배치)...")
-        cmd_post_fix(root_id, original_blueprint=original_blueprint)
+        cmd_post_fix(root_id, original_blueprint=original_blueprint, injected_blueprint=blueprint)
     else:
         print("⚠️  rootId를 찾을 수 없어 post-fix를 건너뜁니다.")
 
@@ -4919,6 +4941,63 @@ def _enforce_ds_button_sizing(root_id: str, label_map: Optional[dict] = None) ->
     return fixed[0]
 
 
+def _collect_instance_text_paths(blueprint: Optional[dict]) -> dict:
+    """inject 된 blueprint 에서 {이름 경로 tuple: _instanceText} 맵 수집.
+    R23 가 swap 한 instance 노드의 원래 텍스트(_instanceText)를 빌드 후 적용하기 위함."""
+    out = {}
+    if not isinstance(blueprint, dict):
+        return out
+    root = blueprint.get("root") or blueprint
+
+    def walk(node, chain):
+        if not isinstance(node, dict):
+            return
+        nm = node.get("name") or ""
+        cur = chain + (nm,)
+        if node.get("componentKey") and node.get("_instanceText"):
+            out[cur] = str(node["_instanceText"])
+        for c in (node.get("children") or node.get("_originalChildren") or []):
+            walk(c, cur)
+    walk(root, ())
+    return out
+
+
+def _enforce_ds_instance_text(root_id: str, path_text_map: dict) -> int:
+    """빌드 트리 DS instance 의 내부 첫 TEXT 를 원래 콘텐츠로 override (2026-05-28).
+
+    R23 swap 후 마스터 더미('Label'/'Button CTA'/'Click to Download')가 남는 회귀 차단.
+    blueprint 경로(이름 chain) 매칭으로 status-pill 4개처럼 같은 이름도 부모로 구분.
+    """
+    if not path_text_map:
+        return 0
+    fixed = [0]
+
+    def walk(node, chain):
+        if not isinstance(node, dict):
+            return
+        nm = node.get("name") or ""
+        cur = chain + (nm,)
+        if (node.get("type") or "").upper() == "INSTANCE" and cur in path_text_map:
+            try:
+                scan = parse_content(call_tool("scan_text_nodes", {"nodeId": node["id"]})).get("json") or {}
+                tnodes = scan.get("textNodes") or []
+                if tnodes:
+                    call_tool("set_text_content", {"nodeId": tnodes[0]["id"], "text": path_text_map[cur]})
+                    fixed[0] += 1
+            except Exception as e:
+                print(f"  [ds-instance-text] '{node.get('id')}' fail: {e}")
+        for c in node.get("children", []) or []:
+            walk(c, cur)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0], ())
+    except Exception as e:
+        print(f"  [ds-instance-text] root fetch fail: {e}")
+    return fixed[0]
+
+
 def _enforce_root_min_height(root_id: str) -> None:
     """루트 height 정책 — 콘텐츠 길이에 따라 두 가지 분기 (2026-05-24):
 
@@ -5183,7 +5262,8 @@ def _load_latest_build() -> dict:
 
 
 def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
-                 original_blueprint: Optional[dict] = None):
+                 original_blueprint: Optional[dict] = None,
+                 injected_blueprint: Optional[dict] = None):
     """빌드 후 자동 후처리: FILL 사이징, Tab Bar/FAB 배치, 섹션 갭, 텍스트 수정.
 
     Usage:
@@ -5483,6 +5563,28 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
             print("  [ds-button-sizing] OK — DS 버튼 없음")
     except Exception as e:
         print(f"  [ds-button-sizing] 실패 (무시하고 계속): {e}")
+
+    # 2026-05-28 사용자 "엉망이다" — R23 가 raw frame(status-pill '진행중', round-tag
+    # '1회차', link '자세히')을 DS Badge/Button/Link 인스턴스로 swap 한 뒤 원래 텍스트를
+    # override 안 해 마스터 더미('Label'/'Button CTA'/'Click to Download')가 렌더됨.
+    # inject 된 blueprint 의 instance 노드 _instanceText 를 경로 매칭으로 적용.
+    print("\n[규칙] DS instance 텍스트 override (badge/button/link 더미 제거) 적용 중...")
+    try:
+        _inj_bp = injected_blueprint
+        if _inj_bp is None:
+            _latest = _load_latest_build()
+            _bpp = _latest.get("blueprintPath")
+            if _bpp and os.path.exists(_bpp):
+                with open(_bpp) as _f:
+                    _inj_bp = json.load(_f)
+        _path_text_map = _collect_instance_text_paths(_inj_bp) if _inj_bp else {}
+        n_it = _enforce_ds_instance_text(root_node_id, _path_text_map)
+        if n_it:
+            print(f"  [ds-instance-text] ✓ instance {n_it}건 텍스트 override (더미 제거)")
+        else:
+            print("  [ds-instance-text] OK — override 대상 없음")
+    except Exception as e:
+        print(f"  [ds-instance-text] 실패 (무시하고 계속): {e}")
 
     # ⚠️ HARD-ENFORCE (2026-05-28 사용자 명시 "룰 말고 무조건 실행 코드"):
     # cmd_post_fix 끝에 무조건 호출. 가드 최소화, 회귀 차단.

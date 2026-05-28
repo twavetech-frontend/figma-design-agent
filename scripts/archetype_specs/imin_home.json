@@ -1,0 +1,382 @@
+{
+  "_description": "imin_home archetype base spec — wire_content 만 매번 작성, 나머지 (mock_data/polish/sections) 는 이 base 에서 가져옴.",
+  "_version": "2026-05-28",
+  "archetype": "imin_home",
+  "scenario": "auto",
+  "mock_data": {
+    "stage_progress": {
+      "count": 3,
+      "header_template": "진행중인 {count}건의 스테이지 내역",
+      "more_link": "자세히",
+      "rows": [
+        {
+          "label": "모은 금액",
+          "value": "+1,240,000원",
+          "color": "success",
+          "dot": "success"
+        },
+        {
+          "label": "빌린 금액",
+          "value": "-340,000원",
+          "color": "error",
+          "dot": "error"
+        }
+      ],
+      "day_strip": [
+        {
+          "day": "14일",
+          "value": "+24만",
+          "status": "예정",
+          "type": "default"
+        },
+        {
+          "day": "15일",
+          "value": "+18만",
+          "status": "오늘",
+          "type": "today"
+        },
+        {
+          "day": "16일",
+          "value": "+30만",
+          "status": "예정",
+          "type": "default"
+        },
+        {
+          "day": "17일",
+          "value": "+15만",
+          "status": "예정",
+          "type": "default"
+        },
+        {
+          "day": "18일",
+          "value": "+22만",
+          "status": "예정",
+          "type": "default"
+        },
+        {
+          "day": "19일",
+          "value": "+28만",
+          "status": "예정",
+          "type": "default"
+        }
+      ],
+      "day_strip_title": "이번 달 일정"
+    },
+    "attendance": {
+      "streak": 7,
+      "headline_template": "연속 {streak}일째 출석 체크 중",
+      "sub": "매일매일 출석하면 특별한 혜택이!"
+    },
+    "calc_callout": {
+      "text": "얼마까지 모을 수 있는 지 확인해보세요."
+    },
+    "recommend_stage": {
+      "section_title": "추천 스테이지",
+      "personal_caption": "회원님을 위한 추천",
+      "title": "총 1,300만원 모으기 도전, 13개월에 받아가요",
+      "label": "예상 수령 금액 (1회차)",
+      "currency_hero": "1,300,000원",
+      "currency_sub": "월 100,000원 · 13개월 · 납입 후 목표 수령",
+      "stepper_amount": {
+        "label": "월",
+        "value": "10만원"
+      },
+      "stepper_period": {
+        "label": "기간",
+        "value": "13개월"
+      },
+      "round_selector": {
+        "total": 13,
+        "current": 1
+      },
+      "purpose_tag": "1회차",
+      "purpose_text": "납입 후 목적 수령",
+      "goal_total": "총 1,300만원 모으기 도전",
+      "goal_hero": "1,300만원",
+      "show_all_cta": "추천 전체 보기 (13개)"
+    },
+    "participating": {
+      "tabs": [
+        "참여 중인 스테이지",
+        "찜한 스테이지"
+      ],
+      "active_tab": 0,
+      "count": 4,
+      "cards": [
+        {
+          "status": "진행중",
+          "status_color": "bg-brand-primary",
+          "status_text": "text-brand-primary",
+          "amount": "월 10만원",
+          "subtitle": "13개월 · 6.9%",
+          "round": "5회차 / 13",
+          "progress": 38,
+          "bar_fill": "bg-brand-solid"
+        },
+        {
+          "status": "곧 지급",
+          "status_color": "bg-warning-secondary",
+          "status_text": "text-warning-primary",
+          "amount": "월 30만원",
+          "subtitle": "12개월 · 5.8%",
+          "round": "11회차 / 12",
+          "progress": 91,
+          "bar_fill": "bg-warning-solid"
+        },
+        {
+          "status": "신규",
+          "status_color": "bg-success-secondary",
+          "status_text": "text-success-primary",
+          "amount": "월 5만원",
+          "subtitle": "6개월 · 4.5%",
+          "round": "1회차 / 6",
+          "progress": 16,
+          "bar_fill": "bg-success-solid"
+        },
+        {
+          "status": "예정",
+          "status_color": "bg-secondary",
+          "status_text": "text-tertiary",
+          "amount": "월 20만원",
+          "subtitle": "10개월 · 5.2%",
+          "round": "0회차 / 10",
+          "progress": 0,
+          "bar_fill": "bg-tertiary"
+        }
+      ]
+    },
+    "lounge": {
+      "section_title": "추천 상품 (라운지)",
+      "deposit": "예치금 312,490원 (100p)",
+      "products": [
+        {
+          "brand": "올리브영",
+          "name": "스킨케어 세트",
+          "price": "29,000P",
+          "imageQuery": "korean skincare cosmetics premium beauty product photography"
+        },
+        {
+          "brand": "스타벅스",
+          "name": "아메리카노 Tall",
+          "price": "4,800P",
+          "imageQuery": "coffee cup latte art barista cafe morning"
+        },
+        {
+          "brand": "고디바",
+          "name": "초콜릿 기프트 박스",
+          "price": "32,000P",
+          "imageQuery": "luxury chocolate gift box premium minimal product"
+        },
+        {
+          "brand": "배민",
+          "name": "배달 쿠폰 5,000원",
+          "price": "5,000P",
+          "imageQuery": "korean street food delivery vibrant colorful"
+        },
+        {
+          "brand": "CGV",
+          "name": "영화 관람권 2매",
+          "price": "28,000P",
+          "imageQuery": "movie theater popcorn cinema ticket"
+        }
+      ]
+    },
+    "top_alert": {
+      "icon": "alert-triangle",
+      "text": "납입 기한이 지난 1건이 있어요",
+      "cta": "지금 납입 >"
+    },
+    "screen_hero": {
+      "active": {
+        "caption": "진행 중인 스테이지 3개",
+        "label": "모은 금액",
+        "amount": "1,240,000원",
+        "footnote_dot": "success",
+        "footnote": "이번 달 240,000원 수령했어요"
+      },
+      "empty": {
+        "caption": "안녕하세요 :)",
+        "title": "오늘부터 스테이지 시작해보세요",
+        "sub": "월 10만원으로 1300만원 모으기 도전"
+      }
+    },
+    "subcard_cta": {
+      "icon": "gift-01",
+      "title": "포인트 모으기 시작",
+      "sub": "출석 체크 + 스테이지 참여로 포인트 받기"
+    },
+    "footer": {
+      "policies": [
+        "이용약관",
+        "스테이지이용약관",
+        "서비스운영정책",
+        "개인정보처리방침",
+        "쇼핑이용약관"
+      ],
+      "company": "(주)티웨이브 역삼지점",
+      "reg_no": "사업자등록번호: 291-85-01499",
+      "ceo": "대표: 서재준",
+      "sales_no": "통신판매업신고: 2021-서울강남-05837",
+      "disclaimer": "(주)티웨이브 역삼지점은 통신판매중개자로서 거래 당사자가 아니므로 판매자가 등록한 상품정보 및 거래 등에 대해 책임을 지지 않습니다. 단, (주)티웨이브 역삼지점이 판매자로 등록 판매한 상품은 판매자로서 책임을 부담합니다.",
+      "copyright": "Copyright Ⓒ TWAVE. All Rights Reverved."
+    },
+    "fab": {
+      "icon": "plus",
+      "fill": "bg-brand-solid",
+      "icon_color": "fg-white"
+    },
+    "tab_bar": {
+      "tabs": [
+        "홈",
+        "라운지",
+        "스테이지",
+        "커뮤니티",
+        "전체"
+      ],
+      "icons": [
+        "home-line",
+        "building-08",
+        "coins-stacked-01",
+        "users-01",
+        "menu-01"
+      ],
+      "active": "홈"
+    },
+    "nav_bar": {
+      "icons": [
+        "bell-01",
+        "message-chat-circle"
+      ]
+    },
+    "mode_tabs": {
+      "tabs": [
+        "거래 현황",
+        "누적 거래"
+      ],
+      "active": 0
+    }
+  },
+  "polish": {
+    "_description": "per-section polish 플래그. 와이어 콘텐츠와 충돌 검사 후 적용.",
+    "top_alert_banner": "active_only",
+    "screen_hero": true,
+    "day_strip_4layer": true,
+    "subcard_cta": true,
+    "recommend_hero_cta": true,
+    "participation_grid": "active_only",
+    "lounge_real_products": "if_empty_cards"
+  },
+  "sections": [
+    {
+      "type": "nav_bar"
+    },
+    {
+      "type": "mode_tabs"
+    },
+    {
+      "type": "top_alert_banner",
+      "scenario_only": "active"
+    },
+    {
+      "type": "screen_hero"
+    },
+    {
+      "type": "stage_progress_card"
+    },
+    {
+      "type": "attendance_banner"
+    },
+    {
+      "type": "calc_callout"
+    },
+    {
+      "type": "recommend_stage_card"
+    },
+    {
+      "type": "participating_section"
+    },
+    {
+      "type": "lounge_section"
+    },
+    {
+      "type": "subcard_cta"
+    },
+    {
+      "type": "footer_policy"
+    },
+    {
+      "type": "fab"
+    },
+    {
+      "type": "tab_bar"
+    }
+  ],
+  "references": [
+    {
+      "app": "toss",
+      "section": "자산 카드 — 금액 hero + list row + 송금 pill",
+      "ref": "uibowl/toss/e71t78p94toqxa3prlofk58g.png",
+      "thumbPath": "scripts/ref_thumbnails/e71t78p94toqxa3prlofk58g.png",
+      "extract": "카드 cornerRadius 20, 자산 섹션 헤더 큰 Bold + 우 chevron, 각 row = avatar 40 원형 + 통장명 13 grey + 금액 22 Bold + 송금 pill(bg-secondary) 우측. 섹션 간격 12.",
+      "copyNotes": "금액 hero 22~28 Bold + 라벨 13 grey 위계, list row avatar 40 + trailing 회색 pill, 카드 cornerRadius 20 + 섹션 간격 12. imin stage_progress/participating 카드에 이 간격·크기 그대로 카피.",
+      "_searchLog": {
+        "queries": [
+          "toss 메인 자산",
+          "toss 통장 list",
+          "toss 홈 카드"
+        ],
+        "candidates": [
+          "uibowl/toss/e71t78p94toqxa3prlofk58g.png",
+          "uibowl/toss/x775bsvobrcl4ezbo3urt9i7.png",
+          "uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png"
+        ],
+        "chosen": "uibowl/toss/e71t78p94toqxa3prlofk58g.png",
+        "copyNotes": "자산 카드 금액 hero + list row + 송금 pill 위계 카피"
+      }
+    },
+    {
+      "app": "kakaopay",
+      "section": "페이머니 카드 + 서비스 그리드 — 큰 금액 + 4열 아이콘",
+      "ref": "uibowl/kakaopay/cmgnok0lh0003ky04mz4psydr.png",
+      "thumbPath": "scripts/ref_thumbnails/cmgnok0lh0003ky04mz4psydr.png",
+      "extract": "흰 카드 cornerRadius 16~20. 페이머니 10,000원 28 Bold + 충전 slider + 충전/송금 pill. 서비스 그리드 4열 (아이콘 28 + 라벨 12). 카드 간격 12.",
+      "copyNotes": "페이머니 큰 금액 28 Bold hero + 충전 slider + 충전/송금 pill. 카드 cornerRadius 16~20 padding 20, 서비스 그리드 4열(아이콘28+라벨12). imin recommend_stage 금액 hero + stepper 크기·간격 카피.",
+      "_searchLog": {
+        "queries": [
+          "kakaopay 메인",
+          "kakaopay 페이머니",
+          "kakaopay 홈 그리드"
+        ],
+        "candidates": [
+          "uibowl/kakaopay/cmgnok0lh0003ky04mz4psydr.png",
+          "uibowl/kakaopay/cmgnok0mf0005ky04yskq8hr2.png",
+          "uibowl/toss/e71t78p94toqxa3prlofk58g.png"
+        ],
+        "chosen": "uibowl/kakaopay/cmgnok0lh0003ky04mz4psydr.png",
+        "copyNotes": "페이머니 큰 금액 + 서비스 그리드 위계 카피"
+      }
+    },
+    {
+      "app": "kakaopay",
+      "section": "최근 이용내역 list — avatar + 텍스트 + 금액",
+      "ref": "uibowl/kakaopay/cmgnok0mf0005ky04yskq8hr2.png",
+      "thumbPath": "scripts/ref_thumbnails/cmgnok0mf0005ky04yskq8hr2.png",
+      "extract": "흰 카드 안 list row = avatar 40 + 상호명 14 + 금액 16 Bold (우측 또는 하단). 관심주식 카드 (종목 + 가격 + 변동율 색). 카드 간격 12.",
+      "copyNotes": "list row avatar 40 + 텍스트 + 금액, 변동/상태는 색 텍스트 소량. imin participating 카드 status·금액 위계 카피.",
+      "_searchLog": {
+        "queries": [
+          "kakaopay 이용내역",
+          "kakaopay list",
+          "kakaopay 관심주식"
+        ],
+        "candidates": [
+          "uibowl/kakaopay/cmgnok0mf0005ky04yskq8hr2.png",
+          "uibowl/kakaopay/cmgnok0lh0003ky04mz4psydr.png",
+          "uibowl/toss/cm7k1itym0040jy0ctugpfpp1.png"
+        ],
+        "chosen": "uibowl/kakaopay/cmgnok0mf0005ky04yskq8hr2.png",
+        "copyNotes": "최근내역 list row avatar + 금액 위계 카피"
+      }
+    }
+  ]
+}

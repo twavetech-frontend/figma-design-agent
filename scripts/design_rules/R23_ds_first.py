@@ -43,6 +43,14 @@ def _extract_instance_text(node: dict, role: str) -> str | None:
     m = _NAME_TEXT_EXTRACT.match(name.strip())
     if m:
         return m.group(1).strip()
+    # 2026-05-28 — 자식 TEXT 의 characters 추출 (badge/button/link/tag 의 라벨).
+    # 이전엔 None 반환 → instance 가 마스터 더미("Label"/"Button CTA"/"Click to
+    # Download") 로 렌더되던 회귀. status-pill('진행중')/round-tag('1회차')/link('자세히').
+    for c in (node.get("children") or node.get("_originalChildren") or []):
+        if isinstance(c, dict) and (c.get("type") or "").lower() in ("text", "TEXT".lower()):
+            t = c.get("characters") or c.get("text")
+            if t and str(t).strip():
+                return str(t).strip()
     return None
 
 
