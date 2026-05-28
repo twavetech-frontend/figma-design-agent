@@ -3234,6 +3234,16 @@ def cmd_build(blueprint_file: str):
         except Exception as e:
             print(f"  [auto-bind] 실패 (무시하고 계속): {e}")
 
+    # Step E.5.4: imageQuery 노드에 실사진 자동 적용 (2026-05-28 사용자 명시 —
+    # placeholder 보라 블록 금지). keyless 이미지 소스에서 받아 set_image_fill +
+    # placeholder icon 삭제. 네트워크 실패 시 placeholder 유지.
+    if root_id:
+        print("\n🖼️  imageQuery 실사진 자동 적용 중...")
+        try:
+            apply_image_queries(root_id, original_blueprint)
+        except Exception as e:
+            print(f"  [apply-images] 실패 (무시하고 계속): {e}")
+
     # Step E.5.5: DS Text Style 자동 적용 (2026-05-24 복원 — 머지로 소실된 기능 복구)
     if root_id:
         print("\n🔤 DS Text Style 자동 적용 중...")
@@ -4466,8 +4476,18 @@ def _enforce_horizontal_row_hug_v_live(root_id: str) -> int:
         children = node.get("children") or []
         if not children:
             return False
-        # 자식이 전부 TEXT 인 경우만 잡기 — 가장 안전 (Stage Tab Row / Footer Links 등)
-        if not all(c.get("type") == "TEXT" for c in children):
+        # 자식이 TEXT(또는 얇은 세로 divider) 인 경우만 잡기 — 가장 안전.
+        # 2026-05-28: part-divider(RECTANGLE) 가 섞인 'Participating Tabs Row' 가
+        # FIXED 83 으로 박혀 위아래 허전한 회귀 → divider RECTANGLE/LINE 도 허용.
+        def _allowed(c):
+            t = c.get("type")
+            if t == "TEXT":
+                return True
+            if t in ("RECTANGLE", "LINE"):
+                nm = (c.get("name") or "").lower()
+                return any(k in nm for k in ("divider", "separator", "line"))
+            return False
+        if not all(_allowed(c) for c in children):
             return False
         # 자식 ABSOLUTE 가드
         for c in children:
@@ -5926,6 +5946,111 @@ def _collect_bindings(bp_node: Any, built_node: Any, out: list, by_name: bool = 
         for i, bpc in enumerate(bp_children):
             if i < len(built_children):
                 _collect_bindings(bpc, built_children[i], out, by_name=False)
+
+
+# ── imageQuery → 실사진 자동 적용 ────────────────────────────────
+_IMG_STOPWORDS = {
+    "premium", "photography", "photo", "product", "minimal", "vibrant",
+    "colorful", "morning", "luxury", "professional", "quality", "high",
+    "modern", "clean", "aesthetic", "background", "studio", "shot", "image",
+    "the", "a", "of", "and", "with",
+}
+
+
+def _imagequery_to_keywords(query: str, max_kw: int = 3) -> str:
+    """imageQuery 문구 → loremflickr 콤마 태그 (stopword 제거 후 앞 N 단어)."""
+    toks = [t.strip().lower() for t in re.split(r"[\s,]+", query or "") if t.strip()]
+    kept = [t for t in toks if t not in _IMG_STOPWORDS and len(t) > 1]
+    if not kept:
+        kept = toks[:max_kw] or ["product"]
+    return ",".join(kept[:max_kw])
+
+
+def _collect_image_queries(bp_node: Any, built_node: Any, out: list, by_name: bool = False):
+    """blueprint + 빌드 트리 병렬 walk — imageQuery 있는 노드의 live id + placeholder
+    icon 자식 id 수집. (이미지 frame 안 vector/icon placeholder 는 실사진 적용 후 삭제)"""
+    if not isinstance(bp_node, dict) or not isinstance(built_node, dict):
+        return
+    q = bp_node.get("imageQuery") or bp_node.get("imageUrl") or bp_node.get("image")
+    if isinstance(q, str) and q.strip():
+        placeholder_ids = []
+        for ch in built_node.get("children") or []:
+            ct = (ch.get("type") or "").upper()
+            if ct in ("VECTOR", "INSTANCE", "FRAME") and ch.get("id"):
+                placeholder_ids.append(ch["id"])
+        out.append({"nodeId": built_node.get("id"), "query": q.strip(),
+                    "placeholders": placeholder_ids})
+    bp_children = bp_node.get("children") or []
+    built_children = built_node.get("children") or []
+    if by_name:
+        buckets: Dict[str, list] = {}
+        for bc in built_children:
+            buckets.setdefault(bc.get("name"), []).append(bc)
+        used: Dict[str, int] = {}
+        for bpc in bp_children:
+            nm = bpc.get("name")
+            lst = buckets.get(nm, [])
+            k = used.get(nm, 0)
+            if k < len(lst):
+                _collect_image_queries(bpc, lst[k], out, by_name=False)
+                used[nm] = k + 1
+    else:
+        for i, bpc in enumerate(bp_children):
+            if i < len(built_children):
+                _collect_image_queries(bpc, built_children[i], out, by_name=False)
+
+
+def apply_image_queries(root_id: str, original_blueprint: dict) -> int:
+    """imageQuery 노드에 실사진 자동 적용 (2026-05-28 사용자 "placeholder 보라 블록도 실사진으로").
+
+    keyless 키워드 이미지 소스(loremflickr, Flickr CC)에서 imageQuery 키워드로
+    사진을 받아 set_image_fill 로 적용 + placeholder icon 자식 삭제. 네트워크 실패
+    시 조용히 skip(placeholder 유지). cmd_build / cmd_post_fix 에서 자동 호출.
+    """
+    import base64 as _b64
+    import urllib.request as _ur
+    try:
+        content = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(content).get("json")
+        built = items[0].get("document") or items[0] if isinstance(items, list) and items else None
+    except Exception as e:
+        print(f"  [apply-images] 빌드 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(built, dict) or not isinstance(original_blueprint, dict):
+        return 0
+
+    jobs: list = []
+    _collect_image_queries(original_blueprint, built, jobs, by_name=True)
+    if not jobs:
+        return 0
+
+    applied = 0
+    for job in jobs:
+        nid = job.get("nodeId")
+        if not nid:
+            continue
+        kw = _imagequery_to_keywords(job.get("query", ""))
+        url = f"https://loremflickr.com/600/600/{kw}"
+        try:
+            req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            data = _ur.urlopen(req, timeout=25).read()
+            if len(data) < 2000:  # 에러 페이지/빈 이미지
+                continue
+            b64 = _b64.b64encode(data).decode()
+            call_tool("set_image_fill", {"nodeId": nid, "imageData": b64})
+            # placeholder icon 자식 제거 (실사진 위 보라 gift 아이콘 등)
+            for pid in job.get("placeholders") or []:
+                try:
+                    call_tool("delete_node", {"nodeId": pid})
+                except Exception:
+                    pass
+            applied += 1
+            print(f"  [apply-images] '{kw}' → {nid} ({len(data)}b)")
+        except Exception as e:
+            print(f"  [apply-images] '{kw}' {nid} 실패(placeholder 유지): {e}")
+    if applied:
+        print(f"  [apply-images] ✓ 실사진 {applied}개 적용 (imageQuery)")
+    return applied
 
 
 def auto_bind_design(root_id: str, original_blueprint: dict) -> int:
@@ -8386,6 +8511,27 @@ def main():
             sys.exit(1)
         ensure_session()
         _apply_ds_effect_styles(sys.argv[2])
+    elif cmd == "apply-images":
+        if len(sys.argv) < 3:
+            print("Usage: figma_mcp_client.py apply-images <rootNodeId> [blueprint.json]")
+            sys.exit(1)
+        ensure_session()
+        _bp = None
+        if len(sys.argv) >= 4 and os.path.exists(sys.argv[3]):
+            with open(sys.argv[3]) as _f:
+                _bp = json.load(_f)
+        else:
+            _latest = _load_latest_build()
+            _bp_path = _latest.get("blueprintPath")
+            if _bp_path and os.path.exists(_bp_path):
+                with open(_bp_path) as _f:
+                    _bp = json.load(_f)
+        if not _bp:
+            print("⚠️  blueprint 없음 — apply-images 는 imageQuery 매핑에 blueprint 필요")
+            sys.exit(1)
+        # thin unified spec 면 expanded blueprint 로 해석 (imageQuery 는 expanded 에만 있음)
+        _bp = _maybe_resolve_unified_input(_bp)
+        apply_image_queries(sys.argv[2], _bp)
     elif cmd == "post-fix":
         if len(sys.argv) < 3:
             print("Usage: figma_mcp_client.py post-fix <rootNodeId>")

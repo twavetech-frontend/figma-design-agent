@@ -1017,9 +1017,12 @@ def _gen_participating_section(data: dict, scenario: str) -> dict:
         "name": "Participating Tabs Row",
         "type": "frame",
         "layoutSizingHorizontal": "FILL",
+        # 세로 HUG — 명시 안 하면 batch_build 가 FIXED 83 으로 박아 위아래 허전 (2026-05-28).
+        "layoutSizingVertical": "HUG",
         "autoLayout": {
             "layoutMode": "HORIZONTAL",
             "paddingLeft": 20, "paddingRight": 20,
+            "paddingTop": 8, "paddingBottom": 8,
             "itemSpacing": 18,
             "counterAxisAlignItems": "CENTER",
         },
