@@ -4879,11 +4879,13 @@ def _enforce_ds_button_sizing(root_id: str, label_map: Optional[dict] = None) ->
     fixed = [0]
 
     def _fix_instance(nid, name, w, h, parent_layout):
-        # 1) sizing
+        # 1) sizing — VERTICAL 부모의 단독 CTA 는 항상 가로 FILL (2026-05-28 사용자
+        #    "버튼을 가로로 채워야지"). HORIZONTAL 부모(버튼 그룹)면 좁을 때만 HUG.
         try:
-            if w < 60:
-                horiz = "FILL" if parent_layout == "VERTICAL" else "HUG"
-                call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": horiz})
+            if parent_layout == "VERTICAL":
+                call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": "FILL"})
+            elif w < 60:
+                call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": "HUG"})
             if h < 40:
                 call_tool("set_layout_sizing", {"nodeId": nid, "vertical": "FIXED"})
                 call_tool("resize_node", {"nodeId": nid,
@@ -4995,6 +4997,73 @@ def _enforce_ds_instance_text(root_id: str, path_text_map: dict) -> int:
             walk(items[0].get("document") or items[0], ())
     except Exception as e:
         print(f"  [ds-instance-text] root fetch fail: {e}")
+    return fixed[0]
+
+
+def _enforce_fixed_size_invariants_final(root_id: str) -> int:
+    """최종 강제 레이어 (2026-05-28) — post-fix 모든 룰 끝난 뒤 순서 무관하게
+    고정 사이즈 invariant 보장. vertical-hug 류 룰이 FAB/circle/icon-box 를
+    24px 로 찌그러뜨리는 회귀를 마지막에 복원.
+
+      - FAB (name 'FAB') → 56×56 FIXED, cornerRadius 28
+      - 원형/icon-box (cornerRadius >= w/2, 20<=w<=80, w!=h) → max(w,h) 정사각 FIXED
+    """
+    fixed = [0]
+
+    def _is_circle_iconbox(n):
+        cr = n.get("cornerRadius") or 0
+        w = n.get("width") or 0
+        h = n.get("height") or 0
+        if not (isinstance(w, (int, float)) and isinstance(h, (int, float))):
+            return False
+        if not (20 <= w <= 80):
+            return False
+        # 원형 (cornerRadius >= 절반) 또는 단일 vector/icon-frame 자식
+        if cr >= (min(w, h) / 2) - 3:
+            return True
+        kids = n.get("children") or []
+        if len(kids) == 1:
+            ck = (kids[0].get("type") or "").upper()
+            if ck in ("FRAME", "INSTANCE", "VECTOR"):
+                return True
+        return False
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        ntype = (node.get("type") or "").upper()
+        name = (node.get("name") or "")
+        nid = node.get("id")
+        w = node.get("width") or 0
+        h = node.get("height") or 0
+        # FAB → 56×56
+        if name in ("FAB", "Fab", "fab") and ntype in ("FRAME", "INSTANCE"):
+            if abs(w - 56) > 0.5 or abs(h - 56) > 0.5:
+                try:
+                    call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": "FIXED", "vertical": "FIXED"})
+                    call_tool("resize_node", {"nodeId": nid, "width": 56, "height": 56})
+                    call_tool("set_corner_radius", {"nodeId": nid, "cornerRadius": 28})
+                    fixed[0] += 1
+                except Exception as e:
+                    print(f"  [size-invariant] FAB '{nid}' fail: {e}")
+        # 원형/icon-box → 정사각 (찌그러진 것만)
+        elif ntype == "FRAME" and node.get("componentKey") is None and _is_circle_iconbox(node) and abs(w - h) > 1.5:
+            side = round(max(w, h))
+            try:
+                call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": "FIXED", "vertical": "FIXED"})
+                call_tool("resize_node", {"nodeId": nid, "width": side, "height": side})
+                fixed[0] += 1
+            except Exception as e:
+                print(f"  [size-invariant] circle '{nid}' fail: {e}")
+        for c in node.get("children", []) or []:
+            walk(c)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [size-invariant] root fetch fail: {e}")
     return fixed[0]
 
 
@@ -5592,6 +5661,17 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _HARD_ENFORCE_IMIN_HOME_INVARIANTS(root_node_id)
     except Exception as e:
         print(f"  [HARD-ENFORCE] 실패 (무시): {e}")
+
+    # ⚠️ 최종 강제 레이어 (2026-05-28 사용자 "FAB 또 찌그러져 / 회귀 누적"):
+    # post-fix 의 모든 룰이 끝난 *가장 마지막* 에 고정 사이즈 invariant 를 순서 무관하게
+    # 최종 보장. 중간 vertical-hug 룰이 FAB/circle 을 24px 로 되돌려도 여기서 복원.
+    print("\n[최종 강제] FAB 56×56 / 원형 정원 고정 사이즈 invariant 적용 중...")
+    try:
+        n_inv = _enforce_fixed_size_invariants_final(root_node_id)
+        print(f"  [size-invariant] ✓ 고정 사이즈 {n_inv}건 최종 강제" if n_inv
+              else "  [size-invariant] OK — 찌그러진 고정 사이즈 노드 없음")
+    except Exception as e:
+        print(f"  [size-invariant] 실패 (무시): {e}")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
