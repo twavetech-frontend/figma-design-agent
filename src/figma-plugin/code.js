@@ -122,10 +122,64 @@ function updateSettings(settings) {
 }
 
 // Handle commands from UI
+// Force Figma to reflow stale auto-layout positions by selecting every
+// FRAME / INSTANCE / GROUP / COMPONENT under a root, then clearing the
+// selection. Without this, freshly built nodes can render at outdated
+// positions until a user clicks one (the act of selecting triggers
+// Figma's internal layout recalculation). 2026-05-08 fix per user
+// observation: "5월" text drifted right in Schedule Title row until
+// the row was double-clicked, after which it snapped back.
+async function triggerLayoutReflow(params) {
+  const rootId = params && params.nodeId;
+  if (!rootId) {
+    throw new Error("trigger_reflow: missing nodeId");
+  }
+  const root = await figma.getNodeByIdAsync(rootId);
+  if (!root) {
+    throw new Error("trigger_reflow: node not found: " + rootId);
+  }
+  // Walk parents until we find the node's PAGE so we can switch to it
+  // before mutating selection (selection must be on currentPage).
+  let pageNode = root;
+  while (pageNode && pageNode.type !== "PAGE") {
+    pageNode = pageNode.parent;
+  }
+  if (pageNode && figma.currentPage !== pageNode) {
+    await figma.setCurrentPageAsync(pageNode);
+  }
+  const all = [];
+  function walk(n) {
+    if (!n) return;
+    const t = n.type;
+    if (t === "FRAME" || t === "INSTANCE" || t === "GROUP" || t === "COMPONENT" || t === "COMPONENT_SET") {
+      all.push(n);
+    }
+    if ("children" in n) {
+      for (var i = 0; i < n.children.length; i++) {
+        walk(n.children[i]);
+      }
+    }
+  }
+  walk(root);
+  // Bulk-select to flush layout cache, then restore previous selection.
+  const prev = figma.currentPage.selection || [];
+  try {
+    figma.currentPage.selection = all;
+    // Brief tick so Figma processes the selection change
+    await new Promise(function (r) { setTimeout(r, 30); });
+  } finally {
+    figma.currentPage.selection = prev;
+  }
+  return { reflowedFrames: all.length };
+}
+
+
 async function handleCommand(command, params) {
   switch (command) {
     case "ping_check":
       return { ok: true, timestamp: Date.now() };
+    case "trigger_reflow":
+      return await triggerLayoutReflow(params);
     case "get_document_info":
       return await getDocumentInfo();
     case "get_selection":
@@ -447,6 +501,10 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
       if (node.lineHeight !== figma.mixed) info.lineHeight = node.lineHeight;
       if (node.letterSpacing !== figma.mixed) info.letterSpacing = node.letterSpacing;
       if (node.textAutoResize) info.textAutoResize = node.textAutoResize;
+      // 2026-05-24 — textStyleId 응답에 포함 (post-fix 검증용)
+      if (node.textStyleId !== undefined && node.textStyleId !== figma.mixed) {
+        info.textStyleId = node.textStyleId || "";
+      }
     } catch (e) { /* mixed text props */ }
   }
 
@@ -888,8 +946,14 @@ async function setStrokeColor(params) {
     throw new Error("Invalid stroke weight - must be a valid number");
   }
 
-  // strokeWeight=0 이면 stroke 완전 제거
-  if (strokeWeightParsed === 0) {
+  // strokeWeight=0 이면 stroke 완전 제거 — 단, individual side weight가
+  // 명시된 경우는 예외 (bottom-only underline 등)
+  var hasIndividualNonZero =
+    (params.strokeTopWeight !== undefined && parseFloat(params.strokeTopWeight) > 0) ||
+    (params.strokeBottomWeight !== undefined && parseFloat(params.strokeBottomWeight) > 0) ||
+    (params.strokeLeftWeight !== undefined && parseFloat(params.strokeLeftWeight) > 0) ||
+    (params.strokeRightWeight !== undefined && parseFloat(params.strokeRightWeight) > 0);
+  if (strokeWeightParsed === 0 && !hasIndividualNonZero) {
     node.strokes = [];
     if ("strokeWeight" in node) node.strokeWeight = 0;
     return { id: node.id, name: node.name, strokes: [], strokeWeight: 0 };
@@ -2877,6 +2941,11 @@ async function setAutoLayout(params) {
   // Configure layout mode
   if (layoutMode === "NONE") {
     node.layoutMode = "NONE";
+    // clipsContent도 NONE 케이스에서 처리해야 함 (R45 — 2026-05-24)
+    // 단순 wrapper frame(아이콘/divider)도 clipsContent 강제 변경 가능
+    if (clipsContent !== undefined) {
+      node.clipsContent = clipsContent;
+    }
   } else {
     // Set auto layout properties
     node.layoutMode = layoutMode;
@@ -3806,24 +3875,53 @@ async function setEffectStyleId(params) {
         throw new Error(`Node with ID ${nodeId} does not support effect styles`);
       }
 
-      // Try to validate the effect style exists before applying
-      console.log(`Fetching effect styles to validate style ID: ${effectStyleId}`);
+      // Remote/library style format: S:key,nodeId — mirror setTextStyleId pattern
+      var remoteMatch = effectStyleId.match(/^S:([^,]+),(.+)$/);
+      if (remoteMatch) {
+        var styleKey = remoteMatch[1];
+        console.log("Importing remote effect style with key: " + styleKey);
+        var importedStyle = await figma.importStyleByKeyAsync(styleKey);
+        if (!importedStyle) {
+          throw new Error("Failed to import remote effect style with key: " + styleKey);
+        }
+        console.log("Imported effect style: " + importedStyle.name + " (id: " + importedStyle.id + ")");
+        if (typeof node.setEffectStyleIdAsync === "function") {
+          await node.setEffectStyleIdAsync(importedStyle.id);
+        } else {
+          node.effectStyleId = importedStyle.id;
+        }
+        return {
+          id: node.id,
+          name: node.name,
+          effectStyleId: node.effectStyleId,
+          styleName: importedStyle.name,
+          appliedEffects: node.effects
+        };
+      }
+
+      // Local style fallback — accept either style.id or style.key
+      console.log(`Fetching local effect styles to validate style ID: ${effectStyleId}`);
       const effectStyles = await figma.getLocalEffectStylesAsync();
-      const foundStyle = effectStyles.find(style => style.id === effectStyleId);
+      const foundStyle = effectStyles.find(function(style) { return style.id === effectStyleId || style.key === effectStyleId; });
 
       if (!foundStyle) {
         throw new Error(`Effect style not found with ID: ${effectStyleId}. Available styles: ${effectStyles.length}`);
       }
 
-      console.log(`Effect style found, applying to node...`);
+      console.log(`Effect style "${foundStyle.name}" found, applying to node...`);
 
       // Apply the effect style to the node
-      node.effectStyleId = effectStyleId;
+      if (typeof node.setEffectStyleIdAsync === "function") {
+        await node.setEffectStyleIdAsync(foundStyle.id);
+      } else {
+        node.effectStyleId = foundStyle.id;
+      }
 
       return {
         id: node.id,
         name: node.name,
         effectStyleId: node.effectStyleId,
+        styleName: foundStyle.name,
         appliedEffects: node.effects
       };
     })();

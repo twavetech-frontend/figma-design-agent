@@ -1,0 +1,272 @@
+{
+  "name": "condition_modal_2026_0527",
+  "rootName": "Stage 조건 설정 Modal (2026-0527)",
+  "_screenType": "bottom-sheet",
+  "type": "frame",
+  "width": 393,
+  "height": 852,
+  "fill": "$token(bg-primary)",
+  "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 0},
+  "discoverySource": "조건 설정 bottom sheet modal — 월 납입/기간 slider + 추천 받기 CTA",
+  "references": [
+    {
+      "section": "Slider modal — value hero + brand pill CTA",
+      "ref": "uibowl/toss/c56xt4owg68invou9vqtmla3.png",
+      "extract": "큰 hero value + 작은 label + 풀폭 brand pill CTA / heydealer 흰 카드 입력 / payhere splash hero",
+      "_searchLog": {
+        "queries": ["조건 설정 슬라이더", "필터 설정", "bottom sheet"],
+        "candidates": [
+          "uibowl/toss/c56xt4owg68invou9vqtmla3.png (toss 증권 — 큰 hero 값 + segment tab + 풀폭 CTA)",
+          "uibowl/heydealer/cmlippm400003l4048ymxvwtj.png (heydealer 검색 — 깔끔한 list 패턴)",
+          "uibowl/payhere/cmnfmw4vv0011le04a6nppl3v.png (splash hero + 풀폭 brand pill CTA)",
+          "uibowl/kakaopay/cmgnnd2j50005gy04dpx0012m.png (커뮤니티 동의 bottom sheet — drag handle + CTA)"
+        ],
+        "chosen": "toss 증권 hero value + kakaopay bottom sheet drag handle + payhere CTA 합성",
+        "copyNotes": "와이어 1:1 복제 금지(절대 규칙 0-C) 적용: (1) 라벨 + 값을 한 줄에서 분리 — caption 12px '월 납입금' + hero 30px Bold '약 100만원' (값 강조). (2) 와이어에 없는 drag handle (회색 mini bar 중앙) 추가 — bottom sheet 의미 명시. (3) Slider track 위 active filled section (brand-section 진한) + handle dot (brand fill). (4) 범위 caption(10만원/160만원) 은 작게 text-tertiary."
+      }
+    }
+  ],
+  "children": [
+    {
+      "name": "Drag Handle Wrap",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "paddingTop": 8, "paddingBottom": 4},
+      "children": [
+        {"name": "Drag Handle", "type": "frame", "width": 40, "height": 4, "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED", "cornerRadius": 999, "fill": "$token(bg-tertiary)"}
+      ]
+    },
+
+    {
+      "name": "Modal Header",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 24, "paddingRight": 16, "paddingTop": 12, "paddingBottom": 4, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER"},
+      "children": [
+        {"name": "header-title", "type": "text", "characters": "조건 설정", "fontSize": 20, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+        {
+          "name": "close-btn",
+          "type": "frame",
+          "width": 36, "height": 36,
+          "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+          "cornerRadius": 999,
+          "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+          "children": [{"name": "close-ic", "type": "icon", "iconName": "x-close", "size": 24, "iconColor": "$token(fg-primary)"}]
+        }
+      ]
+    },
+
+    {
+      "name": "Sub Copy",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {"layoutMode": "VERTICAL", "paddingLeft": 24, "paddingRight": 24, "paddingTop": 0, "paddingBottom": 20, "itemSpacing": 0},
+      "children": [
+        {"name": "sub-copy", "type": "text", "characters": "원하는 조건에 맞춰 5가지 조합을 추천해드려요.", "fontSize": 13, "fontWeight": 500, "fontColor": "$token(text-tertiary)", "lineHeight": 20, "layoutSizingHorizontal": "FILL"}
+      ]
+    },
+
+    {
+      "name": "Slider Section 1",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {"layoutMode": "VERTICAL", "paddingLeft": 24, "paddingRight": 24, "paddingTop": 8, "paddingBottom": 28, "itemSpacing": 16},
+      "children": [
+        {
+          "name": "s1-headblock",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 4},
+          "children": [
+            {"name": "s1-label", "type": "text", "characters": "월 납입금", "fontSize": 12, "fontWeight": 700, "fontColor": "$token(text-brand-primary)", "letterSpacing": 0.5, "layoutSizingHorizontal": "FILL"},
+            {
+              "name": "s1-value-row",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 6, "counterAxisAlignItems": "BASELINE"},
+              "children": [
+                {"name": "s1-approx", "type": "text", "characters": "약", "fontSize": 18, "fontWeight": 500, "fontColor": "$token(text-secondary)"},
+                {"name": "s1-value", "type": "text", "characters": "100만원", "fontSize": 30, "fontWeight": 700, "fontColor": "$token(text-primary)", "letterSpacing": -1}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "s1-slider",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 12, "paddingTop": 8, "paddingBottom": 4},
+          "children": [
+            {
+              "name": "s1-track",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "FIXED",
+              "height": 8,
+              "cornerRadius": 999,
+              "fill": "$token(bg-tertiary)",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 0, "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {
+                  "name": "s1-filled",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FIXED",
+                  "layoutSizingVertical": "FIXED",
+                  "width": 173,
+                  "height": 8,
+                  "cornerRadius": 999,
+                  "fill": "$token(bg-brand-section)",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "MAX", "counterAxisAlignItems": "CENTER"},
+                  "children": [
+                    {
+                      "name": "s1-handle",
+                      "type": "frame",
+                      "width": 28, "height": 28,
+                      "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 999,
+                      "fill": "$token(bg-brand-section)",
+                      "stroke": "$token(bg-primary)",
+                      "strokeWeight": 4,
+                      "strokeAlign": "INSIDE",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+                      "_shadow": true,
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "s1-range",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN"},
+              "children": [
+                {"name": "s1-min", "type": "text", "characters": "10만원", "fontSize": 12, "fontWeight": 500, "fontColor": "$token(text-tertiary)"},
+                {"name": "s1-max", "type": "text", "characters": "160만원", "fontSize": 12, "fontWeight": 500, "fontColor": "$token(text-tertiary)"}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Divider Wrap",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {"layoutMode": "VERTICAL", "paddingLeft": 24, "paddingRight": 24, "paddingTop": 0, "paddingBottom": 0},
+      "children": [
+        {"name": "divider-line", "type": "frame", "layoutSizingHorizontal": "FILL", "height": 1, "fill": "$token(border-secondary)"}
+      ]
+    },
+
+    {
+      "name": "Slider Section 2",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {"layoutMode": "VERTICAL", "paddingLeft": 24, "paddingRight": 24, "paddingTop": 28, "paddingBottom": 28, "itemSpacing": 16},
+      "children": [
+        {
+          "name": "s2-headblock",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 4},
+          "children": [
+            {"name": "s2-label", "type": "text", "characters": "납입 기간", "fontSize": 12, "fontWeight": 700, "fontColor": "$token(text-brand-primary)", "letterSpacing": 0.5, "layoutSizingHorizontal": "FILL"},
+            {
+              "name": "s2-value-row",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 6, "counterAxisAlignItems": "BASELINE"},
+              "children": [
+                {"name": "s2-value", "type": "text", "characters": "13개월", "fontSize": 30, "fontWeight": 700, "fontColor": "$token(text-primary)", "letterSpacing": -1},
+                {"name": "s2-suffix", "type": "text", "characters": "동안 모아요", "fontSize": 14, "fontWeight": 500, "fontColor": "$token(text-secondary)"}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "s2-slider",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 12, "paddingTop": 8, "paddingBottom": 4},
+          "children": [
+            {
+              "name": "s2-track",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "layoutSizingVertical": "FIXED",
+              "height": 8,
+              "cornerRadius": 999,
+              "fill": "$token(bg-tertiary)",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 0, "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {
+                  "name": "s2-filled",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FIXED",
+                  "layoutSizingVertical": "FIXED",
+                  "width": 345,
+                  "height": 8,
+                  "cornerRadius": 999,
+                  "fill": "$token(bg-brand-section)",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "MAX", "counterAxisAlignItems": "CENTER"},
+                  "children": [
+                    {
+                      "name": "s2-handle",
+                      "type": "frame",
+                      "width": 28, "height": 28,
+                      "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED",
+                      "cornerRadius": 999,
+                      "fill": "$token(bg-brand-section)",
+                      "stroke": "$token(bg-primary)",
+                      "strokeWeight": 4,
+                      "strokeAlign": "INSIDE",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"},
+                      "_shadow": true,
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "s2-range",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "SPACE_BETWEEN"},
+              "children": [
+                {"name": "s2-min", "type": "text", "characters": "5개월", "fontSize": 12, "fontWeight": 500, "fontColor": "$token(text-tertiary)"},
+                {"name": "s2-max", "type": "text", "characters": "13개월", "fontSize": 12, "fontWeight": 500, "fontColor": "$token(text-tertiary)"}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Bottom Action Bar",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {"layoutMode": "VERTICAL", "paddingLeft": 20, "paddingRight": 20, "paddingTop": 12, "paddingBottom": 28, "counterAxisAlignItems": "CENTER"},
+      "children": [
+        {
+          "name": "Primary CTA",
+          "type": "instance",
+          "componentKey": "ed0032bcf28f03da97e4b3006f54d30a0fbe5914",
+          "properties": {"Size": "lg", "label": "스테이지 추천 받기"},
+          "layoutSizingHorizontal": "FILL"
+        }
+      ]
+    }
+  ]
+}

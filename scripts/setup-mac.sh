@@ -8,7 +8,7 @@
 # 처리 항목:
 #   1. Homebrew                       — Mac 패키지 매니저 (없으면 비대화식 설치)
 #   2. Python 3                       — figma_mcp_client.py 실행용 (시스템/Homebrew 자동 선택)
-#   3. Python 패키지: requests, Pillow (--install-rembg 시 rembg 추가)
+#   3. Python 패키지: requests, Pillow
 #   4. Node.js 18+ (Homebrew)         — Vite 6는 Node 18+ 필수
 #   5. npm 의존성 (--legacy-peer-deps, .npmrc에 설정됨)
 #   6. sharp 네이티브 모듈 (darwin-arm64 / darwin-x64 플랫폼 패키지)
@@ -16,17 +16,9 @@
 #
 # 사용법:
 #   bash scripts/setup-mac.sh              # 기본 설치
-#   bash scripts/setup-mac.sh --install-rembg  # rembg(배경 제거) 포함
 #   npm run setup:mac                      # npm이 이미 있으면 이걸로도 가능
 
 set -euo pipefail
-
-INSTALL_REMBG=0
-for arg in "$@"; do
-  case "$arg" in
-    --install-rembg|-r) INSTALL_REMBG=1 ;;
-  esac
-done
 
 # ── 색상 ──────────────────────────────────────────────────
 if [[ -t 1 ]]; then
@@ -116,17 +108,6 @@ pip_install() {
 pip_install pip
 pip_install requests Pillow
 ok 'requests, Pillow 설치/갱신 완료'
-
-if [[ "$INSTALL_REMBG" == "1" ]]; then
-  info 'rembg 설치 중 (수 분 소요, 용량 큼)...'
-  if pip_install rembg onnxruntime; then
-    ok 'rembg 설치 완료'
-  else
-    warn 'rembg 설치 실패 — 로컬 아이콘 배경제거만 영향 (디자인 빌드는 정상)'
-  fi
-else
-  info 'rembg 생략 (필요 시 --install-rembg 옵션으로 재실행)'
-fi
 
 # ── 4. Node.js ────────────────────────────────────────────
 step '4/7 Node.js 18+ 확인/설치'

@@ -1,0 +1,570 @@
+{
+  "name": "stage_list_2026_0527",
+  "rootName": "Stage 추천 리스트 · 100만원 13개월 (2026-0527)",
+  "type": "frame",
+  "width": 393,
+  "height": 852,
+  "fill": "$token(bg-primary)",
+  "autoLayout": {
+    "layoutMode": "VERTICAL",
+    "paddingTop": 0,
+    "paddingBottom": 0,
+    "paddingLeft": 0,
+    "paddingRight": 0,
+    "itemSpacing": 0
+  },
+  "discoverySource": "와이어프레임 — 한 달에 약 100만원 13개월 모으기 추천 stage 리스트",
+  "references": [
+    {
+      "section": "추천 카드 리스트 + 회차 selector",
+      "ref": "uibowl/kakaopay/cm8zjuej30001kz0d9fq3tl76.png",
+      "extract": "numbered card list + brand pill 우측 강조 / 회차 pill row + tooltip / 카드 내부 footer 패턴",
+      "_searchLog": {
+        "queries": ["추천 카드 리스트", "납입 정보", "상품 비교", "회차 선택"],
+        "candidates": [
+          "uibowl/kakaopay/cm8zjuej30001kz0d9fq3tl76.png (카드 추천 — numbered list + brand yellow pill 강조)",
+          "uibowl/kakaopay/cm8zjuek50003kz0dc5qhhxxl.png (카드 추천 modal)",
+          "uibowl/heydealer/cmliq5p3l0005l40495mmywna.png (구매 과정 — numbered step 카드 + chevron expand)",
+          "uibowl/payhere/cmnfmzav10019l804pd2e3enj.png (PDP — 상세 정보)",
+          "uibowl/heydealer/cmliq1flb00f6jf04lmjboxyt.png (구매 후기 — brand-color key number 패턴)"
+        ],
+        "chosen": "kakaopay 카드 추천 + heydealer 구매 과정 + 자체 stage_detail 패턴 합성",
+        "copyNotes": "도입 패턴: (1) kakaopay numbered 카드 list (추천 #N tag brand color). (2) brand pill 우측 강조 (받을 금액). (3) heydealer 단계 카드 분리 + 라운드 + chevron. (4) 자체 stage_detail 의 회차 slot selector + tooltip badge 패턴 재사용. (5) 빨강 피드백 컬러(이자 수익/비용) 는 메모리 룰에 따라 brand purple 로 대체."
+      }
+    }
+  ],
+  "children": [
+    {
+      "name": "NavBar",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingLeft": 20,
+        "paddingRight": 20,
+        "paddingTop": 12,
+        "paddingBottom": 12,
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "CENTER",
+        "itemSpacing": 12
+      },
+      "children": [
+        {
+          "name": "Nav Title Wrap",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "autoLayout": {
+            "layoutMode": "HORIZONTAL",
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "itemSpacing": 6
+          },
+          "children": [
+            {
+              "name": "nav-title",
+              "type": "text",
+              "characters": "한 달에 약 100만원 13개월 모으기",
+              "fontSize": 17,
+              "fontWeight": 700,
+              "fontColor": "$token(text-primary)",
+              "layoutSizingHorizontal": "HUG"
+            },
+            {"name": "nav-chevron", "type": "icon", "iconName": "chevron-down", "size": 18, "iconColor": "$token(fg-primary)"}
+          ]
+        },
+        {"name": "nav-search", "type": "icon", "iconName": "search-md", "size": 22, "iconColor": "$token(fg-primary)"}
+      ]
+    },
+
+    {
+      "name": "Recommend List",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "autoLayout": {
+        "layoutMode": "VERTICAL",
+        "paddingLeft": 16,
+        "paddingRight": 16,
+        "paddingTop": 12,
+        "paddingBottom": 24,
+        "itemSpacing": 14
+      },
+      "children": [
+        {
+          "name": "Rec Card 2",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "fill": "$token(bg-primary)",
+          "stroke": "$token(border-secondary)",
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "cornerRadius": 16,
+          "autoLayout": {
+            "layoutMode": "VERTICAL",
+            "paddingTop": 0, "paddingBottom": 0, "paddingLeft": 0, "paddingRight": 0,
+            "itemSpacing": 0
+          },
+          "children": [
+            {
+              "name": "Rec Card 2 Body",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {"layoutMode": "VERTICAL", "paddingLeft": 18, "paddingRight": 18, "paddingTop": 18, "paddingBottom": 16, "itemSpacing": 12},
+              "children": [
+                {"name": "r2-tag", "type": "text", "characters": "추천 #2", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-brand-primary)", "layoutSizingHorizontal": "FILL"},
+                {
+                  "name": "r2-headline",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 8, "counterAxisAlignItems": "CENTER", "primaryAxisAlignItems": "MIN"},
+                  "children": [
+                    {"name": "r2-date", "type": "text", "characters": "27년 12월 25일에", "fontSize": 17, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                    {
+                      "name": "r2-amount-pill",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "layoutSizingVertical": "HUG",
+                      "cornerRadius": 8,
+                      "fill": "$token(bg-brand-primary)",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 8, "paddingRight": 8, "paddingTop": 4, "paddingBottom": 4, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r2-amt", "type": "text", "characters": "20,800,000원", "fontSize": 17, "fontWeight": 700, "fontColor": "$token(text-brand-primary)"}
+                      ]
+                    },
+                    {"name": "r2-suffix", "type": "text", "characters": "받아요.", "fontSize": 17, "fontWeight": 700, "fontColor": "$token(text-primary)"}
+                  ]
+                },
+                {
+                  "name": "r2-slot-wrap",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 6, "paddingTop": 8},
+                  "children": [
+                    {
+                      "name": "r2-tooltip-row",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "MAX", "counterAxisAlignItems": "MIN"},
+                      "children": [
+                        {
+                          "name": "r2-tooltip",
+                          "type": "frame",
+                          "layoutSizingHorizontal": "HUG",
+                          "layoutSizingVertical": "HUG",
+                          "cornerRadius": 999,
+                          "fill": "$token(fg-primary)",
+                          "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 10, "paddingRight": 10, "paddingTop": 4, "paddingBottom": 4},
+                          "children": [
+                            {"name": "r2-tt-text", "type": "text", "characters": "13회차 수령", "fontSize": 11, "fontWeight": 700, "fontColor": "$token(text-primary_on-brand)"}
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "r2-slots",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 2, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r2-s1", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "1", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s2", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "2", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s3", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "3", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s4", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "4", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s5", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "5", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s6", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "6", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s7", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "7", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s8", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "8", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s9", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "9", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s10", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "10", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s11", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "11", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s12", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "12", "fontSize": 10, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r2-s13 active", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 4, "fill": "$token(fg-primary)", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 6, "paddingBottom": 6, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "13", "fontSize": 10, "fontWeight": 700, "fontColor": "$token(text-primary_on-brand)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]}
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "r2-info",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 8, "paddingTop": 4, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "MIN"},
+                  "children": [
+                    {
+                      "name": "r2-pay-wrap",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 8, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r2-bar", "type": "frame", "width": 2, "height": 16, "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED", "fill": "$token(text-brand-primary)", "cornerRadius": 2},
+                        {"name": "r2-pay", "type": "text", "characters": "매월 1,600,000원 납입", "fontSize": 13, "fontWeight": 600, "fontColor": "$token(text-primary)"}
+                      ]
+                    },
+                    {"name": "r2-yield", "type": "text", "characters": "총 이자 비용 0원", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-brand-primary)"}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Rec Card 2 Footer",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "fill": "$token(bg-secondary)",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 18, "paddingRight": 18, "paddingTop": 12, "paddingBottom": 12, "itemSpacing": 12, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {"name": "r2-foot-label", "type": "text", "characters": "추가 혜택", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)"},
+                {
+                  "name": "r2-foot-vals",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 12, "counterAxisAlignItems": "CENTER"},
+                  "children": [
+                    {
+                      "name": "r2-point",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 4, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r2-p-ic", "type": "icon", "iconName": "coins-01", "size": 14, "iconColor": "$token(fg-brand-primary)"},
+                        {"name": "r2-p-txt", "type": "text", "characters": "50,000P", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-primary)"}
+                      ]
+                    },
+                    {
+                      "name": "r2-gift",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 4, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r2-g-ic", "type": "icon", "iconName": "gift-01", "size": 14, "iconColor": "$token(fg-brand-primary)"},
+                        {"name": "r2-g-txt", "type": "text", "characters": "10만원", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-primary)"}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        {
+          "name": "Rec Card 3",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "fill": "$token(bg-primary)",
+          "stroke": "$token(border-secondary)",
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "cornerRadius": 16,
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 0},
+          "children": [
+            {
+              "name": "Rec Card 3 Body",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {"layoutMode": "VERTICAL", "paddingLeft": 18, "paddingRight": 18, "paddingTop": 18, "paddingBottom": 16, "itemSpacing": 12},
+              "children": [
+                {"name": "r3-tag", "type": "text", "characters": "추천 #3", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-brand-primary)", "layoutSizingHorizontal": "FILL"},
+                {
+                  "name": "r3-headline",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 8, "counterAxisAlignItems": "CENTER", "primaryAxisAlignItems": "MIN"},
+                  "children": [
+                    {"name": "r3-date", "type": "text", "characters": "12월 25일에", "fontSize": 17, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                    {
+                      "name": "r3-amount-pill",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "layoutSizingVertical": "HUG",
+                      "cornerRadius": 8,
+                      "fill": "$token(bg-brand-primary)",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 8, "paddingRight": 8, "paddingTop": 4, "paddingBottom": 4, "counterAxisAlignItems": "CENTER"},
+                      "children": [{"name": "r3-amt", "type": "text", "characters": "493,500원", "fontSize": 17, "fontWeight": 700, "fontColor": "$token(text-brand-primary)"}]
+                    },
+                    {"name": "r3-suffix", "type": "text", "characters": "받아요.", "fontSize": 17, "fontWeight": 700, "fontColor": "$token(text-primary)"}
+                  ]
+                },
+                {
+                  "name": "r3-slot-wrap",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 6, "paddingTop": 8},
+                  "children": [
+                    {
+                      "name": "r3-tooltip-row",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "MIN", "counterAxisAlignItems": "MIN"},
+                      "children": [
+                        {
+                          "name": "r3-tooltip",
+                          "type": "frame",
+                          "layoutSizingHorizontal": "HUG",
+                          "layoutSizingVertical": "HUG",
+                          "cornerRadius": 999,
+                          "fill": "$token(fg-primary)",
+                          "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 10, "paddingRight": 10, "paddingTop": 4, "paddingBottom": 4},
+                          "children": [{"name": "r3-tt-text", "type": "text", "characters": "1회차 수령", "fontSize": 11, "fontWeight": 700, "fontColor": "$token(text-primary_on-brand)"}]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "r3-slots",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 4},
+                      "children": [
+                        {"name": "r3-s1 active", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 6, "fill": "$token(fg-primary)", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 8, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "1", "fontSize": 12, "fontWeight": 700, "fontColor": "$token(text-primary_on-brand)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r3-s2", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 6, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 8, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "2", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r3-s3", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 6, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 8, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "3", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r3-s4", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 6, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 8, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "4", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r3-s5", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 6, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 8, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "5", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]}
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "r3-info",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 8, "paddingTop": 4, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "MIN"},
+                  "children": [
+                    {
+                      "name": "r3-pay-wrap",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 8, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r3-bar", "type": "frame", "width": 2, "height": 16, "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED", "fill": "$token(text-brand-primary)", "cornerRadius": 2},
+                        {"name": "r3-pay", "type": "text", "characters": "매월 103,226원 납입", "fontSize": 13, "fontWeight": 600, "fontColor": "$token(text-primary)"}
+                      ]
+                    },
+                    {"name": "r3-yield", "type": "text", "characters": "총 이자 비용 22,630원", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-brand-primary)"}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Rec Card 3 Footer",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "fill": "$token(bg-secondary)",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 18, "paddingRight": 18, "paddingTop": 12, "paddingBottom": 12, "itemSpacing": 12, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {"name": "r3-foot-label", "type": "text", "characters": "추가 혜택", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)"},
+                {
+                  "name": "r3-foot-vals",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 12, "counterAxisAlignItems": "CENTER"},
+                  "children": [
+                    {
+                      "name": "r3-point",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 4, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r3-p-ic", "type": "icon", "iconName": "coins-01", "size": 14, "iconColor": "$token(fg-brand-primary)"},
+                        {"name": "r3-p-txt", "type": "text", "characters": "50,000P", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-primary)"}
+                      ]
+                    },
+                    {
+                      "name": "r3-gift",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 4, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r3-g-ic", "type": "icon", "iconName": "gift-01", "size": 14, "iconColor": "$token(fg-brand-primary)"},
+                        {"name": "r3-g-txt", "type": "text", "characters": "10만원", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-primary)"}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        {
+          "name": "Rec Card 4",
+          "type": "frame",
+          "layoutSizingHorizontal": "FILL",
+          "fill": "$token(bg-primary)",
+          "stroke": "$token(border-secondary)",
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "cornerRadius": 16,
+          "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 0},
+          "children": [
+            {
+              "name": "Rec Card 4 Body",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "autoLayout": {"layoutMode": "VERTICAL", "paddingLeft": 18, "paddingRight": 18, "paddingTop": 18, "paddingBottom": 16, "itemSpacing": 12},
+              "children": [
+                {"name": "r4-tag", "type": "text", "characters": "추천 #4", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-brand-primary)", "layoutSizingHorizontal": "FILL"},
+                {
+                  "name": "r4-headline",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 8, "counterAxisAlignItems": "CENTER", "primaryAxisAlignItems": "MIN"},
+                  "children": [
+                    {"name": "r4-date", "type": "text", "characters": "27년 2월 25일에", "fontSize": 17, "fontWeight": 700, "fontColor": "$token(text-primary)"},
+                    {
+                      "name": "r4-amount-pill",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "layoutSizingVertical": "HUG",
+                      "cornerRadius": 8,
+                      "fill": "$token(bg-brand-primary)",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 8, "paddingRight": 8, "paddingTop": 4, "paddingBottom": 4, "counterAxisAlignItems": "CENTER"},
+                      "children": [{"name": "r4-amt", "type": "text", "characters": "1,500,000원", "fontSize": 17, "fontWeight": 700, "fontColor": "$token(text-brand-primary)"}]
+                    },
+                    {"name": "r4-suffix", "type": "text", "characters": "받아요.", "fontSize": 17, "fontWeight": 700, "fontColor": "$token(text-primary)"}
+                  ]
+                },
+                {
+                  "name": "r4-slot-wrap",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 6, "paddingTop": 8},
+                  "children": [
+                    {
+                      "name": "r4-tooltip-row",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "primaryAxisAlignItems": "MIN", "counterAxisAlignItems": "MIN", "paddingLeft": 105},
+                      "children": [
+                        {
+                          "name": "r4-tooltip",
+                          "type": "frame",
+                          "layoutSizingHorizontal": "HUG",
+                          "layoutSizingVertical": "HUG",
+                          "cornerRadius": 999,
+                          "fill": "$token(fg-primary)",
+                          "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 10, "paddingRight": 10, "paddingTop": 4, "paddingBottom": 4},
+                          "children": [{"name": "r4-tt-text", "type": "text", "characters": "3회차 수령", "fontSize": 11, "fontWeight": 700, "fontColor": "$token(text-primary_on-brand)"}]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "r4-slots",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "FILL",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 4},
+                      "children": [
+                        {"name": "r4-s1", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 6, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 8, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "1", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r4-s2", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 6, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 8, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "2", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r4-s3 active", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 6, "fill": "$token(fg-primary)", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 8, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "3", "fontSize": 12, "fontWeight": 700, "fontColor": "$token(text-primary_on-brand)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r4-s4", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 6, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 8, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "4", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]},
+                        {"name": "r4-s5", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "cornerRadius": 6, "stroke": "$token(border-secondary)", "strokeWeight": 1, "strokeAlign": "INSIDE", "autoLayout": {"layoutMode": "HORIZONTAL", "paddingTop": 8, "paddingBottom": 8, "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER"}, "children": [{"name": "t", "type": "text", "characters": "5", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}]}
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "r4-info",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "FILL",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 8, "paddingTop": 4, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "MIN"},
+                  "children": [
+                    {
+                      "name": "r4-pay-wrap",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 8, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r4-bar", "type": "frame", "width": 2, "height": 16, "layoutSizingHorizontal": "FIXED", "layoutSizingVertical": "FIXED", "fill": "$token(text-brand-primary)", "cornerRadius": 2},
+                        {"name": "r4-pay", "type": "text", "characters": "매월 296,500원 납입", "fontSize": 13, "fontWeight": 600, "fontColor": "$token(text-primary)"}
+                      ]
+                    },
+                    {"name": "r4-yield", "type": "text", "characters": "총 이자 수익 17,500원", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-brand-primary)"}
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Rec Card 4 Footer",
+              "type": "frame",
+              "layoutSizingHorizontal": "FILL",
+              "fill": "$token(bg-secondary)",
+              "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 18, "paddingRight": 18, "paddingTop": 12, "paddingBottom": 12, "itemSpacing": 12, "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER"},
+              "children": [
+                {"name": "r4-foot-label", "type": "text", "characters": "추가 혜택", "fontSize": 12, "fontWeight": 600, "fontColor": "$token(text-tertiary)"},
+                {
+                  "name": "r4-foot-vals",
+                  "type": "frame",
+                  "layoutSizingHorizontal": "HUG",
+                  "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 12, "counterAxisAlignItems": "CENTER"},
+                  "children": [
+                    {
+                      "name": "r4-point",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 4, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r4-p-ic", "type": "icon", "iconName": "coins-01", "size": 14, "iconColor": "$token(fg-brand-primary)"},
+                        {"name": "r4-p-txt", "type": "text", "characters": "50,000P", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-primary)"}
+                      ]
+                    },
+                    {
+                      "name": "r4-gift",
+                      "type": "frame",
+                      "layoutSizingHorizontal": "HUG",
+                      "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 4, "counterAxisAlignItems": "CENTER"},
+                      "children": [
+                        {"name": "r4-g-ic", "type": "icon", "iconName": "gift-01", "size": 14, "iconColor": "$token(fg-brand-primary)"},
+                        {"name": "r4-g-txt", "type": "text", "characters": "10만원", "fontSize": 13, "fontWeight": 700, "fontColor": "$token(text-primary)"}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Tab Bar",
+      "type": "frame",
+      "layoutSizingHorizontal": "FILL",
+      "fill": "$token(bg-primary)",
+      "stroke": "$token(border-secondary)",
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "autoLayout": {
+        "layoutMode": "HORIZONTAL",
+        "paddingTop": 8,
+        "paddingBottom": 12,
+        "paddingLeft": 4,
+        "paddingRight": 4,
+        "itemSpacing": 0,
+        "counterAxisAlignItems": "CENTER"
+      },
+      "children": [
+        {"name": "tb-home", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "itemSpacing": 4, "paddingTop": 4, "paddingBottom": 4}, "children": [
+          {"name": "tb-home-ic", "type": "icon", "iconName": "home-line", "size": 22, "iconColor": "$token(fg-tertiary)"},
+          {"name": "tb-home-l", "type": "text", "characters": "홈", "fontSize": 11, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}
+        ]},
+        {"name": "tb-community", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "itemSpacing": 4, "paddingTop": 4, "paddingBottom": 4}, "children": [
+          {"name": "tb-comm-ic", "type": "icon", "iconName": "message-square-02", "size": 22, "iconColor": "$token(fg-tertiary)"},
+          {"name": "tb-comm-l", "type": "text", "characters": "커뮤니티", "fontSize": 11, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}
+        ]},
+        {"name": "tb-stage active", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "itemSpacing": 4, "paddingTop": 4, "paddingBottom": 4}, "children": [
+          {"name": "tb-stage-ic", "type": "icon", "iconName": "grid-01", "size": 22, "iconColor": "$token(fg-primary)"},
+          {"name": "tb-stage-l", "type": "text", "characters": "스테이지", "fontSize": 11, "fontWeight": 700, "fontColor": "$token(text-primary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}
+        ]},
+        {"name": "tb-lounge", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "itemSpacing": 4, "paddingTop": 4, "paddingBottom": 4}, "children": [
+          {"name": "tb-lng-ic", "type": "icon", "iconName": "tag-01", "size": 22, "iconColor": "$token(fg-tertiary)"},
+          {"name": "tb-lng-l", "type": "text", "characters": "라운지", "fontSize": 11, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}
+        ]},
+        {"name": "tb-me", "type": "frame", "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "HUG", "autoLayout": {"layoutMode": "VERTICAL", "primaryAxisAlignItems": "CENTER", "counterAxisAlignItems": "CENTER", "itemSpacing": 4, "paddingTop": 4, "paddingBottom": 4}, "children": [
+          {"name": "tb-me-ic", "type": "icon", "iconName": "user-01", "size": 22, "iconColor": "$token(fg-tertiary)"},
+          {"name": "tb-me-l", "type": "text", "characters": "나", "fontSize": 11, "fontWeight": 600, "fontColor": "$token(text-tertiary)", "textAlignHorizontal": "CENTER", "layoutSizingHorizontal": "FILL"}
+        ]}
+      ]
+    }
+  ]
+}

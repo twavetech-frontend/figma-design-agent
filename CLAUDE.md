@@ -51,29 +51,27 @@ AI 기반 Figma 디자인 생성 데스크톱 앱: Electron + React + Anthropic 
 
 ### setup-windows.ps1이 처리하는 항목 (멱등)
 1. **Python 3.12** (winget) — `figma_mcp_client.py` 실행용
-2. **Python 패키지** — `requests`, `Pillow` (`-InstallRembg` 옵션 시 `rembg` 추가)
+2. **Python 패키지** — `requests`, `Pillow`
 3. **`PYTHONUTF8=1`** 사용자 환경변수 — 없으면 한글 출력이 cp949 `UnicodeEncodeError`
 4. **Node.js LTS** (winget) — Vite 6는 Node 18+ 필수 (구버전이면 자동 업그레이드)
 5. **npm 의존성** — `.npmrc`의 `legacy-peer-deps=true` (zod peer 충돌 회피)
 6. **sharp 네이티브 모듈** — `@img/sharp-win32-x64` 플랫폼 패키지
 7. **빌드** — `npm run build` → `out/`
 
-> npm이 이미 있으면 `npm run setup:windows`로도 실행 가능. rembg 포함:
-> `powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1 -InstallRembg`
+> npm이 이미 있으면 `npm run setup:windows`로도 실행 가능.
 
 ### setup-mac.sh가 처리하는 항목 (멱등)
 1. **Homebrew** — 없으면 비대화식 설치 시도(`NONINTERACTIVE=1`). sudo 입력 필요할 수 있음
 2. **Python 3** — 시스템 `python3`(3.9+) 우선, 없으면 `brew install python@3.12`
 3. **Python 패키지** — `requests`, `Pillow`. PEP 668 환경(Homebrew Python)에서는
-   `--break-system-packages` → 실패 시 `--user` 폴백 (`--install-rembg`로 rembg 추가)
+   `--break-system-packages` → 실패 시 `--user` 폴백
 4. **Node.js LTS** (Homebrew) — Vite 6는 Node 18+ 필수
 5. **npm 의존성** — `.npmrc`의 `legacy-peer-deps=true`
 6. **sharp 네이티브 모듈** — Apple Silicon은 `@img/sharp-darwin-arm64`, Intel은 `darwin-x64`
    (`uname -m`으로 자동 판단)
 7. **빌드** — `npm run build` → `out/`
 
-> npm이 이미 있으면 `npm run setup:mac`으로도 실행 가능. rembg 포함:
-> `bash scripts/setup-mac.sh --install-rembg`
+> npm이 이미 있으면 `npm run setup:mac`으로도 실행 가능.
 
 ### Windows 함정 (스크립트가 처리하지만 참고)
 - PATH의 `python3`/`python`은 Microsoft Store 별칭 stub — **실제 Python은 `%LOCALAPPDATA%\Programs\Python\Python3xx\python.exe`**. `figma_mcp_client.py` 호출 시 이 전체 경로 + `PYTHONUTF8=1` 환경변수 사용
@@ -99,8 +97,8 @@ npm start       # electron . (이미 빌드된 상태에서)
 ```
 
 ## 아키텍처
-- **Main Process** (`src/main/`): Agent orchestrator (Claude Sonnet 4), FigmaWSServer (port 8767), 58+ 내장 MCP 도구, 4개 DS 조회 도구, Gemini 이미지 생성, 스트리밍 파서
-- **Renderer** (`src/renderer/`): React 19, ChatPanel, AgentStatus, FigmaConnection, SettingsPanel, useAgent hook
+- **Main Process** (`src/main/`): Agent orchestrator (Claude Sonnet 4), FigmaWSServer (port 8767), 58+ 내장 MCP 도구, 4개 DS 조회 도구, 스트리밍 파서
+- **Renderer** (`src/renderer/`): React 19, ChatPanel, AgentStatus, FigmaConnection, useAgent hook
 - **Preload** (`src/preload/`): Context bridge (IPC 보안 통신)
 - **Shared** (`src/shared/`): 타입 정의, IPC 채널 상수, DS 데이터 로더
 - **Build**: tsup (main+preload → CJS) + Vite (renderer), ws/sharp external
@@ -112,20 +110,12 @@ npm start       # electron . (이미 빌드된 상태에서)
 | `src/main/agent-orchestrator.ts` | Claude API 기반 에이전트 오케스트레이터 |
 | `src/main/figma-ws-server.ts` | Figma 플러그인 WebSocket 서버 (8767) |
 | `src/main/figma-mcp-embedded.ts` | 58+ Figma MCP 도구 레지스트리 |
-| `src/main/image-generator.ts` | Gemini API 이미지 생성 (동적 API 키) |
-| `src/main/settings-store.ts` | 설정 저장소 (userData/settings.json) |
 | `src/main/ds-lookup-tools.ts` | 디자인 시스템 조회 도구 4종 |
 | `src/shared/types.ts` | 공유 타입 및 IPC 채널 상수 |
 | `src/preload/index.ts` | Context bridge (electronAPI 노출) |
 | `src/renderer/App.tsx` | 루트 React 컴포넌트 |
 | `src/renderer/hooks/useAgent.ts` | 에이전트 상태 관리 훅 |
-| `src/renderer/components/SettingsPanel.tsx` | Gemini API 키 설정 UI |
 | `src/renderer/components/FigmaConnection.tsx` | Figma 연결 상태 UI |
-
-## 설정 저장 방식
-- `electron-store` v10은 ESM 전용이라 tsup CJS 번들링 불가
-- 대신 `app.getPath('userData')/settings.json` + fs 사용
-- `src/main/settings-store.ts`에서 `getGeminiApiKey()` / `setGeminiApiKey()` 제공
 
 ## Plugin & Build
 - Plugin code: `src/claude_mcp_plugin/code.js` (plain JS, Figma sandbox — no optional chaining `?.`)
@@ -156,7 +146,7 @@ npm start       # electron . (이미 빌드된 상태에서)
 # 2. Blueprint 조립
 python3 scripts/figma_mcp_client.py assemble scripts/my_config.json
 
-# 3. 빌드 (+ 자동 post-fix + 자동 이미지 생성)
+# 3. 빌드 (+ 자동 post-fix)
 python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 # 4. Status Bar·로고는 빌드가 자동 처리 (규칙 1) — blueprint에 넣지 않으면
@@ -172,6 +162,54 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 ## 디자인 생성 필수 규칙
 
+> 🔴 **절대 규칙 0-E — 와이어프레임 콘텐츠 1:1 추출 의무 / archetype config 재사용 금지 (2026-05-27 사용자 분노)**
+>
+> 새 세션에서 와이어프레임을 받아 디자인을 빌드할 때, **와이어의 실제 텍스트/숫자/카운트
+> 를 그대로 빌드에 박는다.** v12 같은 이전 archetype 빌드의 config(`config_*.json`)를
+> 복사해 새 v13으로 재사용하지 말 것 — **콘텐츠가 v12 더미 데이터 그대로 박혀서 와이어 의도
+> 무시 + 사용자 격분**.
+>
+> **사례 (이번 회귀)**:
+> - 와이어: "진행중인 **0건**의 스테이지 내역 / 모은 금액 **+0원** / 빌린 금액 **-0원**"
+> - 빌드(v13=v12 reuse): "3건 / +14,420,320원 / -5,240,020원" (v12 더미 그대로)
+> - 와이어: Day Strip "**14~19일 6 cell × +0원**" / 빌드: "미납 28일/오늘 4일/지급 12일/예정 18일" (다른 컨셉)
+> - 와이어 1.5: "**10만원 stepper + 13개월 stepper + 1~13 회차 round selector + 1회차 + 납입 후 목적 수령 + 총 1300만원 모으기 도전**"
+> - 빌드: "예상 수령 금액/총 1,300만원/회차 stepper 3개" (1~13 round selector 누락)
+>
+> **워크플로우 — 무조건 이 순서**:
+> 1. **와이어 export** (`mcp__figma-tools__export_node_as_image`) → 사람이 읽을 수 있는 이미지
+> 2. **콘텐츠 추출 dict 작성** — 섹션별로 모든 텍스트/숫자/카운트/아이콘 종류를 추출:
+>    ```json
+>    {
+>      "1.3 진행 현황 카드": {
+>        "header": "진행중인 0건의 스테이지 내역",
+>        "more": "자세히 >",
+>        "rows": [{"label": "모은 금액", "value": "+0원"}, {"label": "빌린 금액", "value": "-0원"}],
+>        "dayStrip": ["14일", "15일", "16일", "17일(today)", "18일", "19일"],
+>        "dayValues": ["0원", "0원", "0원", "0원", "0원", "0원"],
+>        "calcCTA": "얼마까지 모을 수 있는 지 확인해보세요"
+>      },
+>      ...
+>    }
+>    ```
+> 3. **blueprint root._wireframeContent 필드에 dict 박기** — `cmd_build` Step E.6.5 의
+>    `_qa_wireframe_content_match` 가 blueprint TEXT characters 와 dict 매치 검증. 미스매치 ≥30% 시 build 차단
+> 4. **config 는 처음부터 작성** — `cp config_*.json` 금지. 와이어 dict 기반으로 새 config 작성
+> 5. 그 다음 assemble → build → post-fix → token bind → QA 2 pass
+>
+> **자동 강제 (코드 박힘)**:
+> 1. `figma_mcp_client.py cmd_build` Step E.0 `_check_no_archetype_reuse` (S22) —
+>    config 의 textual 패턴이 이전 빌드 산출물과 70%+ 일치 시 build 차단(ERROR)
+> 2. `cmd_build` Step E.0 `_check_wireframe_content_required` (S23) —
+>    imin_* archetype 빌드인데 root._wireframeContent dict 도 _wireframeContentSkipped 도
+>    없으면 build 차단(ERROR). bypass: `"_wireframeContentSkipped": "<reason>"`
+> 3. `cmd_build` Step E.6.5 `_qa_wireframe_content_match` —
+>    blueprint TEXT characters 가 root._wireframeContent dict 와 매치 검증. 30%+ 미스매치 시 WARN, 50%+ 시 ERROR
+>
+> **Why**: 새 세션 컨텍스트 부족 → "imin_home은 v12 있으니 base 가져가자" 본능 → 더미 데이터 박힘 → 사용자가 "와이어 무시"라고 분노. 시스템이 와이어 콘텐츠 추출을 강제하지 않으면 매번 새 세션마다 회귀.
+>
+> **참고**: 메모리 [feedback_no_wireframe_clone] 은 **시각 위계** 만 재해석하라는 뜻 — 카드 그림자/타이포/그룹화 같은 디자인 판단. **콘텐츠(텍스트/숫자/카운트)는 와이어 1:1**.
+
 > 🔴 **절대 규칙 0 — 루트 프레임(화면 최상위 프레임) 배경색은 반드시 `bg-primary`**
 >
 > 루트 프레임의 `fill`은 **무조건 `$token(bg-primary)`**(`#fcfcfd`, 거의 흰색)여야 한다.
@@ -184,6 +222,52 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 >   2. `figma_mcp_client.py post-fix` → `_enforce_root_bg_primary_live()`: 빌드된 루트 노드 배경을 bg-primary로 런타임 강제(리터럴 + DS 변수 바인딩)
 >   3. `figma-mcp-embedded.ts enhanceBlueprint`: 모든 `batch_build_screen` 호출에서 root fill을 bg-primary로 교정
 > - **빌드 후 검증**: 스크린샷에서 콘텐츠 카드 바깥 배경이 회색이 아닌 흰색(`bg-primary`)인지 확인.
+
+> 🔴 **절대 규칙 0-D — Modal 기본형 = Bottom Sheet (2026-05-27)**
+>
+> Modal 의 **기본형은 bottom sheet** — 화면 세로의 절반 정도로 표시되고, 뒤에 원래
+> 화면 위 **dimmed overlay** 가 깔린 채 **bottom 에 붙어서** 슬라이드업.
+>
+> Blueprint 작성 시 `_screenType: "bottom-sheet"` 명시. 빌드 후 자동:
+> 1. Root 852 FIXED (디바이스 viewport)
+> 2. 1st 자식 = **Dim Overlay** (FILL, alpha-black 50%) — 위쪽 가용 공간 채움
+> 3. 2nd 자식 = **Modal Sheet** (FILL, HUG, bg-primary, top-rounded 24px) — 콘텐츠 wrap
+>
+> 강제 함수: `_enforce_bottom_sheet_pattern` (cmd_build pre-process)
+> 회귀 테스트: `scripts/tests/test_bottom_sheet_pattern.py` 14개 케이스
+>
+> **Modal 두 가지 구분:**
+> - `_screenType: "bottom-sheet"` (기본형) — 반 화면 + dim overlay + bottom anchor
+> - `_screenType: "modal"` (full modal) — 전체 화면 modal, X 닫기만 (Footer/Tab 제거)
+>
+> ⚠️ 새 modal 빌드는 기본 `bottom-sheet` 사용. full modal 필요시에만 `modal` 명시.
+
+> 🔴 **절대 규칙 0-C — 와이어프레임 1:1 복제 금지, 창의적 재해석 의무 (2026-05-27)**
+>
+> 와이어프레임의 **레이아웃 · 정보 위계 · 포인트 컬러**를 그대로 베끼면 안 된다.
+> 와이어프레임은 **콘텐츠 source**일 뿐 layout/visual blueprint 가 아니다.
+>
+> **금지:**
+> - 와이어프레임의 회색 박스 배치를 그대로 frame 배치로 옮기는 것
+> - 와이어프레임의 글자 크기 위계를 그대로 fontSize 로 옮기는 것 (예: 와이어 본문이 다 같은 크기여도 디자인에선 hero/section/body 차등)
+> - 와이어프레임의 포인트 컬러(빨강·파랑 등) 를 그대로 brand 외 컬러로 옮기는 것
+>
+> **필수:**
+> - **가독성 / 시인성 / 미학** 우선으로 시각 위계 재구성
+> - 핵심 수치는 hero size (28~36px Bold), 카드 그룹화로 정보 위계 차등
+> - 반복 요소(카드 리스트 등)는 첫 번째를 강조하거나 차등 적용
+> - **약간의 창의적 컬러 사용**: 상태 표시(성공/완료/주의) 에 brand tint + 시맨틱 액센트 소량 (브랜드 일관)
+> - 와이어프레임에 없는 폴리시(카드 그림자/elevation, 도형-배경 대비, 강한 타이포 위계) 추가
+>
+> **Why:** 와이어프레임을 그대로 옮기면 "디자인을 한 게 아니라 와이어를 강화한 것"이 된다.
+> 사용자가 디자이너에게 기대하는 건 **콘텐츠를 받아 디자인적 판단을 더한 결과물**이지,
+> 와이어를 px-perfect 로 옮기는 게 아니다.
+>
+> **검증 (사람이 확인):**
+> - 빌드 후 스크린샷을 와이어프레임 옆에 놓고 비교 — 시각 위계/그룹화/액센트가 **달라야** 정상
+> - 똑같으면 룰 위반 → 재구성
+>
+> 코드로 자동 검출 불가능 (의미적 판단). 매 디자인 빌드 시 사람(Claude)이 자체 검증.
 
 > 🔴 **절대 규칙 0-B — `-alt` / `_alt` 변형 토큰은 절대 쓰지 말 것**
 >
@@ -205,30 +289,94 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **빌드 후 검증**: 루트 첫 자식이 INSTANCE `"Status Bar"`인지 확인.
 - 참고: "Styles" 페이지(`276:1882`)에 마스터 인스턴스가 있다 — Status Bar `279:4758`, 로고 `279:4757`. 자동 삽입이 안 되는 특수 상황에서만 `clone_node`(인스턴스는 clone해도 인스턴스 유지) 후 `insert_child`로 수동 삽입.
 
-### 2. 색상 다양성 — 브랜드 컬러만 사용 금지
-- CTA/강조에 브랜드 컬러(`bg-brand-solid`)만 반복 사용하면 단조로워짐
-- **최소 2–3개 액센트 컬러**를 섞어 사용:
-  - `$token(bg-warning-primary)` — 오렌지/경고 (포인트, 이벤트)
-  - `$token(bg-success-primary)` — 그린/성공 (달성률, 완료)
-  - `$token(bg-error-primary)` — 레드/긴급 (알림, 한정)
-- 카드형 CTA 배경도 동일 브랜드 컬러 반복 금지 — 각 카드마다 다른 톤 적용
-- 숫자/통계 강조에 `fg-success-primary`, `fg-warning-primary` 등 시맨틱 색상 활용
+### 2-H. ⚠️ 큰 면적 frame에 brand color 채우기 금지 (2026-05-27 사용자 명시)
+- **"추천 스테이지 섹션같이 버튼이 아니면서 면적이 큰 frame에 brand color를 채우지마!"**
+- 이전 룰 폐기 — "Recommend Brand Card = brand-solid hero" 패턴 (`bg-brand-solid` 보라색 큰 카드) 사용자 분노.
+- **새 표준**: 큰 카드 = `bg-primary` + `border-secondary` 1px. brand 는 **작은 액센트**(텍스트, 버튼 label, 작은 dot)만.
+- **사용자 reference 패턴** (17380:48334 분석):
+  - Recommend Brand Card: `bg-primary` 흰 + border (이전 brand-solid)
+  - Eyebrow / Headline: `text-primary` 다크 / `fg-secondary` (이전 fg-white)
+  - **숫자 hero** "1,300,000": `text-brand-primary` 보라 (강조)
+  - **CTA Primary** "참여하기": `bg-primary` + label brand
+  - Detail Card: `bg-secondary` 회색 (위계 역전 — 흰 hero 안 회색 inset)
+  - CTA Secondary: `fill=none` + label `text-tertiary`
+- **시스템 강제 (3단 박힘):**
+  1. `_enforce_no_large_brand_fill(blueprint)` — blueprint 단계: `$token(bg-brand-*)` + (cornerRadius≥12 ∧ children≥2 ∨ children≥3) frame 자동 `bg-primary` + border 교체
+  2. `_strip_large_brand_fills(root_id)` — 빌드 트리 단계: brand RGB heuristic + 면적 ≥ 100×60 frame 검출 + 교정
+  3. `cmd_post_fix` 끝에서 매 실행 자동 — 회귀 차단 (`_auto_fix_invisible_text` 가 내부 흰 텍스트 다크로 연쇄 fix)
+- **실측 검증**: brand card fill을 일부러 깨뜨린 후 post-fix → 1건 frame + 8건 텍스트 자동 회복 로그 확인.
+
+### 2. ⚠️ 색상 — 절제된 단일 액센트 + 폴리시 (2026-05-23 갱신)
+- **브랜드 컬러는 앱의 단일 일관 액센트** — 주 액션(CTA)·active 탭/네비·핵심 수치·중요 링크/아이콘 등 **의도된 여러 지점**에 일관되게 사용한다. 회사가 거부한 건 "여러 색 난무"이지 브랜드 컬러 자체가 아니다. 단, 모든 카드·태그·통계에 무분별하게 깔지는 말 것.
+- **피드백(상태) 컬러는 소량·차분하게** — 미납·완료·주의 등 **진짜 상태 정보**에 한해 `success`/`warning`/`error` 계열을 절제된 톤으로 소량 사용 가능. 장식·태그·통계 전반에 색을 까는 건 금지.
+- **폴리시 필수 (와이어프레임 탈피)** — 평평한 그레이 박스만 나열하면 와이어프레임처럼 보인다. **카드 그림자/elevation, 흰 카드 ↔ 연한 그레이 면의 도형-배경 대비, 강한 타이포 위계(히어로 수치는 크게·Bold)**로 "디자인된" 느낌을 만든다.
+- **베이스는 뉴트럴 그레이** — `bg-/fg-/border-` 그레이 계열 중심이되, 완전 무채색 평면은 금지.
+- **Why**: 회사가 "브랜드/피드백 컬러 난무"를 거부 → 절제. 그러나 완전 그레이톤 + 버튼 1개는 "와이어프레임 같다"고 재피드백 (2026-05-23). 적정선 = 절제된 단일 액센트 + 상태 컬러 소량 + 입체감 폴리시.
+
+### 2-B. ⚠️ 카드 표면 — bg-primary + 보더 (root 위 카드, 2026-05-23 룰)
+- **루트 위 최상위 카드의 표면 = `$token(bg-primary)` fill + `$token(border-secondary)` 1px 보더** — `bg-secondary`(회색)로 채우지 말 것. 흰 카드를 보더(+ 자동 주입되는 subtle shadow)로 정의한다.
+- 카드 안의 인셋·서브카드는 대상 아님 (필요 시 `bg-secondary`/`bg-tertiary` 유지). 브랜드 컬러 카드(`bg-brand-solid` 등)도 그대로 둔다.
+- **예외 — 맨 아래 Footer**: Footer는 `$token(bg-secondary)` fill + **보더 없음**(그림자도 없음). 페이지를 닫는 회색 띠이지 카드가 아니다.
+- `cmd_build`의 `_enforce_card_surface`가 최상위 그레이 카드를 bg-primary + border-secondary로 자동 교정하고, Footer는 bg-secondary + 보더 제거로 처리 — blueprint에서 어떻게 쓰든 빌드가 바로잡는다.
+
+### 2-C. ⚠️ 타이포 위계 — 크기·굵기로 시각 리듬 (2026-05-23 룰)
+- **컬러가 절제될수록 시각 위계는 폰트 크기·굵기로 강화한다.** 표준 type scale:
+  - **HERO** (카드 안 핵심 금액·수치) — `28~36px Bold`
+  - **TITLE** — `22~26px Bold`
+  - **SECTION** (섹션 헤더) — `17~19px Bold`
+  - **BODY** — `14~16px Medium/SemiBold`
+  - **CAPTION** (라벨·메타) — `11~13px Medium/Regular`, 컬러 `fg-tertiary`
+- 같은 카드 안에 **최소 3단계 이상 차이**를 둔다 — HERO 금액은 본문(BODY)의 2배 안팎이어야 리듬이 산다. 16px 본문 옆에 16px Bold 금액 = 단조로움(금지).
+- `cmd_build`의 `_enforce_text_hierarchy`가 카드 안의 통화 hero(부호 `+/−` 또는 천단위 콤마가 있는 금액 텍스트)를 자동으로 **30px Bold**로 승격 — 본문이 hero보다 작게 작성되어 있어도 hero가 본문 위로 올라온다.
+
+### 2-D. ⚠️ Modal 화면 패턴 — 상단 X만, Footer·Tab Bar·상단 탭 없음 (2026-05-24 룰)
+- **Full modal** (홈 위로 슬라이드업되는 단일 화면, 예: 거래 스케줄 상세) 은:
+  - **상단 헤더 = X(닫기) 버튼만** — 로고·알림·채팅·검색 등 nav 아이콘 없음. X 는 우측 상단(NavBar `primaryAxisAlignItems: MAX`).
+  - **Footer 없음 · Tab Bar 없음 · 상단 Tab 메뉴(거래현황/누적거래 등) 없음** — 모달은 단일 컨텍스트.
+  - 루트 높이는 콘텐츠에 HUG (불필요한 빈 공간 금지).
+- Blueprint root 에 `"_screenType": "modal"` 명시 → `cmd_build`의 `_enforce_modal_pattern` 이 자동 강제: Footer / Tab Bar / 상단 탭(`Tab Row`/`Top Tab`/`Section Tab` 포함) / non-X nav 아이콘(`Logo`/`bell`/`chat` 등) 을 빌드 전에 제거하고 NavBar 를 우측 정렬한다.
+- 모달이 아닌 일반 화면은 기존대로 (NavBar 풀세트 + Tab Bar + Footer).
+
+### 2-G. ⚠️ 하단 CTA = DS Button 컴포넌트 인스턴스 우선 (2026-05-24 룰)
+- **하단 CTA 버튼(Bottom Action Bar 의 Primary CTA / Submit Button / 참여하기 등) 은 무조건 DS `Action Button` 컴포넌트 인스턴스로 만든다.** raw frame 으로 그리지 말 것.
+- DS Button 으로 표현이 안 되는 특수 케이스(이중 버튼, 그라데이션 CTA 등)에 한해 직접 그릴 수 있음 — 그 외는 항상 instance.
+- **사용할 키 (scripts/design_rules/ds_catalog.py):**
+  - `Action Button md Primary` (`ed0032bcf28f03da97e4b3006f54d30a0fbe5914`) — 기본 CTA
+  - `Action Button md Secondary` / `Tertiary` / `Outline` / `Ghost` — 위계별
+  - `Action Button sm` (`a8a4d7eb7874c469ab89105cc342fad85a3d28ce`) — 보조 CTA
+- **사이즈 / 상태:** Bottom Action Bar 의 대형 CTA 는 `Size: lg`, 비활성 상태는 `State: Disabled` (variant 로 적용 — opacity 0.5 자동).
+- **라벨:** `componentProperties` 의 텍스트 슬롯에 override (e.g., "참여하기"). 아이콘 토글(`⬅️ Icon leading` / `➡️ Icon trailing`) 은 기본 false.
+- **시스템 강제 (기존):** R23 inject 의 `detect_button_shape` 가 raw button frame 을 자동 swap. 2026-05-24 — `Primary CTA` 같이 VERTICAL 로 잘못 작성된 케이스도 잡도록 name 매칭(`cta` / `button` / `submit`) 시 layoutMode 무관 인정. catalog 미스 시 build ERROR.
+- Blueprint 작성 시: `{"type":"instance","componentKey":"ed0032bcf28f03da97e4b3006f54d30a0fbe5914","properties":{"Size":"lg","State":"Disabled","label":"참여하기"}}` 패턴.
+
+### 2-F. ⚠️ 루트 minHeight=852 + 하단 바 bottom-pin (2026-05-24 룰)
+- 루트 프레임 **min height = 852** (iPhone 16 뷰포트). 콘텐츠가 늘어나면 그에 따라 같이 늘어남.
+- 콘텐츠 합이 852 보다 짧을 때, 화면에 고정된 하단 바(**Bottom Action Bar / Tab Bar / CTA Bar / FAB**) 는 **루트 하단(y = 852 - bar.height)에 bottom-align** — 콘텐츠 끝에 붙어 떠 있지 않게 한다.
+- **시스템 강제:** `cmd_post_fix` 의 `_enforce_root_min_height` (scripts/figma_mcp_client.py, 2026-05-24) — 루트 높이 < 852 시 852 로 늘리고, 이름에 `tab bar`/`tabbar`/`bottom action bar`/`action bar`/`cta bar`/`fab` 포함된 자식을 ABSOLUTE + bottom constraint MAX 로 새 루트 하단에 재배치. 콘텐츠가 852 보다 길면 손대지 않음 (콘텐츠 끝이 곧 바의 위치).
+
+### 2-E. ⛔ Section Divider 자동 삽입 폐기 (2026-05-27 사용자 명시)
+- **"frame에 border를 추가하라니깐 엉뚱하게 섹션 사이에 선을 넣고있냐!!!"** — 섹션 사이에 1px divider 라인 자동 삽입 금지. 이전(2026-05-24) 룰 폐기.
+- 정보 그룹 경계는 **카드 자체의 border** 로 표현한다 — `_enforce_white_card_border`(fill=`bg-primary` frame 에 `border-secondary` 1px 자동) + 카드별 stroke 토큰 바인딩이 담당.
+- **시스템 강제:** `_enforce_section_dividers` 는 폐기 (no-op + 입력 divider 노드 자동 제거). `cmd_post_fix` 끝에 `_strip_section_dividers` 가 빌드 트리의 모든 "Section Divider" 노드 자동 삭제 — 회귀 차단.
+- Blueprint 에 명시적으로 "Section Divider" 노드 작성하지 말 것. drop-shadow 도 함께 금지 ([[feedback_no_drop_shadow]] 참조).
 
 ### 3. Tab Bar 아이템은 반드시 FILL 균등 분배
 - Tab Bar 내 모든 아이템: `layoutSizingHorizontal: "FILL"`, `layoutSizingVertical: "FILL"`
 - HUG/FIXED 혼용 금지 — 아이템 간격이 불균등해짐
 - 빌드 후 반드시 Tab Bar 아이템 사이징 검증할 것
 
-### 4. 3D 아이콘 생성 — 정사각형 비율 필수
-- Gemini로 3D 아이콘 생성 시 프롬프트에 **`"chunky, compact, equal width and height, square proportions"`** 포함
-- 생성 후 PIL로 **center-crop to square** 처리: `min(w,h)` 기준 정사각형 크롭 → 리사이즈
-- 세로로 길쭉한 아이콘 방지: crop 없이 resize만 하면 비율 왜곡됨
-- rembg 배경 제거 후 적용
-
-### 5. 히어로/배너 이미지 — 그래픽 요소 최대 3개
-- 히어로 배너 그래픽 생성 시 **오브젝트 최대 3개** 제한 (예: 동전 + 선물 + 반짝이)
-- 요소가 많으면 복잡하고 산만해짐 — 심플하고 임팩트 있는 구성
-- 텍스트가 올라갈 영역(좌측)은 비워둘 것 — 그래픽은 우측에 배치
+### 5-B. ⚠️ 상단 모드 탭 = Underline Tab (RECTANGLE underline 자식, 2026-05-27 사용자 명시)
+- 이전 룰 폐기 — "white pill on grey track" (R29) 폐기. 새 표준은 **Underline Tab v2**.
+- **컨테이너 (Tabs Wrap)**: HORIZONTAL, `paddingLeft/Right=24`, `paddingBottom=8`, `itemSpacing=22`, `counterAxisAlignItems=MAX` (베이스라인 정렬), `fill=$token(bg-primary)`, `clipsContent=true`, `layoutSizingHorizontal=FILL`, `layoutSizingVertical=HUG`
+- **각 탭**: VERTICAL HUG×HUG, `paddingTop=16`, `itemSpacing=12`, `counterAxisAlignItems=CENTER`
+  - **label (TEXT)**: 16px / lineHeight 24px
+    - Active: Bold + `text-primary` 바인딩
+    - Inactive: Medium + `text-tertiary` 바인딩
+  - **underline (RECTANGLE)**: height 2.5, `layoutSizingHorizontal=FILL`, `layoutSizingVertical=FIXED`
+    - Active: `fill=$token(bg-brand-solid)`
+    - Inactive: 투명 (fill 없음) — 자리만 유지해 높이 일치
+- **레퍼런스 노드**: `17382:48541` (Mode Tabs). clone 후 라벨 override + 부모 swap 패턴 사용 가능.
+- 코드 강제: R29 폐기, blueprint 작성 시 위 구조 그대로. 별도 R 룰 미구현 — 메모리 [[feedback_underline_tab_v2]] 참조.
 
 ### 6. Underline Tab Active/Inactive 높이 일치 + Individual Stroke
 - Underline 스타일 탭에서 Active에는 Underline Bar(2px)가 있어 Inactive보다 높아짐
@@ -254,18 +402,22 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 ### 9. ⚠️ Tab Bar와 FAB — 루트 프레임 하단에 배치 (콘텐츠 아래)
 - **이 규칙도 매번 누락된다. 빌드 후 반드시 적용해야 한다.**
 - **batch_build_screen은 `layoutPositioning: "ABSOLUTE"`를 적용하지 않는다** → 빌드 후 반드시 별도 `set_layout_positioning` 호출
-- **배치 원칙**: Tab Bar는 **콘텐츠 하단에 밀착**(빈 흰 띠/데드밴드 금지), FAB는 **콘텐츠 위로 떠서** Tab Bar 바로 위에 위치한다. FAB는 floating 버튼이므로 마지막 섹션과 겹쳐도 정상이다.
+- **배치 원칙**: Tab Bar는 **콘텐츠 하단에 밀착**(빈 흰 띠/데드밴드 금지), FAB는 **콘텐츠/Tab Bar 위로 떠서** 우측 하단에 위치한다. FAB는 floating 버튼이므로 마지막 섹션과 겹쳐도 정상이다.
 - **위치 계산** (`post-fix` `_fix_layout_and_positions`가 자동 적용):
   1. 마지막 콘텐츠 요소의 bottom (y + height) = `content_bottom`
   2. Tab Bar: `y = content_bottom` (콘텐츠에 밀착 — 사이에 빈 공간 두지 말 것), `x = 0`
-  3. FAB: `y = Tab Bar_y − 44 − 16` (Tab Bar 바로 위로 뜸, 콘텐츠와 겹침), `x = 253`
+  3. **FAB (2026-05-27 사용자 룰)**: icon-only 56×56 원형
+     - `x = root_width - 56 - 20` (우측 20px)
+     - `y = (Tab Bar_y or content_bottom) - 56 - 20` (Tab Bar 위 20px gap; Tab Bar 없으면 콘텐츠 마지막 요소 위 20px gap)
   4. Root height: `Tab Bar_y + 73`
 - ⚠️ **데드밴드 금지**: 예전엔 `FAB y = content_bottom + 24`, `Tab Bar y = FAB_y + 60`으로 둬서 콘텐츠와 Tab Bar 사이에 ~76px 빈 흰 띠가 생겼다 — 이제 Tab Bar가 콘텐츠에 밀착하고 FAB가 그 위로 뜬다.
 - Tab Bar: `set_layout_positioning(positioning: "ABSOLUTE")` → `move_node(x: 0, y: 계산값)`
-- FAB: `set_layout_positioning(positioning: "ABSOLUTE")` → `move_node(x: 253, y: 계산값)`
-- **FAB 크기**: pill 형태 `120×44`, `cornerRadius: 22` — 56×56 원형은 텍스트가 잘림
+- FAB: `set_layout_positioning(positioning: "ABSOLUTE")` → `move_node(x: 317, y: 계산값)` (393−56−20=317)
+- **FAB 크기 (2026-05-27 사용자 룰)**: **icon-only 56×56 원형**, `cornerRadius: 28`. 라벨 텍스트 금지 — 아이콘만. 라벨이 필요한 케이스는 별도 pill variant 사용 (drop-down 메뉴 / 라벨 hint 등).
+- **🔴 FAB 아이콘 (2026-05-27 사용자 강력 명시)**: **이모티콘 절대 사용 금지** (💰 🔍 ❤️ ⭐ 등). 반드시 DS icon component 인스턴스. DS instance 색 override 실패 시 fallback: Pretendard Bold ASCII 텍스트 ("+", "→" 등) — emoji 폰트 사용 금지.
+- **🔴 FAB 위치 (2026-05-27 사용자 강력 명시)**: Tab Bar 또는 마지막 bottom 요소 **위 20px** + 우측 20px. Tab Bar 위치 변경 시 FAB 같이 옮겨야 함 — `python3 scripts/figma_mcp_client.py post-fix <rootId>` 재실행 시 자동 동기화.
 - **FAB 컬러**: PRD에 특정 색상이 지정되어 있으면 해당 색상 사용 (config에서 fill 오버라이드). 미지정 시 브랜드 컬러 `$token(bg-brand-solid)` 사용 — FAB는 화면에서 가장 중요한 버튼이므로 브랜드 컬러가 기본
-- **빌드 후 검증**: Tab Bar가 콘텐츠 하단에 밀착했는지, FAB가 Tab Bar 바로 위에 떠 있는지, 콘텐츠~Tab Bar 사이에 빈 띠가 없는지 확인
+- **빌드 후 검증**: Tab Bar가 콘텐츠 하단에 밀착했는지, FAB가 우측 20px / Tab Bar 위 20px 위치에 있는지 확인
 
 ### 10. ⚠️ 히어로 배너는 반드시 가로 캐로셀 구조
 - **이 규칙도 매번 VERTICAL 스택으로 잘못 생성된다.**
@@ -299,26 +451,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - 배경색이 다르거나(컬러 → white 등) 사이에 divider가 있으면 gap 유지
 
 ### 14. ⚠️ 스테이지 카드 — 아이콘/이미지 삽입 금지
-- Stage Card 안에 아이콘, 이미지, imageGen 노드를 **절대 넣지 말 것**
+- Stage Card 안에 아이콘, 이미지를 **절대 넣지 말 것**
 - Stage Card 구성: 태그(포인트/기프티콘) + 금액 텍스트 + 이율/기간 정보 + 북마크 — **이것만**
 - 아이콘/이미지를 넣으면 카드가 복잡해지고 PRD 의도에서 벗어남
-
-### 15. ⚠️ 혜택 리스트 썸네일 — 2D 스타일, 24px, radius 0
-- "매일매일 혜택받기" 등 리스트형 섹션의 썸네일 아이콘:
-  - **크기: 24×24px** (32px, 40px 아님)
-  - **cornerRadius: 0** (둥근 모서리 금지)
-  - **스타일: 2D flat** (3D 금지) — Tossface 이모지 스타일 또는 단순 2D 일러스트
-  - imageGen 프롬프트: `"2D flat illustration of [subject], simple clean lines, minimal detail, solid colors, Tossface emoji style. Single centered object. Pure white background. No text. No shadow."`
-- 3D 아이콘은 히어로 배너, Fun 섹션 등 **큰 카드 전용** — 리스트 썸네일에는 2D만 사용
-
-### 17. ⚠️ Fun 카드 (랜덤박스/기프트샵) — 32px 썸네일, 텍스트 위에 배치
-- "놓칠 수 없는 즐거움" 등 Fun 섹션의 카드 아이콘:
-  - **크기: 32×32px** (50px 아님)
-  - **위치: 텍스트 위에 배치** — 아이콘이 카드 상단, 텍스트(제목+설명)가 아래
-  - **스타일: 3D 비비드 글로시** (여기어때/야놀자 스타일)
-  - **카드 레이아웃**: VERTICAL auto-layout, `[32px 아이콘] → [제목 텍스트] → [설명 텍스트]`
-  - cornerRadius: 0 (아이콘 프레임)
-- **절대 금지**: 아이콘을 텍스트 옆(HORIZONTAL)에 배치하거나 50px 이상으로 키우는 것
 
 ### 18. ⚠️ 루트 프레임 높이 = 전체 콘텐츠 높이 (852px로 줄이지 말 것)
 - **post-fix가 설정한 루트 높이를 임의로 줄이지 말 것**
@@ -359,34 +494,6 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - 빌드 로그의 `[QA] ⚠️ 시각 검사` 라인을 반드시 확인하고, 잡힌 항목을 수정할 것.
 - ※ 측정 가능한 항목만 자동화된다 — "디자인이 PRD 의도에 맞나"는 여전히 사람이 확인.
 
-### 16. 이미지 자동 생성 — Blueprint `imageGen` 필드
-- Blueprint 노드에 `imageGen` 필드를 추가하면 **디자인 빌드 후 자동으로 Gemini 이미지 생성 + 적용**
-- 디자인 빌드 한 번으로 **빌드 → post-fix → 이미지 생성/적용**까지 전부 자동 실행
-- **Blueprint 예시**:
-  ```json
-  {
-    "name": "Banner Card 1",
-    "type": "frame",
-    "imageGen": {
-      "prompt": "3D gold coins floating with green sparkles, right side composition",
-      "isHero": true
-    },
-    ...
-  }
-  ```
-- **imageGen 필드**:
-  - `prompt` (필수): Gemini 이미지 생성 프롬프트 (영어)
-  - `isHero` (선택): `true`면 히어로/배너 이미지 (배경 유지, 노드 크기 자동 감지), `false`(기본값)면 아이콘 (배경 제거)
-  - `width`/`height` (선택): 아이콘 크기 (isHero=false일 때, 기본 120)
-  - `style` (선택): 스타일 오버라이드
-- **주의**: `imageGen.prompt`에 3D 스타일 키워드는 자동 적용되지 않음 — 프롬프트에 직접 포함할 것
-- **⚠️ MCP generate_image(isHero=true) 수동 호출 시 주의**: Banner Card nodeId를 전달해야 하며, Hero Section이나 Carousel nodeId를 전달하면 안 됨. `isHero=true`는 전달된 nodeId의 크기를 자동 감지하여 이미지를 적용하므로, 부모 프레임을 전달하면 부모에 이미지가 적용됨. Blueprint의 `imageGen` 필드를 사용하면 nodeMap으로 정확한 nodeId가 매핑되어 이 문제가 발생하지 않음.
-- **⚠️ `set_image_fill`은 `imageData` (base64) 전용 — `url` 파라미터 절대 사용 금지**
-  - Figma 플러그인에 URL 다운로드 기능 없음 — `url`을 전달하면 `"Missing imageData"` 에러
-  - 반드시 파일을 읽어서 `base64.b64encode()` 후 `imageData`로 전달
-  - `figma_mcp_client.py`의 `call_tool`에 `url` 사용 시 자동 차단 로직 있음 (ValueError)
-  - `figma-mcp-embedded.ts` 스키마에서 `url` 파라미터 제거됨, `imageData` required
-
 ---
 
 ## 빌드 후 자동 후처리 (post-fix)
@@ -405,6 +512,11 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 3. Tab Bar/FAB: ABSOLUTE 배치 + 루트 하단 위치 + FAB width 복원 (HUG)
 4. Tab Bar item FILL 통일 + Tab Row individual stroke (bottom-only)
 5. zero-width 텍스트: width=0 TEXT → textAutoResize="WIDTH_AND_HEIGHT" + FILL (Banner Card 내부 텍스트는 FIXED 160px)
+6. DS Effect Style (Shadows/*) 자동 바인딩: frame.effects 가 raw 값으로 박혀 있어도
+   첫 DROP_SHADOW fingerprint(offset.y, radius) → Shadows/shadow-{xs,sm,md,lg,xl,2xl}
+   가장 가까운 DS effect style 에 `set_effect_style_id` 로 바인딩.
+   인스턴스 내부 노드(`I…;…`) 와 이미 styles.effect 가 채워진 노드는 skip.
+   - 수동 재바인딩: `python3 scripts/figma_mcp_client.py bind-effect-styles <rootNodeId>`
 [규칙] 루트 프레임 배경 = bg-primary 강제 (절대 규칙 0 — 리터럴 + DS 변수 바인딩)
 ```
 
@@ -430,10 +542,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 | 문서 | 언제 읽는가 |
 |------|------------|
 | [`docs/ds-architecture.md`](docs/ds-architecture.md) | DS 토큰 조회, 변수 업데이트, MCP 도구 목록 확인, INSTANCE_SWAP 시 |
-| [`docs/design-rules.md`](docs/design-rules.md) | **디자인 생성/수정 시 필수** — 빌드 규칙, 컴포넌트, 색상, 타이포그래피, 이미지 생성 규칙 |
+| [`docs/design-rules.md`](docs/design-rules.md) | **디자인 생성/수정 시 필수** — 빌드 규칙, 컴포넌트, 색상, 타이포그래피 |
 | [`docs/mobile-patterns.md`](docs/mobile-patterns.md) | 모바일 화면 디자인 시 — 레이아웃 패턴, 화면 사이즈, Status Bar |
 | [`docs/qa-checklist.md`](docs/qa-checklist.md) | 디자인 완료 QA 시 — 13개 체크 항목, 스크린샷 촬영 방법, 완료 판단 기준 |
-| [`docs/image-generation.md`](docs/image-generation.md) | Gemini 이미지 생성 시 — API 사용법, 스타일 기본값, rembg 파이프라인 |
 | [`docs/multi-agent-design.md`](docs/multi-agent-design.md) | 복잡한 화면(섹션 3+, 이미지 1+) 디자인 시 — 멀티에이전트 모드 |
 | [`docs/pencil-to-figma.md`](docs/pencil-to-figma.md) | "figma로 보내줘" 요청 시 — Pencil→Figma 변환 워크플로우, Blueprint 규칙 |
 | [`docs/python-mcp-client.md`](docs/python-mcp-client.md) | batch_build_screen, DS 바인딩 등 대규모 작업 시 — Python HTTP 클라이언트 |

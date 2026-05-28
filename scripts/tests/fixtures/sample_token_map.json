@@ -1,0 +1,48 @@
+{
+  "--colors-grayLightMode-900": {
+    "figmaPath": "Colors/Gray (light mode)/900",
+    "value": "#181d27",
+    "type": "COLOR"
+  },
+  "--colors-text-textPrimary": {
+    "figmaPath": "Colors/Text/text-primary",
+    "value": "#181d27",
+    "type": "COLOR"
+  },
+  "--colors-bg-bgBrandSolid": {
+    "figmaPath": "Colors/Bg/bg-brand-solid",
+    "value": "#7700ff",
+    "type": "COLOR"
+  },
+  "--spacing-2-8px": {
+    "figmaPath": "Spacing/2 (8px)",
+    "value": 8,
+    "type": "NUMBER"
+  },
+  "--spacing-3-12px": {
+    "figmaPath": "Spacing/3 (12px)",
+    "value": 12,
+    "type": "NUMBER"
+  },
+  "--fontSize-2": {
+    "figmaPath": "fontSize/2",
+    "value": 16,
+    "type": "NUMBER"
+  },
+  "--fontSize-10": {
+    "figmaPath": "fontSize/10",
+    "value": 72,
+    "type": "NUMBER"
+  },
+  "--display2xl-semibold": {
+    "figmaPath": "Display 2xl/Semibold",
+    "value": {
+      "fontFamily": "{Font family.font-family-display}",
+      "fontWeight": "{Font weight.semibold}",
+      "lineHeight": "{Line height.display-2xl}",
+      "fontSize": "{fontSize.10}",
+      "letterSpacing": "{letterSpacing.0}"
+    },
+    "type": "TYPOGRAPHY"
+  }
+}

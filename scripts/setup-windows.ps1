@@ -17,17 +17,11 @@
     6. sharp 네이티브 모듈 (win32-x64 플랫폼 패키지)
     7. 프로젝트 빌드 (npm run build → out/)
 
-.PARAMETER InstallRembg
-  rembg(로컬 아이콘 배경 제거)도 설치한다. 무겁고 느려서 기본은 생략.
-
 .EXAMPLE
   npm run setup:windows
   powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1
-  powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1 -InstallRembg
 #>
-param(
-  [switch]$InstallRembg
-)
+param()
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -98,17 +92,6 @@ Write-Step '2/7 Python 패키지 설치 (requests, Pillow)'
 & $python -m pip install --upgrade pip --quiet --disable-pip-version-check
 & $python -m pip install --upgrade requests Pillow --quiet --disable-pip-version-check
 Write-Ok 'requests, Pillow 설치/갱신 완료'
-if ($InstallRembg) {
-  Write-Info 'rembg 설치 중 (수 분 소요, 용량 큼)...'
-  try {
-    & $python -m pip install --upgrade rembg onnxruntime --quiet --disable-pip-version-check
-    Write-Ok 'rembg 설치 완료'
-  } catch {
-    Write-Warn2 'rembg 설치 실패 — 로컬 아이콘 배경제거만 영향 (디자인 빌드는 정상)'
-  }
-} else {
-  Write-Info 'rembg 생략 (필요 시 -InstallRembg 옵션으로 재실행)'
-}
 
 # ── 3. PYTHONUTF8 ─────────────────────────────────────────
 Write-Step '3/7 PYTHONUTF8 환경변수'

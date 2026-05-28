@@ -250,50 +250,41 @@
     },
 
     "FAB": {
-      "_description": "플로팅 액션 버튼. pill 형태 (120x44, cornerRadius 22). post-fix에서 ABSOLUTE 배치 자동 적용.",
+      "_description": "플로팅 액션 버튼. icon-only 원형 (56x56, cornerRadius 28). post-fix에서 ABSOLUTE 배치 자동 적용 (2026-05-27 사용자 룰).",
       "_variables": [
         "iconName: FAB 아이콘 (기본: wallet-02)",
-        "label: FAB 텍스트 (기본: 마이 월렛)",
         "fill: 배경색 (기본: $token(bg-brand-solid) — PRD에 특정 색상 지정 시 오버라이드)",
-        "textColor: 텍스트/아이콘 색상 (기본: $token(fg-white))"
+        "iconColor: 아이콘 색상 (기본: $token(fg-white))"
       ],
       "_notes": [
-        "post-fix가 자동 처리: ABSOLUTE 배치, x=253, 루트 하단 Tab Bar 위에 위치",
-        "56x56 원형 사용 금지 — 텍스트가 잘림. 반드시 pill 형태 120x44 사용",
-        "layoutSizingHorizontal은 HUG 유지 (post-fix가 width 복원)"
+        "post-fix가 자동 처리: ABSOLUTE 배치, x = root_width - 56 - 20 = 317 (우측 20px), y = (Tab Bar_y or content_bottom) - 56 - 20 (상단 20px gap)",
+        "icon-only 56x56 원형이 표준 (2026-05-27). 라벨 필요 시 별도 pill variant 사용",
+        "Tab Bar 있으면 그 위 20px gap, 없으면 마지막 bottom 요소 위 20px gap"
       ],
       "template": {
         "name": "FAB",
         "type": "frame",
-        "width": 120,
-        "height": 44,
-        "cornerRadius": 22,
+        "width": 56,
+        "height": 56,
+        "cornerRadius": 28,
         "fill": "$token(bg-brand-solid)",
         "autoLayout": {
           "layoutMode": "HORIZONTAL",
           "primaryAxisAlignItems": "CENTER",
           "counterAxisAlignItems": "CENTER",
-          "paddingTop": 13,
-          "paddingBottom": 13,
-          "paddingLeft": 16,
-          "paddingRight": 16,
-          "itemSpacing": 6
+          "paddingTop": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "paddingRight": 0,
+          "itemSpacing": 0
         },
         "children": [
           {
             "name": "fab-icon",
             "type": "icon",
             "iconName": "wallet-02",
-            "size": 18,
+            "size": 24,
             "iconColor": "$token(fg-white)"
-          },
-          {
-            "name": "fab-text",
-            "type": "text",
-            "text": "마이 월렛",
-            "fontSize": 14,
-            "fontName": { "family": "Pretendard", "style": "Bold" },
-            "fontColor": "$token(fg-white)"
           }
         ]
       }
