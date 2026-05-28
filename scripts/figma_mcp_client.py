@@ -568,14 +568,19 @@ def cmd_init():
     print("Ready.")
 
 
-def cmd_call(tool_name: str, args_json: str):
+def cmd_call(tool_name: str, args_json: str, compact: bool = False):
     ensure_session()
     args = json.loads(args_json) if args_json else {}
     content = call_tool(tool_name, args)
     result = parse_content(content)
 
     if result["json"]:
-        print(json.dumps(result["json"], indent=2, ensure_ascii=False))
+        # 2026-05-28 — compact 면 한 줄 JSON 출력. 검증 스크립트가 `tail -1 | json.loads`
+        # 로 안정 파싱하도록 (이전 indent=2 pretty-print 는 여러 줄이라 파싱 실패 → 추측 패치 회귀).
+        if compact:
+            print("__JSON__" + json.dumps(result["json"], ensure_ascii=False))
+        else:
+            print(json.dumps(result["json"], indent=2, ensure_ascii=False))
     else:
         for t in result["texts"]:
             print(t)
@@ -2625,7 +2630,13 @@ def _enforce_white_card_border_live(root_node_id: str) -> int:
         return False
 
     def walk(node, is_root):
-        if not isinstance(node, dict) or node.get("type") not in ("FRAME", "frame"):
+        if not isinstance(node, dict):
+            return
+        # DS 인스턴스(badge/button/tag 등) 내부는 master 가 fill/stroke 제어 —
+        # 절대 손대지 않는다 (2026-05-28 사용자 "badge 에 stroke 은 없는거란다").
+        if (node.get("type") or "").upper() == "INSTANCE":
+            return
+        if node.get("type") not in ("FRAME", "frame"):
             for ch in node.get("children", []) or []:
                 walk(ch, False)
             return
@@ -4154,6 +4165,9 @@ def _enforce_button_border_on_same_bg(root_id: str) -> int:
     def walk(node, parent_fill=None):
         if not isinstance(node, dict):
             return
+        # DS 인스턴스 내부는 master 제어 — fill/stroke 손대지 않음 (badge stroke 금지)
+        if (node.get("type") or "").upper() == "INSTANCE":
+            return
         self_fill = _first_solid_rgb(node.get("fills"))
         is_frame = (node.get("type") or "").upper() == "FRAME"
         name = node.get("name") or ""
@@ -4561,6 +4575,9 @@ def _strip_section_wrapper_borders_live(root_id: str) -> int:
     def walk(node):
         if not isinstance(node, dict):
             return
+        # DS 인스턴스 내부는 master 제어 — stroke 손대지 않음
+        if (node.get("type") or "").upper() == "INSTANCE":
+            return
         if node.get("type") in ("FRAME", "frame") and _is_wrapper(node):
             strokes = node.get("strokes") or []
             if strokes:
@@ -4586,6 +4603,50 @@ def _strip_section_wrapper_borders_live(root_id: str) -> int:
         print(f"  [strip-wrapper-border] ✓ wrapper 섹션 {fixed[0]}건의 잘못된 stroke 제거")
     else:
         print(f"  [strip-wrapper-border] OK — wrapper 섹션 stroke 없음")
+    return fixed[0]
+
+
+def _enforce_badge_no_stroke_live(root_id: str) -> int:
+    """DS Badge/Tag 인스턴스의 stroke 제거 (2026-05-28 사용자 절대 룰).
+
+    사용자 명시: "badge 에 stroke 은 없는거란다" + "badge 는 임의로 fill color 바꾸지마!
+    오직 Props 에 color option 만 선택". badge 색은 component property(color variant)로만
+    제어하고, **stroke 은 무조건 없다**. swap 된 badge variant 가 outline(보더)을 들고
+    있거나 이전 룰이 brand 보더를 박았으면 여기서 일괄 제거.
+
+    - 대상: type=INSTANCE + name 에 badge/tag/pill/chip/round-tag 포함 + strokes 있음
+    - fill 은 절대 건드리지 않는다 (master/variant 제어). stroke 만 strokeWeight 0 으로.
+    """
+    fixed = [0]
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        ntype = (node.get("type") or "").upper()
+        nl = (node.get("name") or "").lower()
+        if ntype == "INSTANCE" and any(k in nl for k in ("badge", "tag", "pill", "chip")):
+            if node.get("strokes"):
+                try:
+                    call_tool("set_stroke_color", {
+                        "nodeId": node["id"], "r": 0, "g": 0, "b": 0, "a": 0, "strokeWeight": 0,
+                    })
+                    fixed[0] += 1
+                    print(f"  [badge-no-stroke] '{node.get('name')}' stroke 제거 (badge 는 보더 없음)")
+                except Exception as e:
+                    print(f"  [badge-no-stroke] '{node.get('name')}' fail: {e}")
+            # badge 인스턴스 내부는 master 제어 — 더 내려가지 않음
+            return
+        for c in node.get("children", []) or []:
+            walk(c)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [badge-no-stroke] root fetch fail: {e}")
+    if fixed[0] == 0:
+        print("  [badge-no-stroke] OK — badge stroke 없음")
     return fixed[0]
 
 
@@ -5028,14 +5089,29 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
                 return True
         return False
 
-    def walk(node):
+    def walk(node, parent_layout=""):
         if not isinstance(node, dict):
             return
         ntype = (node.get("type") or "").upper()
         name = (node.get("name") or "")
+        nl = name.lower()
         nid = node.get("id")
         w = node.get("width") or 0
         h = node.get("height") or 0
+        # DS 버튼 인스턴스 가로 FILL — VERTICAL 부모의 단독 CTA 는 항상 가로 채움
+        # (2026-05-28 사용자 "버튼을 가로로 채워야지"). 이 final layer 의 card-padding
+        # set_auto_layout 이 CTA child sizing 을 HUG 로 리셋하는 회귀를, child 를 부모보다
+        # 늦게 방문하는 walk 순서를 이용해 마지막에 FILL 로 복원 (순서 무관 보장).
+        is_btn = ntype == "INSTANCE" and ("action button" in nl or nl == "button"
+                                          or nl.endswith(" button") or nl.endswith(" btn")
+                                          or nl.endswith(" cta") or "cta" in nl)
+        if is_btn and parent_layout == "VERTICAL" \
+                and node.get("layoutSizingHorizontal") != "FILL":
+            try:
+                call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": "FILL"})
+                fixed[0] += 1
+            except Exception as e:
+                print(f"  [size-invariant] cta-fill '{nid}' fail: {e}")
         # FAB → 56×56
         if name in ("FAB", "Fab", "fab") and ntype in ("FRAME", "INSTANCE"):
             if abs(w - 56) > 0.5 or abs(h - 56) > 0.5:
@@ -5058,12 +5134,10 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
         # 카드 padding 복원 (batch_build 가 grid row 안 카드의 padding 을 누락 →
         # 요소가 경계에 붙음). VERTICAL 카드(cornerRadius>=12 + 자식 3+)의 paddingLeft<12
         # 면 16 복원. layoutMode 동일 재설정이라 자식 sizing 영향 최소.
-        elif (ntype == "FRAME" and node.get("componentKey") is None
-              and (node.get("cornerRadius") or 0) >= 12
-              and (node.get("layoutMode") or "").upper() == "VERTICAL"
-              and len(node.get("children") or []) >= 3
-              and (node.get("width") or 0) >= 140  # day cell(48) 등 작은 셀 제외
-              and (node.get("paddingLeft") or 0) < 12):
+        elif (ntype == "FRAME" and not node.get("componentKey")
+              and "card" in name.lower()
+              and "carousel" not in name.lower()
+              and (node.get("paddingLeft") or 0) < 8):  # padding 없는 카드만 (있으면 skip)
             try:
                 call_tool("set_auto_layout", {
                     "nodeId": nid, "layoutMode": "VERTICAL",
@@ -5073,8 +5147,29 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
                 fixed[0] += 1
             except Exception as e:
                 print(f"  [size-invariant] card-pad '{nid}' fail: {e}")
+        # day cell — batch_build 가 carousel 안 cell 의 FIXED+padding 을 무시(FILL 45.5 +
+        # padding 0)해 텍스트가 경계에 붙고 status 넘침. 빌드 후 FIXED 76 + padding 강제.
+        elif "day cell" in name.lower() and ntype == "FRAME":
+            need = (node.get("layoutSizingHorizontal") != "FIXED"
+                    or (node.get("paddingLeft") or 0) < 4
+                    or abs((node.get("width") or 0) - 76) > 1.5)
+            if need:
+                try:
+                    call_tool("set_auto_layout", {
+                        "nodeId": nid, "layoutMode": "VERTICAL",
+                        "paddingTop": 14, "paddingBottom": 14,
+                        "paddingLeft": 8, "paddingRight": 8,
+                        "counterAxisAlignItems": "CENTER", "itemSpacing": 6,
+                    })
+                    call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": "FIXED", "vertical": "HUG"})
+                    call_tool("resize_node", {"nodeId": nid, "width": 76, "height": h if h > 0 else 102})
+                    call_tool("set_layout_sizing", {"nodeId": nid, "vertical": "HUG"})
+                    fixed[0] += 1
+                except Exception as e:
+                    print(f"  [size-invariant] day-cell '{nid}' fail: {e}")
+        cur_layout = (node.get("layoutMode") or "").upper()
         for c in node.get("children", []) or []:
-            walk(c)
+            walk(c, cur_layout)
 
     try:
         items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
@@ -5651,6 +5746,14 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     except Exception as e:
         print(f"  [ds-button-sizing] 실패 (무시하고 계속): {e}")
 
+    # 2026-05-28 사용자 절대 룰: "badge 에 stroke 은 없는거란다". swap 된 badge variant 가
+    # outline(보더)을 들고 오거나 이전 룰이 brand 보더를 박았으면 일괄 제거. fill 은 불변.
+    print("\n[규칙] DS Badge/Tag stroke 제거 (badge 는 보더 없음 — 절대 룰) 적용 중...")
+    try:
+        _enforce_badge_no_stroke_live(root_node_id)
+    except Exception as e:
+        print(f"  [badge-no-stroke] 실패 (무시하고 계속): {e}")
+
     # 2026-05-28 사용자 "엉망이다" — R23 가 raw frame(status-pill '진행중', round-tag
     # '1회차', link '자세히')을 DS Badge/Button/Link 인스턴스로 swap 한 뒤 원래 텍스트를
     # override 안 해 마스터 더미('Label'/'Button CTA'/'Click to Download')가 렌더됨.
@@ -5760,28 +5863,36 @@ def _collect_bindings(bp_node: Any, built_node: Any, out: list, by_name: bool = 
         return
     node_id = built_node.get("id")
     binds: Dict[str, str] = {}
-    # 색상: fill/stroke/strokeColor/fontColor/iconColor → fills/0 · strokes/0
-    # ⚠️ strokeColor 도 stroke 와 동일 처리 (blueprint 가 둘 다 사용 — 2026-05-27 사용자 분노 fix)
-    for field, prop in (("fill", "fills/0"), ("stroke", "strokes/0"),
-                        ("strokeColor", "strokes/0"),
-                        ("fontColor", "fills/0"), ("iconColor", "fills/0")):
-        val = bp_node.get(field)
-        if isinstance(val, str) and val.startswith("$token(") and val.endswith(")"):
-            tname = val[7:-1]
-            # 텍스트 색상은 반드시 Colors/Text/text-* 토큰 — fg-* 가 오면 text-* 로 자동 교정
-            if field == "fontColor" and tname.startswith("fg-"):
-                cand = "text-" + tname[3:]
-                if _token_to_figma_path(cand):
-                    tname = cand
-            fp = _token_to_figma_path(tname)
+    # 🔴 DS 인스턴스(badge/button/tag 등)는 fill/stroke 를 master/variant 가 제어한다 —
+    # 절대 색을 rebind 하지 않는다 (2026-05-28 사용자 절대 규칙: "badge fill color
+    # 바꾸지마! 오직 Props 에 color option 만 선택"). R23 가 swap 한 badge 노드가
+    # blueprint 에 fill 필드를 남겨도 여기서 fills/0 을 덮으면 variant 색이 깨진다.
+    is_ds_instance = ((bp_node.get("type") or "").lower() == "instance"
+                      or bool(bp_node.get("componentKey"))
+                      or bool(bp_node.get("_dsResolvedRole")))
+    if not is_ds_instance:
+        # 색상: fill/stroke/strokeColor/fontColor/iconColor → fills/0 · strokes/0
+        # ⚠️ strokeColor 도 stroke 와 동일 처리 (blueprint 가 둘 다 사용 — 2026-05-27 사용자 분노 fix)
+        for field, prop in (("fill", "fills/0"), ("stroke", "strokes/0"),
+                            ("strokeColor", "strokes/0"),
+                            ("fontColor", "fills/0"), ("iconColor", "fills/0")):
+            val = bp_node.get(field)
+            if isinstance(val, str) and val.startswith("$token(") and val.endswith(")"):
+                tname = val[7:-1]
+                # 텍스트 색상은 반드시 Colors/Text/text-* 토큰 — fg-* 가 오면 text-* 로 자동 교정
+                if field == "fontColor" and tname.startswith("fg-"):
+                    cand = "text-" + tname[3:]
+                    if _token_to_figma_path(cand):
+                        tname = cand
+                fp = _token_to_figma_path(tname)
+                if fp:
+                    binds[prop] = fp
+        # 타이포: fontSize → fontSize/k 변수
+        fs = bp_node.get("fontSize")
+        if isinstance(fs, (int, float)):
+            fp = _load_fontsize_map().get(float(fs))
             if fp:
-                binds[prop] = fp
-    # 타이포: fontSize → fontSize/k 변수
-    fs = bp_node.get("fontSize")
-    if isinstance(fs, (int, float)):
-        fp = _load_fontsize_map().get(float(fs))
-        if fp:
-            binds["fontSize"] = fp
+                binds["fontSize"] = fp
     if node_id and binds:
         out.append({"nodeId": node_id, "bindings": binds})
     # 자식 재귀
@@ -8228,9 +8339,15 @@ def main():
         cmd_init()
     elif cmd == "call":
         if len(sys.argv) < 3:
-            print("Usage: figma_mcp_client.py call <tool_name> [args_json]")
+            print("Usage: figma_mcp_client.py call <tool_name> [args_json] [--compact]")
             sys.exit(1)
-        cmd_call(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "{}")
+        _compact = "--compact" in sys.argv
+        _args = "{}"
+        for a in sys.argv[3:]:
+            if a != "--compact":
+                _args = a
+                break
+        cmd_call(sys.argv[2], _args, compact=_compact)
     elif cmd == "build":
         if len(sys.argv) < 3:
             print("Usage: figma_mcp_client.py build <blueprint.json>")
