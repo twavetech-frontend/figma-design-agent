@@ -111,24 +111,39 @@ ok 'requests, Pillow 설치/갱신 완료'
 
 # ── 4. Node.js ────────────────────────────────────────────
 step '4/7 Node.js 18+ 확인/설치'
-node_major=0
-node_ver=""
-if command -v node >/dev/null 2>&1; then
-  node_ver="$(node --version)"
-  node_major="$(printf '%s' "$node_ver" | sed -nE 's/^v([0-9]+)\..*/\1/p')"
-  node_major="${node_major:-0}"
-fi
+node_major() {
+  if command -v node >/dev/null 2>&1; then
+    node --version | sed -nE 's/^v([0-9]+)\..*/\1/p'
+  else
+    echo 0
+  fi
+}
+nm="$(node_major)"; nm="${nm:-0}"
 
-if [[ "$node_major" -ge 18 ]]; then
-  ok "Node $node_ver"
+if [[ "$nm" -ge 18 ]]; then
+  ok "Node $(node --version)"
 else
-  if [[ "$node_major" -gt 0 ]]; then
-    warn "Node $node_ver — 너무 오래됨 (Vite 6는 Node 18+ 필요)"
+  if [[ "$nm" -gt 0 ]]; then
+    warn "Node $(node --version) — 너무 오래됨 (Vite 6는 Node 18+ 필요)"
   else
     info 'Node 미설치'
   fi
   info 'Homebrew로 Node.js LTS 설치 중...'
   brew install node >/dev/null
+
+  # brew 설치 직후 같은 세션에서 node/npm을 즉시 쓰도록 PATH·명령 해시 갱신
+  eval "$("$brew_prefix/bin/brew" shellenv)"
+  hash -r 2>/dev/null || true
+
+  nm="$(node_major)"; nm="${nm:-0}"
+  if [[ "$nm" -lt 18 ]]; then
+    warn 'Node.js를 설치했지만 현재 셸 세션에서 찾을 수 없습니다.'
+    echo ''
+    echo '  새 터미널을 열고 이 스크립트를 다시 실행하거나,'
+    echo '  https://nodejs.org 에서 LTS 버전을 수동 설치한 뒤 재실행하세요.'
+    echo ''
+    exit 1
+  fi
   ok "Node $(node --version) 설치 완료"
 fi
 

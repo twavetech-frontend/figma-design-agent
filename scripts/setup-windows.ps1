@@ -9,7 +9,7 @@
   이미 설치된 항목은 건너뛴다.
 
   처리 항목:
-    1. Python 3.12 (winget)          — figma_mcp_client.py 실행용
+    1. Python 3.9+ (winget)          — figma_mcp_client.py 실행용 (없거나 구버전이면 3.12 설치)
     2. Python 패키지: requests, Pillow
     3. PYTHONUTF8=1 사용자 환경변수  — 한글 출력 cp949 UnicodeEncodeError 방지
     4. Node.js LTS (winget)          — Vite 6는 Node 18+ 필수
@@ -40,20 +40,30 @@ function Update-SessionPath {
 
 # 실제 Python 탐색 — PATH의 python3/python은 Microsoft Store 별칭 stub이므로
 # Programs\Python 과 Program Files\Python* 만 탐색한다.
+# figma_mcp_client.py는 3.9+가 필요하므로 3.9 미만은 무효로 보고,
+# 여러 개가 있으면 가장 높은 마이너 버전을 고른다.
 function Find-RealPython {
   $dirs = @()
   $dirs += Get-ChildItem "$env:LOCALAPPDATA\Programs\Python" -Directory -ErrorAction SilentlyContinue
   $dirs += Get-ChildItem 'C:\Program Files\Python*' -Directory -ErrorAction SilentlyContinue
+  $best = $null
+  $bestMinor = -1
   foreach ($d in $dirs) {
     $exe = Join-Path $d.FullName 'python.exe'
     if (Test-Path $exe) {
       try {
         $v = & $exe --version 2>&1
-        if ("$v" -match 'Python 3\.') { return $exe }
+        if ("$v" -match 'Python 3\.(\d+)') {
+          $minor = [int]$Matches[1]
+          if ($minor -ge 9 -and $minor -gt $bestMinor) {
+            $best = $exe
+            $bestMinor = $minor
+          }
+        }
       } catch {}
     }
   }
-  return $null
+  return $best
 }
 
 function Assert-Winget {
@@ -75,15 +85,20 @@ Write-Host '#  Figma Design Agent - Windows 환경 설정      #' -ForegroundCol
 Write-Host '###############################################' -ForegroundColor Cyan
 
 # ── 1. Python ─────────────────────────────────────────────
-Write-Step '1/7 Python 3.x 확인/설치'
+Write-Step '1/7 Python 3.9+ 확인/설치'
 $python = Find-RealPython
 if (-not $python) {
   Assert-Winget
-  Write-Info 'Python 미설치 — winget으로 Python 3.12 설치 중...'
+  Write-Info 'Python 3.9+ 미설치(또는 구버전) — winget으로 Python 3.12 설치 중...'
   winget install --id Python.Python.3.12 -e --accept-source-agreements --accept-package-agreements --silent --scope user | Out-Null
   Update-SessionPath
   $python = Find-RealPython
-  if (-not $python) { throw 'Python 설치 후에도 찾을 수 없습니다. https://python.org 에서 수동 설치하세요.' }
+  if (-not $python) {
+    throw @'
+Python 3.9+ 설치 후에도 찾을 수 없습니다.
+PowerShell을 새로 연 뒤 다시 실행하거나, https://python.org 에서 최신 버전을 수동 설치하세요.
+'@
+  }
 }
 Write-Ok "Python: $python  ($(& $python --version 2>&1))"
 
@@ -105,23 +120,55 @@ $env:PYTHONUTF8 = '1'
 
 # ── 4. Node.js ────────────────────────────────────────────
 Write-Step '4/7 Node.js 18+ 확인/설치'
-$nodeMajor = 0
-$nv = ''
-try {
-  $nv = (& node --version) 2>$null
-  if ($nv -match 'v(\d+)\.') { $nodeMajor = [int]$Matches[1] }
-} catch {}
-if ($nodeMajor -ge 18) {
-  Write-Ok "Node $nv"
+
+# winget/MSI 설치 직후 같은 세션은 PATH가 갱신 안 됨 → Node 설치 디렉터리를 직접 탐색해
+# $env:Path에 추가한다. (PowerShell을 재시작하지 않아도 바로 이어지는 npm 단계가 동작하도록)
+function Find-NodeDir {
+  $bases = @($env:ProgramFiles, ${env:ProgramFiles(x86)}, "$env:LOCALAPPDATA\Programs")
+  foreach ($b in $bases) {
+    if (-not $b) { continue }
+    $d = Join-Path $b 'nodejs'
+    if (Test-Path (Join-Path $d 'node.exe')) { return $d }
+  }
+  return $null
+}
+
+function Get-NodeMajor {
+  try {
+    $v = (& node --version) 2>$null
+    if ($v -match 'v(\d+)\.') { return @{ major = [int]$Matches[1]; ver = "$v" } }
+  } catch {}
+  return @{ major = 0; ver = '' }
+}
+
+$node = Get-NodeMajor
+if ($node.major -ge 18) {
+  Write-Ok "Node $($node.ver)"
 } else {
   Assert-Winget
-  if ($nodeMajor -gt 0) { Write-Warn2 "Node $nv — 너무 오래됨 (Vite 6는 Node 18+ 필요)" }
+  if ($node.major -gt 0) { Write-Warn2 "Node $($node.ver) — 너무 오래됨 (Vite 6는 Node 18+ 필요)" }
   else { Write-Info 'Node 미설치' }
   Write-Info 'winget으로 Node.js LTS 설치 중...'
   winget install --id OpenJS.NodeJS.LTS -e --accept-source-agreements --accept-package-agreements --silent | Out-Null
+
+  # 레지스트리 PATH 재로드 + 설치 디렉터리 직접 추가 (둘 다 해야 세션 내 즉시 인식)
   Update-SessionPath
-  $nv = (& node --version) 2>$null
-  Write-Ok "Node $nv 설치 완료"
+  $nodeDir = Find-NodeDir
+  if ($nodeDir -and ($env:Path -notlike "*$nodeDir*")) {
+    $env:Path = "$nodeDir;$env:Path"
+  }
+
+  $node = Get-NodeMajor
+  if ($node.major -lt 18) {
+    throw @'
+Node.js를 설치했지만 현재 PowerShell 세션에서 찾을 수 없습니다.
+PowerShell을 새로 연 뒤 이 스크립트를 다시 실행하세요. 그래도 안 되면 수동 설치:
+  1. https://nodejs.org 에서 LTS 버전 다운로드 및 설치
+  2. PowerShell 재시작
+  3. 스크립트 재실행
+'@
+  }
+  Write-Ok "Node $($node.ver) 설치 완료"
 }
 
 # ── 5~7. npm install / sharp / build ──────────────────────
