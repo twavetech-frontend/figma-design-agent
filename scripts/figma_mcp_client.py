@@ -89,6 +89,36 @@ def _binding_value(figma_path: Optional[str]) -> Optional[str]:
     return f"K:{key}" if key else figma_path
 
 
+# 🎨 DS Badge `Color` prop 의 13개 유효 옵션 (2026-06-01 사용자 명시, 절대 규칙 0-K).
+BADGE_COLOR_PROP_OPTIONS = (
+    "Gray", "Brand", "Error", "Warning", "Success", "Blue light", "Blue",
+    "Indigo", "Purple", "Pink", "Orange", "Blue gray", "Gray blue",
+)
+
+
+def set_badge_color(node_id: str, color: str) -> bool:
+    """Badge 인스턴스 색을 'Color' prop 으로 변경 (fill/stroke 직접 변경 금지 — 절대 규칙 0-K).
+
+    color 는 BADGE_COLOR_PROP_OPTIONS 의 13개 중 하나. set_instance_properties 로
+    variant 만 바꾼다 → master 가 fill·stroke·label 색을 일관되게 제어한다.
+    """
+    if color not in BADGE_COLOR_PROP_OPTIONS:
+        # 대소문자/공백 보정 시도
+        match = next((o for o in BADGE_COLOR_PROP_OPTIONS if o.lower() == str(color).strip().lower()), None)
+        if not match:
+            print(f"❌ set_badge_color: '{color}' 는 유효한 Badge Color 옵션이 아님. "
+                  f"가능: {', '.join(BADGE_COLOR_PROP_OPTIONS)}")
+            return False
+        color = match
+    try:
+        call_tool("set_instance_properties", {"nodeId": node_id, "properties": {"Color": color}})
+        print(f"  [badge-color] {node_id} → Color={color}")
+        return True
+    except Exception as e:
+        print(f"  [badge-color] {node_id} 실패: {e}")
+        return False
+
+
 def load_token_map() -> Dict[str, dict]:
     """Load TOKEN_MAP.json and build a lookup by figmaPath."""
     global _token_map
@@ -9355,6 +9385,14 @@ def main():
         # ds/VARIABLE_KEY_MAP.json 생성. Draft 에서도 변수 바인딩(K:key)이 동작하게 한다.
         ensure_session()
         cmd_sync_variable_keys()
+    elif cmd == "set-badge-color":
+        # Badge 색 변경 = Color prop (fill/stroke 직접 변경 금지 — 절대 규칙 0-K).
+        if len(sys.argv) < 4:
+            print("Usage: figma_mcp_client.py set-badge-color <nodeId> <Color>")
+            print(f"  Color 옵션: {', '.join(BADGE_COLOR_PROP_OPTIONS)}")
+            sys.exit(1)
+        ensure_session()
+        set_badge_color(sys.argv[2], sys.argv[3])
     elif cmd == "sync-text-styles":
         # DS 파일(Imin Design System)에 plugin 연결된 상태에서 1회 실행 →
         # ds/TEXT_STYLE_MAP.json 생성. 작업 파일엔 로컬 text style 이 없으므로

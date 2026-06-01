@@ -196,6 +196,16 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > 교정 등 어떤 일반 패스도 인스턴스 색을 덮으면 안 된다. 색을 바꾸고 싶으면 `set_instance_properties`
 > 로 **variant/color prop 만** 선택한다.
 >
+> **🎨 Badge 색 변경 = `Color` prop 에서 선택 (2026-06-01 사용자 명시):**
+> DS Badge 컴포넌트는 `Color` prop 에 **13개 옵션**이 있다 — fill/stroke 를 직접 바꾸지
+> 말고 이 prop 에서 고른다. `set_instance_properties(nodeId, {"Color": "<옵션>"})`.
+> 유효 옵션 (정확히 이 문자열):
+> `Gray` · `Brand` · `Error` · `Warning` · `Success` · `Blue light` · `Blue` ·
+> `Indigo` · `Purple` · `Pink` · `Orange` · `Blue gray` · `Gray blue`
+> (코드 상수: `ds_catalog.BADGE_COLOR_PROP_OPTIONS`, 헬퍼: `figma_mcp_client.set_badge_color()`).
+> R23 swap 시 라벨 의미(`_BADGE_COLOR_ROLE`)로 색 variant 를 고르고, 빌드 후 색을 바꿔야
+> 하면 위 prop 으로만 바꾼다. **절대 fill/stroke 리터럴·토큰을 덮지 않는다.**
+>
 > **회귀 사례 (이번 뿌리)**: auto-bind 의 `_collect_bindings` 가 `original_blueprint`
 > (R23 swap 전 복사본)를 보고 R23-swap 된 DS Badge Warning 을 raw frame 으로 오인 →
 > 빌드된 INSTANCE 의 fills/0 에 bg-secondary, 내부 라벨에 text-tertiary 를 바인딩 →

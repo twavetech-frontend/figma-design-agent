@@ -122,6 +122,35 @@ def test_count_with_unit_stays_badge_even_if_round():
         assert _is_badge(role_of(pill)), f"'{word}' 는 원형이어도 카운트 badge"
 
 
+# ── Badge 색 = Color prop (절대 규칙 0-K, 2026-06-01) ──────────────────────
+def test_badge_color_prop_options_count():
+    from design_rules.ds_catalog import BADGE_COLOR_PROP_OPTIONS
+    assert len(BADGE_COLOR_PROP_OPTIONS) == 13, BADGE_COLOR_PROP_OPTIONS
+    for expect in ("Gray", "Brand", "Warning", "Success", "Blue light", "Gray blue"):
+        assert expect in BADGE_COLOR_PROP_OPTIONS, expect
+
+
+def test_badge_color_prop_from_role():
+    from design_rules.ds_catalog import badge_color_prop_from_role
+    assert badge_color_prop_from_role("Badge sm Warning") == "Warning"
+    assert badge_color_prop_from_role("Badge sm Brand") == "Brand"
+    assert badge_color_prop_from_role("Badge sm Success") == "Success"
+    assert badge_color_prop_from_role("Action Button md Primary") is None  # 버튼은 매핑 없음
+
+
+def test_r23_swap_sets_badge_color_prop():
+    """R23 가 badge 를 swap 할 때 Color prop 을 명시적으로 박는가 (fill 대신)."""
+    from design_rules.R23_ds_first import _inject_node
+    node = {"name": "Tag", "type": "frame", "cornerRadius": 6, "fill": "$token(bg-secondary)",
+            "autoLayout": {"layoutMode": "HORIZONTAL", "paddingLeft": 8, "paddingRight": 8,
+                           "paddingTop": 4, "paddingBottom": 4},
+            "children": [{"name": "t", "type": "text", "characters": "진행중"}]}
+    changed = _inject_node(node, None)
+    assert changed == 1 and node.get("type") == "instance", node
+    ip = node.get("instanceProperties") or {}
+    assert ip.get("Color"), f"badge swap 은 Color prop 을 박아야 함: {ip}"
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     passed = 0

@@ -677,6 +677,35 @@ def detect_avatar_shape(node: dict) -> Optional[Tuple[str, str, Optional[str]]]:
     return (role, key, None)
 
 
+# 🎨 DS Badge `Color` prop 의 13개 유효 옵션 (2026-06-01 사용자 명시). Badge 색을 바꿀 땐
+# fill/stroke 가 아니라 이 prop 에서 고른다 — set_instance_properties(id, {"Color": "<옵션>"}).
+BADGE_COLOR_PROP = "Color"
+BADGE_COLOR_PROP_OPTIONS = (
+    "Gray", "Brand", "Error", "Warning", "Success", "Blue light", "Blue",
+    "Indigo", "Purple", "Pink", "Orange", "Blue gray", "Gray blue",
+)
+# detect_badge_shape 가 고르는 role("Badge sm Warning" 등) → Color prop 값 매핑.
+_BADGE_ROLE_TO_COLOR_PROP = {
+    "Badge sm Brand": "Brand", "Badge sm Warning": "Warning",
+    "Badge sm Success": "Success", "Badge sm Purple": "Purple",
+    "Badge sm Gray": "Gray", "Badge sm Error": "Error",
+}
+
+
+def badge_color_prop_from_role(role: Optional[str]) -> Optional[str]:
+    """Badge role/이름 → 유효한 Color prop 값 (없으면 None). 마지막 토큰도 시도."""
+    if not role:
+        return None
+    if role in _BADGE_ROLE_TO_COLOR_PROP:
+        return _BADGE_ROLE_TO_COLOR_PROP[role]
+    # "Badge sm <Color>" 형태에서 색 부분 추출 후 유효 옵션과 대조 (대소문자 무시)
+    tail = role.replace("Badge", "").replace("sm", "").replace("md", "").strip()
+    for opt in BADGE_COLOR_PROP_OPTIONS:
+        if tail.lower() == opt.lower():
+            return opt
+    return None
+
+
 def detect_badge_shape(node: dict) -> Optional[Tuple[str, str, str]]:
     """Detect a small status-badge / tag-shaped frame: a frame with exactly one
     short text child, a cornerRadius, and small dimensions. Returns

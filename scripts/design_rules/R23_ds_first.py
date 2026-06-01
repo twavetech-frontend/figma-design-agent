@@ -19,6 +19,7 @@ from .base import (Phase, Rule, Severity, Violation, register, walk_blueprint,
 from .ds_catalog import (
     DS_PATTERNS, is_container, resolve_component_key,
     detect_button_shape, detect_badge_shape, detect_ds_role_structural,
+    badge_color_prop_from_role,
 )
 
 
@@ -102,6 +103,14 @@ def _inject_node(node: dict, parent: dict = None) -> int:
         ip.setdefault("⬅️ Icon leading#3287:1577", False)
         ip.setdefault("➡️ Icon trailing#3287:2338", False)
         node["instanceProperties"] = ip
+    # 🎨 Badge 색은 fill 이 아니라 'Color' prop 으로 (2026-06-01 사용자 명시, 절대 규칙 0-K).
+    # role 이 인코딩한 색을 Color prop 으로 명시 → 빌드/후처리가 prop 으로 색을 제어한다.
+    if str(role).startswith("Badge"):
+        color_opt = badge_color_prop_from_role(role)
+        if color_opt:
+            ip = dict(node.get("instanceProperties") or {})
+            ip.setdefault("Color", color_opt)
+            node["instanceProperties"] = ip
     # Strip raw children — instances render via main component
     if "children" in node:
         node["_originalChildren"] = node.pop("children")
