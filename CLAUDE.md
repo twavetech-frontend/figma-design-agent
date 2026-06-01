@@ -141,6 +141,21 @@ npm test        # vitest
 - 테스트 없음 (단위/통합)
 - Figma 도구 호출 캐싱 없음
 
+## ⚠️ 텍스트 스타일(set_text_style_id) 적용 — 라이브러리 fallback (2026-06-01)
+- **증상**: 빌드 후 variables(색/spacing)는 바인딩됐는데 **텍스트 스타일만 하나도 적용 안 됨**. 빌드 로그에 `[text-style] DS text style 인덱스 비어있음 — 건너뜀`.
+- **원인**: `get_styles`(code.js)는 `getLocalTextStylesAsync`로 **로컬 스타일만** 조회. 작업 파일은 DS(`Imin Design System`)를 **라이브러리로 참조만** 하고 로컬 text style이 0개 → 인덱스 빔. Figma는 변수와 달리 **라이브러리 스타일 목록 API가 없음**.
+- **해법 (이미 코드에 박힘 — 자동 동작)**: `_load_text_style_map`이 로컬 0건이면 `ds/TEXT_STYLE_MAP.json`(사전 추출본)을 fallback으로 사용. `set_text_style_id`는 `S:{key},` 형식이면 `importStyleByKeyAsync`로 라이브러리 스타일을 import해 적용하므로 **로컬 없어도 동작**.
+- **`ds/TEXT_STYLE_MAP.json`이 없거나 stale하면**: plugin을 **DS 파일(Imin Design System)에 연결**한 뒤 `python3 scripts/figma_mcp_client.py sync-text-styles` 1회 실행 → 추출·저장 후 커밋. (variables의 `TOKEN_MAP.json`과 동일 패턴)
+- **⚠️ Carmen sans 등 비-UI 폰트 제외 (필수)**: DS text style에 **Carmen sans**(영문 전용, UI 폰트 아님)가 섞여 있고, `ExtraBold`가 weight bucket `bold`로 분류돼 `(24,bold)`·`(16,bold)` 인덱스에서 Pretendard Bold를 덮어쓴다. 그러면 Pretendard 텍스트에 Carmen sans style이 매칭돼 plugin이 그 폰트 로드로 **22초+ hang → 미적용**. `_is_pretendard_text_style`이 **Pretendard 패밀리만 매칭**(Carmen 제외)하도록 막아둠. 사용자 명시: "Carmen sans는 UI 폰트가 아니다 — 제외."
+- **재빌드 없이 기존 화면에 적용**: `python3 scripts/figma_mcp_client.py apply-text-styles <rootNodeId>`
+- **참고**: `cmd_build`의 `batch_build_screen`이 client 300초 timeout으로 죽으면 그 뒤의 text style 단계(Step E.5.5)에 도달 못 함 → 이땐 `apply-text-styles`로 보완.
+
+## ⚠️ batch_build_screen timeout 시 후속 단계 자동 복구 (2026-06-01) — 모든 회귀의 공통 뿌리
+- **증상**: 빌드는 됐는데 **색 변수 바인딩·text style·post-fix 가 전부 안 됨** (화면 색/배치는 리터럴로 박혀 정상처럼 보이나 DS 변수 연결·스타일 없음).
+- **원인**: `batch_build_screen` 은 plugin 이 노드 생성을 끝내도 응답을 못 보내 **client 300초 timeout** 이 잦다. 예전엔 이 예외로 `cmd_build` 가 중단되어 Step D~H(색 바인딩 E.5 / text style E.5.5 / post-fix)가 전부 스킵됐다. 이 세션의 3개 회귀(text style 미적용·색 바인딩 누락·post-fix 미실행)가 **모두 이 하나의 뿌리**.
+- **해법 (코드에 박힘 — 자동)**: `cmd_build` 가 `batch_build_screen` 을 try/except 로 감싸고, timeout/예외 시 `_recover_built_root_id(blueprint.name)` 로 plugin 이 끝낸 root 를 `get_document_info` 폴링으로 찾아 `root_id` 를 복구한 뒤 **후속 단계를 그대로 잇는다**. `original_blueprint`(token 보존 deep copy)는 batch_build 전에 떠 있어 색 바인딩이 정상 동작.
+- **수동 복구가 필요한 옛 빌드**: `auto-bind <rootId> <blueprint.json>`(색 변수) + `apply-text-styles <rootId>`(text style) + `post-fix <rootId>`.
+
 ---
 
 ## 디자인 빌드 빠른 워크플로우 (템플릿 기반)
@@ -170,6 +185,34 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 ---
 
 ## 디자인 생성 필수 규칙
+
+> 🔴 **절대 규칙 0-K — DS 컴포넌트의 fill·stroke·label 색은 절대 변경 금지 (2026-06-01 사용자 명시)**
+>
+> 사용자 명시: *"1. badge fill, stroke color 절대 변경 금지 2. badge label text fill
+> color 역시 절대 변경 금지 3. 모든 component의 fill, stroke, label color 변경하지 말 것!!"*
+>
+> **DS 컴포넌트 인스턴스(badge/button/tag/avatar/input 등)와 그 내부 노드(라벨 텍스트·
+> 아이콘)의 색은 오직 master/variant/props 가 제어한다.** 토큰 바인딩·대비 보정·카드 표면
+> 교정 등 어떤 일반 패스도 인스턴스 색을 덮으면 안 된다. 색을 바꾸고 싶으면 `set_instance_properties`
+> 로 **variant/color prop 만** 선택한다.
+>
+> **회귀 사례 (이번 뿌리)**: auto-bind 의 `_collect_bindings` 가 `original_blueprint`
+> (R23 swap 전 복사본)를 보고 R23-swap 된 DS Badge Warning 을 raw frame 으로 오인 →
+> 빌드된 INSTANCE 의 fills/0 에 bg-secondary, 내부 라벨에 text-tertiary 를 바인딩 →
+> Warning variant 색이 깨짐.
+>
+> **시스템 강제 (코드 박힘, 자동):**
+> 1. `figma_mcp_client.py call_tool` **중앙 가드**: `set_fill_color`/`set_stroke_color`/
+>    `set_bound_variables(fills|strokes)` 의 대상이 **인스턴스 내부 노드(id 에 `;` =
+>    `I{id};{sub}`)면 차단**한다. 의도적 enforcer(FAB 아이콘 fg-light 등)만 호출 args 에
+>    `_allowComponentColor: True` 로 예외.
+> 2. `_collect_bindings`: 빌드된 노드가 **INSTANCE 면 색 바인딩 안 함 + 자식 재귀도 skip**
+>    (variant 가 제어하는 내부 색 보호). `original_blueprint` 가 swap 마커를 몰라도 안전.
+> 3. `_strip_large_brand_fills`·`_auto_fix_invisible_text` 등 라이브 색 보정기는 이미
+>    `;` 내부 노드 + INSTANCE type 을 skip.
+>
+> **빌드 후 검증:** badge/button 의 fill·stroke·라벨 색이 DS variant 기본값과 일치하는지
+> (스크린샷). 회색으로 덮였으면 위반 — `_collect_bindings`/중앙 가드 점검.
 
 > 🔴 **절대 규칙 0-J — 2-tab 이상 텍스트 탭 nav 는 DS Horizontal Tabs 인스턴스 강제 (2026-06-01 사용자 룰)**
 >
@@ -238,12 +281,17 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 >    - **L5 verify**: 빌드 후 검증 — 여전히 위반이면 WARN
 > 2. `scripts/design_rules/__init__.py` 의 자동 import — R59 자동 등록
 >
-> **스코프 — 섹션 타이틀로 인식되는 패턴:**
-> - TEXT 노드 name 이 `title`/`header`/`section-title` 포함 (예: `Day Strip Title`, `rec-title`, `lounge-title`)
-> - 또는 부모 frame name 이 `Title Row`/`Header Row` 패턴 (예: `Recommend Title Row`)
+> **스코프 (2026-06-01 좁힘 — 사용자 피드백 "갑자기 모든 정렬이 왼쪽 정렬로 고정된거 같다. 섹션 타이틀만 왼쪽 정렬이어야"):**
+> - TEXT 의 `fontSize ≥ 15` (작은 라벨/본문 제외)
+> - 부모 frame name 이 `Title Row` / `Header Row` 패턴
+> - **ancestor 에 `empty` / `modal` / `dialog` / `sheet` / `popover` / `tooltip` 없음** —
+>   Empty state / 모달 안내 텍스트는 와이어 의도(가운데 정렬)를 유지하기 위해 제외
+> - `card` 는 의도적으로 ancestor 차단 hint 에서 제외 — "Day Strip Title" 처럼 카드 안에
+>   있어도 섹션 타이틀로 인식되는 경우가 있음 (사용자 1차 요청)
 >
 > **빌드 후 검증:** 빌드 로그에서 `R59 inject:` 또는 `R59 section-title:` 라인이
-> 보이면 자동 교정 성공. 스크린샷에서 모든 섹션 타이틀이 좌측 정렬되어야 한다.
+> 보이면 자동 교정 성공. 스크린샷에서 화면 큰 섹션 타이틀만 LEFT, Empty/Modal 안내는
+> 와이어 의도 정렬 유지.
 
 > 🔴 **절대 규칙 0-H — 새 root frame 은 기존 화면 우측 빈 공간에 자동 배치 (2026-06-01 사용자 룰)**
 >

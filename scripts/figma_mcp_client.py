@@ -459,6 +459,29 @@ def call_tool(name: str, args: dict, msg_id: int = 1) -> List[dict]:
             "Use 'imageData' (base64-encoded PNG/JPEG). "
             "Read the file with open(path,'rb') and base64.b64encode()."
         )
+    # 🔴 절대 규칙 (2026-06-01 사용자 명시): "모든 component 의 fill·stroke·label color
+    # 를 절대 변경하지 말 것." DS 컴포넌트 인스턴스 내부 노드(id 에 ';' = I{id};{sub})의
+    # 색은 master/variant 가 제어한다 — 일반 바인딩/보정이 절대 덮으면 안 된다(badge fill·
+    # stroke·label 색 변경 금지). 의도적 enforcer(FAB 아이콘 fg-light 등)만 args 에
+    # _allowComponentColor=True 를 넣어 예외. 이 중앙 가드로 새 세션에서도 재발 차단.
+    _allow_comp_color = bool(args.get("_allowComponentColor"))
+    if "_allowComponentColor" in args:
+        args = {k: v for k, v in args.items() if k != "_allowComponentColor"}
+    if not _allow_comp_color:
+        nid = args.get("nodeId")
+        is_internal = isinstance(nid, str) and ";" in nid  # 인스턴스 내부 노드
+        if is_internal and name in ("set_fill_color", "set_stroke_color"):
+            return [{"type": "text", "text": json.dumps(
+                {"skipped": "component-internal color write blocked (절대 규칙)",
+                 "nodeId": nid}, ensure_ascii=False)}]
+        if is_internal and name == "set_bound_variables" and isinstance(args.get("bindings"), dict):
+            kept = {k: v for k, v in args["bindings"].items()
+                    if not (str(k).startswith("fills/") or str(k).startswith("strokes/"))}
+            if not kept:
+                return [{"type": "text", "text": json.dumps(
+                    {"skipped": "component-internal color binding blocked (절대 규칙)",
+                     "nodeId": nid}, ensure_ascii=False)}]
+            args = {**args, "bindings": kept}
     # 중앙 처리: 모든 변수 바인딩 값을 가능하면 'K:{key}'(직접 import, Draft 안전)로 변환.
     # VARIABLE_KEY_MAP 에 키가 없으면 figmaPath 이름 그대로(팀 라이브러리 검색) 유지.
     # 모든 set_bound_variables 호출부(색·타이포·spacing·border 등)를 한 곳에서 커버.
@@ -5001,19 +5024,20 @@ def _enforce_fab_icon_color_live(root_id: str) -> int:
         fp = "Colors/Foreground/fg-light"
 
     def _paint_white(node_id: str, has_fills: bool, has_strokes: bool):
+        # 의도적 FAB 아이콘 색 강제 — 중앙 component-color 가드 예외(_allowComponentColor)
         try:
             if has_fills:
-                call_tool("set_fill_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                call_tool("set_fill_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1, "_allowComponentColor": True})
                 if fp:
                     try:
-                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"fills/0": fp}})
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"fills/0": fp}, "_allowComponentColor": True})
                     except Exception:
                         pass
             if has_strokes:
-                call_tool("set_stroke_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                call_tool("set_stroke_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1, "_allowComponentColor": True})
                 if fp:
                     try:
-                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"strokes/0": fp}})
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"strokes/0": fp}, "_allowComponentColor": True})
                     except Exception:
                         pass
             fixed[0] += 1
@@ -5091,19 +5115,20 @@ def _enforce_icon_on_brand_bg_contrast(root_id: str) -> int:
         fp = "Colors/Foreground/fg-light"
 
     def _paint_white(node_id, has_fills, has_strokes):
+        # 의도적 brand 위 아이콘 색 강제 — 중앙 component-color 가드 예외(_allowComponentColor)
         try:
             if has_fills:
-                call_tool("set_fill_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                call_tool("set_fill_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1, "_allowComponentColor": True})
                 if fp:
                     try:
-                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"fills/0": fp}})
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"fills/0": fp}, "_allowComponentColor": True})
                     except Exception:
                         pass
             if has_strokes:
-                call_tool("set_stroke_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                call_tool("set_stroke_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1, "_allowComponentColor": True})
                 if fp:
                     try:
-                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"strokes/0": fp}})
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"strokes/0": fp}, "_allowComponentColor": True})
                     except Exception:
                         pass
             fixed[0] += 1

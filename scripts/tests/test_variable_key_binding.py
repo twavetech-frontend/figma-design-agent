@@ -104,6 +104,60 @@ def test_collect_bindings_binds_plain_frame_fill():
     assert len(out) == 1 and out[0]["bindings"].get("fills/0"), f"frame fill 바인딩 누락: {out}"
 
 
+def _capture_call(name, args):
+    """call_tool 을 통과시키되 plugin 으로 실제 전송된 arguments 를 캡처."""
+    captured = {}
+
+    def fake_req(method, params, msg_id=1):
+        captured["args"] = params.get("arguments", {})
+        captured["sent"] = True
+        return {"result": {"content": [{"type": "text", "text": "{}"}]}}
+
+    orig = fc.mcp_request
+    fc.mcp_request = fake_req
+    try:
+        out = fc.call_tool(name, args)
+    finally:
+        fc.mcp_request = orig
+    return captured, out
+
+
+# ── 절대 규칙 0-K: 컴포넌트 내부('I…;…') 색 변경 차단 ───────────────────────
+def test_guard_blocks_internal_fill_color():
+    captured, out = _capture_call("set_fill_color", {"nodeId": "I2001:2583;4825:409531", "r": 1, "g": 0, "b": 0})
+    assert not captured.get("sent"), "인스턴스 내부 set_fill_color 는 plugin 으로 전송되면 안 됨"
+    assert "skipped" in (out[0]["text"] if out else ""), out
+
+
+def test_guard_blocks_internal_stroke_binding():
+    captured, out = _capture_call("set_bound_variables",
+                                  {"nodeId": "I1:1;2:2", "bindings": {"strokes/0": "Colors/Border/border-secondary"}})
+    assert not captured.get("sent"), "인스턴스 내부 strokes 바인딩은 차단되어야 함"
+
+
+def test_guard_keeps_non_color_binding_on_internal():
+    # 내부 노드라도 색이 아닌 바인딩(spacing/padding)은 통과
+    captured, out = _capture_call("set_bound_variables",
+                                  {"nodeId": "I1:1;2:2", "bindings": {"paddingLeft": "spacing-md",
+                                                                       "fills/0": "Colors/X/y"}})
+    assert captured.get("sent"), "비-색 바인딩은 전송되어야 함"
+    sent = captured["args"]["bindings"]
+    assert "paddingLeft" in sent and "fills/0" not in sent, sent
+
+
+def test_guard_allows_internal_color_with_optout():
+    captured, out = _capture_call("set_fill_color",
+                                  {"nodeId": "I1:1;2:2", "r": 1, "g": 1, "b": 1, "_allowComponentColor": True})
+    assert captured.get("sent"), "_allowComponentColor=True 면 전송"
+    assert "_allowComponentColor" not in captured["args"], "플래그는 plugin 으로 새 나가면 안 됨"
+
+
+def test_guard_ignores_toplevel_nodes():
+    # 최상위(인스턴스 아님) 노드 색은 정상 통과
+    captured, out = _capture_call("set_fill_color", {"nodeId": "2001:2493", "r": 1, "g": 0, "b": 0})
+    assert captured.get("sent"), "최상위 노드 색은 통과"
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     passed = 0
