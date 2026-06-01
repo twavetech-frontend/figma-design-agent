@@ -39,7 +39,9 @@ AI 기반 Figma 디자인 생성 데스크톱 앱: Electron + React + Anthropic 
 3. **MCP 접속 검증** — `figma_mcp_client.py init` 실행.
    `Ready.` + 실제 세션 ID가 나오면 OK (`Session initialized: None`이면 실패 → 브리지/패치 점검).
 4. **플러그인 연결 확인** — 브리지 로그에 `Figma: connected`가 있으면 완료. 없으면 사용자에게
-   *"Figma 데스크톱 앱에서 플러그인을 실행해 주세요"* 안내 (플러그인 실행은 자동화 불가 — 유일한 수동 단계).
+   *"Figma 데스크톱 앱에서 **'Figma Design Agent'** 플러그인을 실행해 주세요"* 라고 안내한다
+   (플러그인 실행은 자동화 불가 — 유일한 수동 단계).
+   ⚠️ 플러그인 이름은 정확히 **"Figma Design Agent"** — "Claude MCP" 등 다른 이름으로 부르지 말 것.
 5. **완료 보고** — 준비 완료를 알리고, 디자인할 화면의 PRD/요구사항을 요청한다.
 
 ### 멈춰서 사용자에게 보고해도 되는 경우 (이때만)
