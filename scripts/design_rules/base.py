@@ -183,3 +183,23 @@ def walk_tree(node: dict, path: str = "root"):
     for i, child in enumerate(node.get("children") or []):
         cname = child.get("name", f"child[{i}]")
         yield from walk_tree(child, f"{path}/{cname}")
+
+
+def walk_blueprint_with_parent(node: dict, path: str = "root", parent: dict = None):
+    """Like walk_blueprint but also yields the parent node (None for the root).
+
+    Enables role/position-aware detectors (e.g. badge-vs-button) that need to
+    know whether a node is a small leading item inside a list/row container.
+    """
+    yield node, path, parent
+    for i, child in enumerate(node.get("children") or []):
+        cname = child.get("name", f"child[{i}]")
+        yield from walk_blueprint_with_parent(child, f"{path}/{cname}", node)
+
+
+def walk_tree_with_parent(node: dict, path: str = "root", parent: dict = None):
+    """walk_tree variant that also yields the parent node (None for the root)."""
+    yield node, path, parent
+    for i, child in enumerate(node.get("children") or []):
+        cname = child.get("name", f"child[{i}]")
+        yield from walk_tree_with_parent(child, f"{path}/{cname}", node)

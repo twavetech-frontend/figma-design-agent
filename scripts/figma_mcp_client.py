@@ -50,9 +50,73 @@ MCP_URL = "http://127.0.0.1:8769/mcp"
 _http = requests.Session()
 SESSION_FILE = os.path.join(os.path.dirname(__file__), ".mcp_session")
 TOKEN_MAP_FILE = os.path.join(os.path.dirname(__file__), "..", "ds", "TOKEN_MAP.json")
+# figmaPath → DS variable key. Lets set_bound_variables import by key
+# (importVariableByKeyAsync) instead of relying on figma.teamLibrary discovery,
+# which returns nothing when the file lives in a personal Draft. Mirrors the
+# TEXT_STYLE_MAP.json key-import path. Populated by `sync-variable-keys`.
+VARIABLE_KEY_MAP_FILE = os.path.join(os.path.dirname(__file__), "..", "ds", "VARIABLE_KEY_MAP.json")
 
 # Cached token map (loaded once per process)
 _token_map: Optional[Dict[str, dict]] = None
+_variable_key_map: Optional[Dict[str, str]] = None
+
+
+def _load_variable_key_map() -> Dict[str, str]:
+    """Load ds/VARIABLE_KEY_MAP.json → {figmaPath: variableKey}. {} if absent."""
+    global _variable_key_map
+    if _variable_key_map is not None:
+        return _variable_key_map
+    _variable_key_map = {}
+    try:
+        path = os.path.normpath(VARIABLE_KEY_MAP_FILE)
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                _variable_key_map = {str(k): str(v) for k, v in data.items() if v}
+    except Exception as e:
+        print(f"  [var-key] VARIABLE_KEY_MAP.json 로드 실패 (이름 바인딩으로 진행): {e}")
+        _variable_key_map = {}
+    return _variable_key_map
+
+
+def _binding_value(figma_path: Optional[str]) -> Optional[str]:
+    """figmaPath → 바인딩 값. key 맵에 키가 있으면 'K:{key}'(직접 import, Draft 안전),
+    없으면 figmaPath 그대로(팀 라이브러리 이름 검색). figma_path 없으면 None."""
+    if not figma_path:
+        return figma_path
+    key = _load_variable_key_map().get(figma_path)
+    return f"K:{key}" if key else figma_path
+
+
+# 🎨 DS Badge `Color` prop 의 13개 유효 옵션 (2026-06-01 사용자 명시, 절대 규칙 0-K).
+BADGE_COLOR_PROP_OPTIONS = (
+    "Gray", "Brand", "Error", "Warning", "Success", "Blue light", "Blue",
+    "Indigo", "Purple", "Pink", "Orange", "Blue gray", "Gray blue",
+)
+
+
+def set_badge_color(node_id: str, color: str) -> bool:
+    """Badge 인스턴스 색을 'Color' prop 으로 변경 (fill/stroke 직접 변경 금지 — 절대 규칙 0-K).
+
+    color 는 BADGE_COLOR_PROP_OPTIONS 의 13개 중 하나. set_instance_properties 로
+    variant 만 바꾼다 → master 가 fill·stroke·label 색을 일관되게 제어한다.
+    """
+    if color not in BADGE_COLOR_PROP_OPTIONS:
+        # 대소문자/공백 보정 시도
+        match = next((o for o in BADGE_COLOR_PROP_OPTIONS if o.lower() == str(color).strip().lower()), None)
+        if not match:
+            print(f"❌ set_badge_color: '{color}' 는 유효한 Badge Color 옵션이 아님. "
+                  f"가능: {', '.join(BADGE_COLOR_PROP_OPTIONS)}")
+            return False
+        color = match
+    try:
+        call_tool("set_instance_properties", {"nodeId": node_id, "properties": {"Color": color}})
+        print(f"  [badge-color] {node_id} → Color={color}")
+        return True
+    except Exception as e:
+        print(f"  [badge-color] {node_id} 실패: {e}")
+        return False
 
 
 def load_token_map() -> Dict[str, dict]:
@@ -425,6 +489,36 @@ def call_tool(name: str, args: dict, msg_id: int = 1) -> List[dict]:
             "Use 'imageData' (base64-encoded PNG/JPEG). "
             "Read the file with open(path,'rb') and base64.b64encode()."
         )
+    # 🔴 절대 규칙 (2026-06-01 사용자 명시): "모든 component 의 fill·stroke·label color
+    # 를 절대 변경하지 말 것." DS 컴포넌트 인스턴스 내부 노드(id 에 ';' = I{id};{sub})의
+    # 색은 master/variant 가 제어한다 — 일반 바인딩/보정이 절대 덮으면 안 된다(badge fill·
+    # stroke·label 색 변경 금지). 의도적 enforcer(FAB 아이콘 fg-light 등)만 args 에
+    # _allowComponentColor=True 를 넣어 예외. 이 중앙 가드로 새 세션에서도 재발 차단.
+    _allow_comp_color = bool(args.get("_allowComponentColor"))
+    if "_allowComponentColor" in args:
+        args = {k: v for k, v in args.items() if k != "_allowComponentColor"}
+    if not _allow_comp_color:
+        nid = args.get("nodeId")
+        is_internal = isinstance(nid, str) and ";" in nid  # 인스턴스 내부 노드
+        if is_internal and name in ("set_fill_color", "set_stroke_color"):
+            return [{"type": "text", "text": json.dumps(
+                {"skipped": "component-internal color write blocked (절대 규칙)",
+                 "nodeId": nid}, ensure_ascii=False)}]
+        if is_internal and name == "set_bound_variables" and isinstance(args.get("bindings"), dict):
+            kept = {k: v for k, v in args["bindings"].items()
+                    if not (str(k).startswith("fills/") or str(k).startswith("strokes/"))}
+            if not kept:
+                return [{"type": "text", "text": json.dumps(
+                    {"skipped": "component-internal color binding blocked (절대 규칙)",
+                     "nodeId": nid}, ensure_ascii=False)}]
+            args = {**args, "bindings": kept}
+    # 중앙 처리: 모든 변수 바인딩 값을 가능하면 'K:{key}'(직접 import, Draft 안전)로 변환.
+    # VARIABLE_KEY_MAP 에 키가 없으면 figmaPath 이름 그대로(팀 라이브러리 검색) 유지.
+    # 모든 set_bound_variables 호출부(색·타이포·spacing·border 등)를 한 곳에서 커버.
+    if name == "set_bound_variables" and isinstance(args.get("bindings"), dict):
+        args = {**args, "bindings": {
+            k: (_binding_value(v) if isinstance(v, str) else v)
+            for k, v in args["bindings"].items()}}
     result = mcp_request("tools/call", {
         "name": name,
         "arguments": args
@@ -2977,6 +3071,81 @@ def _normalize_text_font_weight(node: Any) -> int:
     return count
 
 
+def _position_new_root_to_right(root_id: str, gap: int = 200) -> None:
+    """새 root frame 을 페이지의 다른 children 우측 빈 공간으로 이동 (2026-06-01 사용자 룰).
+
+    batch_build_screen 은 새 root 를 (0,0) 에 박아 기존 화면과 정확히 겹침을 유발한다.
+    이 함수는 다음을 수행:
+      1. get_document_info 로 currentPage children + bounds(x,y,width) 수집
+      2. 다른 children(= 새 root 제외) 의 maxRight = max(x + width) 계산
+      3. maxRight + gap 위치로 새 root 를 move_node
+      4. 페이지가 비었거나(자기 자신뿐) move 실패 시 silent — (0,0) 유지
+
+    silent fail safe — figma 측 직렬화 이슈 등으로 위치 파악 못 해도 빌드는 계속.
+    """
+    doc_content = call_tool("get_document_info", {})
+    doc = parse_content(doc_content).get("json") or {}
+    children = doc.get("children") or []
+
+    max_right = 0
+    siblings_seen = 0
+    for ch in children:
+        cid = ch.get("id")
+        if not cid or cid == root_id:
+            continue  # 자기 자신은 제외
+        try:
+            x = float(ch.get("x") or 0)
+            w = float(ch.get("width") or 0)
+        except (TypeError, ValueError):
+            continue
+        siblings_seen += 1
+        right = x + w
+        if right > max_right:
+            max_right = right
+
+    if siblings_seen == 0:
+        print(f"  [auto-position] 페이지 비어있음 — (0,0) 유지")
+        return
+
+    target_x = int(max_right + gap)
+    call_tool("move_node", {"nodeId": root_id, "x": target_x, "y": 0})
+    print(f"  [auto-position] ✓ 새 root → x={target_x}, y=0 "
+          f"(기존 {siblings_seen}개 화면 우측, maxRight={max_right:.0f} + gap={gap})")
+
+
+def _recover_built_root_id(root_name: str, attempts: int = 8, sleep_s: float = 8.0):
+    """batch_build_screen 이 client timeout 으로 끊겼을 때, plugin 이 끝낸 root 노드를 찾는다.
+
+    plugin 은 batch_build_screen 응답을 못 보내도 노드 생성은 끝까지 진행하는 경우가 많다.
+    이때 cmd_build 가 예외로 죽으면 색 바인딩·text style·post-fix 가 전부 스킵된다.
+    get_document_info 를 폴링(plugin 이 batch 마무리 중이면 그 호출도 늦거나 timeout 나므로
+    재시도)해, root_name 과 일치하는 가장 최근(가장 큰 id) FRAME 의 id 를 돌려준다.
+    (2026-06-01 재발방지 — timeout 나도 완성품이 나오게)"""
+    for i in range(attempts):
+        try:
+            doc = parse_content(call_tool("get_document_info", {})).get("json") or {}
+        except Exception:
+            doc = {}
+        children = doc.get("children") if isinstance(doc, dict) else None
+        if isinstance(children, list) and children:
+            matches = [c for c in children
+                       if isinstance(c, dict) and c.get("name") == root_name
+                       and c.get("type") in ("FRAME", "frame")]
+            if matches:
+                def _idnum(c):
+                    try:
+                        return int(str(c.get("id", "0:0")).split(":")[-1])
+                    except Exception:
+                        return 0
+                rid = sorted(matches, key=_idnum)[-1].get("id")
+                print(f"   [recover] '{root_name}' root 발견 (시도 {i+1}/{attempts}): {rid}")
+                return rid
+        if i < attempts - 1:
+            print(f"   [recover] plugin 아직 빌드 마무리 중… 재시도 {i+1}/{attempts}")
+            time.sleep(sleep_s)
+    return None
+
+
 def cmd_build(blueprint_file: str):
     """Build a screen from a blueprint JSON file.
 
@@ -3215,8 +3384,23 @@ def cmd_build(blueprint_file: str):
 
     # Step C: 빌드 실행
     start = time.time()
-    content = call_tool("batch_build_screen", {"blueprint": blueprint})
-    result = parse_content(content)
+    try:
+        content = call_tool("batch_build_screen", {"blueprint": blueprint})
+        result = parse_content(content)
+    except Exception as build_err:
+        # ⚠️ batch_build_screen 이 client timeout(기본 300s)으로 끊겨도 plugin 은 노드
+        # 생성을 끝까지 진행하는 경우가 많다. 예외로 cmd_build 가 여기서 죽으면 색 변수
+        # 바인딩(E.5)·text style(E.5.5)·post-fix 등 후속이 전부 스킵되어, 색/스타일이
+        # 안 박힌 반쪽 화면이 남는다(2026-06-01 사용자 보고된 3개 회귀의 공통 뿌리).
+        # → 생성된 root 를 복구해 후속 단계를 그대로 잇는다. (재발방지)
+        print(f"\n⚠️ batch_build_screen 응답 끊김: {build_err}")
+        print("   plugin 은 노드 생성을 계속했을 수 있음 → 생성된 root 탐색 중...")
+        recovered = _recover_built_root_id(blueprint.get("name"))
+        if not recovered:
+            print("   ❌ root 복구 실패 — plugin 연결/상태 확인 필요. 빌드 중단.")
+            raise
+        result = {"json": {"rootId": recovered}, "texts": [], "images": [], "raw": []}
+        print(f"   ✓ root 복구: {recovered} — 후속 단계(색 바인딩·text style·post-fix) 계속 진행")
     build_elapsed = time.time() - start
 
     # Step D: 빌드 결과 추출
@@ -3247,6 +3431,16 @@ def cmd_build(blueprint_file: str):
 
     if result["images"]:
         print(f"[Screenshot returned: {result['images'][0]['data_length']} bytes]")
+
+    # Step D.5 — 새 root 우측 빈 공간 자동 배치 (2026-06-01 사용자 룰)
+    # batch_build_screen 은 새 root 를 (0,0) 에 박는다 → 같은 페이지에 다른 화면이
+    # 있으면 정확히 겹친다. 페이지의 다른 children 의 maxRight 를 구해 새 root 를
+    # (maxRight + gap, 0) 로 이동해 겹침을 자동 차단.
+    if root_id:
+        try:
+            _position_new_root_to_right(root_id, gap=200)
+        except Exception as e:
+            print(f"  [auto-position] skipped (무시하고 계속): {e}")
 
     # Step E-0: 루트 clipsContent + FIXED 설정 (layoutMode 재설정 금지!)
     # ★ 주의: set_auto_layout으로 layoutMode를 재설정하면 Figma가 자식들의
@@ -4860,19 +5054,20 @@ def _enforce_fab_icon_color_live(root_id: str) -> int:
         fp = "Colors/Foreground/fg-light"
 
     def _paint_white(node_id: str, has_fills: bool, has_strokes: bool):
+        # 의도적 FAB 아이콘 색 강제 — 중앙 component-color 가드 예외(_allowComponentColor)
         try:
             if has_fills:
-                call_tool("set_fill_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                call_tool("set_fill_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1, "_allowComponentColor": True})
                 if fp:
                     try:
-                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"fills/0": fp}})
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"fills/0": fp}, "_allowComponentColor": True})
                     except Exception:
                         pass
             if has_strokes:
-                call_tool("set_stroke_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                call_tool("set_stroke_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1, "_allowComponentColor": True})
                 if fp:
                     try:
-                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"strokes/0": fp}})
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"strokes/0": fp}, "_allowComponentColor": True})
                     except Exception:
                         pass
             fixed[0] += 1
@@ -4950,19 +5145,20 @@ def _enforce_icon_on_brand_bg_contrast(root_id: str) -> int:
         fp = "Colors/Foreground/fg-light"
 
     def _paint_white(node_id, has_fills, has_strokes):
+        # 의도적 brand 위 아이콘 색 강제 — 중앙 component-color 가드 예외(_allowComponentColor)
         try:
             if has_fills:
-                call_tool("set_fill_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                call_tool("set_fill_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1, "_allowComponentColor": True})
                 if fp:
                     try:
-                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"fills/0": fp}})
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"fills/0": fp}, "_allowComponentColor": True})
                     except Exception:
                         pass
             if has_strokes:
-                call_tool("set_stroke_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1})
+                call_tool("set_stroke_color", {"nodeId": node_id, "r": 1, "g": 1, "b": 1, "a": 1, "_allowComponentColor": True})
                 if fp:
                     try:
-                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"strokes/0": fp}})
+                        call_tool("set_bound_variables", {"nodeId": node_id, "bindings": {"strokes/0": fp}, "_allowComponentColor": True})
                     except Exception:
                         pass
             fixed[0] += 1
@@ -6387,9 +6583,14 @@ def _collect_bindings(bp_node: Any, built_node: Any, out: list, by_name: bool = 
     # 절대 색을 rebind 하지 않는다 (2026-05-28 사용자 절대 규칙: "badge fill color
     # 바꾸지마! 오직 Props 에 color option 만 선택"). R23 가 swap 한 badge 노드가
     # blueprint 에 fill 필드를 남겨도 여기서 fills/0 을 덮으면 variant 색이 깨진다.
+    # ⚠️ 2026-06-01: original_blueprint 는 R23 inject **전** deep-copy 라 swap 마커
+    # (componentKey/_dsResolvedRole)가 없다. 그래서 bp_node 만 보면 swap 된 badge 를
+    # raw frame 으로 오인해 variant fill 을 덮어쓴다(사용자: "badge color 맘대로 수정").
+    # → **빌드된 노드가 INSTANCE 이면 무조건 색 rebind 금지** (원본 상태 무관).
     is_ds_instance = ((bp_node.get("type") or "").lower() == "instance"
                       or bool(bp_node.get("componentKey"))
-                      or bool(bp_node.get("_dsResolvedRole")))
+                      or bool(bp_node.get("_dsResolvedRole"))
+                      or (built_node.get("type") or "").upper() == "INSTANCE")
     if not is_ds_instance:
         # 색상: fill/stroke/strokeColor/fontColor/iconColor → fills/0 · strokes/0
         # ⚠️ strokeColor 도 stroke 와 동일 처리 (blueprint 가 둘 다 사용 — 2026-05-27 사용자 분노 fix)
@@ -6406,15 +6607,19 @@ def _collect_bindings(bp_node: Any, built_node: Any, out: list, by_name: bool = 
                         tname = cand
                 fp = _token_to_figma_path(tname)
                 if fp:
-                    binds[prop] = fp
+                    binds[prop] = fp  # call_tool 이 K:{key} 로 중앙 변환
         # 타이포: fontSize → fontSize/k 변수
         fs = bp_node.get("fontSize")
         if isinstance(fs, (int, float)):
             fp = _load_fontsize_map().get(float(fs))
             if fp:
-                binds["fontSize"] = fp
+                binds["fontSize"] = fp  # call_tool 이 K:{key} 로 중앙 변환
     if node_id and binds:
         out.append({"nodeId": node_id, "bindings": binds})
+    # DS 인스턴스 내부(variant 가 제어)는 재귀하지 않는다 — 내부 TEXT/도형 색을
+    # rebind 하면 variant 가 깨진다 (badge/button 색 보호, 2026-06-01).
+    if (built_node.get("type") or "").upper() == "INSTANCE":
+        return
     # 자식 재귀
     bp_children = bp_node.get("children") or []
     built_children = built_node.get("children") or []
@@ -7851,8 +8056,149 @@ def _weight_bucket(label) -> str:
     return "regular"
 
 
+def _text_style_map_path() -> str:
+    return os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "ds", "TEXT_STYLE_MAP.json")
+
+
+def _is_pretendard_text_style(name: str, family=None) -> bool:
+    """빌드 텍스트는 Pretendard 라, DS text style 중 **Pretendard 패밀리만** 매칭해야 한다.
+    Carmen sans 등 영문 전용 폰트 스타일을 매칭하면 plugin 이 그 폰트를 로드하려다
+    hang/실패한다(22s+). family 정보가 있으면 그것으로 판별, 없으면(구 추출본) name 에
+    'carmen' 등 비-Pretendard 마커가 있는지로 판별. (2026-06-01 근본 수정)"""
+    if family:
+        return "pretendard" in str(family).lower()
+    n = (name or "").lower()
+    # name 이 폰트 패밀리로 시작하는 DS 컨벤션: "Carmen sans/...", "Pretendard/..." 또는
+    # "Display xl/Bold"(Pretendard 기본). 비-Pretendard 영문 폰트 마커를 제외한다.
+    return "carmen" not in n
+
+
+def _load_text_style_map_from_file() -> dict:
+    """ds/TEXT_STYLE_MAP.json (DS 파일에서 1회 추출한 라이브러리 text style 목록)
+    → {(size:int, weight_bucket:str): styleKey} 인덱스.
+
+    `sync-text-styles` 명령으로 DS 파일(Imin Design System)에 plugin 연결된 상태에서
+    한 번 추출해 생성한다. 작업 파일에는 로컬 text style 이 없어 get_styles 가 0건을
+    반환하므로(=DS 를 라이브러리로 참조만 함), Figma 의 라이브러리-스타일-목록 API
+    부재를 이 사전 추출본으로 우회한다. set_text_style_id 는 S:key, 형식이면
+    importStyleByKeyAsync 로 라이브러리 스타일을 import 해 적용하므로 로컬 스타일이
+    없어도 동작한다. (2026-06-01 재발방지 — variables 의 TOKEN_MAP.json 과 동일 패턴)"""
+    path = _text_style_map_path()
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        print(f"  [text-style] TEXT_STYLE_MAP.json 로드 실패: {e}")
+        return {}
+    idx = {}
+    for e in (data if isinstance(data, list) else []):
+        size = e.get("fontSize")
+        key = e.get("key")
+        if not isinstance(size, (int, float)) or not key:
+            continue
+        name = e.get("name") or ""
+        if not _is_pretendard_text_style(name, e.get("family")):
+            continue
+        suffix = e.get("style") or (name.split("/")[-1] if "/" in name else None)
+        idx[(int(size), _weight_bucket(suffix))] = key
+    return idx
+
+
+def cmd_sync_text_styles() -> None:
+    """DS 파일(Imin Design System)의 로컬 text style 을 추출해
+    ds/TEXT_STYLE_MAP.json 에 저장한다.
+
+    ⚠️ plugin 이 **DS 파일에 연결된 상태**에서 실행해야 한다. 작업 파일에는 로컬
+    text style 이 없어 0건이 나온다. 한 번 추출해 레포에 커밋해두면 이후 모든 세션의
+    빌드에서 _load_text_style_map fallback 으로 쓰여, 로컬 스타일 없이도 DS text style
+    이 적용된다 (variables 의 TOKEN_MAP.json 과 동일 철학)."""
+    try:
+        d = parse_content(call_tool("get_styles", {})).get("json") or {}
+    except Exception as e:
+        print(f"❌ get_styles 실패: {e}")
+        return
+    texts = d.get("texts") or []
+    out = []
+    for t in texts:
+        key = t.get("key")
+        if not key:
+            continue
+        name = t.get("name") or ""
+        out.append({
+            "name": name,
+            "key": key,
+            "fontSize": t.get("fontSize"),
+            "family": (t.get("fontName") or {}).get("family"),
+            "style": (t.get("fontName") or {}).get("style")
+                     or (name.split("/")[-1] if "/" in name else None),
+        })
+    if not out:
+        print("⚠️ 로컬 text style 0건 — plugin 이 DS 파일(Imin Design System)에 "
+              "연결됐는지 확인하세요.")
+        print("   작업 파일에는 로컬 스타일이 없습니다. Figma 에서 DS 파일을 열고 "
+              "plugin 실행 후 다시 시도하세요.")
+        return
+    path = _text_style_map_path()
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=2)
+    print(f"✓ DS text style {len(out)}개 추출 → {path}")
+    print("  이 파일을 커밋하면 새 세션에서도 text style 이 자동 적용됩니다.")
+
+
+def cmd_sync_variable_keys() -> None:
+    """DS 변수(색·spacing·fontSize 등)의 figmaPath → key 를 추출해
+    ds/VARIABLE_KEY_MAP.json 에 저장한다 (TEXT_STYLE_MAP 의 변수 판).
+
+    ⚠️ plugin 이 **DS 변수에 접근 가능한 파일**에 연결된 상태에서 실행:
+      - DS 파일(Imin Design System) 자체 → 로컬 변수로 추출, 또는
+      - 팀 프로젝트의 작업 파일(라이브러리 enabled) → 라이브러리 변수로 추출.
+    개인 Draft(라이브러리 끊김)에서는 0건이 나온다 — 그 상태를 구제하려고 만든 맵이므로
+    반드시 라이브러리가 살아있는 위치에서 1회 추출해 레포에 커밋해둔다.
+
+    이후 set_bound_variables 가 call_tool 중앙 변환으로 'K:{key}' 를 보내
+    importVariableByKeyAsync 로 직접 import → Draft 에서도 변수 바인딩이 동작한다.
+    """
+    try:
+        d = parse_content(call_tool("get_local_variables", {"includeLibrary": True})).get("json") or {}
+    except Exception as e:
+        print(f"❌ get_local_variables 실패: {e}")
+        return
+    out: Dict[str, str] = {}
+    # 1) 로컬 변수 (DS 파일에 직접 연결했을 때)
+    for v in d.get("variables") or []:
+        nm, key = v.get("name"), v.get("key")
+        if nm and key:
+            out[nm] = key
+    # 2) 라이브러리 컬렉션 변수 (작업 파일에 라이브러리 enabled 일 때)
+    for col in d.get("libraryCollections") or []:
+        for v in col.get("variables") or []:
+            nm, key = v.get("name"), v.get("key")
+            if nm and key:
+                out.setdefault(nm, key)
+    if not out:
+        print("⚠️ DS 변수 0건 — plugin 이 라이브러리 접근 가능한 파일에 연결됐는지 확인하세요.")
+        print("   개인 Draft 는 팀 라이브러리가 끊겨 변수가 안 보입니다. DS 파일(Imin Design")
+        print("   System)을 열거나, 작업 파일을 팀 프로젝트로 옮긴 뒤 다시 시도하세요.")
+        return
+    path = os.path.normpath(VARIABLE_KEY_MAP_FILE)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=2, sort_keys=True)
+    global _variable_key_map
+    _variable_key_map = None  # 캐시 무효화
+    print(f"✓ DS 변수 {len(out)}개 figmaPath→key 추출 → {path}")
+    print("  이 파일을 커밋하면 Draft 에서도 변수 바인딩(K:key import)이 동작합니다.")
+    print("  적용: python3 scripts/figma_mcp_client.py auto-bind <rootId> <blueprint.json>")
+
+
 def _load_text_style_map() -> dict:
-    """DS text styles → {(size:int, weight_bucket:str): styleKey} 인덱스. 캐시."""
+    """DS text styles → {(size:int, weight_bucket:str): styleKey} 인덱스. 캐시.
+
+    1순위: 현재 파일의 로컬 text style(get_styles). 2순위: 로컬이 0건이면
+    ds/TEXT_STYLE_MAP.json fallback (DS 라이브러리만 참조하는 작업 파일 대응)."""
     global _TEXT_STYLE_MAP_CACHE
     if _TEXT_STYLE_MAP_CACHE is not None:
         return _TEXT_STYLE_MAP_CACHE
@@ -7860,8 +8206,7 @@ def _load_text_style_map() -> dict:
         d = parse_content(call_tool("get_styles", {})).get("json") or {}
     except Exception as e:
         print(f"  [text-style] get_styles 실패: {e}")
-        _TEXT_STYLE_MAP_CACHE = {}
-        return _TEXT_STYLE_MAP_CACHE
+        d = {}
     idx = {}
     for t in (d.get("texts") or []):
         size = t.get("fontSize")
@@ -7869,9 +8214,20 @@ def _load_text_style_map() -> dict:
             continue
         # DS style 이름 예: "Display 2xl/Bold", "Text md/Medium" — 끝의 슬래시-suffix 가 weight
         name = t.get("name") or ""
+        if not _is_pretendard_text_style(name, (t.get("fontName") or {}).get("family")):
+            continue  # Carmen sans 등 비-Pretendard 스타일 제외 (폰트 로드 hang 방지)
         suffix = name.split("/")[-1] if "/" in name else (t.get("fontName") or {}).get("style")
         bucket = _weight_bucket(suffix)
         idx[(int(size), bucket)] = t.get("key")
+    # Fallback: 작업 파일에 로컬 text style 이 없으면(=DS 라이브러리만 참조) get_styles 가
+    # 0건 → 사전 추출본 사용. 이게 없으면 text style 이 영영 적용 안 되는 회귀 발생.
+    if not idx:
+        idx = _load_text_style_map_from_file()
+        if idx:
+            print(f"  [text-style] 로컬 text style 0건 → ds/TEXT_STYLE_MAP.json fallback ({len(idx)}개)")
+        else:
+            print("  [text-style] ⚠️ 로컬 0건 + TEXT_STYLE_MAP.json 없음 — "
+                  "DS 파일에서 `python3 scripts/figma_mcp_client.py sync-text-styles` 1회 실행 필요")
     _TEXT_STYLE_MAP_CACHE = idx
     return idx
 
@@ -9024,6 +9380,32 @@ def main():
             sys.exit(1)
         ensure_session()
         _apply_ds_effect_styles(sys.argv[2])
+    elif cmd == "sync-variable-keys":
+        # DS 파일 또는 라이브러리 enabled 작업 파일에 plugin 연결된 상태에서 1회 실행 →
+        # ds/VARIABLE_KEY_MAP.json 생성. Draft 에서도 변수 바인딩(K:key)이 동작하게 한다.
+        ensure_session()
+        cmd_sync_variable_keys()
+    elif cmd == "set-badge-color":
+        # Badge 색 변경 = Color prop (fill/stroke 직접 변경 금지 — 절대 규칙 0-K).
+        if len(sys.argv) < 4:
+            print("Usage: figma_mcp_client.py set-badge-color <nodeId> <Color>")
+            print(f"  Color 옵션: {', '.join(BADGE_COLOR_PROP_OPTIONS)}")
+            sys.exit(1)
+        ensure_session()
+        set_badge_color(sys.argv[2], sys.argv[3])
+    elif cmd == "sync-text-styles":
+        # DS 파일(Imin Design System)에 plugin 연결된 상태에서 1회 실행 →
+        # ds/TEXT_STYLE_MAP.json 생성. 작업 파일엔 로컬 text style 이 없으므로
+        # 이 추출본이 _load_text_style_map 의 fallback 으로 쓰인다.
+        ensure_session()
+        cmd_sync_text_styles()
+    elif cmd == "apply-text-styles":
+        # 빌드된 화면에 DS text style 만 별도 적용 (재빌드 없이).
+        if len(sys.argv) < 3:
+            print("Usage: figma_mcp_client.py apply-text-styles <rootNodeId>")
+            sys.exit(1)
+        ensure_session()
+        _apply_ds_text_styles(sys.argv[2])
     elif cmd == "apply-images":
         if len(sys.argv) < 3:
             print("Usage: figma_mcp_client.py apply-images <rootNodeId> [blueprint.json]")
