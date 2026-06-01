@@ -14,7 +14,8 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from .base import Phase, Rule, Severity, Violation, register, walk_blueprint, walk_tree
+from .base import (Phase, Rule, Severity, Violation, register, walk_blueprint,
+                   walk_blueprint_with_parent, walk_tree, walk_tree_with_parent)
 from .ds_catalog import (
     DS_PATTERNS, is_container, resolve_component_key,
     detect_button_shape, detect_badge_shape, detect_ds_role_structural,
@@ -54,7 +55,7 @@ def _extract_instance_text(node: dict, role: str) -> str | None:
     return None
 
 
-def _inject_node(node: dict) -> int:
+def _inject_node(node: dict, parent: dict = None) -> int:
     """Mutate `node` in place to add componentKey + type=instance if applicable.
 
     Returns 1 if changed, 0 otherwise.
@@ -82,7 +83,7 @@ def _inject_node(node: dict) -> int:
         #    Only `confident` matches (button/badge/tag, or name-hinted form
         #    controls) are auto-swapped; shape-only hits are surfaced as WARN
         #    by _lint instead (no swap — avoids false-positive instances).
-        r = detect_ds_role_structural(node)
+        r = detect_ds_role_structural(node, parent)
         if r and r[3]:
             role, key, text_override = r[0], r[1], r[2]
     if not key:
@@ -109,8 +110,8 @@ def _inject_node(node: dict) -> int:
 
 def _inject(bp: dict) -> dict:
     changed = 0
-    for node, _path in walk_blueprint(bp):
-        changed += _inject_node(node)
+    for node, _path, parent in walk_blueprint_with_parent(bp):
+        changed += _inject_node(node, parent)
     if changed:
         print(f"[inject R23] auto-swapped {changed} raw frame(s) → DS instance")
     return bp
@@ -119,7 +120,7 @@ def _inject(bp: dict) -> dict:
 # ── L2 lint — only flag the truly unresolvable cases ────────────
 
 def _lint(bp: dict, ctx: dict) -> Iterable[Violation]:
-    for node, path in walk_blueprint(bp):
+    for node, path, parent in walk_blueprint_with_parent(bp):
         ntype = node.get("type", "frame")
         if ntype not in ("frame", "FRAME"):
             continue
@@ -130,7 +131,7 @@ def _lint(bp: dict, ctx: dict) -> Iterable[Violation]:
         # a raw FRAME. Buttons = hard ERROR (verified key, inject auto-swaps,
         # so this only fires if something went wrong). Everything else = WARN
         # (surfaces the gap without breaking builds; keys not all battle-tested).
-        struct = detect_ds_role_structural(node)
+        struct = detect_ds_role_structural(node, parent)
         if struct:
             role = struct[0]
             yield Violation(
@@ -163,11 +164,11 @@ def _lint(bp: dict, ctx: dict) -> Iterable[Violation]:
 # ── L5 verify — assert built tree has no DS-implied raw frames ─
 
 def _verify(tree: dict, ctx: dict) -> Iterable[Violation]:
-    for node, path in walk_tree(tree):
+    for node, path, parent in walk_tree_with_parent(tree):
         if node.get("type") not in ("FRAME",):
             continue
         name = node.get("name") or ""
-        struct = detect_ds_role_structural(node)
+        struct = detect_ds_role_structural(node, parent)
         if struct:
             role = struct[0]
             yield Violation(

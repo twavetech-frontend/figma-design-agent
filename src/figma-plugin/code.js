@@ -384,6 +384,12 @@ async function getDocumentInfo() {
       id: node.id,
       name: node.name,
       type: node.type,
+      // 2026-06-01 사용자 룰: 새 root frame은 기존 화면 우측 빈 공간으로 자동 이동.
+      // bounds 정보를 함께 리턴해야 cmd_build 가 maxRight 를 계산해 새 root 를 (maxRight+gap, 0) 으로 옮길 수 있음.
+      x: typeof node.x === "number" ? node.x : 0,
+      y: typeof node.y === "number" ? node.y : 0,
+      width: typeof node.width === "number" ? node.width : 0,
+      height: typeof node.height === "number" ? node.height : 0,
     })),
     currentPage: {
       id: page.id,
@@ -4007,12 +4013,16 @@ async function setTextStyleId(params) {
   }
 
   try {
-    // Set up a manual timeout to detect long operations
+    // Set up a manual timeout to detect long operations.
+    // ⚠️ 22000ms — 반드시 loadFontWithTimeout 기본(10000ms)보다 충분히 길어야 한다.
+    // 이전 8000ms 는 내부 폰트 로드(최대 10s)보다 짧아, 라이브러리 text style 의
+    // importStyleByKeyAsync+loadFont 가 8s 를 넘기면 폰트 로드가 끝나기도 전에
+    // 바깥 timeout 이 먼저 터져 Bold 등 일부 스타일이 항상 미적용됐다. (2026-06-01 재발방지)
     let timeoutId;
     const timeoutPromise = new Promise((_, reject) => {
       timeoutId = setTimeout(() => {
-        reject(new Error("Timeout while setting text style ID (8s). The operation took too long to complete."));
-      }, 8000); // 8 seconds timeout
+        reject(new Error("Timeout while setting text style ID (22s). The operation took too long to complete."));
+      }, 22000); // 22s — must exceed loadFontWithTimeout default (10s) + import overhead
     });
 
     console.log(`Starting to set text style ID ${textStyleId} on node ${nodeId}...`);
@@ -4083,9 +4093,12 @@ async function setTextStyleId(params) {
     console.error(`Error setting text style ID: ${error.message || "Unknown error"}`);
     console.error(`Stack trace: ${error.stack || "Not available"}`);
 
-    // Provide specific error messages for different cases
+    // Provide specific error messages for different cases.
+    // ⚠️ timeout 분기는 더 이상 "(8s)" 로 뭉뚱그리지 않고 원본 메시지를 그대로 노출한다.
+    // 이전엔 loadFontWithTimeout 의 "Font loading timed out after 10s" 같은 진짜 원인이
+    // "8 seconds" 로 덮여 디버깅을 막았다. (2026-06-01 실제 원인 노출)
     if (error.message.includes("timeout") || error.message.includes("Timeout")) {
-      throw new Error(`The operation timed out after 8 seconds. This could happen with complex nodes. Try with a simpler node.`);
+      throw new Error(`set_text_style_id failed: ${error.message}`);
     } else if (error.message.includes("not found") && error.message.includes("Node")) {
       throw new Error(`Node with ID "${nodeId}" not found. Make sure the node exists in the current document.`);
     } else if (error.message.includes("not found") && error.message.includes("style")) {
@@ -5299,8 +5312,23 @@ async function setBoundVariables(params) {
       continue;
     }
 
-    // Search in local variables first
-    var variable = varByName[varName];
+    // K:{key} — import the DS variable directly by key (works in a personal
+    // Draft where figma.teamLibrary discovery returns nothing). Mirrors the
+    // text-style S:{key} path. The Python side emits K:{key} whenever
+    // ds/VARIABLE_KEY_MAP.json has a key for the token (sync-variable-keys).
+    var variable = null;
+    var keyMatch = (typeof varName === "string") ? varName.match(/^K:(.+)$/) : null;
+    if (keyMatch) {
+      try {
+        variable = await figma.variables.importVariableByKeyAsync(keyMatch[1]);
+      } catch (e) {
+        errors.push({ field: field, variableName: varName, error: "Key import failed: " + (e.message || String(e)) });
+        continue;
+      }
+    }
+
+    // Search in local variables first (when not already resolved by key)
+    if (!variable) variable = varByName[varName];
     if (!variable) {
       // Try partial match for local vars
       var localKeys = Object.keys(varByName);

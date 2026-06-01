@@ -100,6 +100,20 @@ COMPONENT_KEYS = {
 
     # ── Tabs ───────────────────────────────────────────────────
     "Underline Tab Item":   "2fd0d4316087ce3d04816dc5f2eb8c421e43588f",
+    # Horizontal tabs (전체 탭 그룹) — setKey f11bda3cf5430bdb7052591a5beead9d5abdf093
+    # 2026-06-01 사용자 룰: 2-tab 이상 텍스트만 있는 탭 nav 는 raw frame 금지, DS instance 사용 강제.
+    "Horizontal Tabs Underline sm Mobile":         "6b613d270ba98d67c4a8d210721f332ab53fac0d",
+    "Horizontal Tabs Underline md Mobile":         "3d2c0c82adc08b47904314fc1ce041efaf45d305",
+    "Horizontal Tabs Underline sm Full Mobile":    "9b76638ee31a8aa32e2be0b7030d4d4d03341453",
+    "Horizontal Tabs Underline md Full Mobile":    "e1bbacea93585cdafe0fdd348d28717d8d2f173b",
+    "Horizontal Tabs Button Brand sm Mobile":      "90af96eeac20c87d13998db484d3f9bbc16dfe77",
+    "Horizontal Tabs Button Gray sm Mobile":       "68fccbcf9ba9f7630c22981fae25c6904f2b4ea4",
+    # Alias for blueprint naming convention — Mode Tabs / Section Tabs / Top Tabs
+    # 이 셋 모두 underline sm Mobile 로 매핑 (project canonical)
+    "Mode Tabs":           "6b613d270ba98d67c4a8d210721f332ab53fac0d",
+    "Mode Tabs Wrap":      "6b613d270ba98d67c4a8d210721f332ab53fac0d",
+    "Section Tabs":        "6b613d270ba98d67c4a8d210721f332ab53fac0d",
+    "Top Tabs":            "6b613d270ba98d67c4a8d210721f332ab53fac0d",
 
     # ── NavBar variants ────────────────────────────────────────
     "Section Header":       "24c310156df2b11a3204cc317fb4bf9149953f9a",
@@ -363,6 +377,83 @@ _STATUS_WORDS = (
 )
 
 
+# ── FUNCTION-ROLE lexicons — distinguish action-BUTTON vs status-BADGE by what
+#    the element DOES, not just its rectangular shape (2026-06-01 사용자 요청:
+#    "리스트 상단 badge 가 직사각형이라 button 으로 잡힘 — 기능으로 구분/검증 강화").
+#
+# Button = an action/CTA. Its label is an imperative/verb (참여하기·신청·확인·더보기·
+#   결제하기 / Submit·Continue·Apply…). Badge = a status/category/count label
+#   (진행중·미납·추천·이벤트·D-7·6개·1회차 / NEW·HOT…). Same pill shape, different role.
+_ACTION_LABEL_RE = re.compile(
+    r"(하기$|하기\s|하러|해보기|받기$|담기$|보기$|보러|가기$)"
+    r"|(확인|신청|결제|충전|시작|로그인|로그아웃|가입|등록|작성|수정|삭제|저장|전송|"
+    r"보내|다음|이전|완료하|선택하|업로드|다운로드|더\s*보기|전체\s*보기|자세히|"
+    r"구매|주문|예약|신고|문의|취소|동의|계속|열기|닫기|확인하|참여하|신청하|"
+    r"교환|환불|적립|받으러|보러\s*가기|시작하)"
+    r"|\b(submit|continue|next|back|done|confirm|apply|start|log\s*in|log\s*out|"
+    r"sign\s*up|sign\s*in|buy|order|get\s|view|see\s*(more|all|details?)|download|"
+    r"upload|send|save|cancel|agree|open|close|join|pay|checkout|add\s*to|"
+    r"learn\s*more|read\s*more|show\s*more)\b",
+    re.I,
+)
+# count / D-day / explicit badge-tier word → strong BADGE signal.
+_BADGE_LABEL_RE = re.compile(
+    r"^[+\-]?\d{1,4}\s*(개|건|원|명|회|회차|일|분|시간|점|위|％|%|kg|km)?$"   # 6 / +6 / 13회 / 1회차
+    r"|^[dD][-–]\s*\d+$"                                                    # D-7
+    r"|(공지|이벤트|추천|인기|신규|광고|무료|할인|필수|선택|점검|종료|예정|마감|"
+    r"진행\s*중|진행|완료|미납|연체|성공|실패|달성|도전|참여|대기|지급|혜택|이벤트|"
+    r"\d+\s*회차|\d+\s*등급|등급|new|hot|best|ad|sale|free|tip|n빵)",
+    re.I,
+)
+
+
+def _label_is_action(label: Optional[str]) -> bool:
+    """라벨이 동작/CTA 의미인가 (버튼 신호)."""
+    return bool(label) and bool(_ACTION_LABEL_RE.search(label.strip()))
+
+
+def _label_is_badge_word(label: Optional[str]) -> bool:
+    """라벨이 상태/카테고리/카운트인가 (배지 신호)."""
+    if not label:
+        return False
+    ll = label.strip().lower()
+    if any(w.lower() in ll for w in _STATUS_WORDS):
+        return True
+    return bool(_BADGE_LABEL_RE.search(label.strip()))
+
+
+def _is_list_item_context(parent: Optional[dict]) -> bool:
+    """부모가 리스트 행/아이템/카드 헤더처럼 보이는가 — leading 소형 요소를
+    badge 로 판정하기 위한 위치 신호. parent 없으면 False (보수적)."""
+    if not isinstance(parent, dict):
+        return False
+    pn = (parent.get("name") or "").lower()
+    if any(k in pn for k in ("list", "item", "row", "card", "cell", "header",
+                             "리스트", "아이템", "행", "카드", "헤더", "셀")):
+        return True
+    # HORIZONTAL parent with a text sibling (title) next to the small pill → list-row-like
+    al = parent.get("autoLayout") or {}
+    mode = (al.get("layoutMode") or parent.get("layoutMode") or "").upper()
+    kids = parent.get("children") or parent.get("_originalChildren") or []
+    if mode == "HORIZONTAL" and len(kids) >= 2:
+        has_text_sibling = any((c.get("type") or "").lower() == "text" for c in kids)
+        return has_text_sibling
+    return False
+
+
+def _is_leading_small(node: dict, parent: Optional[dict]) -> bool:
+    """node 가 부모의 leading(첫) 자식이면서 작은가 — 리스트 상단 badge 전형."""
+    if not isinstance(parent, dict):
+        return False
+    kids = parent.get("children") or parent.get("_originalChildren") or []
+    if not kids or kids[0] is not node:
+        return False
+    h = node.get("height")
+    if isinstance(h, (int, float)) and h > 32:
+        return False
+    return True
+
+
 def _layout_mode(node: dict) -> str:
     al = node.get("autoLayout") or {}
     return (al.get("layoutMode") or node.get("layoutMode") or "").upper()
@@ -395,7 +486,7 @@ def _is_label_only_children(node: dict) -> Optional[str]:
     return label
 
 
-def detect_button_shape(node: dict) -> Optional[Tuple[str, str, str]]:
+def detect_button_shape(node: dict, parent: Optional[dict] = None) -> Optional[Tuple[str, str, str]]:
     """Detect a CTA-button-shaped frame. Returns (role, componentKey, labelText)
     or None.
 
@@ -403,6 +494,11 @@ def detect_button_shape(node: dict) -> Optional[Tuple[str, str, str]]:
     (label, optionally + arrow), has a cornerRadius, horizontal padding, and a
     HORIZONTAL auto-layout. Width/height not required (FILL buttons have no
     explicit size in the blueprint).
+
+    Function-role gate (2026-06-01): a rectangular pill is only a BUTTON if it
+    *acts* like one — a verb/CTA label or a button-named frame. A non-action,
+    short, small, or list-leading pill is a BADGE and is deferred to
+    detect_badge_shape. `parent` (optional) enables the list-position signal.
     """
     if not isinstance(node, dict):
         return None
@@ -422,9 +518,11 @@ def detect_button_shape(node: dict) -> Optional[Tuple[str, str, str]]:
     label = _is_label_only_children(node)
     if not label:
         return None
-    # status word label (성공/실패/완료/미납 …) → 버튼 아님, badge 로 양보 (2026-05-28)
+    # status word label (성공/실패/완료/미납 …) → 버튼 아님, badge 로 양보 (2026-05-28).
+    # 단, 액션 라벨(참여하기·완료하기 — '참여'/'완료' 가 status word 와 부분일치)은
+    # 버튼이므로 양보하지 않는다 (2026-06-01).
     ll = label.strip().lower()
-    if any(w.lower() in ll for w in _STATUS_WORDS):
+    if (not _label_is_action(label)) and any(w.lower() in ll for w in _STATUS_WORDS):
         return None
     if _corner_radius(node) < 6:
         return None
@@ -455,6 +553,24 @@ def detect_button_shape(node: dict) -> Optional[Tuple[str, str, str]]:
     if (label and len(label) <= 6 and vp <= 6
             and (not isinstance(node.get("width"), (int, float)) or node.get("width") < 96)):
         return None
+    # ── FUNCTION-ROLE gate — distinguish action-button from status-badge by
+    #    ROLE, not rectangular shape alone (2026-06-01). A button must *act*:
+    #    named CTA/Btn/Submit OR a verb/action label. Otherwise, a short pill
+    #    that is small / lightly-padded / a known badge word / a leading item
+    #    in a list row is a BADGE → defer to detect_badge_shape.
+    nm_l = (node.get("name") or "").lower()
+    is_button_named = (nm_l.endswith("btn") or nm_l.endswith("button")
+                       or nm_l.startswith("cta ") or " cta" in f" {nm_l}"
+                       or "submit" in nm_l or "primary cta" in nm_l)
+    if not is_button_named and not _label_is_action(label):
+        h_val = node.get("height")
+        short = bool(label) and len(label) <= 10
+        small_h = isinstance(h_val, (int, float)) and h_val <= 32
+        light_pad = vp <= 10
+        if (_label_is_badge_word(label)
+                or _is_leading_small(node, parent)
+                or (short and (small_h or light_pad))):
+            return None  # role = badge, not button → let detect_badge_shape claim it
     # pick the Hierarchy variant by the raw frame's fill / stroke
     role = _button_hierarchy_role(node)
     key = COMPONENT_KEYS[role]
@@ -576,13 +692,25 @@ def detect_badge_shape(node: dict) -> Optional[Tuple[str, str, str]]:
     label = _is_label_only_children(node)
     if not label or len(label) > 12:
         return None
-    if _corner_radius(node) < 4:
+    cr = _corner_radius(node)
+    # circular bare-number / single-initial marker = AVATAR or step indicator,
+    # NOT a status badge (2026-06-01). A fully-round chip holding only a number
+    # (도토리 번호 / 회차 step / 내 수령 표식) is an identity marker — leave it
+    # raw. Real count badges ("13회"·"+6") have a unit or sign and survive.
+    w = node.get("width")
+    is_circle = cr >= 12 and (not isinstance(w, (int, float)) or cr >= float(w) * 0.4)
+    if is_circle and re.fullmatch(r"\d{1,3}|[A-Za-z가-힣]", label.strip()):
+        return None
+    # cornerRadius: pills are rounded, but rectangular TAGS are squared-off
+    # (2026-06-01). Accept low/zero radius when the label/name *says* badge.
+    badge_worded = _label_is_badge_word(label) or _name_hints(node, "badge", "뱃지", "배지", "태그", "chip", " tag")
+    if cr < 4 and not badge_worded:
         return None
     h = node.get("height")
     w = node.get("width")
-    if isinstance(h, (int, float)) and h > 30:
+    if isinstance(h, (int, float)) and h > 32:   # was 30 — allow rectangular list-top tags
         return None
-    if isinstance(w, (int, float)) and w > 140:
+    if isinstance(w, (int, float)) and w > 160:  # was 140 — allow a slightly wider category tag
         return None
     # must have *some* fill (a transparent text-only row isn't a badge)
     if not (node.get("fill") or node.get("fills")):
@@ -797,7 +925,7 @@ def _has_distinctive_shape(node: dict, role: str) -> bool:
     return False
 
 
-def detect_ds_role_structural(node: dict):
+def detect_ds_role_structural(node: dict, parent: Optional[dict] = None):
     """Unified structural DS detector. Returns (role, componentKey,
     instanceText, confident) or None.
 
@@ -805,40 +933,51 @@ def detect_ds_role_structural(node: dict):
       confident=False ⇒ R23 emits a WARN (component-shaped raw frame) but
                         leaves it as-is.
 
-    Priority: button → badge/tag → input → dropdown → toggle → checkbox →
-    radio → slider → progress. Buttons are always confident (verified key,
-    strict shape). For everything else: confident only if the role's key is
-    verified (_VERIFIED_AUTOSWAP_ROLES) AND the node has the role's
-    distinctive shape — name hints alone are never enough to auto-swap.
+    Priority: badge/tag (role-confirmed) → button → avatar → input → dropdown →
+    toggle → checkbox → radio → slider → progress.
+
+    2026-06-01 — badge/button disambiguation is ROLE-based, not shape-only:
+    a rectangular pill whose label is a status/category/count (or that sits as
+    a small leading item in a list row) is a BADGE even if it is rectangular.
+    `parent` (optional) supplies the list-position signal. detect_button_shape
+    defers such pills, so checking badge first is belt-and-suspenders.
+    Buttons stay always-confident (verified key); other roles need a verified
+    key + distinctive shape.
     """
     if not isinstance(node, dict):
         return None
-    # 1) button — DETECTED but NOT auto-swapped (2026-05-12). The DS
-    #    "Buttons/Button" instance doesn't drop in cleanly: collapses to ~1px
-    #    in a shared HORIZONTAL row, overflows its container, keeps leading/
-    #    trailing icon slots the instanceProperties override doesn't reliably
-    #    turn off. Until a dedicated post-fix DS-button sizing/icon pass
-    #    exists, buttons stay raw styled frames (render fine) + WARN.
-    b = detect_button_shape(node)
-    if b:
-        # 2026-05-28 — 버튼 auto-swap 활성화 (사용자: "제일 중요한 컴포넌트는 버튼").
-        # 이전엔 confident=False (DS 버튼이 row 에서 1px 붕괴) → post-fix
-        # _enforce_ds_button_sizing 이 sizing/icon 을 라이브 교정하므로 이제 swap.
-        return (b[0], b[1], b[2], True)
-    # 1.5) avatar — confident auto-swap (2026-05-28). person/user icon 든 원형
-    #      프로필. badge 검출보다 먼저 — user circle 이 badge 로 오인 안 되게.
-    av = detect_avatar_shape(node)
-    if av:
-        return (av[0], av[1], av[2], True)
-    # 2) badge / tag — confident (auto-swap) if the name says so OR the label
-    #    is a known short status word ("미납 1" / "완료" / "진행중" …): those
-    #    tiny pills ARE badges by definition. (User: "미납1 은 badge로 표현.")
+    # 0) badge / tag — checked FIRST when the ROLE is unambiguous (label is a
+    #    status/category/count word, the name says badge/tag, or it is a small
+    #    leading pill in a list row). This stops rectangular status badges from
+    #    being mis-detected as buttons (2026-06-01 사용자 분노: 리스트 상단 badge
+    #    가 button 으로 잡힘).
     bd = detect_badge_shape(node)
     if bd:
         ll = (bd[2] or "").strip().lower()
         is_status = any(w.lower() in ll for w in _STATUS_WORDS)
-        confident = is_status or _name_hints(node, "badge", "뱃지", "배지", "태그", "chip", " tag")
-        return (bd[0], bd[1], bd[2], confident)
+        role_badge = (is_status or _label_is_badge_word(bd[2])
+                      or _name_hints(node, "badge", "뱃지", "배지", "태그", "chip", " tag")
+                      or _is_leading_small(node, parent))
+        # A clear action label means it is actually a button, not a badge —
+        # do not claim it here; fall through to the button detector.
+        if role_badge and not _label_is_action(bd[2]):
+            return (bd[0], bd[1], bd[2], True)
+    # 1) button — DETECTED and auto-swapped. detect_button_shape now defers
+    #    non-action / badge-tier pills (function-role gate), so what reaches
+    #    here is a genuine action/CTA.
+    b = detect_button_shape(node, parent)
+    if b:
+        # 2026-05-28 — 버튼 auto-swap 활성화 (사용자: "제일 중요한 컴포넌트는 버튼").
+        # post-fix _enforce_ds_button_sizing 이 sizing/icon 을 라이브 교정.
+        return (b[0], b[1], b[2], True)
+    # 1.5) avatar — confident auto-swap (2026-05-28). person/user icon 든 원형 프로필.
+    av = detect_avatar_shape(node)
+    if av:
+        return (av[0], av[1], av[2], True)
+    # 2) badge / tag — shape-detected but role NOT confirmed above → WARN only
+    #    (surfaces the gap without forcing a possibly-wrong badge instance).
+    if bd and not _label_is_action(bd[2]):
+        return (bd[0], bd[1], bd[2], False)
     # 3) form controls
     for det in (detect_input_shape, detect_dropdown_shape, detect_toggle_shape,
                 detect_checkbox_shape, detect_radio_shape, detect_slider_shape,
