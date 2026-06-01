@@ -8,7 +8,9 @@
 - 별도 승인 요청 없이 바로 실행할 것
 
 ## 프로젝트 개요
-AI 기반 Figma 디자인 생성 데스크톱 앱: Electron + React + Anthropic SDK
+AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Code CLI 기반 — Electron/React 앱이 아니다.**
+흐름: 터미널 **Claude Code CLI** → Python 클라이언트(`scripts/figma_mcp_client.py`) → Node **브리지**(WS 8767 + HTTP MCP 8769) → **Figma 플러그인**(Figma 데스크톱 앱 *안에서* 실행) → Figma 파일.
+(레포에 `electron`/`vite` 의존성·`dev`/`start` 스크립트 없음. `package.json`의 `main`은 `out/bridge/index.js`.)
 
 ## ⚠️ "디자인 생성 준비" 자동 트리거 (새 사용자 — Windows / macOS)
 
@@ -93,37 +95,42 @@ AI 기반 Figma 디자인 생성 데스크톱 앱: Electron + React + Anthropic 
 
 ## 빌드 & 실행
 ```bash
-npm run dev     # 빌드 + electron 실행
-npm run build   # tsup + vite 빌드만
-npm start       # electron . (이미 빌드된 상태에서)
+npm run build   # tsup → out/ (bridge + yoga-cli, CJS). Vite/Electron 빌드 없음
+npm run bridge  # 브리지 기동: WS 8767 + HTTP MCP 8769 (Node, Electron 없음)
+npm test        # vitest
 ```
+- 실제 디자인 생성은 **터미널 Claude Code CLI에서** `scripts/figma_mcp_client.py`를 호출해 진행한다(브리지가 떠 있어야 함).
+- Figma 데스크톱에서 **"Figma Design Agent"** 플러그인을 실행해야 브리지와 연결된다(유일한 수동 단계).
 
-## 아키텍처
-- **Main Process** (`src/main/`): Agent orchestrator (Claude Sonnet 4), FigmaWSServer (port 8767), 58+ 내장 MCP 도구, 4개 DS 조회 도구, 스트리밍 파서
-- **Renderer** (`src/renderer/`): React 19, ChatPanel, AgentStatus, FigmaConnection, useAgent hook
-- **Preload** (`src/preload/`): Context bridge (IPC 보안 통신)
-- **Shared** (`src/shared/`): 타입 정의, IPC 채널 상수, DS 데이터 로더
-- **Build**: tsup (main+preload → CJS) + Vite (renderer), ws/sharp external
+## 아키텍처 (실제 런타임 — Electron 아님)
+- **진입점**: 터미널 **Claude Code CLI** — 사용자 요청 입력 + AI 오케스트레이션(요구사항 해석)을 직접 수행
+- **Python 클라이언트** (`scripts/figma_mcp_client.py`): 빌드 파이프라인/규칙 엔진. Claude가 Bash로 호출 (검증·조립·post-fix·자가검증)
+- **브리지** (`src/bridge/index.ts` → `out/bridge/index.js`): Node 프로세스, **Electron 의존성 없음**. WS 8767(플러그인 ↔) + HTTP MCP 8769(클라이언트 ↔) 동시 기동
+- **빌드 로직** (`src/main/`): FigmaWSServer, 58+ 내장 MCP 도구(figma-mcp-embedded), 4개 DS 조회 도구(ds-lookup-tools), MCP HTTP 서버(mcp-http-server), Yoga 레이아웃 시뮬레이터
+- **공유** (`src/shared/`): 타입 정의, DS 데이터 로더
+- **플러그인** (`src/figma-plugin/`): `code.js` — **Figma 데스크톱 앱 안에서** 실행, 브리지에 WS(`ws://localhost:8767`)로 연결
+- **Build**: tsup (CJS, node18 타겟), `ws`/`yoga-layout` external. **Vite/renderer·Electron 빌드 없음**
 
 ## 주요 파일
 | 파일 | 역할 |
 |------|------|
-| `src/main/index.ts` | Electron 메인 프로세스 진입점, IPC 핸들러 |
-| `src/main/agent-orchestrator.ts` | Claude API 기반 에이전트 오케스트레이터 |
+| `scripts/figma_mcp_client.py` | 디자인 빌드 파이프라인 진입점 (CLI에서 호출) — 검증·조립·post-fix·자가검증 |
+| `src/bridge/index.ts` | 브리지 진입점 (Node) — WS 8767 + HTTP MCP 8769 기동, Electron 없음 |
 | `src/main/figma-ws-server.ts` | Figma 플러그인 WebSocket 서버 (8767) |
+| `src/main/mcp-http-server.ts` | HTTP MCP 서버 (8769) — Python 클라이언트가 접속 |
 | `src/main/figma-mcp-embedded.ts` | 58+ Figma MCP 도구 레지스트리 |
 | `src/main/ds-lookup-tools.ts` | 디자인 시스템 조회 도구 4종 |
-| `src/shared/types.ts` | 공유 타입 및 IPC 채널 상수 |
-| `src/preload/index.ts` | Context bridge (electronAPI 노출) |
-| `src/renderer/App.tsx` | 루트 React 컴포넌트 |
-| `src/renderer/hooks/useAgent.ts` | 에이전트 상태 관리 훅 |
-| `src/renderer/components/FigmaConnection.tsx` | Figma 연결 상태 UI |
+| `src/main/yoga-simulator.ts` | Yoga 기반 레이아웃 시뮬레이터 |
+| `src/shared/ds-data.ts` | DS 데이터 로더 (토큰/컴포넌트 동기화) |
+| `src/shared/types.ts` | 공유 타입 정의 |
+| `src/figma-plugin/code.js` | Figma 플러그인 "Figma Design Agent" — Figma 데스크톱 내 실행 |
+| `src/figma-plugin/manifest.json` | 플러그인 매니페스트 (id, WS 8767 dev 허용) |
 
 ## Plugin & Build
-- Plugin code: `src/claude_mcp_plugin/code.js` (plain JS, Figma sandbox — no optional chaining `?.`)
-- MCP server: TypeScript, built by `tsup` via `npm run build`
-- `npm run build` → out/ (main/preload/bridge = CJS, renderer = Vite 번들)
-- 배포용 앱 패키지: `npm run package` (electron-builder)
+- Plugin code: `src/figma-plugin/code.js` (plain JS, Figma sandbox — no optional chaining `?.`). Figma 데스크톱에서 "Figma Design Agent" 플러그인으로 실행
+- 브리지/도구: TypeScript, `tsup`으로 빌드 (`npm run build`)
+- `npm run build` → `out/` (bridge + yoga-cli = CJS). **Vite/renderer 번들·Electron 패키징 없음**
+- 배포/납품: 레포 클론 → `setup-mac.sh`/`setup-windows.ps1` → `npm run bridge` → Figma에서 플러그인 실행 (별도 앱 패키징 없음)
 
 ### Git Commit & Push 규칙
 - `src/` 코드 변경이 포함된 커밋은 **`npm run build`로 빌드 검증 후** 커밋 (docs/ds/scripts만 변경 시 생략 가능)
@@ -163,6 +170,102 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 ---
 
 ## 디자인 생성 필수 규칙
+
+> 🔴 **절대 규칙 0-J — 2-tab 이상 텍스트 탭 nav 는 DS Horizontal Tabs 인스턴스 강제 (2026-06-01 사용자 룰)**
+>
+> 사용자 명시: *"'거래현황', '누적거래' 2 tabs가 있는데 tabs component가 사용되지 않았다.
+> 왜 사용하지 않았는지 원인을 찾고 재발하지 않도록 문제 수정해. 새 세션에서 생성했을때
+> 또 지금과 같은 컴포넌트를 사용하지 않는 일이 없어야 된다."*
+>
+> **금지:** "Mode Tabs Wrap" / "Section Tabs" / "Top Tabs" / "Page Tabs" / "Underline Tabs"
+> 등 이름의 HORIZONTAL frame 안에 raw tab cell frame 들을 직접 그리는 것. (e.g. 자식
+> "Mode Tab Active" + "Mode Tab Inactive" 각각이 TEXT 만 들어있는 frame)
+>
+> **올바른 방법:** blueprint 에 처음부터 `type: "instance"` + DS Horizontal Tabs 컴포넌트
+> 키를 박는다. Underline variant 가 project canonical.
+>
+> ```json
+> {
+>   "name": "Mode Tabs Wrap",
+>   "type": "instance",
+>   "componentKey": "6b613d270ba98d67c4a8d210721f332ab53fac0d",  // Underline sm Mobile
+>   "_tabLabels": ["거래 현황", "누적 거래"],
+>   "_tabActiveIndex": 0
+> }
+> ```
+>
+> **DS Horizontal Tabs 키 (setKey f11bda3cf5430bdb7052591a5beead9d5abdf093):**
+> | Variant | 컴포넌트 키 |
+> |---------|------------|
+> | Underline sm Mobile (default) | `6b613d270ba98d67c4a8d210721f332ab53fac0d` |
+> | Underline md Mobile | `3d2c0c82adc08b47904314fc1ce041efaf45d305` |
+> | Underline sm Mobile Full=True | `9b76638ee31a8aa32e2be0b7030d4d4d03341453` |
+> | Underline md Mobile Full=True | `e1bbacea93585cdafe0fdd348d28717d8d2f173b` |
+>
+> **시스템 강제 (4중 방어, 자동):**
+> 1. `scripts/design_rules/R60_tabs_ds_instance.py`
+>    - **L2 lint**: raw tab nav frame 발견 시 WARN
+>    - **L3 inject**: 빌드 직전 자동 swap — `type: frame` → `instance`, componentKey 박기,
+>      라벨/active idx 메타 저장, raw children → `_originalChildren` 보존
+>    - **L4 post-fix**: 빌드된 instance 의 내부 TEXT 노드 findAll + 라벨 순서대로
+>      `set_text_content` 호출 (텍스트 매핑 자동화)
+>    - **L5 verify**: built tree 의 tab nav wrapper 가 INSTANCE 가 아니면 ERROR
+> 2. `scripts/design_rules/ds_catalog.py` 의 COMPONENT_KEYS 에 6종 variant + 4종 alias
+>    ("Mode Tabs", "Mode Tabs Wrap", "Section Tabs", "Top Tabs") 등록 — resolve_component_key 자동 매칭
+>
+> **빌드 후 검증:** 빌드 로그에 `[inject R60] Mode Tabs raw frame → DS Horizontal Tabs
+> instance: N건` + `R60 Tabs instance: '<name>' 라벨 N개 매핑` 라인이 보이면 자동 처리 성공.
+> 스크린샷에서 탭 영역이 DS Underline tabs 스타일로 표시되어야 한다.
+
+> 🔴 **절대 규칙 0-I — 섹션 타이틀 텍스트는 항상 좌측 정렬 (2026-06-01 사용자 룰)**
+>
+> 사용자 명시: *"다른 섹션들은 그렇게 되어 있는데 왜 이것만 중앙으로 배치했는지 이해가
+> 되지 않는다."* — 섹션 헤더/타이틀 텍스트(예: "이번 달 일정", "추천 스테이지",
+> "거래 스케줄", "추천 상품")는 **모두 좌측 정렬**(`textAlignHorizontal: LEFT` 또는
+> 미명시=기본 LEFT)이어야 한다.
+>
+> **중앙 정렬을 만드는 두 패턴 (둘 다 금지):**
+> 1. **TEXT 노드에 `textAlignHorizontal: "CENTER"` 직접 박힘** — blueprint 작성 실수.
+> 2. **`primaryAxisAlignItems: SPACE_BETWEEN` + 자식 1개** — Figma 가 단일 자식을
+>    row 정중앙에 배치한다. 다른 Title Row 들이 우측에 CTA("전체 보기" / 예치금 라벨)를
+>    가진 것과 일관성 위해 자식 1개일 땐 `MIN`(=시작 정렬) 사용.
+>
+> **시스템 강제 (자동, 3중 방어):**
+> 1. `scripts/design_rules/R59_section_title_left_align.py`
+>    - **L2 lint**: blueprint 사전 검증 — CENTER align 또는 SPACE_BETWEEN+single-child 시 WARN
+>    - **L3 inject**: 빌드 직전 blueprint 자동 교정 (CENTER→LEFT, SPACE_BETWEEN→MIN)
+>    - **L4 post-fix**: 빌드 후 실제 노드에 `set_text_align(LEFT)` / `set_auto_layout(MIN)` 자동 호출
+>    - **L5 verify**: 빌드 후 검증 — 여전히 위반이면 WARN
+> 2. `scripts/design_rules/__init__.py` 의 자동 import — R59 자동 등록
+>
+> **스코프 — 섹션 타이틀로 인식되는 패턴:**
+> - TEXT 노드 name 이 `title`/`header`/`section-title` 포함 (예: `Day Strip Title`, `rec-title`, `lounge-title`)
+> - 또는 부모 frame name 이 `Title Row`/`Header Row` 패턴 (예: `Recommend Title Row`)
+>
+> **빌드 후 검증:** 빌드 로그에서 `R59 inject:` 또는 `R59 section-title:` 라인이
+> 보이면 자동 교정 성공. 스크린샷에서 모든 섹션 타이틀이 좌측 정렬되어야 한다.
+
+> 🔴 **절대 규칙 0-H — 새 root frame 은 기존 화면 우측 빈 공간에 자동 배치 (2026-06-01 사용자 룰)**
+>
+> `batch_build_screen` 은 새로 만든 root frame 을 항상 **(0,0) 에 박는다.** 같은 페이지에
+> 이미 화면이 있으면 **정확히 겹쳐서** 사용자가 결과를 구분할 수 없다. 절대 금지.
+>
+> **시스템 강제 (자동):**
+> - `figma_mcp_client.py cmd_build` Step D.5 → `_position_new_root_to_right(root_id, gap=200)`
+>   - batch_build_screen 직후, post-fix 전에 호출
+>   - `get_document_info` 로 currentPage children + bounds 수집 → 다른 children(자기 자신 제외)
+>     의 `maxRight = max(x + width)` 계산 → 새 root 를 `(maxRight + 200, 0)` 으로
+>     `move_node` 자동 호출
+>   - 페이지가 비었거나 bounds 정보가 부족하면 silent — (0,0) 유지 (첫 화면이라 OK)
+> - `src/figma-plugin/code.js getDocumentInfo()` 는 children 매핑에 `x/y/width/height`
+>   포함해 리턴 — 이 룰의 전제 조건. 제거하면 자동 배치가 silent fail 함.
+>
+> **빌드 후 검증:** 빌드 로그에 `[auto-position] ✓ 새 root → x=<N>, y=0` 라인이 보이면
+> 자동 배치 성공. 없으면 페이지에 다른 화면이 없는 첫 빌드라 (0,0) 유지된 것 (OK).
+>
+> **수동 호출 (예: batch_build_screen 직접 호출 시):** 그 후 즉시
+> `move_node({"nodeId": <root>, "x": maxRight + 200, "y": 0})` 호출 — Claude 가 수동
+> 빌드 후에도 이 룰을 반드시 적용해야 한다.
 
 > 🔴 **절대 규칙 0-G — references/uibowl REFERENCE READ 강제 (2026-05-28 사용자: "레퍼런스 이미지 검색은 하냐?")**
 >
