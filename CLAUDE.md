@@ -46,6 +46,17 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
    ⚠️ 플러그인 이름은 정확히 **"Figma Design Agent"** — "Claude MCP" 등 다른 이름으로 부르지 말 것.
 5. **완료 보고** — 준비 완료를 알리고, 디자인할 화면의 PRD/요구사항을 요청한다.
 
+> 🧹 **오래된 산출물 자동 정리 (생성 7일 경과 → 삭제)** — 1단계 setup 스크립트의
+> **마지막 프로세스**로 `scripts/cleanup_old_blueprints.py` 가 자동 실행돼, 생성 **7일**
+> 지난 blueprint(`scripts/blueprint_*.json`)·빌드 산출물(`json/*.json`)·QA 스크린샷
+> (`scripts/qa_screenshots/`)·레퍼런스 썸네일(`scripts/ref_thumbnails/`)을 삭제한다.
+> blueprint·산출물이 무한 누적되는 문제 방지. 기준은 파일 mtime(생성 후 미수정이라 ≈ 생성일).
+> **보존**: `blueprint_templates.json`·`blueprint_unified_imin_home.json`(소스 템플릿),
+> `gen_*.py`·`spec_*.json`·`wireframe_content_*.json`(패턴 밖이라 애초에 미대상),
+> **PRD 입력 파일 `json/*PRD*.json`**(이름에 `PRD` 포함 시 삭제·추적 제외 모두 스킵 — 사용자 소스).
+> 이 산출물들은 `.gitignore` 로 git 추적도 제외된다 — 레포엔 소스만 남는다.
+> 수동 실행: `python3 scripts/cleanup_old_blueprints.py` (확인만: `--dry-run`, TTL 변경: `TTL_DAYS=14`).
+
 ### 멈춰서 사용자에게 보고해도 되는 경우 (이때만)
 - **Windows**: winget 자체가 없음 → Microsoft Store "앱 설치 관리자"(App Installer) 설치 안내
 - **macOS**: Homebrew 자동 설치가 sudo 비밀번호 입력 실패로 종료 → 사용자에게 Homebrew
@@ -61,6 +72,7 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
 5. **npm 의존성** — `.npmrc`의 `legacy-peer-deps=true` (zod peer 충돌 회피)
 6. **sharp 네이티브 모듈** — `@img/sharp-win32-x64` 플랫폼 패키지
 7. **빌드** — `npm run build` → `out/`
+8. **오래된 산출물 정리** (마지막 프로세스) — `scripts/cleanup_old_blueprints.py` 실행: 생성 **7일 경과** blueprint·빌드 산출물(json/QA/썸네일) 자동 삭제 (소스 템플릿·gen/spec/wireframe_content 보존)
 
 > npm이 이미 있으면 `npm run setup:windows`로도 실행 가능.
 
@@ -74,6 +86,7 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
 6. **sharp 네이티브 모듈** — Apple Silicon은 `@img/sharp-darwin-arm64`, Intel은 `darwin-x64`
    (`uname -m`으로 자동 판단)
 7. **빌드** — `npm run build` → `out/`
+8. **오래된 산출물 정리** (마지막 프로세스) — `scripts/cleanup_old_blueprints.py` 실행: 생성 **7일 경과** blueprint·빌드 산출물(json/QA/썸네일) 자동 삭제 (소스 템플릿·gen/spec/wireframe_content 보존)
 
 > npm이 이미 있으면 `npm run setup:mac`으로도 실행 가능.
 

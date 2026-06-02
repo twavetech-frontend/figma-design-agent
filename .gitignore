@@ -15,9 +15,16 @@ ds/.icon-cache/
 
 # 세션 임시 파일
 scripts/.mcp_session
-# 디자인 빌드 중간 산출물 (MEMORY 삭제 규칙)
-scripts/blueprint_assembled_*.json
+# 디자인 빌드 산출물 (생성 7일 경과 시 cleanup_old_blueprints.py 자동 삭제 + git 추적 제외).
+# 소스(gen_*.py / spec_*.json / wireframe_content_*.json)와 아래 템플릿 2종만 레포에 보관.
+scripts/blueprint_*.json
+!scripts/blueprint_templates.json
+!scripts/blueprint_unified_imin_home.json
 scripts/config_imin_*.json
+json/*.json
+!json/*PRD*.json
+scripts/qa_screenshots/
+scripts/ref_thumbnails/
 
 # Claude Code 로컬 세션·설정
 .claude/projects/

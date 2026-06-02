@@ -190,6 +190,11 @@ try {
   Write-Step '7/7 프로젝트 빌드'
   Invoke-Npm @('run', 'build')
   Write-Ok '빌드 완료 → out/'
+
+  # ── 마지막 프로세스: 오래된 산출물 자동 정리 (생성 7일 경과 → 삭제) ──
+  Write-Step '오래된 산출물 정리 (생성 7일 경과 blueprint·QA·썸네일 자동 삭제)'
+  try { & $python (Join-Path $PSScriptRoot 'cleanup_old_blueprints.py') } catch { Write-Host "  (정리 건너뜀: $_)" -ForegroundColor Yellow }
+  Write-Ok '오래된 산출물 정리 완료'
 } finally {
   Pop-Location
 }
