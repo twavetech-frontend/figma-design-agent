@@ -48,8 +48,11 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
 
 > 🧹 **오래된 산출물 자동 정리 (생성 7일 경과 → 삭제)** — 1단계 setup 스크립트의
 > **마지막 프로세스**로 `scripts/cleanup_old_blueprints.py` 가 자동 실행돼, 생성 **7일**
-> 지난 blueprint(`scripts/blueprint_*.json`)·빌드 산출물(`json/*.json`)·QA 스크린샷
-> (`scripts/qa_screenshots/`)·레퍼런스 썸네일(`scripts/ref_thumbnails/`)을 삭제한다.
+> 지난 blueprint(`scripts/blueprint_*.json`)·**디자인별 일회성 생성기(`scripts/gen_*.py`)**·
+> 빌드 산출물(`json/*.json`)·QA 스크린샷(`scripts/qa_screenshots/`)·레퍼런스
+> 썸네일(`scripts/ref_thumbnails/`)을 삭제한다.
+> ⚠️ **`gen_frontend_spec.py` 는 예외(보존)** — gen_ 접두사지만 일회성이 아니라
+> `figma_mcp_client.py` 가 매 빌드(Step F)에서 호출하는 공용 유틸리티다.
 > blueprint·산출물이 무한 누적되는 문제 방지. 기준은 파일 mtime(생성 후 미수정이라 ≈ 생성일).
 > **보존**: `blueprint_templates.json`·`blueprint_unified_imin_home.json`(소스 템플릿),
 > `gen_*.py`·`spec_*.json`·`wireframe_content_*.json`(패턴 밖이라 애초에 미대상),

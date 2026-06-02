@@ -20,6 +20,8 @@ scripts/.mcp_session
 scripts/blueprint_*.json
 !scripts/blueprint_templates.json
 !scripts/blueprint_unified_imin_home.json
+scripts/gen_*.py
+!scripts/gen_frontend_spec.py
 scripts/config_imin_*.json
 json/*.json
 !json/*PRD*.json

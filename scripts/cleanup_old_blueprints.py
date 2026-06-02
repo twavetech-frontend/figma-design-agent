@@ -32,11 +32,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEEP = {
     "blueprint_templates.json",
     "blueprint_unified_imin_home.json",
+    # ⚠️ gen_frontend_spec.py 는 gen_ 접두사지만 일회성이 아니라 공용 유틸리티 —
+    # figma_mcp_client.py 가 매 빌드(Step F)에서 frontend spec 추출에 subprocess
+    # 로 호출한다. 삭제하면 빌드의 spec 추출이 깨진다. 절대 보존.
+    "gen_frontend_spec.py",
 }
 
 # 7일 경과 시 삭제 대상 (재생성 가능한 산출물)
 TARGETS = [
     "scripts/blueprint_*.json",   # 디자인 blueprint (gen 스크립트/와이어에서 재생성)
+    "scripts/gen_*.py",           # 디자인별 일회성 생성기 (매 디자인마다 새로 작성 — 규칙 0-B)
     "json/*.json",                # 빌드 frontend spec 산출물
     "scripts/ref_thumbnails/*",   # 레퍼런스 썸네일 (ref_search 재생성)
     "scripts/qa_screenshots/*",   # QA 스크린샷 (빌드 self-verify 재생성)
