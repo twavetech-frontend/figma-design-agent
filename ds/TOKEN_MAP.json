@@ -5742,26 +5742,6 @@
     "value": "#e0e0e0",
     "type": "COLOR"
   },
-  "--componentColors-components-buttons-buttonPrimaryIcon": {
-    "figmaPath": "Component colors/Components/Buttons/button-primary-icon",
-    "value": "#b685ff",
-    "type": "COLOR"
-  },
-  "--componentColors-components-buttons-buttonPrimaryIconHover": {
-    "figmaPath": "Component colors/Components/Buttons/button-primary-icon_hover",
-    "value": "#cfaeff",
-    "type": "COLOR"
-  },
-  "--componentColors-components-buttons-buttonDestructivePrimaryIcon": {
-    "figmaPath": "Component colors/Components/Buttons/button-destructive-primary-icon",
-    "value": "#fda29b",
-    "type": "COLOR"
-  },
-  "--componentColors-components-buttons-buttonDestructivePrimaryIconHover": {
-    "figmaPath": "Component colors/Components/Buttons/button-destructive-primary-icon_hover",
-    "value": "#fecdca",
-    "type": "COLOR"
-  },
   "--componentColors-alpha-alphaWhite90": {
     "figmaPath": "Component colors/Alpha/alpha-white-90",
     "value": "#ffffffe6",

@@ -375,7 +375,7 @@
 | Colors/Effects/Focus rings/focus-ring | #7700ff | `--colors-effects-focusRings-focusRing` |
 | Colors/Effects/Focus rings/focus-ring-error | #f04438 | `--colors-effects-focusRings-focusRingError` |
 
-### Component Colors (165 tokens)
+### Component Colors (161 tokens)
 
 | Token | Value | CSS Variable |
 |-------|-------|-------------|
@@ -518,10 +518,6 @@
 | Component colors/Components/Toggles/toggle-slim-border_pressed | #7700ff | `--componentColors-components-toggles-toggleSlimBorderPressed` |
 | Component colors/Components/Toggles/toggle-slim-border_pressed-hover | #6a00e0 | `--componentColors-components-toggles-toggleSlimBorderPressedHover` |
 | Component colors/Components/Avatars/avatar-styles-bg-neutral | #e0e0e0 | `--componentColors-components-avatars-avatarStylesBgNeutral` |
-| Component colors/Components/Buttons/button-primary-icon | #b685ff | `--componentColors-components-buttons-buttonPrimaryIcon` |
-| Component colors/Components/Buttons/button-primary-icon_hover | #cfaeff | `--componentColors-components-buttons-buttonPrimaryIconHover` |
-| Component colors/Components/Buttons/button-destructive-primary-icon | #fda29b | `--componentColors-components-buttons-buttonDestructivePrimaryIcon` |
-| Component colors/Components/Buttons/button-destructive-primary-icon_hover | #fecdca | `--componentColors-components-buttons-buttonDestructivePrimaryIconHover` |
 | Component colors/Alpha/alpha-white-90 | #ffffffe6 | `--componentColors-alpha-alphaWhite90` |
 | Component colors/Alpha/alpha-white-80 | #ffffffcc | `--componentColors-alpha-alphaWhite80` |
 | Component colors/Alpha/alpha-white-70 | #ffffffb3 | `--componentColors-alpha-alphaWhite70` |
