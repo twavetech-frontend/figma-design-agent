@@ -115,7 +115,7 @@
 - **NavBar 로고는 반드시 icons 페이지의 logo 컴포넌트(`64:1449`)를 인스턴스로 생성**해서 사용할 것
 - 텍스트 노드로 "imin" 로고를 직접 만들지 않는다
 - **`clone_node` 사용 금지** — 마스터 컴포넌트를 `clone_node`하면 마스터가 복제되어 의도치 않은 마스터 컴포넌트가 생김
-- 절차: `create_component_instance(componentKey="957912b03baf924a48ef83424ed66f22a4a386a8")` → `insert_child(parentId=navBarId, childId=인스턴스ID, index=0)` — NavBar의 첫 번째 자식으로 배치
+- 절차: `create_component_instance(componentKey="81efeddd245e95f31a2724aa370ee54d3caf93d0")` (Imin DS Logo, DS v7 957912b0 폐기 2026-06-02) → `insert_child(parentId=navBarId, childId=인스턴스ID, index=0)` — NavBar의 첫 번째 자식으로 배치
 
 ## 버튼/CTA 컴포넌트 인스턴스 필수
 - 버튼은 반드시 DS `Buttons/Button` 컴포넌트 인스턴스를 사용 — 프레임+텍스트로 수동 구성 금지
@@ -181,6 +181,7 @@
 ### 컬러 — 절제된 단일 액센트 + 폴리시 (2026-05-23 갱신)
 - **베이스는 뉴트럴 그레이** — 배경 `bg-primary`/`bg-secondary`/`bg-tertiary`, 텍스트 `fg-primary`/`fg-secondary`/`fg-tertiary`, 보더 `border-secondary`. 단, 완전 무채색 평면은 금지.
 - **브랜드 컬러 = 앱의 단일 일관 액센트** — 주 액션(CTA)·active 탭/네비·핵심 수치·중요 링크/아이콘 등 의도된 여러 지점에 일관 사용. 거부된 건 "여러 색 난무"이지 브랜드 컬러 자체가 아니다. 모든 카드·태그·통계에 무분별하게 까는 것만 금지.
+- **Aqua = 보조 액센트 (2026-06-02 사용자 룰, CLAUDE.md 2-J)** — 브랜드 단색만 쓰면 컬러감이 단조로우니 **Aqua를 보조 액센트로 의도된 지점에 절제 사용**(보조 아이콘+틴트 원형, 정보/팁 하이라이트, 보조 통계, 보조 인디케이터). 토큰: solid `$token(utility-aqua-500)` · 텍스트 `utility-aqua-700` · 틴트 `utility-aqua-50|100` (figmaPath `Component colors/Utility/Aqua/utility-aqua-{N}`; 없으면 동일값 `Colors/Aqua/{N}`로 자동 폴백). ⚠️ `utility-blue-*`는 파랑 — Aqua 아님. "여러 색 난무"는 여전히 금지(Aqua는 *하나의* 보조 액센트). `R26_second_accent.py`가 브랜드만 쓰고 Aqua 0곳이면 advisory WARN.
 - **피드백(상태) 컬러는 소량·차분하게** — 미납·완료·주의 등 진짜 상태 정보에만 success/warning/error 계열을 절제된 톤으로 소량. 장식·태그·통계 전반에 색을 까는 건 금지.
 - **폴리시 필수 (와이어프레임 탈피)** — 평평한 그레이 박스만 나열하면 와이어프레임처럼 보인다. 카드 그림자/elevation, 흰 카드 ↔ 연한 그레이 면의 도형-배경 대비, 강한 타이포 위계(히어로 수치 크게·Bold)로 "디자인된" 느낌을 만든다. `cmd_build`의 `_enforce_card_elevation`이 그림자 없는 카드에 자동으로 subtle shadow를 주입한다.
 

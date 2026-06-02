@@ -1562,7 +1562,7 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
 
     // ── 4. Emoji text → icon conversion ──
     if (isEmojiOnlyText(n)) {
-      const emoji = (n.text as string).trim();
+      const emoji = ((n.text ?? n.characters) as string).trim();
       const iconName = EMOJI_TO_ICON_MAP[emoji] || guessIconFromEmoji(emoji) || 'star-01';
       const tint = ICON_TINT_COLORS[tintColorIdx % ICON_TINT_COLORS.length];
       tintColorIdx++;
@@ -1576,6 +1576,7 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
           n.name = iconName;
           n.size = (n.fontSize as number) || 24;
           delete n.text;
+          delete n.characters;
           delete n.fontSize;
           delete n.fontWeight;
           delete n.fontFamily;
@@ -1588,6 +1589,7 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
         n.name = iconName;
         n.size = 24;
         delete n.text;
+        delete n.characters;
         delete n.fontSize;
         delete n.fontWeight;
         delete n.fontFamily;
@@ -1879,8 +1881,14 @@ function guessIconFromEmoji(_emoji: string): string | null {
 
 /** 이모지만 있는 텍스트인지 판별 */
 function isEmojiOnlyText(n: Record<string, unknown>): boolean {
-  if (n.type !== 'text' || !n.text) return false;
-  const text = (n.text as string).trim();
+  // 🔴 ROOT CAUSE FIX (2026-06-02): blueprint 텍스트 노드는 `characters` 필드를 쓰는데
+  // (plugin batch builder 는 `spec.text || spec.characters` 둘 다 받음), 이모지 변환기는
+  // 과거 `n.text` 만 읽어 `characters` 로 작성된 이모지(🔍 등)가 변환에서 누락 →
+  // 리터럴 이모지로 빌드되던 재발 버그. 이제 두 필드 모두 본다.
+  if (n.type !== 'text') return false;
+  const raw = (n.text ?? n.characters) as string | undefined;
+  if (!raw) return false;
+  const text = raw.trim();
   if (text.length === 0 || text.length > 10) return false;
   // \u26A0\uFE0F \p{Emoji}\uB294 \uC22B\uC790(0-9)\u00B7#\u00B7* \uB3C4 \uB9E4\uCE6D\uD55C\uB2E4 \u2014 \uAE00\uC790/\uC22B\uC790\uAC00 \uD558\uB098\uB77C\uB3C4 \uC788\uC73C\uBA74 \uC774\uBAA8\uC9C0 \uC544\uB2D8.
   // \uC774 \uAC00\uB4DC\uAC00 \uC5C6\uC73C\uBA74 "5" \uAC19\uC740 \uC22B\uC790 \uD14D\uC2A4\uD2B8(\uC2A4\uD14C\uD37C \uAC12 \uB4F1)\uAC00 \uC774\uBAA8\uC9C0\uB85C \uC624\uC778\uB418\uC5B4
@@ -2095,9 +2103,13 @@ function convertToIconBg(n: Record<string, unknown>, iconName: string, tintColor
     name: iconName,
     size: 24,
   }];
-  // Clean rectangle properties
+  // Clean rectangle / text properties
   delete n.stroke;
   delete n.strokeWeight;
+  delete n.text;
+  delete n.characters;
+  delete n.fontSize;
+  delete n.fontWeight;
 }
 
 function convertListItemIcon(listItem: Record<string, unknown>, colorIdx: number): void {

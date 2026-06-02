@@ -55,8 +55,10 @@ _K_BADGE_BRAND = _DS_KEYS.get("Badge sm Brand", "03b25488b460f514f23ddf39b5b42f7
 #     로 앞 N개 라벨 → use_figma 로 N 이후 탭 .visible=false + Badge .visible=false →
 #     bridge insert_child 로 Mode Tabs Wrap 에 삽입. (생성기는 placeholder instance 만 emit,
 #     trim/label 은 빌드 후 단계 — 메모리 [ds-mode-tabs-component] 참조)
-_K_HORIZONTAL_TABS_UNDERLINE = _DS_KEYS.get(
-    "Horizontal tabs Underline md", "129dd87af9f604fb62b926d66a8ccd773d63912f")
+# 🔴 2026-06-02 DS v7 → Imin DS: 기존 DS v7 "Horizontal tabs Underline"(129dd87, 모바일
+# 드롭다운 붕괴) 폐기 → Imin DS Segmented_control(Style=hug). 빌드 후 _configure_segmented_control
+# 가 _segLabels 마커로 세그먼트 개수·라벨(Label# prop)·선택(Active prop) 자동 설정.
+_K_SEGMENTED_CONTROL = "47a01673a46dc3bc9bfd62948c10e5fa9f2e5e78"
 # DS Action Button 의 leading/trailing icon BOOLEAN prop (기본 on → off 시켜야 텍스트만)
 _BTN_ICON_OFF = {"⬅️ Icon leading#3287:1577": False, "➡️ Icon trailing#3287:2338": False}
 
@@ -153,12 +155,12 @@ def _gen_nav_bar(data: dict, scenario: str) -> dict:
 
 
 def _gen_mode_tabs(data: dict, scenario: str) -> dict:
-    """top 모드 탭 = DS "Horizontal tabs" 컨테이너(Underline) 인스턴스.
+    """top 모드 탭 = Imin DS Segmented_control 인스턴스 (2026-06-02 DS v7 폐기).
 
-    2026-05-29 사용자: "이건 Tabs 컴포넌트를 써야 되는데 안 쓰고 있다" — 기존 raw frame +
-    RECTANGLE underline(v2) 폐기. 컨테이너 variant 인스턴스를 emit한다 (탭 10개 default).
-    빌드 후 단계가 앞 N개 라벨 set + 나머지 탭 hide 로 trim (위 _K_… 주석의 제약/절차 참조).
-    `_dsModeTabs` 마커에 라벨/active 를 실어 빌드 후 단계가 읽는다.
+    DS v7 "Horizontal tabs"(모바일 드롭다운 붕괴 + DS v7 의존) 폐기. Imin DS
+    Segmented_control(Style=hug)을 emit하고 `_segLabels` 마커를 단다. 빌드 후
+    `_configure_segmented_control` 가 세그먼트 개수(Show Segment#)·라벨(Label# prop)·
+    선택(Active prop)을 자동 설정한다 (nested 텍스트노드 id 가 아니라 prop 기반).
     """
     tabs = data.get("tabs") or ["거래 현황", "누적 거래"]
     active_idx = data.get("active", 0)
@@ -168,7 +170,6 @@ def _gen_mode_tabs(data: dict, scenario: str) -> dict:
         "layoutSizingHorizontal": "FILL",
         "fill": "$token(bg-primary)",
         "clipsContent": False,
-        "_dsModeTabs": {"labels": tabs, "active": active_idx},
         "autoLayout": {
             "layoutMode": "HORIZONTAL",
             "paddingLeft": 20, "paddingRight": 20,
@@ -178,10 +179,12 @@ def _gen_mode_tabs(data: dict, scenario: str) -> dict:
         },
         "children": [
             {
-                "name": "Mode Tabs",
+                "name": "View Tabs",
                 "type": "instance",
-                "componentKey": _K_HORIZONTAL_TABS_UNDERLINE,
+                "componentKey": _K_SEGMENTED_CONTROL,
                 "layoutSizingHorizontal": "HUG",
+                "_segLabels": tabs,
+                "_segActive": active_idx,
             },
         ],
     }

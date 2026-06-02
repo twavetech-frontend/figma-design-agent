@@ -33,13 +33,17 @@ from typing import Iterable, List, Tuple
 from .base import Phase, Rule, Severity, Violation, register, walk_blueprint, walk_tree
 
 
-# 2026-06-01 — Horizontal Tabs Underline 컴포넌트 키 (Mobile, sm/md, Full/non-Full)
-# setKey: f11bda3cf5430bdb7052591a5beead9d5abdf093
+# 🔴 2026-06-02 DS v7 → Imin Design System 마이그레이션 (사용자 룰):
+# 기존 "Horizontal tabs Underline" (DS v7, 6b613d… 등)은 모바일에서 드롭다운으로
+# collapse 되는 버그 + DS v7 라이브러리 의존 → 전면 폐기. Imin Design System 의
+# 'Segmented_control' (component_set 143ee3e3…) 으로 통일. 세그먼트 텍스트 override 로
+# 라벨, Show Segment 3~8 불리언으로 개수, Style(hug/fill) 제어.
+_SEGMENTED_CONTROL_KEY = "143ee3e3fdd529c89c4360e3d70a583be4a83f53"
 _TAB_KEYS = {
-    ("underline", "sm", False): "6b613d270ba98d67c4a8d210721f332ab53fac0d",
-    ("underline", "md", False): "3d2c0c82adc08b47904314fc1ce041efaf45d305",
-    ("underline", "sm", True):  "9b76638ee31a8aa32e2be0b7030d4d4d03341453",
-    ("underline", "md", True):  "e1bbacea93585cdafe0fdd348d28717d8d2f173b",
+    ("underline", "sm", False): _SEGMENTED_CONTROL_KEY,
+    ("underline", "md", False): _SEGMENTED_CONTROL_KEY,
+    ("underline", "sm", True):  _SEGMENTED_CONTROL_KEY,
+    ("underline", "md", True):  _SEGMENTED_CONTROL_KEY,
 }
 
 # Tab nav wrapper name patterns (case-insensitive)

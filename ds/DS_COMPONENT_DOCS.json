@@ -1,6 +1,6 @@
 {
   "source": "https://twavetech-frontend.github.io/design-system-docs",
-  "lastFetched": "2026-05-28T16:57:23.376Z",
+  "lastFetched": "2026-06-02T09:41:30.544Z",
   "foundation": [
     {
       "name": "Colors",
@@ -1534,6 +1534,54 @@
       "usageGuidelines": null
     },
     {
+      "name": "Tab Bar",
+      "category": "components",
+      "path": "/design-system-docs/components/tab-bar",
+      "description": "탭 바는 앱 화면 하단에 고정되어 주요 메뉴 사이를 이동하는 모바일 내비게이션 컴포넌트입니다. 5개의 최상위 메뉴(홈, 커뮤니티, 스테이지, 라운지, 나)를 한 줄로 보여주며, 현재 위치한 메뉴를 강조합니다.",
+      "figmaComponentName": "Tab bar",
+      "variants": [
+        {
+          "name": "Default",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "Selected states",
+          "description": "",
+          "subVariants": []
+        },
+        {
+          "name": "In context",
+          "description": "",
+          "subVariants": []
+        }
+      ],
+      "props": [
+        {
+          "name": "items",
+          "type": "{ key, label, icon }[]",
+          "values": [],
+          "default": "defaultTabBarItems"
+        },
+        {
+          "name": "active",
+          "type": "number",
+          "values": [],
+          "default": "0"
+        },
+        {
+          "name": "onChange",
+          "type": "(item, index) =&gt; void",
+          "values": [],
+          "default": null
+        }
+      ],
+      "figmaVariants": [
+        "Selected: 1. 홈 2 커뮤니티 3 스테이지 4 라운지 5 나"
+      ],
+      "usageGuidelines": null
+    },
+    {
       "name": "Dropdowns",
       "category": "components",
       "path": "/design-system-docs/components/dropdowns",
@@ -2551,6 +2599,11 @@
       "figmaComponentName": "Table",
       "variants": [
         {
+          "name": "Team members",
+          "description": "",
+          "subVariants": []
+        },
+        {
           "name": "Default",
           "description": "",
           "subVariants": []
@@ -2628,6 +2681,33 @@
           "default": "&#x27;데이터가 없습니다.&#x27;"
         },
         {
+          "name": "title",
+          "type": "ReactNode",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "count",
+          "type": "ReactNode",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "headerActions",
+          "type": "ReactNode",
+          "values": [],
+          "default": "⋮ 메뉴"
+        },
+        {
+          "name": "pagination",
+          "type": "boolean | { total, page }",
+          "values": [
+            "boolean",
+            "{ total, page }"
+          ],
+          "default": null
+        },
+        {
           "name": "key",
           "type": "string",
           "values": [],
@@ -2673,6 +2753,18 @@
             "&#x27;none&#x27;"
           ],
           "default": null
+        },
+        {
+          "name": "help",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
+        },
+        {
+          "name": "muted",
+          "type": "boolean",
+          "values": [],
+          "default": "false"
         },
         {
           "name": "variant",
@@ -2728,6 +2820,51 @@
           "type": "number",
           "values": [],
           "default": "32"
+        },
+        {
+          "name": "items",
+          "type": "string[] | { label, variant }[]",
+          "values": [
+            "string[]",
+            "{ label, variant }[]"
+          ],
+          "default": "[]"
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "values": [],
+          "default": "3"
+        },
+        {
+          "name": "onEdit",
+          "type": "() =&gt; void",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "onDelete",
+          "type": "() =&gt; void",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "total",
+          "type": "number",
+          "values": [],
+          "default": "10"
+        },
+        {
+          "name": "page",
+          "type": "number",
+          "values": [],
+          "default": null
+        },
+        {
+          "name": "onChange",
+          "type": "(page: number) =&gt; void",
+          "values": [],
+          "default": null
         }
       ],
       "figmaVariants": [
@@ -2889,7 +3026,7 @@
           "name": "title",
           "type": "string",
           "values": [],
-          "default": "&#x27;모�� 제목&#x27;"
+          "default": "&#x27;모달 제목&#x27;"
         },
         {
           "name": "description",

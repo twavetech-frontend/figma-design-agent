@@ -17,10 +17,10 @@ from typing import Optional, Tuple
 COMPONENT_KEYS = {
     # ── Brand / chrome ─────────────────────────────────────────
     "Logo":                 "81efeddd245e95f31a2724aa370ee54d3caf93d0",
-    "Logo (alt)":           "957912b03baf924a48ef83424ed66f22a4a386a8",
+    "Logo (alt)":           "13b53a11b20a467ad465deb4cf2611cb3aa0c804",
 
     # ── Mobile system chrome ───────────────────────────────────
-    "Status Bar":           "51ddb19de206b67eae2d554b1d20c018feb754f4",  # iPhone 9:41
+    "Status Bar":           "e11cb49d275c972b7d40242be9b22c26b3dd633a",  # iPhone 9:41
 
     # ── Bottom Tab Bar (DS 'Tab bar' set, 2026-06-02 추출) ──────
     # variant prop "Selected": 1.홈 / 2 커뮤니티 / 3 스테이지 / 4 라운지 / 5 나.
@@ -99,37 +99,30 @@ COMPONENT_KEYS = {
     # ── IMIN composite components (camelCase 내부 컴포넌트, 이름 매칭) ──
     # 2026-05-28 사용자: "컴포넌트 목록 없어?" — DS 전체에서 추출한 IMIN 고유 컴포넌트.
     # composite 라 shape 검출 안 되고 이름 매칭으로만 swap (blueprint 이름이 role 과 일치 시).
-    "Month Cell":            "657f41d0a19bbba151bd0ce6051a202cfbe6645a",  # monthCell
-    "Stats Strip 3Col":      "32352a3ed6aadd5ed86ab3035492c53dc2a459b2",  # statsStrip3Col
-    "Stepper Card Row":      "dbd51e5df3a46f92dbbf7bfc679d61abfc2312bd",  # stepperCardRow
-    "Summary Card Link Row": "b68bf5f0c85c53b935cf9c91977465c1063f166f",  # summaryCardLinkRow
-    "Transaction Timeline Row": "5e616eafb8665fde02b37a62c3bf46e9d0294975",  # transactionTimelineRow
-    "Filter Chip":           "32d787ba259b9055a67098ecbb83616c4138b87d",  # filterChip
+    "Month Cell":            "786ecc644d2a5b35e7e3aa3253fb7f451c836e1c",  # monthCell
     "Card default":          "fd8bfe2911f0fd86868aaad298d285455e954352",  # Type=Card default Mobile
     "Button group":          "6eeac5347bb698e42d184eb6de21103e0c7357fd",  # Type=Button group Single line
     "Avatar group md":       "cbf96575fc618ab0c481b96a8bd8cadad4709dae",  # Type=Avatar group md
 
     # ── Tabs ───────────────────────────────────────────────────
-    "Underline Tab Item":   "2fd0d4316087ce3d04816dc5f2eb8c421e43588f",
+    "Underline Tab Item":   "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
     # Horizontal tabs (전체 탭 그룹) — setKey f11bda3cf5430bdb7052591a5beead9d5abdf093
     # 2026-06-01 사용자 룰: 2-tab 이상 텍스트만 있는 탭 nav 는 raw frame 금지, DS instance 사용 강제.
-    "Horizontal Tabs Underline sm Mobile":         "6b613d270ba98d67c4a8d210721f332ab53fac0d",
-    "Horizontal Tabs Underline md Mobile":         "3d2c0c82adc08b47904314fc1ce041efaf45d305",
-    "Horizontal Tabs Underline sm Full Mobile":    "9b76638ee31a8aa32e2be0b7030d4d4d03341453",
-    "Horizontal Tabs Underline md Full Mobile":    "e1bbacea93585cdafe0fdd348d28717d8d2f173b",
-    "Horizontal Tabs Button Brand sm Mobile":      "90af96eeac20c87d13998db484d3f9bbc16dfe77",
-    "Horizontal Tabs Button Gray sm Mobile":       "68fccbcf9ba9f7630c22981fae25c6904f2b4ea4",
+    "Horizontal Tabs Underline sm Mobile":         "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
+    "Horizontal Tabs Underline md Mobile":         "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
+    "Horizontal Tabs Underline sm Full Mobile":    "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
+    "Horizontal Tabs Underline md Full Mobile":    "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
+    "Horizontal Tabs Button Brand sm Mobile":      "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
+    "Horizontal Tabs Button Gray sm Mobile":       "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
     # Alias for blueprint naming convention — Mode Tabs / Section Tabs / Top Tabs
     # 이 셋 모두 underline sm Mobile 로 매핑 (project canonical)
-    "Mode Tabs":           "6b613d270ba98d67c4a8d210721f332ab53fac0d",
-    "Mode Tabs Wrap":      "6b613d270ba98d67c4a8d210721f332ab53fac0d",
-    "Section Tabs":        "6b613d270ba98d67c4a8d210721f332ab53fac0d",
-    "Top Tabs":            "6b613d270ba98d67c4a8d210721f332ab53fac0d",
+    "Mode Tabs":           "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
+    "Mode Tabs Wrap":      "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
+    "Section Tabs":        "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
+    "Top Tabs":            "143ee3e3fdd529c89c4360e3d70a583be4a83f53",
 
     # ── NavBar variants ────────────────────────────────────────
-    "Section Header":       "24c310156df2b11a3204cc317fb4bf9149953f9a",
-    "Back Header":          "7378e8e6833234a06636571a0507a2e9cb114363",
-    "Modal Header":         "ee5c0e5184d4597e1ccf804de204198e0f13b0a4",
+    "Modal Header":         "689757096008812f6a99c76efb51e914feb4fd2c",
     "Type Header":          "ed6ef9d403a570d5176d69bc314a54390409bbac",
 
     # ── Header / utility icons (24px, line) ────────────────────
@@ -171,7 +164,7 @@ COMPONENT_KEYS = {
     "Tooltip":               "e979943c0c6acb589d90da7afff7e62e294a7031",  # CS 'Tooltip' Supporting text=False, Arrow=None 106×34 ✓
     "Dropdown":              "7a694080c6546c9c4d27acbe35e8dc36ceb18559",  # CS 'Dropdown' Type=Button Open=False 111×36 ✓
     "Select":                "f7a3ef93afb47ca7d13e96a735a332732839cb87",  # CS 'Select' md Placeholder 320×88 ✓
-    "Segmented tab item":        "28269da222042366fed0e1032514bb8ff7d4b094",  # segmentedTabItem (used by R29)
+    "Segmented tab item":        "143ee3e3fdd529c89c4360e3d70a583be4a83f53",  # segmentedTabItem (used by R29)
 }
 
 # Roles whose key is verified to instantiate as the right atomic control →

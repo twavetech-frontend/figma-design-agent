@@ -175,6 +175,56 @@ def _strip_alt_token(token_name: str) -> str:
     return token_name
 
 
+_AQUA_STEP_RE = re.compile(r"(\d{2,3})\s*$")
+
+
+def _normalize_aqua_token(token_name: str) -> Optional[str]:
+    """Aqua 보조 액센트 토큰 → primitive 'Colors/Aqua/{N}' 로 정규화 (2026-06-02 룰).
+
+    DS 의 semantic Aqua(`Component colors/Utility/Aqua/utility-blue-{N}`)는 GitHub
+    토큰 export 에 아직 없고, 그 last-segment `utility-blue-{N}` 는 **Utility/Blue**
+    와 충돌(같은 이름 → 파랑으로 오매칭)한다. 그래서 'aqua' 가 명시된 참조는 값이
+    동일한 primitive `Colors/Aqua/{N}`(TOKEN_MAP + VARIABLE_KEY_MAP 에 존재)로 보낸다.
+
+    매칭 (대소문자 무시, 'aqua' 가 들어있을 때만 — Blue 오염 방지):
+      Component colors/Utility/Aqua/utility-blue-300  → Colors/Aqua/300
+      utility-aqua-300 · aqua-300 · Aqua/300          → Colors/Aqua/300
+    이미 'Colors/Aqua/...' 면 그대로 둔다(호출부 exact-match 가 처리).
+    """
+    if not token_name:
+        return None
+    low = token_name.lower()
+    if low.startswith("colors/aqua/"):
+        return None  # 이미 정식 primitive 경로
+    if "aqua" not in low:
+        return None  # aqua 명시 없으면 손대지 않음 (utility-blue=파랑 보존)
+    m = _AQUA_STEP_RE.search(token_name)
+    if not m:
+        return None
+    return f"Colors/Aqua/{m.group(1)}"
+
+
+def _aqua_binding_path(token_name: str) -> Optional[str]:
+    """Aqua 토큰 → **변수 바인딩용 figmaPath** (semantic 우선).
+
+    바인딩은 색 해석과 다르다: semantic `Component colors/Utility/Aqua/utility-aqua-{N}`
+    가 VARIABLE_KEY_MAP 에 있으면 그 경로를 쓴다(게시된 키 → importVariableByKeyAsync
+    성공). primitive `Colors/Aqua/{N}` 키는 _Primitives 컬렉션이라 미게시 → import 실패하므로
+    fallback 일 뿐. (2026-06-02 — sync-variable-keys 로 두 키 모두 추출됨.)
+    """
+    prim = _normalize_aqua_token(token_name)  # "Colors/Aqua/{N}" or None
+    if not prim:
+        return None
+    n = prim.rsplit("/", 1)[-1]
+    vk = _load_variable_key_map()
+    semantic = f"Component colors/Utility/Aqua/utility-aqua-{n}"
+    if vk.get(semantic):
+        return semantic
+    if vk.get(prim):
+        return prim
+    return semantic  # best-effort (central handler falls back to name search)
+
+
 def resolve_token_ref(value: str) -> Optional[Dict[str, float]]:
     """Resolve a $token(name) reference to RGBA.
 
@@ -193,29 +243,40 @@ def resolve_token_ref(value: str) -> Optional[Dict[str, float]]:
     token_name = _strip_alt_token(value[7:-1])  # strip "$token(" and ")" + reject -alt
     token_map = load_token_map()
 
-    # Exact match (map key)
-    info = token_map.get(token_name)
-    if info and info.get("type") == "COLOR":
-        return hex_to_rgba(info["value"])
+    def _lookup(name: str) -> Optional[Dict[str, float]]:
+        # Exact match (map key)
+        info = token_map.get(name)
+        if info and info.get("type") == "COLOR":
+            return hex_to_rgba(info["value"])
+        # Pass 1: figmaPath 마지막 세그먼트 '정확 일치' 우선 (_alt 오매칭 방지)
+        for path, info_item in token_map.items():
+            if info_item.get("type") != "COLOR":
+                continue
+            figma_path = info_item.get("figmaPath", path)
+            last_segment = figma_path.rsplit("/", 1)[-1] if "/" in figma_path else figma_path
+            if last_segment == name:
+                return hex_to_rgba(info_item["value"])
+        # Pass 2: 괄호 변형 매칭만 허용 ("fg-brand-primary" → "fg-brand-primary (600)")
+        # ※ '_' prefix 매칭 절대 금지 — bg-secondary 가 bg-secondary_alt 로 오매칭됨
+        for path, info_item in token_map.items():
+            if info_item.get("type") != "COLOR":
+                continue
+            figma_path = info_item.get("figmaPath", path)
+            last_segment = figma_path.rsplit("/", 1)[-1] if "/" in figma_path else figma_path
+            if last_segment.startswith(name + " "):
+                return hex_to_rgba(info_item["value"])
+        return None
 
-    # Pass 1: figmaPath 마지막 세그먼트 '정확 일치' 우선 (_alt 오매칭 방지)
-    for path, info_item in token_map.items():
-        if info_item.get("type") != "COLOR":
-            continue
-        figma_path = info_item.get("figmaPath", path)
-        last_segment = figma_path.rsplit("/", 1)[-1] if "/" in figma_path else figma_path
-        if last_segment == token_name:
-            return hex_to_rgba(info_item["value"])
-
-    # Pass 2: 괄호 변형 매칭만 허용 ("fg-brand-primary" → "fg-brand-primary (600)")
-    # ※ '_' prefix 매칭 절대 금지 — bg-secondary 가 bg-secondary_alt 로 오매칭됨
-    for path, info_item in token_map.items():
-        if info_item.get("type") != "COLOR":
-            continue
-        figma_path = info_item.get("figmaPath", path)
-        last_segment = figma_path.rsplit("/", 1)[-1] if "/" in figma_path else figma_path
-        if last_segment.startswith(token_name + " "):
-            return hex_to_rgba(info_item["value"])
+    # 정식 토큰명 우선 — 토큰 export 에 utility-aqua 가 들어오면 그대로 해석된다.
+    hit = _lookup(token_name)
+    if hit is not None:
+        return hit
+    # Aqua 보조 액센트 폴백 — semantic utility-aqua 가 아직 export 에 없을 때 primitive Colors/Aqua/{N}
+    alias = _normalize_aqua_token(token_name)
+    if alias and alias != token_name:
+        hit = _lookup(alias)
+        if hit is not None:
+            return hit
 
     print(f"WARNING: Token '{token_name}' not found in TOKEN_MAP.json")
     return None
@@ -2542,7 +2603,7 @@ def _enforce_color_restraint(blueprint: dict) -> None:
     ≤2)이 화면을 완전 무채색 와이어프레임처럼 만들어 제거됨. 사용량을 집계해
     로그로 보고하고, 0이거나 과다하면 경고한다.
     """
-    counts = {"brand": 0, "feedback": 0}
+    counts = {"brand": 0, "feedback": 0, "aqua": 0}
 
     def walk(node):
         if not isinstance(node, dict):
@@ -2554,16 +2615,25 @@ def _enforce_color_restraint(blueprint: dict) -> None:
             low = name.lower()
             if any(k in low for k in _FEEDBACK_KEYWORDS):
                 counts["feedback"] += 1
+            elif "aqua" in low:
+                counts["aqua"] += 1
             elif "brand" in low:
                 counts["brand"] += 1
         for child in node.get("children", []) or []:
             walk(child)
 
     walk(blueprint)
-    print(f"[색상] 브랜드 액센트 {counts['brand']}곳 · 상태 컬러 {counts['feedback']}곳")
+    print(f"[색상] 브랜드 액센트 {counts['brand']}곳 · Aqua 보조 액센트 "
+          f"{counts['aqua']}곳 · 상태 컬러 {counts['feedback']}곳")
     if counts["brand"] == 0:
         print("  ⚠️  브랜드 액센트 0곳 — 완전 무채색은 와이어프레임처럼 보임. "
               "주 액션·active 등에 브랜드 컬러를 단일 액센트로 줄 것.")
+    # 2026-06-02 사용자 룰: 브랜드 단일 액센트만 쓰면 화면 컬러감이 단조로움.
+    # 보조 액센트로 Aqua(Colors/Aqua/*) 를 의도된 지점에 절제 사용할 것.
+    if counts["brand"] >= 3 and counts["aqua"] == 0:
+        print("  ⚠️  Aqua 보조 액센트 0곳 — 브랜드 단색만 쓰면 단조롭다(사용자 룰 2026-06-02). "
+              "보조 아이콘/틴트/정보 하이라이트 등 의도된 지점에 Aqua "
+              "($token(utility-aqua-500) · 틴트 utility-aqua-50·100 · 텍스트 utility-aqua-700) 를 절제 사용할 것.")
     if counts["feedback"] > 8:
         print(f"  ⚠️  상태 컬러 {counts['feedback']}곳 — 진짜 상태 정보(미납·완료 등)에만 "
               "절제 사용할 것. 장식·태그·통계 전반에 색을 까는 건 금지.")
@@ -3640,7 +3710,8 @@ def cmd_build(blueprint_file: str):
             if navbar_id:
                 # 로고 컴포넌트 인스턴스 생성
                 logo_content = call_tool("create_component_instance", {
-                    "componentKey": "957912b03baf924a48ef83424ed66f22a4a386a8"
+                    # Imin DS Logo (DS v7 957912b0 폐기, 2026-06-02)
+                    "componentKey": "81efeddd245e95f31a2724aa370ee54d3caf93d0"
                 })
                 logo_result = parse_content(logo_content)
                 logo_id = None
@@ -5410,6 +5481,110 @@ def _collect_mode_tabs_config(blueprint: Optional[dict]) -> Optional[dict]:
     return found[0]
 
 
+def _collect_seg_tabs_config(blueprint: dict) -> Optional[dict]:
+    """blueprint 에서 _segLabels 마커 {name, labels, active} 수집 (Segmented_control)."""
+    found = [None]
+
+    def walk(n):
+        if found[0] is not None or not isinstance(n, dict):
+            return
+        seg = n.get("_segLabels")
+        if isinstance(seg, list) and seg:
+            found[0] = {"name": n.get("name"), "labels": seg,
+                        "active": n.get("_segActive", 0)}
+            return
+        for c in n.get("children") or []:
+            walk(c)
+
+    walk(blueprint)
+    return found[0]
+
+
+def _configure_segmented_control(root_id: str, config: Optional[dict]) -> int:
+    """Imin DS Segmented_control 인스턴스를 N개 세그먼트 + 라벨 + 선택으로 설정 (2026-06-02).
+
+    🔴 prop 기반 (사용자 룰): 세그먼트 라벨/선택을 nested 텍스트 노드 id 가 아니라
+    세그먼트 인스턴스의 **컴포넌트 prop** (`Label#…` TEXT, `Active` on/off) 으로 설정한다.
+    텍스트노드 deepest-id 는 variant 마다 달라 깨지지만, prop 키는 안정적이라 견고하다.
+    - 세그먼트 개수: `Show Segment {n}#16713:{n-3}` (n=3..8) 불리언으로 제어
+    - 라벨: 각 세그먼트 인스턴스의 `Label#…` prop
+    - 선택: 각 세그먼트 인스턴스의 `Active` = on/off
+    """
+    if not config:
+        return 0
+    labels = config.get("labels") or []
+    active = config.get("active", 0)
+    name = config.get("name")
+    if not labels:
+        return 0
+    try:
+        tree = _collect_tree(root_id)
+    except Exception as e:
+        print(f"  [seg-tabs] tree 수집 실패: {e}")
+        return 0
+
+    # Segmented_control 인스턴스 찾기 (마커 노드 이름 우선, 없으면 'Segmented_control')
+    inst = [None]
+
+    def find(n):
+        if inst[0] or not isinstance(n, dict):
+            return
+        nm = n.get("name")
+        if (n.get("type") or "").upper() == "INSTANCE" and (
+                nm == name or nm == "Segmented_control"):
+            inst[0] = n.get("id")
+            return
+        for c in n.get("_children_full") or []:
+            find(c)
+
+    find(tree)
+    if not inst[0]:
+        print("  [seg-tabs] Segmented_control 인스턴스 없음 — skip")
+        return 0
+    iid = inst[0]
+    # 세그먼트 개수: 3~8 표시 여부
+    show = {}
+    for seg_n in range(3, 9):
+        show[f"Show Segment {seg_n}#16713:{seg_n - 3}"] = (seg_n <= len(labels))
+    try:
+        call_tool("set_instance_properties", {"nodeId": iid, "properties": show})
+    except Exception as e:
+        print(f"  [seg-tabs] Show Segment 설정 실패: {e}")
+
+    # 세그먼트 인스턴스 id (순서 보존) — 텍스트 노드 스캔으로 파악
+    segids = []
+    try:
+        for x in call_tool("scan_text_nodes", {"nodeId": iid}):
+            if x.get("type") == "text":
+                d = json.loads(x["text"])
+                for tn in d.get("textNodes", []):
+                    parts = (tn.get("id") or "").split(";")
+                    if len(parts) >= 2:
+                        seg = parts[0] + ";" + parts[1]
+                        if seg not in segids:
+                            segids.append(seg)
+    except Exception as e:
+        print(f"  [seg-tabs] 세그먼트 스캔 실패: {e}")
+        return 0
+
+    done = 0
+    for i, seg in enumerate(segids[:len(labels)]):
+        try:
+            props = parse_content(call_tool("get_instance_properties",
+                                            {"nodeId": seg})).get("json", {}).get("properties", {})
+            lblkey = next((k for k in props if k.startswith("Label")), None)
+            new = {"Active": "on" if i == active else "off"}
+            if lblkey:
+                new[lblkey] = labels[i]
+            call_tool("set_instance_properties", {"nodeId": seg, "properties": new})
+            done += 1
+        except Exception as e:
+            print(f"  [seg-tabs] 세그먼트 {i} 설정 실패: {e}")
+    print(f"  [seg-tabs] Segmented_control 설정 완료 — {done}/{len(labels)} 세그먼트 "
+          f"(라벨 prop + Active, active={active})")
+    return done
+
+
 def _configure_ds_mode_tabs(root_id: str, config: Optional[dict]) -> int:
     """DS "Horizontal tabs" 컨테이너 인스턴스를 N개 탭으로 trim + 라벨 설정 (2026-05-29).
 
@@ -6130,6 +6305,13 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     except Exception as e:
         print(f"  [col-baseline] 실패 (무시하고 계속): {e}")
 
+    # 2026-06-02 사용자: 회차 셀렉터 10~13(2자리) 만 빌드가 FIXED h=36 으로 키워
+    # 숫자가 아래로 내려가 정렬 틀어짐 (1~9 는 HUG). 동질 셀 그룹 세로 사이징 통일로 차단.
+    try:
+        _normalize_row_cell_vertical_sizing_live(root_node_id)
+    except Exception as e:
+        print(f"  [row-cell-vsize] 실패 (무시하고 계속): {e}")
+
     # ⚠️ 2026-05-24 사용자 "다 박아" — manual fix 후 자동 재바인딩
     # 위 3개 fix가 set_fill_color/set_layout_sizing 호출 → boundVariables 끊김 가능.
     # original_blueprint가 있으면 token 재적용. 없으면 .latest_build.json에서 자동 lookup.
@@ -6352,6 +6534,10 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
             _configure_ds_mode_tabs(root_node_id, _mt_cfg)
         else:
             print("  [mode-tabs] _dsModeTabs 마커 없음 — skip")
+        # Imin DS Segmented_control (_segLabels 마커) 자동 설정 — prop 기반
+        _seg_cfg = _collect_seg_tabs_config(_mt_bp) if _mt_bp else None
+        if _seg_cfg:
+            _configure_segmented_control(root_node_id, _seg_cfg)
     except Exception as e:
         print(f"  [mode-tabs] 실패 (무시하고 계속): {e}")
 
@@ -6406,21 +6592,33 @@ def _token_to_figma_path(token_name: str) -> Optional[str]:
     """
     token_name = _strip_alt_token(token_name)
     tm = load_token_map()
-    info = tm.get(token_name)
-    if info and info.get("figmaPath"):
-        return info["figmaPath"]
-    # Pass 1: 마지막 세그먼트 '정확 일치' 우선
-    for path, info_item in tm.items():
-        fp = info_item.get("figmaPath", path)
-        seg = fp.rsplit("/", 1)[-1] if "/" in fp else fp
-        if seg == token_name:
-            return fp
-    # Pass 2: 괄호 변형만 허용 — '_' prefix 매칭 절대 금지
-    for path, info_item in tm.items():
-        fp = info_item.get("figmaPath", path)
-        seg = fp.rsplit("/", 1)[-1] if "/" in fp else fp
-        if seg.startswith(token_name + " "):
-            return fp
+
+    def _lookup_path(name: str) -> Optional[str]:
+        info = tm.get(name)
+        if info and info.get("figmaPath"):
+            return info["figmaPath"]
+        # Pass 1: 마지막 세그먼트 '정확 일치' 우선
+        for path, info_item in tm.items():
+            fp = info_item.get("figmaPath", path)
+            seg = fp.rsplit("/", 1)[-1] if "/" in fp else fp
+            if seg == name:
+                return fp
+        # Pass 2: 괄호 변형만 허용 — '_' prefix 매칭 절대 금지
+        for path, info_item in tm.items():
+            fp = info_item.get("figmaPath", path)
+            seg = fp.rsplit("/", 1)[-1] if "/" in fp else fp
+            if seg.startswith(name + " "):
+                return fp
+        return None
+
+    hit = _lookup_path(token_name)
+    if hit:
+        return hit
+    # Aqua 보조 액센트 — semantic 'Component colors/Utility/Aqua/utility-aqua-{N}' 우선
+    # (VARIABLE_KEY_MAP 의 게시된 키로 K:import). TOKEN_MAP 엔 없으므로 경로를 직접 반환.
+    aqua_path = _aqua_binding_path(token_name)
+    if aqua_path:
+        return aqua_path
     return None
 
 
@@ -7575,6 +7773,95 @@ def _disable_section_clipping(root_id: str) -> int:
         return 0
 
 
+def _normalize_row_cell_vertical_sizing_live(root_id: str) -> int:
+    """HORIZONTAL 행의 동질 셀 그룹(회차 셀렉터·Day strip 등)에서 세로 사이징이
+    섞여(일부 HUG, 일부 FIXED/FILL) baseline 이 어긋나는 버그 차단 (2026-06-02 사용자).
+
+    사례: 'Round Cell 1~9' 는 HUG(h=23) 인데 빌드가 'Round Cell 10~13'(2자리) 만
+    FIXED h=36 으로 만들어, 더 높은 셀 안 숫자가 ~6px 아래로 내려가 정렬이 틀어짐.
+    blueprint 는 13개 전부 HUG 로 올발랐음 — 빌드 단계가 일부만 키운 회귀.
+
+    Detection (보수적 — 오탐 방지):
+      - HORIZONTAL auto-layout FRAME parent
+      - 직계 FRAME 자식 중, 이름의 끝 숫자를 떼면 같은 prefix 인 그룹 (예 'Round Cell')
+        이 3개 이상
+      - 그 그룹의 layoutSizingVertical 값이 섞여 있거나 height 가 2px 초과로 다름
+    Fix:
+      - 그룹 다수의 vertical 사이징으로 통일. 단 다수가 FIXED 인데 height 가 들쭉날쭉이면
+        HUG 로 통일(텍스트 셀은 HUG 가 정답 — 패딩+콘텐츠로 균일 높이).
+    Returns: 통일한 그룹 수.
+    """
+    import re as _re
+    try:
+        info = call_tool("get_nodes_info", {"nodeIds": [root_id]})
+        items = parse_content(info).get("json") or []
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [row-cell-vsize] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+
+    fixed = [0]
+
+    def _prefix(nm: str) -> str:
+        # 끝의 숫자/공백/하이픈 제거 → 'Round Cell 13' → 'round cell'
+        return _re.sub(r"[\s\-_]*\d+\s*$", "", (nm or "")).strip().lower()
+
+    def _h(n: dict) -> float:
+        return float((n.get("absoluteBoundingBox") or {}).get("height") or 0)
+
+    def _walk(node):
+        if not isinstance(node, dict):
+            return
+        if (node.get("layoutMode") or "").upper() == "HORIZONTAL":
+            kids = [c for c in (node.get("children") or [])
+                    if (c.get("type") or "").upper() == "FRAME"]
+            # prefix 별 그룹화
+            groups: Dict[str, list] = {}
+            for c in kids:
+                p = _prefix(c.get("name") or "")
+                if p:
+                    groups.setdefault(p, []).append(c)
+            for p, members in groups.items():
+                if len(members) < 3:
+                    continue
+                sizes = [(m.get("layoutSizingVertical") or "").upper() for m in members]
+                heights = [_h(m) for m in members]
+                mixed_size = len(set(s for s in sizes if s)) > 1
+                mixed_h = (max(heights) - min(heights)) > 2 if heights else False
+                if not (mixed_size or mixed_h):
+                    continue
+                # target = 다수 사이징. FIXED 다수인데 height 들쭉날쭉이면 HUG.
+                counts: Dict[str, int] = {}
+                for s in sizes:
+                    if s:
+                        counts[s] = counts.get(s, 0) + 1
+                target = max(counts, key=counts.get) if counts else "HUG"
+                if target == "FIXED" and mixed_h:
+                    target = "HUG"
+                changed = 0
+                for m, s in zip(members, sizes):
+                    if s != target:
+                        try:
+                            call_tool("set_layout_sizing",
+                                      {"nodeId": m["id"], "vertical": target})
+                            changed += 1
+                        except Exception:
+                            pass
+                if changed:
+                    fixed[0] += 1
+                    print(f"  [row-cell-vsize] '{node.get('name')}' 셀 그룹 '{p}' "
+                          f"{changed}개 → vertical={target} 통일")
+        for c in node.get("children", []) or []:
+            _walk(c)
+
+    _walk(root)
+    if not fixed[0]:
+        print("  [row-cell-vsize] OK — 행 셀 세로 사이징 일관")
+    return fixed[0]
+
+
 def _enforce_tab_bar_children_fill_live(root_id: str) -> int:
     """Bottom Tab Bar 자식 tab 들 (Tab 홈/커뮤니티/스테이지/...) 이 HUG 상태로 박혀
     라벨이 width=24 처럼 좁아져 두 줄 wrap 되는 버그 fix (2026-05-28 사용자 분노).
@@ -8147,6 +8434,43 @@ def cmd_sync_text_styles() -> None:
         json.dump(out, f, ensure_ascii=False, indent=2)
     print(f"✓ DS text style {len(out)}개 추출 → {path}")
     print("  이 파일을 커밋하면 새 세션에서도 text style 이 자동 적용됩니다.")
+
+
+def cmd_sync_components() -> None:
+    """DS 파일(Imin Design System)의 로컬 COMPONENT / COMPONENT_SET 을 키와 함께
+    추출해 ds/COMPONENT_KEY_MAP.json 에 저장한다 (DS v7 → Imin Design System 전수
+    마이그레이션 기준 데이터).
+
+    ⚠️ plugin 이 **Imin Design System 파일에 연결된 상태**에서 실행해야 한다. 작업
+    파일에는 로컬 컴포넌트가 없어 0건이 나온다. 추출 후 ds_catalog.py 의 키를 이
+    맵 기준으로 교체하면 DS v7 라이브러리 의존이 사라진다."""
+    comps, sets = [], []
+    try:
+        comps = (parse_content(call_tool("get_local_components", {})) or {}).get("components") or []
+    except Exception as e:
+        print(f"❌ get_local_components 실패: {e}")
+    try:
+        sets = (parse_content(call_tool("get_local_component_sets", {})) or {}).get("componentSets") or []
+    except Exception as e:
+        print(f"❌ get_local_component_sets 실패: {e}")
+    out = {
+        "components": [{"name": c.get("name"), "key": c.get("key"), "id": c.get("id")}
+                       for c in comps if c.get("key")],
+        "componentSets": [{"name": s.get("name"), "key": s.get("key"), "id": s.get("id")}
+                          for s in sets if s.get("key")],
+    }
+    total = len(out["components"]) + len(out["componentSets"])
+    if total == 0:
+        print("⚠️ 로컬 컴포넌트 0건 — plugin 이 Imin Design System 파일에 연결됐는지 확인하세요.")
+        print("   Figma 에서 Imin Design System 파일을 열고 plugin 실행 후 다시 시도하세요.")
+        return
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "ds", "COMPONENT_KEY_MAP.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=2)
+    print(f"✓ Imin Design System 컴포넌트 {len(out['components'])}개 + "
+          f"세트 {len(out['componentSets'])}개 추출 → {path}")
+    print("  이 맵 기준으로 ds_catalog.py 의 DS v7 키를 교체하세요.")
 
 
 def cmd_sync_variable_keys() -> None:
@@ -9393,6 +9717,11 @@ def main():
             sys.exit(1)
         ensure_session()
         set_badge_color(sys.argv[2], sys.argv[3])
+    elif cmd == "sync-components":
+        # Imin Design System 파일에 plugin 연결된 상태에서 1회 실행 →
+        # ds/COMPONENT_KEY_MAP.json 생성 (DS v7 → Imin DS 전수 마이그레이션 기준).
+        ensure_session()
+        cmd_sync_components()
     elif cmd == "sync-text-styles":
         # DS 파일(Imin Design System)에 plugin 연결된 상태에서 1회 실행 →
         # ds/TEXT_STYLE_MAP.json 생성. 작업 파일엔 로컬 text style 이 없으므로

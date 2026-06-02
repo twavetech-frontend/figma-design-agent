@@ -57,10 +57,14 @@ _BANNED_STATE_SUBSTR = (
 def _check_token_name(name: str) -> str | None:
     """Return error message if token name is banned, else None."""
     n = name.strip()
-    for pref in _BANNED_PRIMITIVE_PREFIXES:
-        if n.startswith(pref):
-            return f"primitive scale token '{n}' — use semantic Colors/Background|Foreground|Border|Text"
     lower = n.lower()
+    # 2026-06-02 사용자 룰: Aqua 보조 액센트 허용. DS 의 Aqua 는 primitive(Colors/Aqua/*)
+    # 또는 'Component colors/Utility/Aqua/utility-blue-*' 로만 존재(semantic 단축명 없음)
+    # → 'aqua' 가 명시된 토큰은 primitive-prefix ban 에서 예외. (state 변형은 계속 검사)
+    if "aqua" not in lower:
+        for pref in _BANNED_PRIMITIVE_PREFIXES:
+            if n.startswith(pref):
+                return f"primitive scale token '{n}' — use semantic Colors/Background|Foreground|Border|Text"
     for sub in _BANNED_STATE_SUBSTR:
         if sub in lower:
             return f"state/modifier token '{n}' — banned for default rendering"

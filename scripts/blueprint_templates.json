@@ -30,7 +30,7 @@
             "type": "frame",
             "width": 80,
             "height": 32,
-            "_comment": "빌드 후 create_component_instance(componentKey='957912b03baf924a48ef83424ed66f22a4a386a8') → insert_child로 교체"
+            "_comment": "빌드 후 create_component_instance(componentKey='81efeddd245e95f31a2724aa370ee54d3caf93d0' Imin DS Logo) → insert_child로 교체"
           },
           {
             "name": "Nav Right",

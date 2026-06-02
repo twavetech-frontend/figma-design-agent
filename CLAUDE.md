@@ -250,26 +250,38 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > 등 이름의 HORIZONTAL frame 안에 raw tab cell frame 들을 직접 그리는 것. (e.g. 자식
 > "Mode Tab Active" + "Mode Tab Inactive" 각각이 TEXT 만 들어있는 frame)
 >
-> **올바른 방법:** blueprint 에 처음부터 `type: "instance"` + DS Horizontal Tabs 컴포넌트
-> 키를 박는다. Underline variant 가 project canonical.
+> 🔴 **2026-06-02 DS v7 → Imin Design System 마이그레이션 (사용자 룰):** 기존 DS v7
+> "Horizontal tabs Underline"(`6b613d…` 등)은 **모바일에서 드롭다운으로 붕괴 + DS v7
+> 라이브러리 의존** → 전면 폐기. Imin Design System 의 **`Segmented_control`** 으로 통일.
+>
+> **올바른 방법:** blueprint 에 `type: "instance"` + Segmented_control variant 키를 박는다.
 >
 > ```json
 > {
->   "name": "Mode Tabs Wrap",
+>   "name": "View Tabs",
 >   "type": "instance",
->   "componentKey": "6b613d270ba98d67c4a8d210721f332ab53fac0d",  // Underline sm Mobile
->   "_tabLabels": ["거래 현황", "누적 거래"],
->   "_tabActiveIndex": 0
+>   "componentKey": "47a01673a46dc3bc9bfd62948c10e5fa9f2e5e78",  // Segmented_control Style=hug
+>   "_segLabels": ["거래 현황", "누적 거래"]
 > }
 > ```
 >
-> **DS Horizontal Tabs 키 (setKey f11bda3cf5430bdb7052591a5beead9d5abdf093):**
+ **빌드 후 설정 — 🔴 prop 기반 (2026-06-02 사용자: 텍스트 레이어를 컴포넌트 prop 으로):**
+> 세그먼트 라벨/선택은 nested 텍스트 노드 id(variant 마다 달라 깨짐)가 아니라 **세그먼트
+> 인스턴스의 컴포넌트 prop** 으로 설정한다 — 견고함:
+> - 세그먼트 개수 = `set_instance_properties(ctrlId, {"Show Segment 3#16713:0": False, …})` (n=3..8, `#16713:{n-3}`)
+> - 라벨 = 각 세그먼트 인스턴스(`I{ctrl};{segId}`)에 `Label#17537:11` TEXT prop
+> - 선택 = 각 세그먼트 인스턴스에 `Active` = `on`/`off`
+>
+> **자동화:** blueprint 의 탭 인스턴스에 `"_segLabels": ["추천","전체"]`(+ 선택 시
+> `"_segActive": 0`) 마커만 박으면 — `cmd_build` 가 `_configure_segmented_control` 로
+> 위 prop 들을 자동 설정한다. 빌드 로그 `[seg-tabs] Segmented_control 설정 완료` 확인.
+>
+> **Imin DS Segmented_control 키:**
 > | Variant | 컴포넌트 키 |
 > |---------|------------|
-> | Underline sm Mobile (default) | `6b613d270ba98d67c4a8d210721f332ab53fac0d` |
-> | Underline md Mobile | `3d2c0c82adc08b47904314fc1ce041efaf45d305` |
-> | Underline sm Mobile Full=True | `9b76638ee31a8aa32e2be0b7030d4d4d03341453` |
-> | Underline md Mobile Full=True | `e1bbacea93585cdafe0fdd348d28717d8d2f173b` |
+> | Style=hug (기본) | `47a01673a46dc3bc9bfd62948c10e5fa9f2e5e78` |
+> | Style=fill (전폭) | `2ee9d12d4c904650ab496b9bcdf874a648e73ceb` |
+> | (set key, import 불가) | `143ee3e3fdd529c89c4360e3d70a583be4a83f53` |
 >
 > **시스템 강제 (4중 방어, 자동):**
 > 1. `scripts/design_rules/R60_tabs_ds_instance.py`
@@ -571,6 +583,49 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **베이스는 뉴트럴 그레이** — `bg-/fg-/border-` 그레이 계열 중심이되, 완전 무채색 평면은 금지.
 - **Why**: 회사가 "브랜드/피드백 컬러 난무"를 거부 → 절제. 그러나 완전 그레이톤 + 버튼 1개는 "와이어프레임 같다"고 재피드백 (2026-05-23). 적정선 = 절제된 단일 액센트 + 상태 컬러 소량 + 입체감 폴리시.
 
+### 2-J. ⚠️ Aqua 보조 액센트 — 브랜드 단색 단조로움 방지 (2026-06-02 사용자 룰)
+> 사용자 명시: *"현재 포인트 컬러로 브랜드 컬러만 쓰고 있는데, 그로인해 생성된 디자인
+> 화면들의 컬러감이 너무 단조로워서 보조 컬러로 Utility / Aqua 컬러를 사용하도록 추가."*
+>
+> ⚠️ **정책 반전**: 2026-05-05엔 사용자가 "aqua 쓰지마라"라고 했었으나 **2026-06-02
+> 뒤집음**. 이제 Aqua는 **승인된 보조 액센트**다. (옛 R26 "aqua 차단"은 폐기됨.)
+>
+> - **브랜드 퍼플 = 주 액센트** (그대로): 주 액션(CTA)·active 탭/네비·핵심 hero 수치.
+> - **Aqua = 보조 액센트**: 브랜드 단색만 깔면 화면이 단조로우니, **의도된 지점에 Aqua를
+>   절제 사용**해 컬러 리듬을 만든다 —
+>   - 보조 아이콘 + 그 틴트 원형 (예: 한 쌍의 카드 중 하나를 Aqua로 차등화)
+>   - 정보/팁 하이라이트, 보조 통계 강조, 보조 인디케이터·도트·작은 바
+>   - **보조 금융 정보 텍스트** — 예: 스테이지 카드의 "총 이자 비용/수익 N원" (주 금액은
+>     dark/brand, 이 보조 라인은 `utility-aqua-700`로 차등화). 2026-06-02 사용자 명시 적정 사례.
+> - 단, **"여러 색 난무"는 여전히 금지** — Aqua는 *하나의 보조* 액센트일 뿐 모든
+>   카드·태그·통계에 무분별하게 깔지 않는다. 상태 컬러(success/warning/error)는 진짜 상태에만.
+>
+> **토큰 (DS semantic — 2026-06-02 사용자 명명 `utility-aqua-*`):**
+> | 용도 | 토큰 | hex |
+> |------|------|-----|
+> | solid / 아이콘 | `$token(utility-aqua-500)` | #00c6d4 |
+> | 텍스트 대비(진한 면) | `$token(utility-aqua-600)` | #009eaa |
+> | 흰 배경 위 텍스트 | `$token(utility-aqua-700)` | #007b84 |
+> | 연한 틴트 배경 | `$token(utility-aqua-50)` · `utility-aqua-100` | #eaf9fb · #d9f5f8 |
+>
+> figmaPath는 `Component colors/Utility/Aqua/utility-aqua-{N}`. 토큰 export에 아직
+> 반영 안 됐어도 `_normalize_aqua_token`이 **동일 값 primitive `Colors/Aqua/{N}`로 폴백**해
+> 해석·변수 바인딩 모두 동작한다. primitive `$token(Colors/Aqua/{N})` 직접 사용도 가능.
+> ⚠️ `utility-blue-*`(aqua 없는 이름)는 **파랑**이다 — Aqua가 아니므로 보조 액센트로 쓰지 말 것.
+>
+> **시스템 강제 (코드 박힘):**
+> 1. `scripts/design_rules/R26_second_accent.py` — **L2 lint advisory**: 브랜드 액센트가
+>    충분한데(≥4) Aqua 보조 액센트가 0곳이면 WARN("단조로움 — Aqua 보조 액센트 추가 권장").
+>    차단 안 함(색 적용은 디자인 판단 — Claude가 blueprint 저작 시 적용).
+> 2. `figma_mcp_client.py _enforce_color_restraint` — 빌드 로그에 `[색상] 브랜드 N곳 ·
+>    Aqua 보조 N곳 · 상태 N곳` 집계 출력 + 브랜드≥3·Aqua=0이면 단조로움 경고.
+> 3. `figma_mcp_client.py _normalize_aqua_token` — `utility-aqua-*` / `aqua-*` /
+>    `Component colors/Utility/Aqua/...` 를 모두 올바른 Aqua로 해석·바인딩(Blue 충돌 방지).
+> 4. `scripts/design_rules/schema.py` — `aqua` 명시 토큰은 primitive-prefix ban 예외.
+>
+> **빌드 후 검증:** 빌드 로그의 `[색상]` 라인에 Aqua 보조 액센트가 잡히는지 + 스크린샷에서
+> 브랜드 퍼플 외 Aqua가 보조 지점에 절제되어 들어갔는지 확인.
+
 ### 2-B. ⚠️ 카드 표면 — bg-primary + 보더 (root 위 카드, 2026-05-23 룰)
 - **루트 위 최상위 카드의 표면 = `$token(bg-primary)` fill + `$token(border-secondary)` 1px 보더** — `bg-secondary`(회색)로 채우지 말 것. 흰 카드를 보더(+ 자동 주입되는 subtle shadow)로 정의한다.
 - 카드 안의 인셋·서브카드는 대상 아님 (필요 시 `bg-secondary`/`bg-tertiary` 유지). 브랜드 컬러 카드(`bg-brand-solid` 등)도 그대로 둔다.
@@ -622,6 +677,14 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - 콘텐츠 합이 852 보다 짧을 때, 화면에 고정된 하단 바(**Bottom Action Bar / Tab Bar / CTA Bar / FAB**) 는 **루트 하단(y = 852 - bar.height)에 bottom-align** — 콘텐츠 끝에 붙어 떠 있지 않게 한다.
 - **시스템 강제:** `cmd_post_fix` 의 `_enforce_root_min_height` (scripts/figma_mcp_client.py, 2026-05-24) — 루트 높이 < 852 시 852 로 늘리고, 이름에 `tab bar`/`tabbar`/`bottom action bar`/`action bar`/`cta bar`/`fab` 포함된 자식을 ABSOLUTE + bottom constraint MAX 로 새 루트 하단에 재배치. 콘텐츠가 852 보다 길면 손대지 않음 (콘텐츠 끝이 곧 바의 위치).
 
+### 2-E-5. ⚠️ 행 셀 그룹 세로 사이징 통일 — baseline 어긋남 차단 (2026-06-02 사용자)
+- **사례**: 회차 셀렉터 "Round Cell 1~13" 중 **2자리(10~13)만 빌드가 FIXED h=36 으로 키워**(1~9 는 HUG h=23), 더 높은 셀 안 숫자가 ~6px 아래로 내려가 정렬이 틀어짐. ⚠️ **blueprint 는 13개 전부 HUG 로 올발랐다 — 빌드 단계가 일부 셀만 키운 회귀**(그래서 blueprint 만 고쳐선 못 막음 → post-fix 가드 필수).
+- **시스템 강제** — `_normalize_row_cell_vertical_sizing_live(root_id)` (`cmd_post_fix` chain):
+  1. HORIZONTAL parent 의 직계 FRAME 자식 중, 이름 끝 숫자를 뗀 **prefix 가 같은 셀 그룹**(예 'Round Cell')이 3개+ 인 경우 감지
+  2. 그 그룹의 `layoutSizingVertical` 이 섞였거나 height 가 2px 초과로 다르면 → **다수 사이징으로 통일**(다수가 FIXED 인데 height 들쭉날쭉이면 HUG 로 — 텍스트 셀은 HUG 가 정답)
+  3. idempotent — 일관되면 no-op
+- **회귀 신호**: 숫자/날짜 셀 행에서 일부 셀(보통 2자리)의 텍스트만 위/아래로 어긋남, 언더라인이 두 높이로 끊김
+
 ### 2-E-4. ⚠️ Bottom Tab Bar 자식 FILL + 라벨 wrap 차단 (2026-05-28 사용자 분노)
 - **사례**: Bottom Tab Bar 5개 자식 (Tab 홈/커뮤니티/스테이지/라운지/나) 이 HUG horizontal 로 박혀, tab-label TEXT 가 width=24 (아이콘 width 따라가서) 좁아져 "커뮤/니티", "스테/이지", "라운/지" 같이 두 줄 wrap. R13.3 inject 후에도 회귀 가능.
 - **시스템 강제** — `_enforce_tab_bar_children_fill_live(root_id)` (`cmd_post_fix` chain):
@@ -663,13 +726,12 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - HUG/FIXED 혼용 금지 — 아이템 간격이 불균등해짐
 - 빌드 후 반드시 Tab Bar 아이템 사이징 검증할 것
 
-### 5-B. ⚠️ 상단 모드 탭 = DS "Horizontal tabs" 컴포넌트 인스턴스 (2026-05-29 사용자 명시)
-- 🔴 **raw frame + RECTANGLE underline(v2) 폐기** — 2026-05-29 사용자 "이건 Tabs 컴포넌트를 써야 되는데 안 쓰고 있다". DS **"Horizontal tabs"** 컴포넌트 인스턴스(Underline variant)를 쓴다.
-- **컴포넌트 키** (Imin Design System): variant `Type=Underline, Size=md, Full width=False, Breakpoint=Desktop` = `129dd87af9f604fb62b926d66a8ccd773d63912f` (set `dda7a104b0de347c143c6d622c980b8d92fd8674`). ⚠️ Mobile breakpoint underline 은 드롭다운으로 collapse → **Desktop** 사용.
-- **생성기**: `unified_blueprint.py _gen_mode_tabs` 가 Mode Tabs Wrap 안에 이 variant 인스턴스 1개 emit + `_dsModeTabs:{labels,active}` 마커.
-- **✅ trim/label 완전 자동화 (2026-05-29)**: cmd_post_fix 의 `_configure_ds_mode_tabs` 가 자동으로 컨테이너(탭 10개 고정)를 trim — 앞 N개 라벨 `set_text_content` + Badge·나머지 탭 `set_node_visible` hide + 인스턴스 `set_layout_sizing HUG`(기본 폭 1280 FIXED → 축소) + active≠0 이면 Current. config 는 blueprint `_dsModeTabs:{labels,active}` 마커에서 읽음. 수동 단계 불필요.
-- **plugin 도구 `set_node_visible` (신규)**: `code.js` + bridge reg. 인스턴스 자손 visibility 토글(컨테이너 탭 trim 핵심). code.js 수정은 `npm run build` + 브리지 재시작 시 플러그인 WS 재접속이 자동 로드 (Figma 수동 재실행 불필요).
-- active 탭 = Current=True (variant default tab0). 회귀 신호: ⚠ placeholder / raw RECTANGLE underline / 탭 10개 default 라벨(My details…) / 탭바 폭 1280px. 상세 → 메모리 [[feedback_ds_mode_tabs_component]].
+### 5-B. ⚠️ 상단 모드 탭 = Imin DS Segmented_control (2026-06-02 DS v7 폐기)
+- 🔴 **DS v7 "Horizontal tabs"(129dd87…/dda7a104…) 전면 폐기** — 모바일에서 드롭다운("My details")으로 붕괴 + DS v7 라이브러리 의존. 사용자 룰(2026-06-02)에 따라 Imin DS **`Segmented_control`** 으로 통일. 절대 규칙 0-J 참조.
+- **컴포넌트 키** (Imin Design System): Style=hug `47a01673a46dc3bc9bfd62948c10e5fa9f2e5e78` / Style=fill `2ee9d12d4c904650ab496b9bcdf874a648e73ceb` (set `143ee3e3…` import 불가).
+- **생성기**: `unified_blueprint.py _gen_mode_tabs` 가 Mode Tabs Wrap 안에 Segmented_control 인스턴스 1개 emit + **`_segLabels:[…]` + `_segActive:N`** 마커.
+- **✅ 완전 자동화 (prop 기반, 2026-06-02)**: `cmd_build` 의 `_configure_segmented_control` 가 자동으로 — `Show Segment 3~8#16713:{n-3}` 불리언으로 세그먼트 개수 + 각 세그먼트 인스턴스의 `Label#17537:11` TEXT prop 으로 라벨 + `Active` on/off prop 으로 선택. nested 텍스트노드 id 가 아니라 **prop** 으로 설정해 견고(텍스트노드 id 는 variant 마다 달라 깨짐). 수동 단계 불필요.
+- 회귀 신호: 탭이 "전체/전체" / 드롭다운 / DS v7 키(129dd87…) 사용. 상세 → 메모리 [[segmented-control-prop-labels]].
 
 ### 6. Underline Tab Active/Inactive 높이 일치 + Individual Stroke
 - Underline 스타일 탭에서 Active에는 Underline Bar(2px)가 있어 Inactive보다 높아짐
