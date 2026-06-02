@@ -22,6 +22,17 @@ COMPONENT_KEYS = {
     # ── Mobile system chrome ───────────────────────────────────
     "Status Bar":           "51ddb19de206b67eae2d554b1d20c018feb754f4",  # iPhone 9:41
 
+    # ── Bottom Tab Bar (DS 'Tab bar' set, 2026-06-02 추출) ──────
+    # variant prop "Selected": 1.홈 / 2 커뮤니티 / 3 스테이지 / 4 라운지 / 5 나.
+    # active 탭에 해당하는 variant key 로 인스턴스 생성 → 그 탭이 selected 로 렌더.
+    # "Tab Bar" 기본값 = 홈 selected. raw frame 으로 그리지 말고 이 인스턴스 사용.
+    "Tab Bar":              "0faaa55563de4da617964ea93ba07f09bc1279f6",  # = Selected 1.홈 (default)
+    "Tab Bar 홈":           "0faaa55563de4da617964ea93ba07f09bc1279f6",
+    "Tab Bar 커뮤니티":      "b7d390e90bae2d41059671f4474102a2bd92b7c1",
+    "Tab Bar 스테이지":      "a56726e0de4bc0e71875159662b320e9b2ac695c",
+    "Tab Bar 라운지":        "7dcb6d5d2b97d36e0b5d601441f22f87e2d26f5c",
+    "Tab Bar 나":           "740120b5e954cae262d21fefffa946afc26f2d63",
+
     # ── Pills (sm) ─────────────────────────────────────────────
     "Pill sm Brand":        "d0163041d0c710551c31ffd4acaca5ce42f993ac",
     "Pill sm Success":      "e8f010fe720f6742a38c8c8c1c591531fcb5149b",
@@ -727,8 +738,10 @@ def detect_badge_shape(node: dict) -> Optional[Tuple[str, str, str]]:
     # (도토리 번호 / 회차 step / 내 수령 표식) is an identity marker — leave it
     # raw. Real count badges ("13회"·"+6") have a unit or sign and survive.
     w = node.get("width")
-    is_circle = cr >= 12 and (not isinstance(w, (int, float)) or cr >= float(w) * 0.4)
-    if is_circle and re.fullmatch(r"\d{1,3}|[A-Za-z가-힣]", label.strip()):
+    # bare number / single char = step·회차·index·avatar-initial 마커지 status badge 아님.
+    # circular 든 rectangular 든 동일 (2026-06-02: 회차 1~13 셀이 Badge 로 오스왑되던 회귀).
+    # 진짜 count badge('13회'·'+6')는 단위/부호가 있어 \d{1,3} 단독 매칭 안 됨 → 살아남음.
+    if re.fullmatch(r"\d{1,3}|[A-Za-z가-힣]", label.strip()):
         return None
     # cornerRadius: pills are rounded, but rectangular TAGS are squared-off
     # (2026-06-01). Accept low/zero radius when the label/name *says* badge.
@@ -954,6 +967,46 @@ def _has_distinctive_shape(node: dict, role: str) -> bool:
     return False
 
 
+# 2026-06-02 — structural auto-swap 은 '이름 힌트' 가 있을 때만 confident.
+# 순수 모양 일치(이름 힌트 없음)는 WARN-only 로 남겨, hand-authored 콘텐츠/장식
+# (금액 pill·회차 셀·필터 헤더·칩 등)이 DS 컴포넌트로 오스왑돼 콘텐츠가 파괴되는 회귀 차단.
+# 사용자 명시(2026-06-02): "새 세션에서 또 이상하게 생성되면 안 된다 — R23 근본 수정."
+_ROLE_NAME_HINTS = {
+    "button":   ("button", "btn", "cta", "submit", "버튼"),
+    "badge":    ("badge", "뱃지", "배지", "태그", "tag", "chip", "칩"),
+    "avatar":   ("avatar", "profile", "프로필", "아바타"),
+    "dropdown": ("dropdown", "select", "드롭다운", "셀렉트"),
+    "input":    ("input", "field", "입력"),
+    "toggle":   ("toggle", "switch", "스위치", "토글"),
+    "checkbox": ("checkbox", "체크박스"),
+    "radio":    ("radio", "라디오"),
+    "slider":   ("slider", "슬라이더"),
+    "progress": ("progress", "프로그레스", "진행"),
+    "tooltip":  ("tooltip", "툴팁"),
+}
+
+
+def _role_category(role: Optional[str]) -> Optional[str]:
+    r = (role or "").lower()
+    for cat in ("button", "badge", "tag", "avatar", "dropdown", "input",
+                "toggle", "checkbox", "radio", "slider", "progress", "tooltip"):
+        if cat in r:
+            return "badge" if cat == "tag" else cat
+    return None
+
+
+def _has_role_name_hint(node: dict, role: str) -> bool:
+    """node 이름에 role 에 해당하는 DS 컴포넌트 단어가 있나 (confident swap 게이트).
+
+    이름 힌트가 없으면 순수 모양 일치만으로는 confident swap 하지 않는다(WARN-only).
+    """
+    cat = _role_category(role)
+    if not cat:
+        return False
+    low = (node.get("name") or "").lower()
+    return any(w in low for w in _ROLE_NAME_HINTS.get(cat, ()))
+
+
 def detect_ds_role_structural(node: dict, parent: Optional[dict] = None):
     """Unified structural DS detector. Returns (role, componentKey,
     instanceText, confident) or None.
@@ -984,9 +1037,11 @@ def detect_ds_role_structural(node: dict, parent: Optional[dict] = None):
     if bd:
         ll = (bd[2] or "").strip().lower()
         is_status = any(w.lower() in ll for w in _STATUS_WORDS)
+        # 2026-06-02 — leading-small 위치만으로는 confident 안 함 (회차 1~13 셀 같은
+        # 작은 리스트 선두 요소가 badge 로 오스왑되던 회귀). status 라벨·badge 이름 같은
+        # 의미/이름 신호가 있을 때만 confident, 나머지는 아래 line 의 WARN-only 로.
         role_badge = (is_status or _label_is_badge_word(bd[2])
-                      or _name_hints(node, "badge", "뱃지", "배지", "태그", "chip", " tag")
-                      or _is_leading_small(node, parent))
+                      or _name_hints(node, "badge", "뱃지", "배지", "태그", "chip", " tag"))
         # A clear action label means it is actually a button, not a badge —
         # do not claim it here; fall through to the button detector.
         if role_badge and not _label_is_action(bd[2]):
@@ -996,13 +1051,18 @@ def detect_ds_role_structural(node: dict, parent: Optional[dict] = None):
     #    here is a genuine action/CTA.
     b = detect_button_shape(node, parent)
     if b:
-        # 2026-05-28 — 버튼 auto-swap 활성화 (사용자: "제일 중요한 컴포넌트는 버튼").
-        # post-fix _enforce_ds_button_sizing 이 sizing/icon 을 라이브 교정.
-        return (b[0], b[1], b[2], True)
+        # 2026-05-28 — 버튼 auto-swap (사용자: "제일 중요한 컴포넌트는 버튼").
+        # 2026-06-02 — confident swap 은 이름이 button/cta/submit 을 가리킬 때만.
+        # 순수 버튼 모양 + action 라벨(필터 칩 '빠른 시작'·금액 pill 등)은 WARN-only —
+        # 콘텐츠/필터가 버튼으로 오스왑되던 회귀 차단. 진짜 CTA 는 이름(cta/button)을
+        # 주거나 blueprint 에서 type:instance 로 직접 작성(2-G). post-fix 가 sizing 교정.
+        confident = _has_role_name_hint(node, b[0])
+        return (b[0], b[1], b[2], confident)
     # 1.5) avatar — confident auto-swap (2026-05-28). person/user icon 든 원형 프로필.
     av = detect_avatar_shape(node)
     if av:
-        return (av[0], av[1], av[2], True)
+        # 2026-06-02 — 이름 힌트(avatar/profile) 있을 때만 confident, 아니면 WARN-only.
+        return (av[0], av[1], av[2], _has_role_name_hint(node, av[0]))
     # 2) badge / tag — shape-detected but role NOT confirmed above → WARN only
     #    (surfaces the gap without forcing a possibly-wrong badge instance).
     if bd and not _label_is_action(bd[2]):
@@ -1014,6 +1074,10 @@ def detect_ds_role_structural(node: dict, parent: Optional[dict] = None):
         r = det(node)
         if r:
             role = r[0]
-            confident = (role in _VERIFIED_AUTOSWAP_ROLES) and _has_distinctive_shape(node, role)
+            # 2026-06-02 — form control 도 이름 힌트 필수 (dropdown/input/toggle 등).
+            # 순수 모양만으론 WARN-only — 콘텐츠 frame 오스왑 방지.
+            confident = ((role in _VERIFIED_AUTOSWAP_ROLES)
+                         and _has_distinctive_shape(node, role)
+                         and _has_role_name_hint(node, role))
             return (r[0], r[1], r[2], confident)
     return None

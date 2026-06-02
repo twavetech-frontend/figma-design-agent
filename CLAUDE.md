@@ -286,6 +286,47 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > instance: N건` + `R60 Tabs instance: '<name>' 라벨 N개 매핑` 라인이 보이면 자동 처리 성공.
 > 스크린샷에서 탭 영역이 DS Underline tabs 스타일로 표시되어야 한다.
 
+> 🔴 **절대 규칙 0-M — 하단 Tab Bar = DS 'Tab bar' 인스턴스 (2026-06-02 사용자 룰)**
+>
+> 하단 바텀 네비게이션은 raw frame(아이콘+라벨 직접 그리기) 금지. DS **'Tab bar'**
+> 컴포넌트 인스턴스를 쓴다. `Selected` variant 로 active 탭을 정한다 — **탭 구성 고정:
+> 홈 / 커뮤니티 / 스테이지 / 라운지 / 나** (라벨·아이콘·색 모두 컴포넌트 내장, override 불필요).
+>
+> **active 탭에 해당하는 variant key 로 인스턴스 생성** (variant flip 불필요):
+> | active | component key |
+> |--------|---------------|
+> | 홈 | `0faaa55563de4da617964ea93ba07f09bc1279f6` |
+> | 커뮤니티 | `b7d390e90bae2d41059671f4474102a2bd92b7c1` |
+> | 스테이지 | `a56726e0de4bc0e71875159662b320e9b2ac695c` |
+> | 라운지 | `7dcb6d5d2b97d36e0b5d601441f22f87e2d26f5c` |
+> | 나 | `740120b5e954cae262d21fefffa946afc26f2d63` |
+> (set key `f7de125d1aa57be1b3c5ec0757c3b3803d435c7e`. catalog `COMPONENT_KEYS["Tab Bar …"]`.)
+>
+> **시스템 박힘:** `unified_blueprint._gen_tab_bar` 가 active 탭 variant key 로 instance emit.
+> custom blueprint 는 `{"name":"Tab Bar","type":"instance","componentKey":"<active key>"}` 직접 작성.
+> ⚠️ DS 라이브러리에 **publish(게시)된 상태**여야 import 됨 — 미게시면 `⚠ Tab Bar` 에러 프레임.
+
+> 🔴 **절대 규칙 0-L — R23 auto-swap 은 '이름 힌트' 있을 때만 / 콘텐츠 frame 은 DS 이름 금지 (2026-06-02 사용자 분노)**
+>
+> 사용자 명시: *"새 세션에서 디자인 생성하라고 하면 또 이렇게 이상하게 생성할거 아냐?"* —
+> hand-authored blueprint 의 콘텐츠/장식 frame(금액 강조 pill·회차 1~13 셀·필터 칩·
+> 드롭다운 헤더)이 DS 컴포넌트 **모양**과 우연히 겹쳐 R23 이 인스턴스로 오스왑 → 콘텐츠
+> 파괴(드롭다운이 "Account" 더미 / 금액이 보라 버튼 / 회차 바 붕괴)되던 회귀.
+>
+> **시스템 강제 (코드 박힘, 2026-06-02):** `ds_catalog.detect_ds_role_structural` 의 confident
+> auto-swap 은 이제 **이름 힌트가 있을 때만** True:
+> - button → 이름에 `button/btn/cta/submit/버튼`
+> - badge/tag → 이름에 `badge/태그/tag/chip` **또는 라벨이 status 어**(진행중/완료/미납 등)
+> - dropdown/input/toggle/checkbox/radio/slider/progress/avatar → 이름에 해당 단어
+> - **bare 숫자/단일 문자**("1"~"13"·"A") → step·회차 마커로 보고 badge 검출 자체 제외
+> 이름 힌트 없는 순수 모양 일치는 **WARN-only(swap 안 함)**. 진짜 status badge·이름 명시
+> 컴포넌트는 여전히 swap.
+>
+> **blueprint 작성 규칙 (새 세션 필수):** 콘텐츠/장식 frame 에 DS 컴포넌트 단어
+> (`Pill`·`Chip`·`Badge`·`Dropdown`·`Button`·`Tag`)를 **이름으로 쓰지 말 것** — 중립 이름
+> (`Amount Box`·`Filter Opt`·`Filter Header` 등) 사용. 진짜 DS 컴포넌트가 필요하면
+> `type:instance` + componentKey 로 **직접** 작성한다(모양 의존 금지).
+
 > 🔴 **절대 규칙 0-I — 섹션 타이틀 텍스트는 항상 좌측 정렬 (2026-06-01 사용자 룰)**
 >
 > 사용자 명시: *"다른 섹션들은 그렇게 되어 있는데 왜 이것만 중앙으로 배치했는지 이해가

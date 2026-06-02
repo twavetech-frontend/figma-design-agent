@@ -187,60 +187,35 @@ def _gen_mode_tabs(data: dict, scenario: str) -> dict:
     }
 
 
+# DS "Tab bar" 컴포넌트 set (Imin Design System, 2026-06-02 추출).
+# set key f7de125d1aa57be1b3c5ec0757c3b3803d435c7e — variant prop "Selected" 로 active 탭 결정.
+# 탭 구성 고정: 홈 / 커뮤니티 / 스테이지 / 라운지 / 나 (라벨·아이콘·색 모두 컴포넌트 내장).
+# active 탭에 해당하는 variant key 로 인스턴스를 만들면 그 탭이 selected 로 렌더된다(variant flip 불필요).
+_DS_TAB_BAR_VARIANT_KEYS = {
+    "홈":       "0faaa55563de4da617964ea93ba07f09bc1279f6",
+    "커뮤니티":  "b7d390e90bae2d41059671f4474102a2bd92b7c1",
+    "스테이지":  "a56726e0de4bc0e71875159662b320e9b2ac695c",
+    "라운지":    "7dcb6d5d2b97d36e0b5d601441f22f87e2d26f5c",
+    "나":       "740120b5e954cae262d21fefffa946afc26f2d63",
+}
+_DS_TAB_BAR_DEFAULT = "홈"
+
+
 def _gen_tab_bar(data: dict, scenario: str) -> dict:
-    """Bottom Tab Bar — 5 tabs FILL, active = brand."""
-    tabs = data.get("tabs") or ["홈", "라운지", "스테이지", "커뮤니티", "전체"]
-    icons = data.get("icons") or ["home-line", "building-08", "coins-stacked-01",
-                                   "users-01", "menu-01"]
-    active = data.get("active", "홈")
+    """Bottom Tab Bar — DS 'Tab bar' 컴포넌트 인스턴스 (2026-06-02, raw frame 폐기).
 
-    def tab_item(label: str, icon_name: str) -> dict:
-        is_active = label == active
-        color = "fg-brand-primary" if is_active else "fg-secondary"
-        weight = 600 if is_active else 500
-        return {
-            "name": f"Tab {label}",
-            "type": "frame",
-            "layoutSizingHorizontal": "FILL",
-            "layoutSizingVertical": "FILL",
-            "autoLayout": {
-                "layoutMode": "VERTICAL",
-                "primaryAxisAlignItems": "CENTER",
-                "counterAxisAlignItems": "CENTER",
-                "itemSpacing": 4,
-            },
-            "children": [
-                {"name": "tab-icon", "type": "icon", "iconName": icon_name,
-                 "size": 24, "iconColor": f"$token({color})"},
-                {"name": "tab-label", "type": "text", "characters": label,
-                 "fontSize": 11, "fontWeight": weight,
-                 "fill": f"$token(text-{'brand-primary' if is_active else 'secondary'})",
-                 "textAlignHorizontal": "CENTER",
-                 "layoutSizingHorizontal": "FILL"},
-            ],
-        }
-
+    active 탭에 해당하는 Selected variant key 로 인스턴스를 생성한다. 라벨/아이콘/active
+    색은 컴포넌트가 제어 (홈·커뮤니티·스테이지·라운지·나 고정) — override 불필요.
+    """
+    active = data.get("active", _DS_TAB_BAR_DEFAULT)
+    # DS 탭에 없는 라벨(예: 기존 spec 의 '전체')이면 기본 '홈' selected 로 폴백
+    key = _DS_TAB_BAR_VARIANT_KEYS.get(active, _DS_TAB_BAR_VARIANT_KEYS[_DS_TAB_BAR_DEFAULT])
     return {
         "name": "Tab Bar",
-        "type": "frame",
-        "width": 393,
-        "height": 73,
+        "type": "instance",
+        "componentKey": key,
         "layoutSizingHorizontal": "FILL",
-        "fill": "$token(bg-primary)",
-        "autoLayout": {
-            "layoutMode": "HORIZONTAL",
-            "primaryAxisAlignItems": "SPACE_BETWEEN",
-            "counterAxisAlignItems": "CENTER",
-            "paddingTop": 8, "paddingBottom": 24,
-            "paddingLeft": 0, "paddingRight": 0,
-        },
-        "strokeWeight": 0,
-        "strokeTopWeight": 1,
-        "strokeBottomWeight": 0,
-        "strokeLeftWeight": 0,
-        "strokeRightWeight": 0,
-        "children": [tab_item(label, icons[i] if i < len(icons) else "menu-01")
-                     for i, label in enumerate(tabs)],
+        "_dsTabBar": {"active": active if active in _DS_TAB_BAR_VARIANT_KEYS else _DS_TAB_BAR_DEFAULT},
     }
 
 
