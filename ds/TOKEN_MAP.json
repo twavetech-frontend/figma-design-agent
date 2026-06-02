@@ -1266,7 +1266,7 @@
   },
   "--colors-text-textBrandSecondary": {
     "figmaPath": "Colors/Text/text-brand-secondary",
-    "value": "#7700ff",
+    "value": "#9b55ff",
     "type": "COLOR"
   },
   "--colors-text-textPlaceholder": {
@@ -1281,7 +1281,7 @@
   },
   "--colors-text-textBrandTertiary": {
     "figmaPath": "Colors/Text/text-brand-tertiary",
-    "value": "#9b55ff",
+    "value": "#b685ff",
     "type": "COLOR"
   },
   "--colors-text-textQuaternary": {
@@ -1291,7 +1291,7 @@
   },
   "--colors-text-textBrandPrimary": {
     "figmaPath": "Colors/Text/text-brand-primary",
-    "value": "#6a00e0",
+    "value": "#7700ff",
     "type": "COLOR"
   },
   "--colors-text-textPrimaryOnBrand": {
@@ -2749,58 +2749,18 @@
     "value": "linear-gradient(180deg, #f5f5f5 0%, #e9eaeb 100%)",
     "type": "COLOR"
   },
-  "--gradient-brand-600>500-90deg": {
-    "figmaPath": "Gradient/Brand/600 -> 500 (90deg)",
-    "value": "linear-gradient(90deg, #6a00e0 0%, #7700ff 100%)",
-    "type": "COLOR"
-  },
-  "--gradient-brand-700>600-45deg": {
-    "figmaPath": "Gradient/Brand/700 -> 600 (45deg)",
-    "value": "linear-gradient(45deg, #5200b0 0%, #6a00e0 100%)",
-    "type": "COLOR"
-  },
-  "--gradient-brand-800>600-45deg": {
-    "figmaPath": "Gradient/Brand/800 -> 600 (45deg)",
-    "value": "linear-gradient(45deg, #340078 0%, #6a00e0 100%)",
-    "type": "COLOR"
-  },
-  "--gradient-brand-800>600-90deg": {
-    "figmaPath": "Gradient/Brand/800 -> 600 (90deg)",
-    "value": "linear-gradient(90deg, #340078 0%, #6a00e0 100%)",
-    "type": "COLOR"
-  },
-  "--gradient-brand-800>700(26-5deg)": {
-    "figmaPath": "Gradient/Brand/800 -> 700 (26/5deg)",
-    "value": "linear-gradient(27deg, #340078 0%, #5200b0 100%)",
-    "type": "COLOR"
-  },
-  "--gradient-brand-900>600-45deg": {
-    "figmaPath": "Gradient/Brand/900 -> 600 (45deg)",
-    "value": "linear-gradient(45deg, #1b0046 0%, #6a00e0 100%)",
-    "type": "COLOR"
-  },
-  "--gradient-brand-900>700-45deg": {
-    "figmaPath": "Gradient/Brand/900 -> 700 (45deg)",
-    "value": "linear-gradient(45deg, #1b0046 0%, #5200b0 100%)",
-    "type": "COLOR"
-  },
-  "--gradient-brand-gradientBrand": {
-    "figmaPath": "Gradient/Brand/Gradient-Brand",
-    "value": "linear-gradient(180deg, #a454ff 0%, #7700ff 80%, #6c00e8 100%)",
-    "type": "COLOR"
-  },
-  "--gradient-brand-gradient6~5~4H": {
-    "figmaPath": "Gradient/Brand/Gradient-6~5~4_h",
+  "--gradient-brand-gradient6~5~4": {
+    "figmaPath": "Gradient/Brand/Gradient-6~5~4",
     "value": "linear-gradient(90deg, #6a00e0 0%, #7700ff 20%, #9b55ff 100%)",
     "type": "COLOR"
   },
-  "--gradient-brand-gradient5~4H": {
-    "figmaPath": "Gradient/Brand/Gradient-5~4_h",
+  "--gradient-brand-gradient5~4": {
+    "figmaPath": "Gradient/Brand/Gradient-5~4",
     "value": "linear-gradient(90deg, #7700ff 20%, #9b55ff 100%)",
     "type": "COLOR"
   },
-  "--gradient-brand-gradient5~3H": {
-    "figmaPath": "Gradient/Brand/Gradient-5~3_h",
+  "--gradient-brand-gradient5~3": {
+    "figmaPath": "Gradient/Brand/Gradient-5~3",
     "value": "linear-gradient(90deg, #7700ff 20%, #b685ff 100%)",
     "type": "COLOR"
   },
@@ -4757,6 +4717,276 @@
     },
     "type": "TYPOGRAPHY"
   },
+  "--carmenSans-headingMd-extraBold": {
+    "figmaPath": "Carmen sans/Heading md/ExtraBold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-4}",
+      "lineHeight": "{lineHeights.28}",
+      "fontSize": "{fontSize.7}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingMd-bold": {
+    "figmaPath": "Carmen sans/Heading md/Bold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-5}",
+      "lineHeight": "{lineHeights.28}",
+      "fontSize": "{fontSize.7}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingMd-regular": {
+    "figmaPath": "Carmen sans/Heading md/Regular",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-6}",
+      "lineHeight": "{lineHeights.28}",
+      "fontSize": "{fontSize.7}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingSm-extraBold": {
+    "figmaPath": "Carmen sans/Heading sm/ExtraBold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-4}",
+      "lineHeight": "{Line height.heading-xs}",
+      "fontSize": "{fontSize.5}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingSm-bold": {
+    "figmaPath": "Carmen sans/Heading sm/Bold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-5}",
+      "lineHeight": "{Line height.heading-xs}",
+      "fontSize": "{fontSize.5}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingSm-regular": {
+    "figmaPath": "Carmen sans/Heading sm/Regular",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-6}",
+      "lineHeight": "{Line height.heading-xs}",
+      "fontSize": "{fontSize.5}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingXs-extraBold": {
+    "figmaPath": "Carmen sans/Heading xs/ExtraBold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-4}",
+      "lineHeight": "{Line height.body-lg}",
+      "fontSize": "{fontSize.4}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingXs-bold": {
+    "figmaPath": "Carmen sans/Heading xs/Bold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-5}",
+      "lineHeight": "{Line height.body-lg}",
+      "fontSize": "{fontSize.4}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingXs-regular": {
+    "figmaPath": "Carmen sans/Heading xs/Regular",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-6}",
+      "lineHeight": "{Line height.body-lg}",
+      "fontSize": "{fontSize.4}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodyLg-extraBold": {
+    "figmaPath": "Carmen sans/Body lg/ExtraBold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-4}",
+      "lineHeight": "{Line height.body-md}",
+      "fontSize": "{fontSize.2}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodyLg-bold": {
+    "figmaPath": "Carmen sans/Body lg/Bold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-5}",
+      "lineHeight": "{Line height.body-md}",
+      "fontSize": "{fontSize.2}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodyLg-regualr": {
+    "figmaPath": "Carmen sans/Body lg/Regualr",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-6}",
+      "lineHeight": "{Line height.body-md}",
+      "fontSize": "{fontSize.2}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodyMd-extraBold": {
+    "figmaPath": "Carmen sans/Body md/ExtraBold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-4}",
+      "lineHeight": "{Line height.body-sm}",
+      "fontSize": "{fontSize.1}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodyMd-bold": {
+    "figmaPath": "Carmen sans/Body md/Bold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-5}",
+      "lineHeight": "{Line height.body-sm}",
+      "fontSize": "{fontSize.1}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodyMd-regular": {
+    "figmaPath": "Carmen sans/Body md/Regular",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-6}",
+      "lineHeight": "{Line height.body-sm}",
+      "fontSize": "{fontSize.1}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodySm-extraBold": {
+    "figmaPath": "Carmen sans/Body sm/ExtraBold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-4}",
+      "lineHeight": "{lineHeights.43}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodySm-bold": {
+    "figmaPath": "Carmen sans/Body sm/Bold",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-5}",
+      "lineHeight": "{lineHeights.43}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodySm-regular": {
+    "figmaPath": "Carmen sans/Body sm/Regular",
+    "value": {
+      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontWeight": "{fontWeights.carmen-sans-6}",
+      "lineHeight": "{lineHeights.43}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
   "--red-25": {
     "figmaPath": "Red/25",
     "value": "#fdf6f6",
@@ -5367,6 +5597,46 @@
     "value": "#9c6900",
     "type": "COLOR"
   },
+  "--componentColors-utility-aqua-utilityAqua50": {
+    "figmaPath": "Component colors/Utility/Aqua/utility-aqua-50",
+    "value": "#eaf9fb",
+    "type": "COLOR"
+  },
+  "--componentColors-utility-aqua-utilityAqua100": {
+    "figmaPath": "Component colors/Utility/Aqua/utility-aqua-100",
+    "value": "#d9f5f8",
+    "type": "COLOR"
+  },
+  "--componentColors-utility-aqua-utilityAqua200": {
+    "figmaPath": "Component colors/Utility/Aqua/utility-aqua-200",
+    "value": "#bcecf1",
+    "type": "COLOR"
+  },
+  "--componentColors-utility-aqua-utilityAqua300": {
+    "figmaPath": "Component colors/Utility/Aqua/utility-aqua-300",
+    "value": "#92e1e8",
+    "type": "COLOR"
+  },
+  "--componentColors-utility-aqua-utilityAqua400": {
+    "figmaPath": "Component colors/Utility/Aqua/utility-aqua-400",
+    "value": "#5cd4de",
+    "type": "COLOR"
+  },
+  "--componentColors-utility-aqua-utilityAqua500": {
+    "figmaPath": "Component colors/Utility/Aqua/utility-aqua-500",
+    "value": "#00c6d4",
+    "type": "COLOR"
+  },
+  "--componentColors-utility-aqua-utilityAqua600": {
+    "figmaPath": "Component colors/Utility/Aqua/utility-aqua-600",
+    "value": "#009eaa",
+    "type": "COLOR"
+  },
+  "--componentColors-utility-aqua-utilityAqua700": {
+    "figmaPath": "Component colors/Utility/Aqua/utility-aqua-700",
+    "value": "#007b84",
+    "type": "COLOR"
+  },
   "--componentColors-components-tooltips-tooltipSupportingText": {
     "figmaPath": "Component colors/Components/Tooltips/tooltip-supporting-text",
     "value": "#d5d7da",
@@ -5602,6 +5872,426 @@
     "value": "#0000004d",
     "type": "COLOR"
   },
+  "--headingMd-regular": {
+    "figmaPath": "Heading md/Regular",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.regular}",
+      "lineHeight": "{Line height.heading-md}",
+      "fontSize": "{fontSize.8}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingMd-medium": {
+    "figmaPath": "Heading md/Medium",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.medium}",
+      "lineHeight": "{Line height.heading-md}",
+      "fontSize": "{fontSize.8}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingMd-semibold": {
+    "figmaPath": "Heading md/Semibold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.semibold}",
+      "lineHeight": "{Line height.heading-md}",
+      "fontSize": "{fontSize.8}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingMd-bold": {
+    "figmaPath": "Heading md/Bold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.bold}",
+      "lineHeight": "{Line height.heading-md}",
+      "fontSize": "{fontSize.8}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingSm-regular": {
+    "figmaPath": "Heading sm/Regular",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.regular}",
+      "lineHeight": "{Line height.heading-sm}",
+      "fontSize": "{fontSize.6}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingSm-medium": {
+    "figmaPath": "Heading sm/Medium",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.medium}",
+      "lineHeight": "{Line height.heading-sm}",
+      "fontSize": "{fontSize.6}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingSm-semibold": {
+    "figmaPath": "Heading sm/Semibold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.semibold}",
+      "lineHeight": "{Line height.heading-sm}",
+      "fontSize": "{fontSize.6}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingSm-bold": {
+    "figmaPath": "Heading sm/Bold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.bold}",
+      "lineHeight": "{Line height.heading-sm}",
+      "fontSize": "{fontSize.6}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingXs-regular": {
+    "figmaPath": "Heading xs/Regular",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.regular}",
+      "lineHeight": "{Line height.heading-xs}",
+      "fontSize": "{fontSize.5}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingXs-medium": {
+    "figmaPath": "Heading xs/Medium",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.medium}",
+      "lineHeight": "{Line height.heading-xs}",
+      "fontSize": "{fontSize.5}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingXs-semibold": {
+    "figmaPath": "Heading xs/Semibold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.semibold}",
+      "lineHeight": "{Line height.heading-xs}",
+      "fontSize": "{fontSize.5}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--headingXs-bold": {
+    "figmaPath": "Heading xs/Bold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.bold}",
+      "lineHeight": "{Line height.heading-sm}",
+      "fontSize": "{fontSize.5}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyLg-regular": {
+    "figmaPath": "Body lg/Regular",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.regular}",
+      "lineHeight": "{Line height.body-lg}",
+      "fontSize": "{fontSize.3}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyLg-medium": {
+    "figmaPath": "Body lg/Medium",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.medium}",
+      "lineHeight": "{Line height.body-lg}",
+      "fontSize": "{fontSize.3}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyLg-semibold": {
+    "figmaPath": "Body lg/Semibold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.semibold}",
+      "lineHeight": "{Line height.body-lg}",
+      "fontSize": "{fontSize.3}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyLg-bold": {
+    "figmaPath": "Body lg/Bold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.bold}",
+      "lineHeight": "{Line height.body-lg}",
+      "fontSize": "{fontSize.3}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyMd-regular": {
+    "figmaPath": "Body md/Regular",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.regular}",
+      "lineHeight": "{Line height.body-md}",
+      "fontSize": "{fontSize.2}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyMd-medium": {
+    "figmaPath": "Body md/Medium",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.medium}",
+      "lineHeight": "{Line height.body-md}",
+      "fontSize": "{fontSize.2}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyMd-semibold": {
+    "figmaPath": "Body md/Semibold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.semibold}",
+      "lineHeight": "{Line height.body-md}",
+      "fontSize": "{fontSize.2}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyMd-bold": {
+    "figmaPath": "Body md/Bold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.bold}",
+      "lineHeight": "{Line height.body-md}",
+      "fontSize": "{fontSize.2}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodySm-regular": {
+    "figmaPath": "Body sm/Regular",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.regular}",
+      "lineHeight": "{Line height.body-sm}",
+      "fontSize": "{fontSize.1}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodySm-medium": {
+    "figmaPath": "Body sm/Medium",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.medium}",
+      "lineHeight": "{Line height.body-sm}",
+      "fontSize": "{fontSize.1}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodySm-semibold": {
+    "figmaPath": "Body sm/Semibold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.semibold}",
+      "lineHeight": "{Line height.body-sm}",
+      "fontSize": "{fontSize.1}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodySm-bold": {
+    "figmaPath": "Body sm/Bold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.bold}",
+      "lineHeight": "{Line height.body-sm}",
+      "fontSize": "{fontSize.1}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyXs-regular": {
+    "figmaPath": "Body xs/Regular",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.regular}",
+      "lineHeight": "{Line height.body-xxs}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyXs-medium": {
+    "figmaPath": "Body xs/Medium",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.medium}",
+      "lineHeight": "{Line height.body-xxs}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyXs-semibold": {
+    "figmaPath": "Body xs/Semibold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.semibold}",
+      "lineHeight": "{Line height.body-xxs}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyXs-bold": {
+    "figmaPath": "Body xs/Bold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.bold}",
+      "lineHeight": "{Line height.body-xxs}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
   "--fontFamily-fontFamilyDisplay": {
     "figmaPath": "Font family/font-family-display",
     "value": "Pretendard",
@@ -5609,6 +6299,11 @@
   },
   "--fontFamily-fontFamilyBody": {
     "figmaPath": "Font family/font-family-body",
+    "value": "Pretendard",
+    "type": "TEXT"
+  },
+  "--fontFamily-fontFamilyHeading": {
+    "figmaPath": "Font family/font-family-heading",
     "value": "Pretendard",
     "type": "TEXT"
   },
@@ -5712,6 +6407,66 @@
     "value": 10,
     "type": "NUMBER"
   },
+  "--fontSize-bodyXs": {
+    "figmaPath": "Font size/body-xs",
+    "value": 12,
+    "type": "NUMBER"
+  },
+  "--fontSize-bodySm": {
+    "figmaPath": "Font size/body-sm",
+    "value": 14,
+    "type": "NUMBER"
+  },
+  "--fontSize-bodyMd": {
+    "figmaPath": "Font size/body-md",
+    "value": 16,
+    "type": "NUMBER"
+  },
+  "--fontSize-bodyLg": {
+    "figmaPath": "Font size/body-lg",
+    "value": 18,
+    "type": "NUMBER"
+  },
+  "--fontSize-bodyXl": {
+    "figmaPath": "Font size/body-xl",
+    "value": 20,
+    "type": "NUMBER"
+  },
+  "--fontSize-headingXs": {
+    "figmaPath": "Font size/heading-xs",
+    "value": 24,
+    "type": "NUMBER"
+  },
+  "--fontSize-headingSm": {
+    "figmaPath": "Font size/heading-sm",
+    "value": 30,
+    "type": "NUMBER"
+  },
+  "--fontSize-headingMd": {
+    "figmaPath": "Font size/heading-md",
+    "value": 36,
+    "type": "NUMBER"
+  },
+  "--fontSize-headingLg": {
+    "figmaPath": "Font size/heading-lg",
+    "value": 48,
+    "type": "NUMBER"
+  },
+  "--fontSize-headingXl": {
+    "figmaPath": "Font size/heading-xl",
+    "value": 60,
+    "type": "NUMBER"
+  },
+  "--fontSize-heading2xl": {
+    "figmaPath": "Font size/heading-2xl",
+    "value": 72,
+    "type": "NUMBER"
+  },
+  "--fontSize-bodyXxs": {
+    "figmaPath": "Font size/body-xxs",
+    "value": 10,
+    "type": "NUMBER"
+  },
   "--lineHeight-textXs": {
     "figmaPath": "Line height/text-xs",
     "value": 18,
@@ -5769,6 +6524,66 @@
   },
   "--lineHeight-textXxs": {
     "figmaPath": "Line height/text-xxs",
+    "value": 14,
+    "type": "NUMBER"
+  },
+  "--lineHeight-bodyXs": {
+    "figmaPath": "Line height/body-xs",
+    "value": 18,
+    "type": "NUMBER"
+  },
+  "--lineHeight-bodySm": {
+    "figmaPath": "Line height/body-sm",
+    "value": 20,
+    "type": "NUMBER"
+  },
+  "--lineHeight-bodyMd": {
+    "figmaPath": "Line height/body-md",
+    "value": 24,
+    "type": "NUMBER"
+  },
+  "--lineHeight-bodyLg": {
+    "figmaPath": "Line height/body-lg",
+    "value": 28,
+    "type": "NUMBER"
+  },
+  "--lineHeight-bodyXl": {
+    "figmaPath": "Line height/body-xl",
+    "value": 30,
+    "type": "NUMBER"
+  },
+  "--lineHeight-headingXs": {
+    "figmaPath": "Line height/heading-xs",
+    "value": 32,
+    "type": "NUMBER"
+  },
+  "--lineHeight-headingSm": {
+    "figmaPath": "Line height/heading-sm",
+    "value": 38,
+    "type": "NUMBER"
+  },
+  "--lineHeight-headingMd": {
+    "figmaPath": "Line height/heading-md",
+    "value": 44,
+    "type": "NUMBER"
+  },
+  "--lineHeight-headingLg": {
+    "figmaPath": "Line height/heading-lg",
+    "value": 60,
+    "type": "NUMBER"
+  },
+  "--lineHeight-headingXl": {
+    "figmaPath": "Line height/heading-xl",
+    "value": 72,
+    "type": "NUMBER"
+  },
+  "--lineHeight-heading2xl": {
+    "figmaPath": "Line height/heading-2xl",
+    "value": 90,
+    "type": "NUMBER"
+  },
+  "--lineHeight-bodyXxs": {
+    "figmaPath": "Line height/body-xxs",
     "value": 14,
     "type": "NUMBER"
   },
