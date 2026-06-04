@@ -55,29 +55,62 @@ def test_bottom_sheet_wraps_children():
     assert inner == ["Header", "Body", "CTA"]
 
 
-def test_dim_overlay_uses_alpha_black_50():
-    """Dim Overlay 의 fill 은 alpha-black 50% (반투명 어둠)."""
+def test_dim_overlay_transparent_spacer():
+    """🔴 2026-06-04 사용자: root fill = black 50%(dim) 로 통일 → Dim Overlay 는 색 없는
+    투명 FILL 스페이서(시트를 하단으로 미는 역할만, 이중 dim 방지)."""
     bp = _make_bp([{"name": "X", "type": "frame"}])
     _enforce_bottom_sheet_pattern(bp)
     dim = bp["children"][0]
     assert dim["name"] == "Dim Overlay"
-    fills = dim.get("fills", [])
-    assert len(fills) == 1
-    assert fills[0]["type"] == "SOLID"
-    assert fills[0]["opacity"] == 0.5
-    assert fills[0]["color"] == {"r": 0, "g": 0, "b": 0}
+    assert dim.get("fills") == []  # 투명
+    assert dim["layoutSizingVertical"] == "FILL"  # 스페이서
+
+
+def test_root_padding_zeroed():
+    """🔴 2026-06-04 사용자: root frame 상하좌우 padding 0 (시트 바닥 완전 밀착·풀폭)."""
+    bp = _make_bp([{"name": "X", "type": "frame"}])
+    bp["autoLayout"].update({"paddingLeft": 20, "paddingRight": 20,
+                             "paddingTop": 12, "paddingBottom": 24})
+    _enforce_bottom_sheet_pattern(bp)
+    al = bp["autoLayout"]
+    assert al["paddingLeft"] == 0 and al["paddingRight"] == 0
+    assert al["paddingTop"] == 0 and al["paddingBottom"] == 0
 
 
 def test_modal_sheet_top_rounded():
-    """Modal Sheet 는 top corners 만 24px rounded."""
+    """Modal Sheet 는 top corners 만 16px rounded (2026-06-04 사용자 절대규칙)."""
     bp = _make_bp([{"name": "X", "type": "frame"}])
     _enforce_bottom_sheet_pattern(bp)
     modal = bp["children"][1]
     assert modal["name"] == "Modal Sheet"
-    assert modal["topLeftRadius"] == 24
-    assert modal["topRightRadius"] == 24
+    assert modal["topLeftRadius"] == 16
+    assert modal["topRightRadius"] == 16
     assert modal["bottomLeftRadius"] == 0
     assert modal["bottomRightRadius"] == 0
+
+
+def test_sheet_full_width_content_padding_20():
+    """🔴 2026-06-04 사용자: 시트는 root 풀폭(root 가로 padding 0), 콘텐츠 가로 padding 20 은
+    Modal Sheet 가 가진다."""
+    bp = _make_bp([{"name": "X", "type": "frame"}])
+    _enforce_bottom_sheet_pattern(bp)
+    # root 가로 padding 0 (시트 풀폭)
+    ral = bp["autoLayout"]
+    assert ral.get("paddingLeft") == 0
+    assert ral.get("paddingRight") == 0
+    # Modal Sheet 콘텐츠 가로 padding 20
+    modal = bp["children"][1]
+    mal = modal["autoLayout"]
+    assert mal["paddingLeft"] == 20
+    assert mal["paddingRight"] == 20
+
+
+def test_root_852_fixed():
+    """🔴 2026-06-04 사용자: root frame 높이는 852, vertical FIXED."""
+    bp = _make_bp([{"name": "X", "type": "frame"}])
+    _enforce_bottom_sheet_pattern(bp)
+    assert bp["height"] == 852
+    assert bp["layoutSizingVertical"] == "FIXED"
 
 
 def test_modal_sheet_bg_primary():

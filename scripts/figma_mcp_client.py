@@ -2245,8 +2245,27 @@ def _enforce_root_bg_primary(blueprint: dict) -> None:
         print(f"[규칙] 루트 프레임 fill 강제 교정: {current!r} → $token(bg-primary)")
 
 
-def _enforce_root_bg_primary_live(root_node_id: str) -> None:
-    """빌드된 루트 노드의 배경을 bg-primary로 강제 (런타임 보장 — post-fix용)."""
+# 🔴 바텀시트 root = black 50% (2026-06-04 사용자): 흰 root 위 흰 시트는 radius 가 안 보여,
+# root 를 dim(black 50%)으로 해 시트 모서리를 또렷하게. 절대규칙 0(root=bg-primary)의 유일 예외.
+_BOTTOM_SHEET_ROOT_DIM = {"r": 0.0, "g": 0.0, "b": 0.0, "a": 0.5}
+
+
+def _enforce_root_bg_primary_live(root_node_id: str, screen_type: Optional[str] = None) -> None:
+    """빌드된 루트 노드의 배경을 bg-primary로 강제 (런타임 보장 — post-fix용).
+
+    🔴 예외: bottom-sheet 는 root fill = black 50% (dim). 시트 radius 가시화 (사용자 룰).
+    """
+    if _is_bottom_sheet_screen_type(screen_type):
+        try:
+            call_tool("set_fill_color", {
+                "nodeId": root_node_id,
+                "r": _BOTTOM_SHEET_ROOT_DIM["r"], "g": _BOTTOM_SHEET_ROOT_DIM["g"],
+                "b": _BOTTOM_SHEET_ROOT_DIM["b"], "a": _BOTTOM_SHEET_ROOT_DIM["a"],
+            })
+            print("  [규칙] 바텀시트 루트 배경 → black 50% (dim) 적용")
+        except Exception as e:
+            print(f"  [규칙] 바텀시트 루트 dim 설정 실패 (무시): {e}")
+        return
     rgba = resolve_token_ref("$token(bg-primary)") or {"r": 0.988, "g": 0.988, "b": 0.992, "a": 1.0}
     try:
         call_tool("set_fill_color", {
@@ -2265,6 +2284,82 @@ def _enforce_root_bg_primary_live(root_node_id: str) -> None:
             print("  [규칙] 루트 프레임 배경 → bg-primary 강제 적용 완료")
         except Exception as e:
             print(f"  [규칙] 루트 bg-primary 변수 바인딩 실패 (무시): {e}")
+
+
+_NAVBAR_NAME_HINTS = ("navbar", "nav bar", "app bar", "appbar", "top bar",
+                      "topbar", "header bar", "nav header")
+
+
+def _enforce_navbar_style_live(root_node_id: str) -> int:
+    """절대 규칙 (2026-06-04 사용자): 상단 NavBar 스타일 강제.
+      1. NavBar frame fill = bg-primary (리터럴 + 변수 바인딩)
+      1-b. NavBar frame 자체 stroke 없어야 함 (제거)
+      2. NavBar 안 좌측 back btn frame 은 stroke 없어야 함 (제거)
+    """
+    nav_bg = resolve_token_ref("$token(bg-primary)") or {"r": 0.988, "g": 0.988, "b": 0.992, "a": 1.0}
+    nav_fp = _token_to_figma_path("bg-primary")
+    fixed = [0]
+
+    def _is_back_btn(n):
+        if (n.get("type") or "").upper() != "FRAME":
+            return False
+        nm = (n.get("name") or "").lower()
+        if any(w in nm for w in ("back", "뒤로")):
+            return True
+        # 좌향 화살표 아이콘만 든 프레임 = back 버튼 (이름 변형에 견고하도록 넓게 매칭)
+        _LEFT_ARROW = ("chevron-left", "arrow-left", "arrow-narrow-left",
+                       "arrow-circle-left", "caret-left", "chevron-circle-left")
+        for ch in (n.get("_children_full") or n.get("children") or []):
+            inm = (ch.get("name") or "").lower()
+            icn = (ch.get("iconName") or "").lower()
+            if any(a in inm for a in _LEFT_ARROW) or any(a in icn for a in _LEFT_ARROW):
+                return True
+        return False
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        nm = (n.get("name") or "").lower()
+        if (n.get("type") or "").upper() == "FRAME" and (n.get("layoutMode") or "").upper() == "HORIZONTAL" \
+                and any(h in nm for h in _NAVBAR_NAME_HINTS):
+            # 1. NavBar fill = bg-primary
+            try:
+                call_tool("set_fill_color", {"nodeId": n["id"], "r": nav_bg["r"], "g": nav_bg["g"],
+                                             "b": nav_bg["b"], "a": nav_bg.get("a", 1.0)})
+                if nav_fp:
+                    call_tool("set_bound_variables", {"nodeId": n["id"], "bindings": {"fills/0": nav_fp}})
+                fixed[0] += 1
+            except Exception as e:
+                print(f"  [navbar] fill 실패(무시): {e}")
+            # 1-b. NavBar frame 자체 stroke 제거 (2026-06-04 사용자 추가)
+            try:
+                call_tool("set_stroke_color", {"nodeId": n["id"], "r": 0, "g": 0, "b": 0,
+                                               "a": 0, "strokeWeight": 0})
+            except Exception as e:
+                print(f"  [navbar] frame stroke 제거 실패(무시): {e}")
+            # 2. 좌측 back btn stroke 제거 (NavBar 서브트리 전체에서 탐색 — 중첩 허용)
+            def _strip_back(node):
+                for ch in (node.get("_children_full") or node.get("children") or []):
+                    if _is_back_btn(ch):
+                        try:
+                            call_tool("set_stroke_color", {"nodeId": ch["id"], "r": 0, "g": 0,
+                                                           "b": 0, "a": 0, "strokeWeight": 0})
+                            fixed[0] += 1
+                        except Exception as e:
+                            print(f"  [navbar] back btn stroke 제거 실패(무시): {e}")
+                    else:
+                        _strip_back(ch)
+            _strip_back(n)
+        for ch in (n.get("_children_full") or n.get("children") or []):
+            walk(ch)
+
+    try:
+        walk(_collect_tree(root_node_id))
+    except Exception as e:
+        print(f"  [navbar] 트리 수집 실패(무시): {e}")
+    if fixed[0]:
+        print(f"  [navbar] ✓ NavBar bg-primary + back btn stroke 제거 ({fixed[0]}건)")
+    return fixed[0]
 
 
 # ── 색상 + 폴리시 규칙 (회사 피드백 2026-05-22, 2026-05-23 재조정) ──────────
@@ -2339,12 +2434,14 @@ def _enforce_bottom_sheet_pattern(blueprint: dict) -> None:
         else:
             modal_kids.append(c)
 
+    # 🔴 2026-06-04 사용자: root fill = black 50%(dim) 로 통일 → Dim Overlay 는 색 없는
+    # FILL 스페이서(투명). 시트를 하단으로 미는 역할만. (root 가 dim 을 제공하므로 이중 dim 방지.)
     dim = {
         "name": "Dim Overlay",
         "type": "frame",
         "layoutSizingHorizontal": "FILL",
         "layoutSizingVertical": "FILL",
-        "fills": [_BOTTOM_SHEET_DIM_FILL],
+        "fills": [],
     }
     modal = {
         "name": "Modal Sheet",
@@ -2352,15 +2449,20 @@ def _enforce_bottom_sheet_pattern(blueprint: dict) -> None:
         "layoutSizingHorizontal": "FILL",
         "layoutSizingVertical": "HUG",
         "fill": "$token(bg-primary)",
-        "topLeftRadius": 24,
-        "topRightRadius": 24,
+        # 🔴 절대규칙 (2026-06-04 사용자): bottom sheet 상단 모서리 radius = 16.
+        "topLeftRadius": 16,
+        "topRightRadius": 16,
         "bottomLeftRadius": 0,
         "bottomRightRadius": 0,
+        # 🔴 절대규칙 (2026-06-04 사용자): radius 있는 frame 은 꼭 clipsContent=true.
+        "clipsContent": True,
+        # 🔴 2026-06-04 사용자: 콘텐츠 가로 padding 20 은 시트가 갖는다 (시트는 풀폭, 안쪽 20 인셋).
+        # paddingTop 12(핸들 영역) + paddingBottom 24(safe area). itemSpacing 18 로 섹션 간격.
         "autoLayout": {
             "layoutMode": "VERTICAL",
-            "itemSpacing": 0,
-            "paddingTop": 0, "paddingBottom": 0,
-            "paddingLeft": 0, "paddingRight": 0,
+            "itemSpacing": 18,
+            "paddingTop": 12, "paddingBottom": 24,
+            "paddingLeft": 20, "paddingRight": 20,
         },
         "children": modal_kids,
     }
@@ -2371,12 +2473,64 @@ def _enforce_bottom_sheet_pattern(blueprint: dict) -> None:
     new_children.extend([dim, modal])
     blueprint["children"] = new_children
 
-    # Root 는 852 FIXED 로 (bottom sheet 위치 고정 위해)
+    # 🔴 Root: 852 FIXED (시트 하단 고정) + **상하좌우 padding 0** (2026-06-04 사용자:
+    # "root frame 위아래 padding값은 필요없어"). 시트가 root 와 동일한 풀폭 + 바닥에 완전 밀착
+    # (root paddingBottom 이 있으면 시트 아래 dim 띠가 생김). 콘텐츠 인셋(가로 20·하단 safe
+    # area 24)은 Modal Sheet 가 가진다.
     blueprint["height"] = 852
     blueprint["layoutSizingVertical"] = "FIXED"
+    blueprint["width"] = 393
+    _root_al = blueprint.get("autoLayout")
+    if isinstance(_root_al, dict):
+        _root_al["paddingLeft"] = 0
+        _root_al["paddingRight"] = 0
+        _root_al["paddingTop"] = 0
+        _root_al["paddingBottom"] = 0
+        _root_al["itemSpacing"] = 0
 
     print(f"[규칙] Bottom Sheet 패턴 강제 — Dim Overlay + Modal Sheet wrap "
           f"({len(modal_kids)}개 자식을 Modal Sheet 안으로)")
+
+
+def _enforce_radius_clip_blueprint(blueprint: dict) -> None:
+    """🔴 절대규칙 (2026-06-04 사용자): radius 값이 있는 frame 은 꼭 clipsContent=true.
+
+    "frame에 radius 값을 넣으면 꼭!! Clip content 옵션 체크가 되어야 한다."
+
+    **Why 라이브 enforcer 만으론 부족** — Modal Sheet 처럼 **개별 코너 radius**(topLeftRadius
+    등)를 쓰는 frame 은 `get_nodes_info` 가 코너 값을 None 으로 직렬화해 라이브 검출이 안 된다.
+    blueprint 단계 값은 정확하므로 여기서 박는다 — batch_build 가 `spec.clipsContent` 를 반영.
+
+    대상: cornerRadius>0 또는 개별 코너(top/bottom Left/Right Radius)>0 인 frame.
+    제외: instance(master 제어). clipsContent 가 이미 명시돼 있으면 존중(명시적 false 도 유지).
+    """
+    if not isinstance(blueprint, dict):
+        return
+    touched = [0]
+
+    def _has_radius(n: dict) -> bool:
+        cr = n.get("cornerRadius")
+        if isinstance(cr, (int, float)) and cr > 0:
+            return True
+        for k in ("topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"):
+            v = n.get(k)
+            if isinstance(v, (int, float)) and v > 0:
+                return True
+        return False
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        t = (n.get("type") or "frame").lower()
+        if t in ("frame", "") and _has_radius(n) and n.get("clipsContent") is None:
+            n["clipsContent"] = True
+            touched[0] += 1
+        for c in n.get("children", []) or []:
+            walk(c)
+
+    walk(blueprint)
+    if touched[0]:
+        print(f"[규칙] radius>0 frame {touched[0]}건 → clipsContent=true (blueprint 강제)")
 
 
 def _enforce_modal_pattern(blueprint: dict) -> None:
@@ -3309,6 +3463,7 @@ def cmd_build(blueprint_file: str):
     # ⚠️ 시스템 규칙: modal 패턴 → 색상 advisory → 카드 표면 → elevation → 타이포 위계 → 섹션 divider → tooltip ignore auto layout → disabled slot 패턴
     _enforce_modal_pattern(blueprint)
     _enforce_bottom_sheet_pattern(blueprint)  # 2026-05-27 — bottom sheet modal 기본형
+    _enforce_radius_clip_blueprint(blueprint)  # 2026-06-04 — radius>0 frame 은 clipsContent=true
     _enforce_color_restraint(blueprint)
     _enforce_card_surface(blueprint)
     _enforce_card_elevation(blueprint)  # 2026-05-27 — shadow 자동 주입 폐기 (제거기로 작동)
@@ -3734,6 +3889,35 @@ def cmd_build(blueprint_file: str):
                 print(f"[Step E.7.7] blueprint FIXED 폭 {n_fw}건 + padding {n_bp}건 최종 복원")
         except Exception as e:
             print(f"  [bp-final] 실패 (무시): {e}")
+
+        # 절대규칙 0-O (2026-06-04): NavBar fill=bg-primary + 좌측 back btn stroke 제거.
+        # AUTO_FIX·white-card-border *이후* 에 해야 back btn 에 border 가 재부착되지 않는다.
+        try:
+            _enforce_navbar_style_live(root_id)
+        except Exception as e:
+            print(f"  [navbar] 실패 (무시): {e}")
+
+        # 절대규칙 0-Q (2026-06-04): radius>0 frame 은 clipsContent=true. R45(post-fix +
+        # AUTO_FIX 두 곳)가 시트/카드 clip 을 false 로 끄는데, get_nodes_info 가 개별 코너
+        # radius 를 None 으로 직렬화해 R45 의 rounded-card 예외가 시트를 놓친다 → **AUTO_FIX
+        # 이후** blueprint 의 radius 정보로 name-path 매칭해 clip=true 를 최종 재단언.
+        try:
+            _final_bp2 = blueprint if isinstance(blueprint, dict) else original_blueprint
+            n_clip = _enforce_radius_clip_live(root_id, _collect_radius_clip_paths(_final_bp2))
+            if n_clip:
+                print(f"[Step E.7.7] radius>0 frame {n_clip}건 clipsContent=true 최종 재단언")
+        except Exception as e:
+            print(f"  [radius-clip-final] 실패 (무시): {e}")
+
+        # 🔴 바텀시트 root = black 50%(dim) 최종 재단언 (2026-06-04 사용자) — AUTO_FIX 가
+        # root 를 bg-primary 로 되돌릴 수 있으므로 맨 끝에서 다시 dim 으로.
+        try:
+            _st2 = (_screen_type_from_blueprint(_final_bp2)
+                    or _screen_type_from_blueprint(original_blueprint))
+            if _is_bottom_sheet_screen_type(_st2):
+                _enforce_root_bg_primary_live(root_id, screen_type=_st2)
+        except Exception as e:
+            print(f"  [root-dim-final] 실패 (무시): {e}")
 
     # Step G: NavBar 로고 인스턴스 교체
     if node_map and "Logo Placeholder" in node_map:
@@ -5869,6 +6053,80 @@ def _enforce_blueprint_padding(root_id: str, pad_map: dict) -> int:
     return fixed[0]
 
 
+def _collect_radius_clip_paths(blueprint: Optional[dict]) -> dict:
+    """🔴 절대규칙 0-Q (2026-06-04): radius>0 frame 의 {이름경로: layoutMode} 수집.
+
+    R45(post-fix + AUTO_FIX)가 시트/카드 clip 을 false 로 끄는데, get_nodes_info 가 개별
+    코너 radius 를 None 으로 직렬화해 라이브 검출이 안 된다 → blueprint 의 radius 정보로
+    name-path 를 모아 Step E.7.7(AUTO_FIX 이후)에서 clip=true 를 재단언한다.
+    """
+    out = {}
+    if not isinstance(blueprint, dict):
+        return out
+    root = blueprint.get("root") or blueprint
+
+    def _has_radius(n):
+        cr = n.get("cornerRadius")
+        if isinstance(cr, (int, float)) and cr > 0:
+            return True
+        for k in ("topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"):
+            v = n.get(k)
+            if isinstance(v, (int, float)) and v > 0:
+                return True
+        return False
+
+    def walk(node, chain):
+        if not isinstance(node, dict):
+            return
+        cur = chain + (node.get("name") or "",)
+        if (node.get("type") or "frame").lower() == "frame" and _has_radius(node) \
+                and (node.get("children") or node.get("_originalChildren")):
+            al = node.get("autoLayout") or {}
+            out[cur] = al.get("layoutMode") or node.get("layoutMode") or "NONE"
+        for c in (node.get("children") or node.get("_originalChildren") or []):
+            walk(c, cur)
+    walk(root, ())
+    return out
+
+
+def _enforce_radius_clip_live(root_id: str, clip_map: dict) -> int:
+    """빌드 트리에서 radius>0 frame 의 clipsContent=true 재단언 (2026-06-04 절대규칙 0-Q).
+
+    R45 가 clip 을 false 로 끈 뒤(get_nodes_info 가 개별 코너를 None 으로 줘서 R45 의 rounded
+    예외가 시트를 놓침) Step E.7.7 에서 blueprint name-path 매칭으로 무조건 true 로 되돌린다.
+    """
+    if not clip_map:
+        return 0
+    fixed = [0]
+
+    def walk(n, chain):
+        if not isinstance(n, dict):
+            return
+        cur = chain + (n.get("name") or "",)
+        if cur in clip_map and (n.get("type") or "").upper() == "FRAME" \
+                and n.get("clipsContent") is not True:
+            lm = clip_map[cur]
+            if lm in (None, "NONE", ""):
+                lm = n.get("layoutMode") or "VERTICAL"
+            try:
+                call_tool("set_auto_layout", {"nodeId": n["id"], "layoutMode": lm, "clipsContent": True})
+                fixed[0] += 1
+            except Exception as e:
+                print(f"  [radius-clip] '{n.get('id')}' fail: {e}")
+        for cc in n.get("children", []) or []:
+            walk(cc, cur)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0], ())
+    except Exception as e:
+        print(f"  [radius-clip] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [radius-clip] ✓ radius>0 frame {fixed[0]}개 clipsContent=true 복원")
+    return fixed[0]
+
+
 def _enforce_fixed_widths(root_id: str, width_map: dict) -> int:
     """빌드 트리에서 blueprint 가 FIXED 로 명시한 폭을 재단언 (2026-06-04 — 회귀 차단).
 
@@ -6085,6 +6343,52 @@ def _collect_seg_tabs_config(blueprint: dict) -> Optional[dict]:
     return found[0]
 
 
+def _enforce_segmented_size_md_live(root_id: str) -> int:
+    """절대규칙 0-P (2026-06-04): 모든 Segmented_control 인스턴스의 Size 를 md 로 강제.
+
+    `_segLabels` 마커가 없어 `_configure_segmented_control` 이 안 도는 hand-author 인스턴스도
+    md 가 되도록, 라이브 트리를 직접 walk 해 Segmented_control 인스턴스를 찾아 Size=md 설정.
+    특수 size 가 필요하면 `_configure_segmented_control`(이 함수 *뒤* 실행, config.size)가 덮어쓴다.
+    감지: INSTANCE 이고 (이름에 'segmented' 포함 또는 componentProperties 에 'Show Segment' 키 존재).
+    """
+    n_fixed = [0]
+
+    def _is_seg(n):
+        if (n.get("type") or "").upper() != "INSTANCE":
+            return False
+        nm = (n.get("name") or "").lower()
+        if "segmented" in nm:
+            return True
+        cp = n.get("componentProperties") or {}
+        return any(str(k).startswith("Show Segment") for k in cp.keys())
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        if _is_seg(n):
+            cp = n.get("componentProperties") or {}
+            cur = None
+            for k, v in cp.items():
+                if str(k).split("#")[0] == "Size" and isinstance(v, dict):
+                    cur = v.get("value")
+            if cur != "md":
+                try:
+                    call_tool("set_instance_properties", {"nodeId": n["id"], "properties": {"Size": "md"}})
+                    n_fixed[0] += 1
+                except Exception as e:
+                    print(f"  [seg-size] Size=md 설정 실패(무시): {e}")
+        for c in (n.get("_children_full") or n.get("children") or []):
+            walk(c)
+
+    try:
+        walk(_collect_tree(root_id))
+    except Exception as e:
+        print(f"  [seg-size] 트리 수집 실패(무시): {e}")
+    if n_fixed[0]:
+        print(f"  [seg-size] ✓ Segmented_control Size=md 강제 ({n_fixed[0]}건)")
+    return n_fixed[0]
+
+
 def _configure_segmented_control(root_id: str, config: Optional[dict]) -> int:
     """Imin DS Segmented_control 인스턴스를 N개 세그먼트 + 라벨 + 선택으로 설정 (2026-06-02).
 
@@ -6127,6 +6431,12 @@ def _configure_segmented_control(root_id: str, config: Optional[dict]) -> int:
         print("  [seg-tabs] Segmented_control 인스턴스 없음 — skip")
         return 0
     iid = inst[0]
+    # 🔴 절대 규칙 (2026-06-04 사용자): Segmented_control 의 Size 는 특수상황 아니면 md 고정.
+    # config.size 로 override 가능(특수 케이스), 기본 md.
+    try:
+        call_tool("set_instance_properties", {"nodeId": iid, "properties": {"Size": config.get("size", "md")}})
+    except Exception as e:
+        print(f"  [seg-tabs] Size 설정 실패(무시): {e}")
     # 세그먼트 개수: 3~8 표시 여부
     show = {}
     for seg_n in range(3, 9):
@@ -6296,6 +6606,31 @@ def _node_wh(n: dict):
             h if isinstance(h, (int, float)) else 0)
 
 
+def _is_circle_square_target(w, h, cr, single_child_type=None) -> bool:
+    """정사각 복원 대상(원형/icon-box)인지 판별 (순수 함수, 테스트 가능).
+
+    True 면 `_enforce_fixed_size_invariants_final` 이 max(w,h) 정사각으로 복원한다.
+    - 정상축 max(w,h) 가 20~80 범위
+    - 🔴 min(w,h) >= 12 (2026-06-04): 얇은 pill/드래그 핸들(40×4)/FILL 로 늘어난
+      dot(75×5)을 제외 — 이들은 cr=999 라도 장식 요소이지 정사각 대상이 아니다.
+      진짜 붕괴한 원형 아바타/icon-box 는 한 축이 콘텐츠 폭(~16px)까지만 줄어 min>=12 유지.
+    - cornerRadius 가 999 류(>=100)거나 정상축 절반 이상이면 원형, 또는
+      양축 20~80 + 단일 FRAME/INSTANCE/VECTOR 자식이면 icon-box.
+    """
+    if not (isinstance(w, (int, float)) and isinstance(h, (int, float))):
+        return False
+    mx, mn = max(w, h), min(w, h)
+    if not (20 <= mx <= 80):
+        return False
+    if mn < 12:
+        return False
+    if cr >= 100 or cr >= (mx / 2) - 3:
+        return True
+    if 20 <= mn <= 80 and single_child_type in ("FRAME", "INSTANCE", "VECTOR"):
+        return True
+    return False
+
+
 def _enforce_fixed_size_invariants_final(root_id: str) -> int:
     """최종 강제 레이어 (2026-05-28) — post-fix 모든 룰 끝난 뒤 순서 무관하게
     고정 사이즈 invariant 보장. vertical-hug 류 룰이 FAB/circle/icon-box 를
@@ -6307,26 +6642,12 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
     fixed = [0]
 
     def _is_circle_iconbox(n):
-        cr = n.get("cornerRadius") or 0
         w, h = _node_wh(n)
         if not (isinstance(w, (int, float)) and isinstance(h, (int, float))):
             return False
-        # ⚠️ 2026-06-04: 붕괴한 원형은 한 축이 콘텐츠 폭(예 16px)으로 줄어 20 미만이 될 수
-        # 있다. 정상 축(max)이 범위 안이면 원형으로 본다 — 그래야 가로 HUG 로 좁아진 아바타
-        # 칩(30→16×30 세로 pill)도 정사각 복원 대상에 잡힌다.
-        mx, mn = max(w, h), min(w, h)
-        if not (20 <= mx <= 80):
-            return False
-        # 원형/pill: cornerRadius 가 정상축 절반 이상(정상) 또는 999 류(붕괴해도 cr 유지)
-        if cr >= 100 or cr >= (mx / 2) - 3:
-            return True
-        if 20 <= mn <= 80:
-            kids = n.get("children") or []
-            if len(kids) == 1:
-                ck = (kids[0].get("type") or "").upper()
-                if ck in ("FRAME", "INSTANCE", "VECTOR"):
-                    return True
-        return False
+        kids = n.get("children") or []
+        kid_type = (kids[0].get("type") or "").upper() if len(kids) == 1 else None
+        return _is_circle_square_target(w, h, n.get("cornerRadius") or 0, kid_type)
 
     def walk(node, parent_layout=""):
         if not isinstance(node, dict):
@@ -6432,12 +6753,21 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
 # 루트가 FIXED 가 아니라 HUG 여야 하는 screen_type (모달 계열) — 2026-05-28.
 # FIXED 로 두면 후속 height 증가 시 하단 clip (CLAUDE.md 2-D). 회귀 테스트:
 # scripts/tests/test_root_min_height.py
-_HUG_SCREEN_TYPES = frozenset({"modal", "bottom-sheet", "bottomsheet", "bottom_sheet"})
+# 🔴 2026-06-04 사용자: bottom-sheet 는 HUG 가 아니라 852 FIXED 여야 한다 (dim 이 위를
+# 채우고 시트가 하단에 밀착). HUG 는 full modal 만 (하단 바 없어 852 floor 무의미 + 후속
+# height 증가 clip 방지). bottom-sheet 는 _BOTTOM_SHEET_TYPES 로 분리해 852 FIXED + dim FILL.
+_HUG_SCREEN_TYPES = frozenset({"modal"})
+_BOTTOM_SHEET_TYPES = frozenset({"bottom-sheet", "bottomsheet", "bottom_sheet", "sheet"})
 
 
 def _is_hug_screen_type(screen_type: Optional[str]) -> bool:
-    """screen_type 이 모달/바텀시트 계열이면 True (root 를 HUG 로 강제해야 함)."""
+    """screen_type 이 full modal 이면 True (root 를 HUG 로 강제). bottom-sheet 는 제외."""
     return (screen_type or "").strip().lower() in _HUG_SCREEN_TYPES
+
+
+def _is_bottom_sheet_screen_type(screen_type: Optional[str]) -> bool:
+    """screen_type 이 bottom-sheet 계열이면 True (root 852 FIXED + dim FILL + 시트 하단 밀착)."""
+    return (screen_type or "").strip().lower() in _BOTTOM_SHEET_TYPES
 
 
 def _screen_type_from_blueprint(bp: Optional[dict]) -> str:
@@ -6523,11 +6853,42 @@ def _enforce_root_min_height(root_id: str, screen_type: Optional[str] = None) ->
 
     FAB 는 floating button 이므로 A/B 케이스 모두 ABSOLUTE 유지.
     """
+    # 🔴 Bottom Sheet (2026-06-04 사용자): root 852 FIXED + dim FILL(위 채움) + 시트 하단 밀착.
+    # 가로는 root 풀폭(시트 FILL), 콘텐츠 가로 padding 20 은 Modal Sheet 가 가짐(패턴에서 설정).
+    if _is_bottom_sheet_screen_type(screen_type):
+        st = (screen_type or "").strip().lower()
+        try:
+            call_tool("set_layout_sizing", {"nodeId": root_id, "vertical": "FIXED"})
+            call_tool("resize_node", {"nodeId": root_id, "width": 393, "height": 852})
+            # Dim Overlay 는 vertical FILL 이라야 위 가용공간을 채워 시트를 하단으로 민다.
+            tr = _collect_tree(root_id)
+            for c in (tr.get("_children_full") or tr.get("children") or []):
+                if (c.get("name") or "") == "Dim Overlay":
+                    call_tool("set_layout_sizing", {"nodeId": c["id"], "horizontal": "FILL", "vertical": "FILL"})
+                # 🔴 절대규칙 (2026-06-04 사용자): 시트 상단 모서리 radius = 16 재단언 +
+                # radius 있으니 clipsContent=true (get_nodes_info 가 개별 코너를 None 으로
+                # 직렬화해 일반 clip enforcer 가 시트를 놓치므로 이름으로 직접 강제).
+                if (c.get("name") or "") == "Modal Sheet":
+                    try:
+                        call_tool("set_corner_radius", {"nodeId": c["id"], "radius": 16,
+                                                        "corners": [True, True, False, False]})
+                    except Exception:
+                        pass
+                    try:
+                        call_tool("set_auto_layout", {"nodeId": c["id"],
+                                                      "layoutMode": c.get("layoutMode") or "VERTICAL",
+                                                      "clipsContent": True})
+                    except Exception:
+                        pass
+            print(f"[규칙] 바텀시트(screen_type={st}) — root 852 FIXED + Dim FILL + 시트 하단 밀착 + 상단 radius 16")
+        except Exception as e:
+            print(f"  [바텀시트] 실패 (무시): {e}")
+        return
     if _is_hug_screen_type(screen_type):
         st = (screen_type or "").strip().lower()
         try:
             call_tool("set_layout_sizing", {"nodeId": root_id, "vertical": "HUG"})
-            print(f"[규칙] 모달/바텀시트(screen_type={st}) — root vertical HUG 강제 "
+            print(f"[규칙] 모달(screen_type={st}) — root vertical HUG 강제 "
                   f"(FIXED 시 후속 height 증가로 하단 clip — CLAUDE.md 2-D)")
         except Exception as e:
             print(f"  [모달 HUG] 실패 (무시): {e}")
@@ -6828,9 +7189,19 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     text_fixes = _fix_zero_width_text(tree)
     print(f"  → {text_fixes}건 수정")
 
-    # ⚠️ 시스템 규칙: 루트 프레임 배경 = bg-primary 강제 (런타임 보장)
-    print("\n[규칙] 루트 프레임 배경 bg-primary 강제 적용 중...")
-    _enforce_root_bg_primary_live(root_node_id)
+    # screen_type 을 미리 해석 (bottom-sheet 면 root 를 black 50% dim 으로 — 아래 bg 강제에 사용)
+    _screen_type = _resolve_screen_type(
+        root_node_id, tree, original_blueprint, injected_blueprint,
+    )
+
+    # ⚠️ 시스템 규칙: 루트 프레임 배경 = bg-primary 강제 (런타임 보장).
+    # 🔴 예외: bottom-sheet 는 black 50%(dim) — 시트 radius 가시화 (2026-06-04 사용자).
+    print("\n[규칙] 루트 프레임 배경 강제 적용 중...")
+    _enforce_root_bg_primary_live(root_node_id, screen_type=_screen_type)
+
+    # NavBar 스타일(절대규칙 0-O)은 cmd_build Step E.7.7(AUTO_FIX·white-card-border *이후*)에서
+    # 최종 적용한다 — 여기서 적용하면 _enforce_white_card_border_live 가 NavBar(bg-primary) 위
+    # back btn 에 border 를 다시 붙여 stroke 제거가 무력화됨.
 
     # ⚠️ 시스템 규칙 (2026-05-27): VERTICAL frame HUG 강제 — batch_build 가 카드 안
     # VERTICAL Body 를 FIXED <small> 로 박는 버그 회피. 이게 안 되면 콘텐츠가 카드
@@ -6860,10 +7231,7 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
 
     # ⚠️ 시스템 규칙: 루트 minHeight=852 + 하단 바 bottom-pin (2026-05-24)
     # 모달/바텀시트는 HUG (2026-05-28 사용자 "또 잘려있다 ... 시스템에 박아").
-    # screen_type 우선순위: original_blueprint → injected_blueprint → latest_build → 트리 구조 휴리스틱.
-    _screen_type = _resolve_screen_type(
-        root_node_id, tree, original_blueprint, injected_blueprint,
-    )
+    # _screen_type 은 위에서 이미 해석됨 (root bg 강제에서 사용).
     print("\n[규칙] 루트 minHeight=852 + 하단 바 bottom-pin 적용 중...")
     _enforce_root_min_height(root_node_id, screen_type=_screen_type)
 
@@ -7165,6 +7533,10 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
             _configure_ds_mode_tabs(root_node_id, _mt_cfg)
         else:
             print("  [mode-tabs] _dsModeTabs 마커 없음 — skip")
+        # 절대규칙 0-P: 모든 Segmented_control 인스턴스 Size=md 무조건 강제 (마커 유무 무관).
+        # _segLabels 마커 없이 hand-author 된 인스턴스도 md 가 되도록 — _configure 보다 먼저
+        # 돌려 특수 size(_seg_cfg.size)가 있으면 그 뒤 _configure 가 덮어써 최종 권한을 갖게.
+        _enforce_segmented_size_md_live(root_node_id)
         # Imin DS Segmented_control (_segLabels 마커) 자동 설정 — prop 기반
         _seg_cfg = _collect_seg_tabs_config(_mt_bp) if _mt_bp else None
         if _seg_cfg:
@@ -7229,6 +7601,13 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     except Exception as e:
         print(f"  [spacing-bind] 실패 (무시): {e}")
 
+    # 🔴 2026-06-04 사용자: cornerRadius → radius-* DS 변수 바인딩 (개별 코너는 blueprint 값으로).
+    print("\n[규칙] cornerRadius → radius-* DS 변수 바인딩 적용 중...")
+    try:
+        _bind_radius_tokens_live(root_node_id, injected_blueprint or original_blueprint)
+    except Exception as e:
+        print(f"  [radius-bind] 실패 (무시): {e}")
+
     # ⚠️ 시스템 규칙 (2026-06-04): blueprint 가 명시한 FIXED 폭 + padding 을 **가장 마지막**
     # (spacing 바인더 *뒤*) 에 재단언 — enforcer/바인더가 FILL 로 늘리거나 paddingLeft 을
     # 0(spacing-none) 으로 만든 프레임(2-line Date Cell, Sched 카드)을 원래 값으로 복원.
@@ -7245,6 +7624,15 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_blueprint_padding(root_node_id, _collect_blueprint_padding(_fw_bp))
     except Exception as e:
         print(f"  [fixed-width] 실패 (무시): {e}")
+
+    # 절대규칙 0-O (2026-06-04): NavBar fill=bg-primary + 좌측 back btn stroke 제거.
+    # cmd_post_fix 맨 끝(white-card-border *이후*)에서 — back btn 에 재부착된 border 를 제거.
+    # (build 경로는 Step E.7.7 가 AUTO_FIX 뒤 한 번 더 적용해 최종 권한을 가짐.)
+    print("\n[규칙] NavBar bg-primary + back btn stroke 제거 적용 중...")
+    try:
+        _enforce_navbar_style_live(root_node_id)
+    except Exception as e:
+        print(f"  [navbar] 실패 (무시): {e}")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
@@ -7439,6 +7827,157 @@ def _bind_spacing_tokens_live(root_id: str) -> int:
             str(int(v) if float(v).is_integer() else v) for v in sorted(off_scale))
         print(f"  [spacing-bind] ⚠️ 스케일 밖 값(토큰 없음, 리터럴 유지): {vals}px "
               f"— 스케일(2/4/6/8/12/16/20/24/32...)로 맞추면 바인딩됨")
+    return ok
+
+
+_radius_map_cache: Optional[Dict[float, str]] = None
+# Figma node.setBoundVariable 가 지원하는 코너 radius 필드 (개별 코너만 바인딩 가능)
+_RADIUS_BIND_FIELDS = ("topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius")
+
+
+def _load_radius_map() -> Dict[float, str]:
+    """radius px 값 → 시맨틱 radius 토큰 figmaPath (예: 14.0 → 'radius-xl').
+
+    🔴 2026-06-04 사용자: "radius값 토큰 바인딩 안해? radius- 로 시작하는 토큰 있다."
+    figmaPath 가 소문자 'radius-' 로 시작하는 NUMBER 토큰만 사용.
+    값: 0=none 4=xxs 6=xs 8=sm 10=md 12=lg 14=xl 16=2xl 20=3xl 24=4xl 28=5xl 32=6xl 9999=full.
+    """
+    global _radius_map_cache
+    if _radius_map_cache is not None:
+        return _radius_map_cache
+    out: Dict[float, str] = {}
+    for _k, v in load_token_map().items():
+        fp = v.get("figmaPath", "")
+        if v.get("type") == "NUMBER" and isinstance(fp, str) and fp.startswith("radius-"):
+            try:
+                out[float(v["value"])] = fp
+            except (ValueError, TypeError, KeyError):
+                pass
+    _radius_map_cache = out
+    return out
+
+
+def _radius_token_for(val: float, radius_map: Dict[float, str]) -> Optional[str]:
+    """radius 값에 정확히 일치하는 radius 토큰 figmaPath. 없으면 None.
+
+    예외: '완전 둥근'(>=100, 예 999/9999 류)은 radius-full 로 — Figma 가 절반-사이즈로
+    clamp 하므로 999·9999 가 시각적으로 동일(둘 다 pill/원형). 그 외 스케일 밖은 None(리터럴 유지).
+    """
+    fv = round(float(val), 3)
+    fp = radius_map.get(fv)
+    if fp is None and abs(fv - round(fv)) < 1e-6:
+        fp = radius_map.get(float(round(fv)))
+    if fp:
+        return fp
+    if fv >= 100:  # 완전 둥근 convention → radius-full
+        full = radius_map.get(9999.0)
+        if full:
+            return full
+    return None
+
+
+def _collect_radius_corners_bp(blueprint: Optional[dict]) -> dict:
+    """blueprint 에서 개별 코너 radius 를 쓰는 frame 의 {이름경로: {corner_field: value}} 수집.
+
+    get_nodes_info 가 개별 코너(topLeftRadius 등)를 None 으로 직렬화해 라이브로 못 읽으므로,
+    개별 코너 binding 은 blueprint 값으로 한다(uniform cornerRadius 는 라이브로 읽음).
+    """
+    out = {}
+    if not isinstance(blueprint, dict):
+        return out
+    root = blueprint.get("root") or blueprint
+
+    def walk(n, chain):
+        if not isinstance(n, dict):
+            return
+        cur = chain + (n.get("name") or "",)
+        if (n.get("type") or "frame").lower() == "frame":
+            cr = n.get("cornerRadius")
+            cr = cr if isinstance(cr, (int, float)) and not isinstance(cr, bool) else None
+            indiv = {f: n.get(f) for f in _RADIUS_BIND_FIELDS
+                     if isinstance(n.get(f), (int, float)) and not isinstance(n.get(f), bool)}
+            if indiv:
+                d = {}
+                for f in _RADIUS_BIND_FIELDS:
+                    d[f] = indiv.get(f, cr if cr is not None else 0)
+                if any(v > 0 for v in d.values()):
+                    out[cur] = d
+        for c in (n.get("children") or n.get("_originalChildren") or []):
+            walk(c, cur)
+    walk(root, ())
+    return out
+
+
+def _bind_radius_tokens_live(root_id: str, blueprint: Optional[dict] = None) -> int:
+    """라이브 트리의 cornerRadius 를 radius-* DS 변수에 바인딩 (2026-06-04 사용자 룰).
+
+    spacing 바인딩과 동형: 토큰 value == 현재 radius 라 시각 변화 0. uniform cornerRadius 는
+    라이브 값으로, 개별 코너(시트 top 16 등)는 blueprint 값으로 매칭. 스케일 밖(999 제외)은
+    리터럴 유지. DS INSTANCE·인스턴스 내부('I…;…')는 제외(컴포넌트가 radius 제어).
+    """
+    radius_map = _load_radius_map()
+    if not radius_map:
+        print("  [radius-bind] radius 토큰 없음 — skip")
+        return 0
+    bp_corners = _collect_radius_corners_bp(blueprint)
+    try:
+        tree = _collect_tree(root_id)
+    except Exception as e:
+        print(f"  [radius-bind] 트리 수집 실패: {e}")
+        return 0
+
+    jobs: list = []
+    off_scale: set = set()
+
+    def walk(n, chain):
+        if not isinstance(n, dict):
+            return
+        cur = chain + (n.get("name") or "",)
+        nid = n.get("id") or ""
+        ntype = (n.get("type") or "").upper()
+        if ntype != "INSTANCE" and ";" not in nid:
+            corners = {}
+            cr = n.get("cornerRadius")
+            if isinstance(cr, (int, float)) and not isinstance(cr, bool) and cr > 0:
+                for f in _RADIUS_BIND_FIELDS:
+                    corners[f] = cr
+            elif cur in bp_corners:
+                corners = dict(bp_corners[cur])
+            if corners:
+                binds = {}
+                for f, val in corners.items():
+                    fp = _radius_token_for(val, radius_map)
+                    if fp:
+                        binds[f] = fp
+                    elif val > 0:
+                        off_scale.add(round(float(val), 3))
+                if binds and nid:
+                    jobs.append({"nodeId": nid, "bindings": binds})
+        for c in (n.get("_children_full") or []):
+            walk(c, cur)
+    walk(tree, ())
+
+    if not jobs:
+        print("  [radius-bind] 바인딩할 on-scale radius 값 없음")
+        return 0
+
+    ok = 0
+    field_count = 0
+    for i, job in enumerate(jobs):
+        try:
+            call_tool("set_bound_variables",
+                      {"nodeId": job["nodeId"], "bindings": job["bindings"]}, msg_id=i + 1)
+            ok += 1
+            field_count += len(job["bindings"])
+        except Exception as e:
+            if ok < 3:
+                print(f"    [radius-bind] FAIL {job['nodeId']}: {e}")
+    print(f"  [radius-bind] ✓ radius 토큰 바인딩 — {ok}개 노드 / {field_count}개 코너 "
+          f"(cornerRadius → radius-*)")
+    if off_scale:
+        vals = ", ".join(str(int(v) if float(v).is_integer() else v) for v in sorted(off_scale))
+        print(f"  [radius-bind] ⚠️ 스케일 밖 값(토큰 없음, 리터럴 유지): {vals}px "
+              f"— 스케일(4/6/8/10/12/14/16/20/24/28/32)로 맞추면 바인딩됨")
     return ok
 
 
@@ -8993,15 +9532,18 @@ def _fix_space_between_col_baseline(root_id: str) -> int:
 
 
 def _enforce_rounded_card_clip_live(root_id: str) -> int:
-    """cornerRadius ≥ 8 frame 은 clipsContent=true 강제 — 2026-05-28 사용자 명시.
+    """🔴 절대규칙 (2026-06-04 사용자): radius 값이 있는 frame 은 **꼭** clipsContent=true.
 
-    R45 (`_disable_section_clipping`) 가 모든 frame clip 을 false 로 강제하면서
-    라운지 카드 같은 rounded card 의 내부 image/색 영역이 카드 라운드 모서리 밖으로
-    튀어나와 상단이 각져 보이는 버그. R45 에 rounded card 예외를 박았지만, 라이브 강제도
-    별도로 둠 — generator/manual fix 가 clip false 박아도 마지막에 true 로 되돌림.
+    "frame에 radius 값을 넣으면 꼭!! Clip content 옵션 체크가 되어야 한다" — radius 가
+    조금이라도(>0) 있으면 둥근 모서리가 콘텐츠를 클립하도록 clipsContent=true 강제.
+    (기존 cr≥8 카드 한정 → 2026-06-04 모든 radius>0 으로 확대.)
 
-    대상: cornerRadius ≥ 8 (또는 individual corner ≥ 8) FRAME + 자식 ≥ 1.
-    root 자체는 건드리지 않음 (이미 plugin 이 true 강제).
+    R45 (`_disable_section_clipping`) 가 frame clip 을 false 로 만들어도 이 enforcer 가
+    R45 *직후* 돌아 radius 있는 frame 을 true 로 되돌린다. generator/manual fix 가 clip
+    false 박아도 마지막에 true.
+
+    대상: cornerRadius > 0 (또는 individual corner > 0) FRAME + 자식 ≥ 1.
+    제외: root 자체(이미 plugin 이 true 강제), DS INSTANCE(master 가 제어).
 
     Returns: fix 건수.
     """
@@ -9017,11 +9559,11 @@ def _enforce_rounded_card_clip_live(root_id: str) -> int:
 
     def _has_rounded_corner(n: dict) -> bool:
         cr = n.get("cornerRadius")
-        if isinstance(cr, (int, float)) and cr >= 8:
+        if isinstance(cr, (int, float)) and cr > 0:
             return True
         for k in ("topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"):
             v = n.get(k)
-            if isinstance(v, (int, float)) and v >= 8:
+            if isinstance(v, (int, float)) and v > 0:
                 return True
         return False
 

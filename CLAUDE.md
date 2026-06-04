@@ -499,16 +499,25 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > 화면 위 **dimmed overlay** 가 깔린 채 **bottom 에 붙어서** 슬라이드업.
 >
 > Blueprint 작성 시 `_screenType: "bottom-sheet"` 명시. 빌드 후 자동:
-> 1. Root 852 FIXED (디바이스 viewport)
-> 2. 1st 자식 = **Dim Overlay** (FILL, alpha-black 50%) — 위쪽 가용 공간 채움
-> 3. 2nd 자식 = **Modal Sheet** (FILL, HUG, bg-primary, top-rounded 24px) — 콘텐츠 wrap
+> 1. **Root 852 FIXED** (디바이스 viewport) — 🔴 HUG 아님(2026-06-04 사용자: "root frame
+>    높이는 852여야함"). 시트를 하단에 고정하려면 root 가 고정 높이여야 함.
+> 2. 1st 자식 = **Dim Overlay** (FILL×FILL, alpha-black 50%) — 위쪽 가용 공간을 **세로로
+>    채워** 시트를 화면 하단으로 민다(bottom 밀착).
+> 3. 2nd 자식 = **Modal Sheet** (가로 FILL = **root 와 동일 풀폭**, 세로 HUG, bg-primary,
+>    🔴 **top-left/top-right radius = 16**(2026-06-04 사용자 절대규칙), bottom radius 0) —
+>    콘텐츠 wrap. 🔴 **시트 가로 = root 풀폭**(2026-06-04 사용자: "가로는
+>    root frame과 동일"). **콘텐츠 가로 padding 20 은 Modal Sheet 가 가짐**(root 가로 padding=0
+>    이라야 dim·시트가 풀폭). 사용자: "가로에 padding값을 20이 있어야하고".
 >
-> 강제 함수: `_enforce_bottom_sheet_pattern` (cmd_build pre-process)
-> 회귀 테스트: `scripts/tests/test_bottom_sheet_pattern.py` 14개 케이스
+> 강제 함수: `_enforce_bottom_sheet_pattern` (cmd_build pre-process — root 852 FIXED +
+> 가로 padding 0, Modal Sheet 가로 padding 20) + 라이브 후처리 `_fix_layout_and_positions`
+> 의 bottom-sheet 분기(`_is_bottom_sheet_screen_type` → root 852 FIXED 재단언 + Dim FILL).
+> 🔴 bottom-sheet 는 `_HUG_SCREEN_TYPES`(=modal 만)에서 **제외** — modal 처럼 root HUG 로
+> 강제하면 dim 이 붕괴해 시트가 하단 밀착 안 됨. 회귀 테스트: `scripts/tests/test_bottom_sheet_pattern.py`.
 >
 > **Modal 두 가지 구분:**
-> - `_screenType: "bottom-sheet"` (기본형) — 반 화면 + dim overlay + bottom anchor
-> - `_screenType: "modal"` (full modal) — 전체 화면 modal, X 닫기만 (Footer/Tab 제거)
+> - `_screenType: "bottom-sheet"` (기본형) — root 852 FIXED + dim(FILL) + 시트 하단 밀착·풀폭·콘텐츠 padding 20
+> - `_screenType: "modal"` (full modal) — 전체 화면 modal, root **HUG**, X 닫기만 (Footer/Tab 제거)
 >
 > ⚠️ 새 modal 빌드는 기본 `bottom-sheet` 사용. full modal 필요시에만 `modal` 명시.
 
@@ -577,6 +586,55 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 >
 > **빌드 후 검증:** 빌드 로그에 `R63-distinct-section-ui` WARN 이 보이면 인접 섹션 UI 가
 > 똑같다는 뜻 → 한쪽 재설계. 스크린샷에서 인접 카드 영역이 서로 다른 시각 언어인지 확인.
+
+> 🔴 **절대 규칙 0-O — 상단 NavBar 스타일 (2026-06-04 사용자 룰)**
+>
+> 1. **NavBar frame 의 fill = `$token(bg-primary)`** (투명/회색 금지). 상단 네비게이션 바 배경은
+>    항상 흰색(bg-primary).
+> 1-b. **NavBar frame 자체에 stroke(보더) 가 없어야 한다.** (상단 바에 테두리 금지.)
+> 2. **NavBar 안 좌측 back 버튼 frame 에도 stroke(보더) 가 없어야 한다.** (흰 배경 위 back
+>    아이콘 버튼에 테두리 금지 — fill 만 또는 fill 도 없이 아이콘만.)
+>
+> **시스템 강제 (코드 박힘, 자동):** `figma_mcp_client.py _enforce_navbar_style_live`
+> (cmd_post_fix 맨 끝 + build Step E.7.7 — AUTO_FIX·white-card-border *이후* 라야 stroke 가
+> 재부착 안 됨) — NavBar(이름에 navbar/nav bar/app bar/top bar/header bar 포함 HORIZONTAL frame)의
+> fill 을 bg-primary 로 강제(리터럴+변수 바인딩) + NavBar frame 자체 stroke 제거 + NavBar 서브트리의
+> back 버튼(이름에 back/뒤로, 또는 chevron-left/arrow-left 아이콘 든 frame) stroke 를 `strokeWeight 0`
+> 으로 제거. 빌드 후 검증: NavBar 배경 흰색 + NavBar·back 버튼 테두리 없음.
+
+> 🔴 **절대 규칙 0-P — Segmented_control 은 기본 Size=md (2026-06-04 사용자 룰)**
+>
+> DS **Segmented_control** 인스턴스는 **특수한 상황이 아니면 props 의 `Size` 를 `md` 로 고정**한다
+> (기본 import 가 `sm` 이라 작게 나옴). 특수 케이스만 다른 size.
+>
+> **시스템 강제:** `_configure_segmented_control` (cmd_build, seg-tabs 설정 시) 이 인스턴스의
+> `Size` variant 를 `md` 로 자동 설정(`config.size` 로 override 가능). blueprint 의 탭 인스턴스에
+> `_segLabels` 마커만 박으면 라벨·선택과 함께 Size=md 가 자동 적용된다.
+
+> 🔴 **절대 규칙 0-Q — radius 있는 frame 은 꼭 clipsContent=true (2026-06-04 사용자 룰)**
+>
+> 사용자 명시: *"frame에 radius 값을 넣으면 꼭!! Clip content 옵션 체크가 되어야 한다."*
+>
+> **cornerRadius(또는 개별 코너 radius)가 0보다 크면** 그 frame 의 `clipsContent` 는 **반드시
+> true** — 둥근 모서리가 콘텐츠를 클립해야 내부 image/색 영역이 모서리 밖으로 안 삐져나온다.
+> (예전엔 cr≥8 카드만 강제 → 2026-06-04 모든 radius>0 으로 확대.)
+>
+> **시스템 강제 (코드 박힘, 자동 — 3중):**
+> 1. `_enforce_radius_clip_blueprint(bp)` (cmd_build pre-process) — blueprint 의 radius>0 FRAME 에
+>    `clipsContent:true` 박음(batch_build 가 `spec.clipsContent` 반영). 명시 false 는 존중.
+> 2. `_enforce_rounded_card_clip_live` (cmd_post_fix, R45 직후) — 라이브 백스톱(균일 cornerRadius).
+> 3. 🔴 `_enforce_radius_clip_live(root_id, _collect_radius_clip_paths(bp))` (**Step E.7.7, AUTO_FIX
+>    이후**) — R45 가 post-fix·AUTO_FIX 두 곳에서 시트/카드 clip 을 false 로 끄는데, **개별 코너
+>    radius**(topLeftRadius 등)를 쓰는 frame(Modal Sheet)은 `get_nodes_info` 가 코너를 None 으로
+>    직렬화해 R45 의 rounded 예외·라이브 검출이 모두 놓친다 → blueprint name-path 로 매칭해 clip=true
+>    를 **최종 재단언**. (개별 코너 radius 회귀의 진짜 해법.) DS INSTANCE·root 제외.
+> 빌드 후 검증: Modal Sheet 등 둥근 frame 의 Clip content 가 체크됨(내부 영역이 모서리 밖으로 안 튀어나옴).
+> 테스트: `scripts/tests/test_radius_clip.py`.
+>
+> 🔴 **추가 (2026-06-04): radius 값은 `radius-*` DS 토큰에 바인딩.** cornerRadius(균일·개별
+> 코너 모두)를 스케일 일치 `radius-*` 토큰에 자동 바인딩 — `_bind_radius_tokens_live`(post-fix,
+> spacing 바인더 직후). 0=none 4=xxs 6=xs 8=sm 10=md 12=lg 14=xl 16=2xl 20=3xl 24=4xl 28=5xl
+> 32=6xl, ≥100=full. 위 post-fix 항목 7-b 참조. blueprint 의 radius 는 이 스케일 값으로 쓸 것.
 
 ### 1. ⚠️ Status Bar는 blueprint에 넣지 말 것 — 빌드가 DS Status Bar를 자동 삽입
 - **Status Bar를 텍스트/프레임으로 직접 그리거나 blueprint 노드로 넣지 말 것.**
@@ -794,6 +852,24 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   - **참여자/멤버 아바타는 랜덤 이미지 사용** (사용자 OK): blueprint 아바타 frame 에
     `"imageQuery":"portrait,face,person"` 박으면 `apply_image_queries` 가 loremflickr 랜덤 사진을
     `set_image_fill` + placeholder 아이콘 제거. `clipsContent:true` + cornerRadius 999 로 원형 클립.
+- 🔴 **2026-06-04 얇은 pill/드래그 핸들/dot 이 거대 원으로 폭주 — size-invariant min 가드:**
+  - **증상**: 바텀시트 드래그 핸들(40×4)·월 셀 dot(5×5)이 빌드 후 셀을 가득 채우는 **거대한
+    원**이 됨. 핸들=40×40 원, dot=75×75 원.
+  - **뿌리**: 장식 요소가 cornerRadius 999 인데 FILL enforcer 가 한 축을 늘리면(핸들→풀폭,
+    dot→셀폭) `_enforce_fixed_size_invariants_final._is_circle_iconbox` 가 `max(w,h)` 정사각
+    복원 대상으로 잡아 거대 원으로 만든다. → 순수 함수 `_is_circle_square_target(w,h,cr,childType)`
+    에 **`min(w,h) >= 12` 가드** 추가: 얇은 pill/핸들/dot(min ≤ 5) 제외, 진짜 붕괴 원형
+    아바타(min ~16)는 보존. 테스트 `scripts/tests/test_circle_square_target.py` 10케이스.
+  - **blueprint 팁**: 작은 dot 인디케이터는 frame(원형) 대신 **text bullet "●"** 로 — 프레임
+    enforcer 의 FILL/정사각화에 면역. 드래그 핸들은 `layoutSizingHorizontal/Vertical:"FIXED"`.
+
+> 🔴 **2026-06-04 — `isTabBar` 가 'nav' 든 컨트롤 프레임을 하단 탭바로 오인 → 흰 fill+보더 강제:**
+> `enhanceBlueprint`(figma-mcp-embedded.ts)의 `isTabBar` 가 이름에 **'nav'/'bottom'** 만 들어가도
+> (자식 3~6 + 텍스트) 하단 탭바로 보고 **흰 fill(1,1,1) + top border(0.95,0.96,0.96)** 를 강제했다.
+> → 'Year Nav'(연도 네비)·상단 'NavBar' 가 카드처럼 흰 박스+보더로 깨짐(사용자 분노). 절대규칙
+> 0-O(상단 NavBar 룰)와 **다른 별개 버그**. 수정: `isTabLike` 를 하단 탭바 전용 표현만 매칭
+> (`tab`/`탭`/`bottom nav`/`bottom tab`/`하단`)으로 좁힘 — 바 `nav`/`bottom` 제외. ⚠️ TS 변경이라
+> `npm run build` + 브리지 재시작 후 적용. 컨트롤/네비 행은 의도치 않은 fill/stroke 를 받지 않는다.
 
 ### 2-E-4. ⚠️ Bottom Tab Bar 자식 FILL + 라벨 wrap 차단 (2026-05-28 사용자 분노)
 - **사례**: Bottom Tab Bar 5개 자식 (Tab 홈/커뮤니티/스테이지/라운지/나) 이 HUG horizontal 로 박혀, tab-label TEXT 가 width=24 (아이콘 width 따라가서) 좁아져 "커뮤/니티", "스테/이지", "라운/지" 같이 두 줄 wrap. R13.3 inject 후에도 회귀 가능.
@@ -998,6 +1074,16 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
    토큰 value == 현재 값이라 시각 변화 0. DS 인스턴스 + 인스턴스 내부 노드(`I…;…`)는 제외.
    스케일 밖 값(10/14/18/22/28 등)은 토큰이 없어 리터럴 유지 — 임의 snap 금지(레이아웃 보존).
    → blueprint 의 padding/gap 은 스케일 값(0/2/4/6/8/12/16/20/24/32/40/48...)으로 쓰면 전부 바인딩됨.
+7-b. 🔴 cornerRadius → `radius-*` DS 변수 자동 바인딩 (2026-06-04 사용자 "radius값 왜 토큰
+   바인딩 안해? radius- 로 시작하는 토큰 있다"): `_bind_radius_tokens_live`가 spacing 바인더
+   직후 실행 — 라이브 트리의 cornerRadius(균일)와 **개별 코너**(시트 top 16/bottom 0; blueprint
+   값으로, get_nodes_info 가 개별 코너를 None 으로 줘서)를 스케일 일치 `radius-*` 토큰에 바인딩.
+   스케일: 0=`radius-none` 4=`radius-xxs` 6=`radius-xs` 8=`radius-sm` 10=`radius-md` 12=`radius-lg`
+   14=`radius-xl` 16=`radius-2xl` 20=`radius-3xl` 24=`radius-4xl` 28=`radius-5xl` 32=`radius-6xl`,
+   **완전 둥근(≥100, 999/9999 류)=`radius-full`**(Figma 가 절반-사이즈 clamp → 동일). figmaPath
+   소문자 `radius-` 시작 토큰만. 토큰 value==현재 radius 라 시각 변화 0. DS 인스턴스·내부(`I…;…`)
+   제외. 스케일 밖(7/13/18 등)은 리터럴 유지. 4코너 각각 `topLeftRadius`…로 바인딩(plugin
+   `rectangleCornerRadii`). 테스트 `test_radius_token_binding.py`.
 8. 2-col FILL 붕괴 자동 복구 (2026-06-04 사용자 "코드에 박아"): `_enforce_multicol_fill_live`가
    모든 sizing 강제 *뒤*에 실행 — HORIZONTAL row 의 FILL 컬럼이 **1px 로 붕괴**하고 형제가
    전폭(FIXED)을 먹는 batch_build_screen 버그([[two-col-fill-card-collapse]])를 라이브에서 교정.

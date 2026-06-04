@@ -1996,8 +1996,11 @@ function isTabBar(n: Record<string, unknown>): boolean {
   // Tab bars: horizontal, 3-5 children, near bottom (height ~50-90)
   const al = n.autoLayout as Record<string, unknown> | undefined;
   const isHorizontal = al?.layoutMode === 'HORIZONTAL';
+  // 🔴 2026-06-04: 바 'nav'/'bottom' 매칭은 너무 광범위 — 'Year Nav'(연도 네비)·상단
+  // 'NavBar' 같은 컨트롤 프레임을 하단 탭바로 오인해 흰 fill+top border 를 강제하던 버그.
+  // → 하단 탭바 전용 표현만 매칭(tab/탭/bottom nav/bottom tab/하단). 바 'nav'/'bottom' 제외.
   const isTabLike = name.includes('tab') || name.includes('탭') ||
-    name.includes('nav') || name.includes('bottom') || name.includes('하단');
+    name.includes('bottom nav') || name.includes('bottom tab') || name.includes('하단');
   const hasTabCount = children.length >= 3 && children.length <= 6;
   const height = n.height as number;
   const isTabHeight = typeof height === 'number' && height >= 48 && height <= 100;
