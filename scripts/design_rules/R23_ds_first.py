@@ -111,6 +111,15 @@ def _inject_node(node: dict, parent: dict = None) -> int:
             ip = dict(node.get("instanceProperties") or {})
             ip.setdefault("Color", color_opt)
             node["instanceProperties"] = ip
+    # 🧭 Tooltip 은 대상(텍스트/버튼)을 가리키는 arrow 가 필수 (2026-06-04 사용자 룰).
+    # blueprint 가 Arrow 를 안 줬으면 기본값을 박아 Arrow=None(가리키는 곳 없음)을
+    # 방지한다. 방향은 blueprint 의 instanceProperties.Arrow 로 override (위 액션바
+    # 위 → 'Bottom left', 본문 위 → 'Bottom center' 등). 유효값: None/Top center/
+    # Bottom center/Top left/Top right/Bottom left/Bottom right/Left/Right.
+    if str(role) == "Tooltip":
+        ip = dict(node.get("instanceProperties") or {})
+        ip.setdefault("Arrow", "Bottom center")
+        node["instanceProperties"] = ip
     # Strip raw children — instances render via main component
     if "children" in node:
         node["_originalChildren"] = node.pop("children")

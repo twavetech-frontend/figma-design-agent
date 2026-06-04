@@ -5522,6 +5522,219 @@ def _enforce_ds_instance_variants(root_id: str, path_variant_map: dict) -> int:
     return fixed[0]
 
 
+def _infer_tooltip_arrow(node: dict, parent: Optional[dict]) -> str:
+    """tooltip 인스턴스 위치로 arrow 방향 추론 (2026-06-04).
+
+    대부분 tooltip 은 대상 위에 떠 **아래(Bottom)** 를 가리킨다. 부모 영역 대비
+    가로 위치로 left/center/right 를 결정한다. 추론 실패 시 'Bottom center'.
+    """
+    nb = node.get("absoluteBoundingBox") or {}
+    pb = (parent or {}).get("absoluteBoundingBox") or {}
+    try:
+        ncx = nb["x"] + nb["width"] / 2.0
+        frac = (ncx - pb["x"]) / max(1.0, pb["width"]) if pb else 0.5
+    except (KeyError, TypeError):
+        frac = 0.5
+    if frac < 0.34:
+        return "Bottom left"
+    if frac > 0.66:
+        return "Bottom right"
+    return "Bottom center"
+
+
+def _tt_bbox(n: dict) -> dict:
+    return (n.get("absoluteBoundingBox") or {}) if isinstance(n, dict) else {}
+
+
+def _collect_tooltip_targets(blueprint: Optional[dict]) -> dict:
+    """blueprint 에서 {이름 경로 tuple: target 노드 이름} 맵 수집 (2026-06-04).
+
+    tooltip 인스턴스에 `_tooltipTarget`(가리킬 대상 노드 이름) 마커가 있으면 수집.
+    빌드 후 _enforce_tooltip_arrow_live 가 이 맵으로 arrow 방향+위치를 대상에 맞춘다.
+    """
+    out = {}
+    if not isinstance(blueprint, dict):
+        return out
+    root = blueprint.get("root") or blueprint
+
+    def walk(node, chain):
+        if not isinstance(node, dict):
+            return
+        cur = chain + (node.get("name") or "",)
+        tgt = node.get("_tooltipTarget")
+        if node.get("componentKey") and isinstance(tgt, str) and tgt.strip():
+            out[cur] = tgt.strip()
+        for c in (node.get("children") or node.get("_originalChildren") or []):
+            walk(c, cur)
+    walk(root, ())
+    return out
+
+
+def _tooltip_arrow_for(tb: dict, gb: dict) -> str:
+    """두 bbox(tooltip tb, target gb)로 arrow variant 결정 (pure — 테스트용).
+
+    arrow 는 '대상이 있는 쪽'에 달려 그쪽을 가리킨다:
+      target 이 tooltip 아래 → 'Bottom center', 위 → 'Top center',
+      오른쪽 → 'Right', 왼쪽 → 'Left'. (상하 우선 — 말풍선 통념)
+    """
+    ty, th = tb.get("y", 0), tb.get("height", 0)
+    gx, gy = gb.get("x", 0), gb.get("y", 0)
+    gw, gh = gb.get("width", 0), gb.get("height", 0)
+    tx, tw = tb.get("x", 0), tb.get("width", 0)
+    if gy >= ty + th - 2:          # target 이 아래
+        return "Bottom center"
+    if gy + gh <= ty + 2:          # target 이 위
+        return "Top center"
+    if gx >= tx + tw - 2:          # target 이 오른쪽
+        return "Right"
+    return "Left"                  # target 이 왼쪽
+
+
+def _point_tooltip_at(node: dict, parent: Optional[dict], target: dict) -> bool:
+    """tooltip 의 arrow 가 target 중심을 가리키도록 Arrow variant + 위치(부모 padding) 교정.
+
+    - target 이 tooltip 아래면 Bottom*, 위면 Top*, 우/좌면 Right/Left arrow.
+    - Bottom/Top: 'X center' arrow + 부모(HORIZONTAL) paddingLeft 로 tooltip 가로중심
+      = target 가로중심 정렬 → 중앙 arrow 가 정확히 대상 위/아래를 찍는다.
+    - Left/Right: 부모(VERTICAL) paddingTop 으로 세로중심 정렬.
+    """
+    tb, gb = _tt_bbox(node), _tt_bbox(target)
+    if not tb or not gb:
+        return False
+    tx, ty, tw, th = tb.get("x", 0), tb.get("y", 0), tb.get("width", 0), tb.get("height", 0)
+    gx, gy, gw, gh = gb.get("x", 0), gb.get("y", 0), gb.get("width", 0), gb.get("height", 0)
+    gcx, gcy = gx + gw / 2.0, gy + gh / 2.0
+    arrow = _tooltip_arrow_for(tb, gb)
+    below = arrow == "Bottom center"
+    above = arrow == "Top center"
+    pmode = (parent.get("layoutMode") or "").upper() if isinstance(parent, dict) else ""
+
+    if below or above:
+        try:
+            call_tool("set_instance_properties", {"nodeId": node["id"], "properties": {"Arrow": arrow}})
+        except Exception as e:
+            print(f"  [tooltip-arrow] '{node.get('id')}' set arrow fail: {e}")
+            return False
+        # arrow 추가로 width 변동 가능 — 재측정
+        tw2 = _tt_bbox(_get_node_min(node["id"])).get("width", tw) or tw
+        if pmode == "HORIZONTAL":
+            pb = _tt_bbox(parent)
+            if pb:
+                new_pl = int(max(0, round(gcx - pb.get("x", 0) - tw2 / 2.0)))
+                _set_wrap_padding(parent, paddingLeft=new_pl)
+        return True
+    else:  # arrow == "Left" / "Right"
+        try:
+            call_tool("set_instance_properties", {"nodeId": node["id"], "properties": {"Arrow": arrow}})
+        except Exception as e:
+            print(f"  [tooltip-arrow] '{node.get('id')}' set arrow fail: {e}")
+            return False
+        if pmode == "VERTICAL":
+            pb = _tt_bbox(parent)
+            if pb:
+                new_pt = int(max(0, round(gcy - pb.get("y", 0) - th / 2.0)))
+                _set_wrap_padding(parent, paddingTop=new_pt)
+        return True
+
+
+def _get_node_min(node_id: str) -> dict:
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [node_id]})).get("json")
+        if isinstance(items, list) and items:
+            return items[0].get("document") or items[0]
+    except Exception:
+        pass
+    return {}
+
+
+def _set_wrap_padding(parent: dict, **pad) -> None:
+    """부모 auto-layout wrap 의 padding 일부만 갱신 (나머지 값 보존)."""
+    args = {"nodeId": parent["id"], "layoutMode": parent.get("layoutMode") or "HORIZONTAL"}
+    for k in ("paddingLeft", "paddingRight", "paddingTop", "paddingBottom", "itemSpacing"):
+        v = pad.get(k, parent.get(k))
+        if v is not None:
+            args[k] = v
+    for k in ("primaryAxisAlignItems", "counterAxisAlignItems"):
+        if parent.get(k):
+            args[k] = parent[k]
+    try:
+        call_tool("set_auto_layout", args)
+    except Exception as e:
+        print(f"  [tooltip-arrow] wrap padding 갱신 실패: {e}")
+
+
+def _enforce_tooltip_arrow_live(root_id: str, target_map: Optional[dict] = None) -> int:
+    """빌드된 Tooltip 인스턴스의 arrow 가 항상 '실제 대상'을 가리키도록 강제 (2026-06-04 사용자 룰).
+
+    사용자 명시: "일반적인 툴팁은 위아래좌우로 가리키는 arrow 가 보여야 한다 / arrow 가
+    엉뚱한 버튼(북마크)이 아니라 대상(채팅)을 가리켜야 한다."
+
+    동작 (2단):
+      1. `_tooltipTarget` 마커가 있는 tooltip → target 노드를 트리에서 찾아 arrow
+         방향(Bottom/Top/Left/Right center) + 부모 padding 위치를 대상 중심에 맞춘다.
+      2. 마커 없는 tooltip → Arrow=None 이면 기하학 추론(_infer_tooltip_arrow)으로
+         최소한 가리키는 arrow 를 보장 (idempotent backstop).
+
+    ⚠️ get_nodes_info(복수형)만 componentProperties/absoluteBoundingBox 를 노출한다.
+    """
+    target_map = target_map or {}
+    root = _get_node_min(root_id)
+    if not root:
+        print("  [tooltip-arrow] root fetch fail")
+        return 0
+
+    # 이름 → 노드 인덱스 (target 해소용)
+    name_idx: dict = {}
+    tooltips: list = []  # (node, parent, path)
+
+    def walk(n, parent, chain):
+        if not isinstance(n, dict):
+            return
+        nm = n.get("name") or ""
+        cur = chain + (nm,)
+        name_idx.setdefault(nm, []).append(n)
+        if (n.get("type") or "").upper() == "INSTANCE":
+            cp = n.get("componentProperties") or {}
+            if isinstance(cp.get("Arrow"), dict):
+                tooltips.append((n, parent, cur))
+        for c in n.get("children", []) or []:
+            walk(c, n, cur)
+    walk(root, None, ())
+
+    fixed = 0
+    for node, parent, path in tooltips:
+        cur_arrow = (node.get("componentProperties") or {}).get("Arrow", {}).get("value")
+        target_name = target_map.get(path)
+        target = None
+        if target_name and name_idx.get(target_name):
+            tb = _tt_bbox(node)
+            tcx = tb.get("x", 0) + tb.get("width", 0) / 2.0
+            tcy = tb.get("y", 0) + tb.get("height", 0) / 2.0
+
+            def _d(cn):
+                cb = _tt_bbox(cn)
+                if not cb:
+                    return float("inf")
+                return abs(cb.get("x", 0) + cb.get("width", 0) / 2.0 - tcx) + \
+                    abs(cb.get("y", 0) + cb.get("height", 0) / 2.0 - tcy)
+            target = min(name_idx[target_name], key=_d)
+        if target is not None:
+            if _point_tooltip_at(node, parent, target):
+                fixed += 1
+                print(f"  [tooltip-arrow] '{node.get('id')}' → '{target_name}' 가리킴")
+        elif cur_arrow in (None, "None", ""):
+            arrow = _infer_tooltip_arrow(node, parent)
+            try:
+                call_tool("set_instance_properties", {"nodeId": node["id"], "properties": {"Arrow": arrow}})
+                fixed += 1
+                print(f"  [tooltip-arrow] '{node.get('id')}' Arrow None → {arrow}")
+            except Exception as e:
+                print(f"  [tooltip-arrow] '{node.get('id')}' fail: {e}")
+    if fixed:
+        print(f"  [tooltip-arrow] ✓ Tooltip {fixed}건 arrow 방향/위치 교정 (대상 정조준)")
+    return fixed
+
+
 def _enforce_ds_instance_text(root_id: str, path_text_map: dict) -> int:
     """빌드 트리 DS instance 의 내부 첫 TEXT 를 원래 콘텐츠로 override (2026-05-28).
 
@@ -6600,6 +6813,10 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         n_var = _enforce_ds_instance_variants(root_node_id, _variant_map)
         if not n_var:
             print("  [ds-instance-variant] OK — instanceProperties 마커 없음")
+        # 🧭 Tooltip arrow 가 실제 대상을 가리키도록 교정 (2026-06-04 사용자 룰).
+        #    instanceProperties.Arrow 적용 직후 → _tooltipTarget 기반 방향/위치 정조준.
+        _tt_targets = _collect_tooltip_targets(_var_bp)
+        _enforce_tooltip_arrow_live(root_node_id, _tt_targets)
     except Exception as e:
         print(f"  [ds-instance-variant] 실패 (무시하고 계속): {e}")
 

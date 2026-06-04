@@ -831,6 +831,42 @@ def detect_dropdown_shape(node: dict):
     return ("Dropdown", COMPONENT_KEYS["Dropdown"], None)
 
 
+def detect_tooltip_shape(node: dict):
+    """Tooltip / speech bubble: a rounded frame holding a TEXT child, usually
+    with a dismiss (x-close) icon — a floating hint / coach mark. Confident only
+    with a name hint (tooltip/툴팁/bubble/말풍선) per the anti-over-swap policy;
+    pure shape → WARN-only. Key VERIFIED (`Tooltip`).
+
+    2026-06-04 — added to close the gap where a raw '궁금한 건 물어보세요. ✕'
+    bubble (stage_detail) was authored as a raw frame and NO detector existed to
+    surface/swap it ('Tooltip' was in _VERIFIED_AUTOSWAP_ROLES but unreachable).
+    """
+    if (node.get("type") or "frame").lower() != "frame" or node.get("componentKey"):
+        return None
+    # 툴팁은 반드시 직계 TEXT 를 품는다 — 이 가드가 "Bubble Wrap" 같은 래퍼 오스왑 차단.
+    if not _has_child_of_type(node, "text"):
+        return None
+    name_ok = _name_hints(node, "tooltip", "툴팁", "bubble", "말풍선", "speech", "coach")
+    if is_container(node.get("name") or "") and not name_ok:
+        return None
+    kids = _children(node)
+    has_close = any(
+        ("x-close" in (c.get("name") or "").lower()
+         or "close" in (c.get("name") or "").lower()
+         or "dismiss" in (c.get("name") or "").lower()
+         or (c.get("iconName") or "").lower() in ("x-close", "x", "x-circle"))
+        for c in kids)
+    shape_ok = _corner_radius(node) >= 6 and has_close
+    if not (shape_ok or name_ok):
+        return None
+    label = None
+    for c in kids:
+        if (c.get("type") or "").lower() == "text":
+            label = c.get("characters") or c.get("text") or c.get("content")
+            break
+    return ("Tooltip", COMPONENT_KEYS["Tooltip"], label)
+
+
 def detect_toggle_shape(node: dict):
     """Switch/toggle: small elongated pill (radius ≥ ~half-height) with one
     ellipse child (the knob), w ≈ 28–56, h ≈ 14–32, w > h. Key VERIFIED."""
@@ -948,7 +984,13 @@ def _has_distinctive_shape(node: dict, role: str) -> bool:
         return _name_ends_with(node, "slider", "슬라이더") or (
             isinstance(h, (int, float)) and h <= 28 and _has_child_of_type(node, "ellipse"))
     if role == "Tooltip":
-        return _name_ends_with(node, "tooltip", "툴팁")
+        if _name_hints(node, "tooltip", "툴팁", "bubble", "말풍선", "speech"):
+            return True
+        has_close = any(("x-close" in (c.get("name") or "").lower()
+                         or "close" in (c.get("name") or "").lower()
+                         or (c.get("iconName") or "").lower() in ("x-close", "x", "x-circle"))
+                        for c in _children(node))
+        return has_close and _has_child_of_type(node, "text") and _corner_radius(node) >= 6
     if role == "Dropdown":
         h = node.get("height")
         has_border = bool(node.get("stroke") or node.get("strokes"))
@@ -975,7 +1017,7 @@ _ROLE_NAME_HINTS = {
     "radio":    ("radio", "라디오"),
     "slider":   ("slider", "슬라이더"),
     "progress": ("progress", "프로그레스", "진행"),
-    "tooltip":  ("tooltip", "툴팁"),
+    "tooltip":  ("tooltip", "툴팁", "bubble", "말풍선", "speech"),
 }
 
 
@@ -1056,14 +1098,22 @@ def detect_ds_role_structural(node: dict, parent: Optional[dict] = None):
     if av:
         # 2026-06-02 — 이름 힌트(avatar/profile) 있을 때만 confident, 아니면 WARN-only.
         return (av[0], av[1], av[2], _has_role_name_hint(node, av[0]))
+    # 1.6) tooltip / 말풍선 — 이름 힌트(tooltip/툴팁/bubble/말풍선) 또는 x-close+텍스트
+    #      라운드 = 명확한 툴팁. 아래 badge WARN-only fallback 보다 먼저 claim 해야
+    #      말풍선이 generic pill(badge) 로 새지 않는다 (2026-06-04 회귀 fix).
+    tt = detect_tooltip_shape(node)
+    if tt:
+        confident = (_has_distinctive_shape(node, "Tooltip")
+                     and _has_role_name_hint(node, "Tooltip"))
+        return (tt[0], tt[1], tt[2], confident)
     # 2) badge / tag — shape-detected but role NOT confirmed above → WARN only
     #    (surfaces the gap without forcing a possibly-wrong badge instance).
     if bd and not _label_is_action(bd[2]):
         return (bd[0], bd[1], bd[2], False)
     # 3) form controls
-    for det in (detect_input_shape, detect_dropdown_shape, detect_toggle_shape,
-                detect_checkbox_shape, detect_radio_shape, detect_slider_shape,
-                detect_progress_shape):
+    for det in (detect_input_shape, detect_dropdown_shape,
+                detect_toggle_shape, detect_checkbox_shape, detect_radio_shape,
+                detect_slider_shape, detect_progress_shape):
         r = det(node)
         if r:
             role = r[0]
