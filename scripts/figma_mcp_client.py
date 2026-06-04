@@ -2768,16 +2768,20 @@ def _enforce_white_card_border(blueprint: dict) -> None:
 
 
 def _enforce_white_card_border_live(root_node_id: str) -> int:
-    """빌드 후 라이브 트리에서 fill=bg-primary frame 에 border-secondary 1px 강제 (2026-05-27 사용자 분노).
+    """빌드 후 라이브 트리에서 fill=bg-primary frame 에 보더 1px 강제 (2026-05-27 사용자 분노).
 
     batch_build_screen 이 blueprint 의 strokeColor/strokeWeight 를 무시하는 버그 회피.
     빌드 트리 walk + bg-primary frame 인데 stroke 없는 것 다 잡아서 박는다.
     - 대상: type=FRAME + fill=#FCFCFD (bg-primary) + children 있음
-    - 제외: 루트 자체, 이미 stroke 있는 frame, 자식이 단일 텍스트인 layout group (Banner Left, Status Marks 등)
-    - 색: border-secondary RGB (0.902, 0.910, 0.922) — 사용자 명시
-    - weight: 1.5px (1px 은 거의 안 보임)
+    - 제외: 루트 자체, 자식이 단일 텍스트인 layout group (Banner Left, Status Marks 등)
+    - 🔴 보더 색 (2026-06-02 사용자 룰): **뒤(배경) fill 이 bg-primary 면 border-primary**,
+      그 외(bg-secondary/tertiary 등 위) 면 border-secondary. 흰 배경 위 흰 카드는 연한
+      border-secondary 로는 경계가 안 보여 — 더 진한 border-primary 로 카드를 정의한다.
+      기존에 border-secondary 가 박힌 카드도 흰 배경 위면 border-primary 로 업그레이드.
+    - weight: 1px
     """
-    BORDER_R, BORDER_G, BORDER_B = 0.902, 0.910, 0.922
+    BORDER2_R, BORDER2_G, BORDER2_B = 0.902, 0.910, 0.918  # border-secondary
+    BORDER1_R, BORDER1_G, BORDER1_B = 0.824, 0.839, 0.859  # border-primary (더 진함)
     BG_PRIMARY_R, BG_PRIMARY_G, BG_PRIMARY_B = 0.988, 0.990, 0.992  # #FCFCFD
     fixed = [0]
 
@@ -2793,17 +2797,19 @@ def _enforce_white_card_border_live(root_node_id: str) -> int:
             and abs(c.get("g", 0) - BG_PRIMARY_G) < 0.02 \
             and abs(c.get("b", 0) - BG_PRIMARY_B) < 0.02
 
-    def _has_correct_stroke(node):
-        """stroke 가 있고 weight=1 이면 OK. weight != 1 이면 갱신 대상."""
+    def _stroke_matches(node, tr, tg, tb):
+        """이미 목표 색(tr,tg,tb) + weight 1 stroke 가 있으면 True (갱신 불필요)."""
         strokes = node.get("strokes") or []
         if not strokes:
             return False
-        sw = node.get("strokeWeight")
-        if sw != 1:
-            return False  # weight 다르면 갱신
+        if node.get("strokeWeight") != 1:
+            return False
         for s in strokes:
             if s.get("visible", True) and s.get("type") == "SOLID":
-                return True
+                c = s.get("color") or {}
+                if (abs(c.get("r", 0) - tr) < 0.02 and abs(c.get("g", 0) - tg) < 0.02
+                        and abs(c.get("b", 0) - tb) < 0.02):
+                    return True
         return False
 
     def _is_card_like(node):
@@ -2829,28 +2835,40 @@ def _enforce_white_card_border_live(root_node_id: str) -> int:
             return True
         return False
 
-    def walk(node, is_root):
+    def walk(node, is_root, bg_behind_primary):
         if not isinstance(node, dict):
             return
         # DS 인스턴스(badge/button/tag 등) 내부는 master 가 fill/stroke 제어 —
         # 절대 손대지 않는다 (2026-05-28 사용자 "badge 에 stroke 은 없는거란다").
         if (node.get("type") or "").upper() == "INSTANCE":
             return
+        # 이 노드가 솔리드 배경을 가지면, 자식 입장에서 "뒤 배경"이 갱신된다.
+        child_bg_primary = bg_behind_primary
+        if (node.get("type") in ("FRAME", "frame")) and (node.get("fills") or []):
+            f0 = (node.get("fills") or [{}])[0]
+            if f0.get("type") == "SOLID" and f0.get("visible", True):
+                child_bg_primary = _is_bg_primary(node)
         if node.get("type") not in ("FRAME", "frame"):
             for ch in node.get("children", []) or []:
-                walk(ch, False)
+                walk(ch, False, child_bg_primary)
             return
-        if (not is_root) and _is_bg_primary(node) and _is_card_like(node) and not _has_correct_stroke(node):
+        # 🔴 뒤 배경이 bg-primary → border-primary, 그 외 → border-secondary (사용자 룰)
+        if bg_behind_primary:
+            tr, tg, tb, tok = BORDER1_R, BORDER1_G, BORDER1_B, "border-primary"
+        else:
+            tr, tg, tb, tok = BORDER2_R, BORDER2_G, BORDER2_B, "border-secondary"
+        if (not is_root) and _is_bg_primary(node) and _is_card_like(node) \
+                and not _stroke_matches(node, tr, tg, tb):
             try:
                 call_tool("set_stroke_color", {
                     "nodeId": node["id"],
-                    "r": BORDER_R, "g": BORDER_G, "b": BORDER_B, "a": 1,
+                    "r": tr, "g": tg, "b": tb, "a": 1,
                     "strokeWeight": 1,
                 })
                 # 토큰 재바인딩 — set_stroke_color 가 raw RGB 박으면 token alias 풀림
                 # _token_to_figma_path 로 정확한 figmaPath 얻어서 사용 (직접 hardcode 시 not-found silent-skip)
                 try:
-                    fp = _token_to_figma_path("border-secondary")
+                    fp = _token_to_figma_path(tok)
                     if fp:
                         call_tool("set_bound_variables", {
                             "nodeId": node["id"],
@@ -2862,19 +2880,21 @@ def _enforce_white_card_border_live(root_node_id: str) -> int:
             except Exception as e:
                 print(f"  [white-card-border-live] '{node.get('name')}' fail: {e}")
         for ch in node.get("children", []) or []:
-            walk(ch, False)
+            walk(ch, False, child_bg_primary)
 
     try:
         items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_node_id]})).get("json")
         if isinstance(items, list) and items:
-            walk(items[0].get("document") or items[0], True)
+            # 루트 배경은 항상 bg-primary (절대 규칙 0) → 최상위 카드 뒤 = bg-primary
+            walk(items[0].get("document") or items[0], True, True)
     except Exception as e:
         print(f"  [white-card-border-live] root fetch fail: {e}")
 
     if fixed[0]:
-        print(f"  [white-card-border-live] ✓ bg-primary frame {fixed[0]}건에 border-secondary 1px 자동 박음 (batch_build stroke 무시 버그 우회)")
+        print(f"  [white-card-border-live] ✓ bg-primary frame {fixed[0]}건 보더 강제 "
+              f"(뒤 배경 bg-primary→border-primary / 그 외→border-secondary)")
     else:
-        print(f"  [white-card-border-live] OK — 모든 흰 카드에 이미 보더 있음")
+        print(f"  [white-card-border-live] OK — 모든 흰 카드에 이미 올바른 보더 있음")
     return fixed[0]
 
 
@@ -4833,6 +4853,15 @@ def _enforce_horizontal_row_hug_v_live(root_id: str) -> int:
             return False
         if node.get("layoutPositioning") == "ABSOLUTE":
             return False  # FAB/sticky bar 등 의도된 ABSOLUTE
+        # ⚠️ 2026-06-02: 원형/작은 정사각 셀(회차 셀렉터 Round N 등)은 HUG 로 만들면
+        # 높이가 텍스트(~14px)로 붕괴해 정원이 타원(pill)으로 찌부러진다. cornerRadius
+        # 가 절반 이상(원형)이거나 폭이 작은(≤60) 정사각 셀은 FIXED 정사각 유지 — skip.
+        _w, _h = _node_wh(node)
+        _cr = node.get("cornerRadius") or 0
+        if _w and _cr >= (_w / 2) - 3:
+            return False  # 원형 셀 — FIXED 정사각 유지
+        if 0 < _w <= 60 and _h and abs(_w - _h) <= 8:
+            return False  # 작은 정사각 셀 (숫자/아이콘 칩) — FIXED 유지
         children = node.get("children") or []
         if not children:
             return False
@@ -5427,6 +5456,72 @@ def _collect_instance_text_paths(blueprint: Optional[dict]) -> dict:
     return out
 
 
+def _collect_instance_variant_paths(blueprint: Optional[dict]) -> dict:
+    """inject 된 blueprint 에서 {이름 경로 tuple: instanceProperties dict} 맵 수집.
+
+    ⚠️ batch_build_screen 의 create_component_instance 는 blueprint 의 instanceProperties
+    (Hierarchy=Primary, Color=Warning 등 variant flip)를 **적용하지 않는다** — 인스턴스만
+    만들고 끝. 그래서 'Action Button md Secondary' 키로 import 후 Hierarchy=Primary 로
+    flip 하려던 CTA 가 매 빌드마다 Secondary(연보라) 로 남는 회귀가 있었다(매번 수동 flip).
+    이 맵을 빌드 후 set_instance_properties 로 적용해 자동화한다. (2026-06-04)
+
+    `instanceProperties` 또는 `_instanceVariants` 키 둘 다 인식."""
+    out = {}
+    if not isinstance(blueprint, dict):
+        return out
+    root = blueprint.get("root") or blueprint
+
+    def walk(node, chain):
+        if not isinstance(node, dict):
+            return
+        nm = node.get("name") or ""
+        cur = chain + (nm,)
+        props = node.get("instanceProperties") or node.get("_instanceVariants")
+        if node.get("componentKey") and isinstance(props, dict) and props:
+            out[cur] = dict(props)
+        for c in (node.get("children") or node.get("_originalChildren") or []):
+            walk(c, cur)
+    walk(root, ())
+    return out
+
+
+def _enforce_ds_instance_variants(root_id: str, path_variant_map: dict) -> int:
+    """빌드 트리 DS instance 에 blueprint 의 instanceProperties(variant/prop) 적용 (2026-06-04).
+
+    create_component_instance 가 무시하는 Hierarchy/Color/Size/State 등 variant flip 을
+    빌드 후 경로 매칭으로 set_instance_properties 적용. CTA Secondary→Primary 자동 flip.
+    """
+    if not path_variant_map:
+        return 0
+    fixed = [0]
+
+    def walk(node, chain):
+        if not isinstance(node, dict):
+            return
+        nm = node.get("name") or ""
+        cur = chain + (nm,)
+        if (node.get("type") or "").upper() == "INSTANCE" and cur in path_variant_map:
+            try:
+                call_tool("set_instance_properties",
+                          {"nodeId": node["id"], "properties": path_variant_map[cur]})
+                fixed[0] += 1
+            except Exception as e:
+                print(f"  [ds-instance-variant] '{node.get('id')}' fail: {e}")
+        for c in node.get("children", []) or []:
+            walk(c, cur)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0], ())
+    except Exception as e:
+        print(f"  [ds-instance-variant] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [ds-instance-variant] ✓ instance {fixed[0]}건 variant/prop 적용 "
+              f"(Hierarchy/Color/Size flip — 매번 수동 flip 제거)")
+    return fixed[0]
+
+
 def _enforce_ds_instance_text(root_id: str, path_text_map: dict) -> int:
     """빌드 트리 DS instance 의 내부 첫 TEXT 를 원래 콘텐츠로 override (2026-05-28).
 
@@ -5691,6 +5786,26 @@ def _configure_ds_mode_tabs(root_id: str, config: Optional[dict]) -> int:
     return 1
 
 
+def _node_wh(n: dict):
+    """노드의 (width, height) — get_nodes_info 는 top-level width/height 가 없고
+    absoluteBoundingBox 에만 담아 반환한다. _collect_tree 류는 top-level 에 둔다.
+    두 경로 모두 안전하게 처리 (2026-06-02 회귀 fix: size-invariant 가드가 None 만
+    읽어 통째로 무력화돼 원형 셀이 HUG 로 찌부러지던 뿌리)."""
+    if not isinstance(n, dict):
+        return (0, 0)
+    w = n.get("width")
+    h = n.get("height")
+    if not isinstance(w, (int, float)) or not isinstance(h, (int, float)):
+        bb = n.get("absoluteBoundingBox") or n.get("absoluteRenderBounds") or {}
+        if isinstance(bb, dict):
+            if not isinstance(w, (int, float)):
+                w = bb.get("width")
+            if not isinstance(h, (int, float)):
+                h = bb.get("height")
+    return (w if isinstance(w, (int, float)) else 0,
+            h if isinstance(h, (int, float)) else 0)
+
+
 def _enforce_fixed_size_invariants_final(root_id: str) -> int:
     """최종 강제 레이어 (2026-05-28) — post-fix 모든 룰 끝난 뒤 순서 무관하게
     고정 사이즈 invariant 보장. vertical-hug 류 룰이 FAB/circle/icon-box 를
@@ -5703,20 +5818,24 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
 
     def _is_circle_iconbox(n):
         cr = n.get("cornerRadius") or 0
-        w = n.get("width") or 0
-        h = n.get("height") or 0
+        w, h = _node_wh(n)
         if not (isinstance(w, (int, float)) and isinstance(h, (int, float))):
             return False
-        if not (20 <= w <= 80):
+        # ⚠️ 2026-06-04: 붕괴한 원형은 한 축이 콘텐츠 폭(예 16px)으로 줄어 20 미만이 될 수
+        # 있다. 정상 축(max)이 범위 안이면 원형으로 본다 — 그래야 가로 HUG 로 좁아진 아바타
+        # 칩(30→16×30 세로 pill)도 정사각 복원 대상에 잡힌다.
+        mx, mn = max(w, h), min(w, h)
+        if not (20 <= mx <= 80):
             return False
-        # 원형 (cornerRadius >= 절반) 또는 단일 vector/icon-frame 자식
-        if cr >= (min(w, h) / 2) - 3:
+        # 원형/pill: cornerRadius 가 정상축 절반 이상(정상) 또는 999 류(붕괴해도 cr 유지)
+        if cr >= 100 or cr >= (mx / 2) - 3:
             return True
-        kids = n.get("children") or []
-        if len(kids) == 1:
-            ck = (kids[0].get("type") or "").upper()
-            if ck in ("FRAME", "INSTANCE", "VECTOR"):
-                return True
+        if 20 <= mn <= 80:
+            kids = n.get("children") or []
+            if len(kids) == 1:
+                ck = (kids[0].get("type") or "").upper()
+                if ck in ("FRAME", "INSTANCE", "VECTOR"):
+                    return True
         return False
 
     def walk(node, parent_layout=""):
@@ -5726,8 +5845,7 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
         name = (node.get("name") or "")
         nl = name.lower()
         nid = node.get("id")
-        w = node.get("width") or 0
-        h = node.get("height") or 0
+        w, h = _node_wh(node)
         # DS 버튼 인스턴스 가로 FILL — VERTICAL 부모의 단독 CTA 는 항상 가로 채움
         # (2026-05-28 사용자 "버튼을 가로로 채워야지"). 이 final layer 의 card-padding
         # set_auto_layout 이 CTA child sizing 을 HUG 로 리셋하는 회귀를, child 를 부모보다
@@ -6466,6 +6584,25 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     except Exception as e:
         print(f"  [icon-on-brand] 실패 (무시하고 계속): {e}")
 
+    # 2026-06-04: blueprint instanceProperties(Hierarchy=Primary 등 variant flip) 적용.
+    # create_component_instance 가 무시하므로 빌드 후 set_instance_properties 로 자동 적용.
+    # ⚠️ 버튼 sizing/label 교정보다 *먼저* — variant flip 이 sizing/label 을 리셋할 수 있으니.
+    print("\n[규칙] DS instance variant/prop 적용 (instanceProperties — Hierarchy/Color flip) 중...")
+    try:
+        _var_bp = injected_blueprint or original_blueprint
+        if _var_bp is None:
+            _latest_v = _load_latest_build()
+            _vp = _latest_v.get("blueprintPath")
+            if _vp and os.path.exists(_vp):
+                with open(_vp) as _vf:
+                    _var_bp = json.load(_vf)
+        _variant_map = _collect_instance_variant_paths(_var_bp)
+        n_var = _enforce_ds_instance_variants(root_node_id, _variant_map)
+        if not n_var:
+            print("  [ds-instance-variant] OK — instanceProperties 마커 없음")
+    except Exception as e:
+        print(f"  [ds-instance-variant] 실패 (무시하고 계속): {e}")
+
     # 2026-05-28 사용자 "제일 중요한 컴포넌트는 버튼" — R23 가 버튼을 DS Action Button
     # 인스턴스로 auto-swap 하게 켰는데, DS 버튼이 공유 row 에서 1px 로 붕괴하거나
     # height 가 텍스트만큼 줄어드는 sizing 버그가 있음. 라이브에서 교정.
@@ -6558,6 +6695,16 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
               else "  [size-invariant] OK — 찌그러진 고정 사이즈 노드 없음")
     except Exception as e:
         print(f"  [size-invariant] 실패 (무시): {e}")
+
+    # ⚠️ 시스템 규칙 (2026-06-02 사용자 "버튼의 높이가 왜 다르지? 제일 큰거와 같아야 되"):
+    # 하단 액션바의 버튼/아이콘 박스 높이를 가장 큰 것에 통일. ⚠️ size-invariant 의
+    # icon-box(단일 자식) 정사각화가 한쪽 박스만 다시 키우는 충돌을 막기 위해 그 *뒤*에
+    # 실행해 최종 권한을 갖는다.
+    print("\n[규칙] 하단 액션바 버튼 높이 통일 (제일 큰 것에 맞춤) 적용 중...")
+    try:
+        _enforce_action_bar_equal_height(root_node_id)
+    except Exception as e:
+        print(f"  [action-bar-eq-h] 실패 (무시): {e}")
 
     # ⚠️ 시스템 규칙 (2026-05-28 사용자 "padding, gap 절대값인데 spacing- 토큰 바인딩 안돼. 박아"
     # / 2026-05-29 사용자 "primitive(Spacing/) 쓰면 안돼. 3. Spacing 의 spacing- 토큰으로 바인딩"):
@@ -7859,6 +8006,123 @@ def _normalize_row_cell_vertical_sizing_live(root_id: str) -> int:
     _walk(root)
     if not fixed[0]:
         print("  [row-cell-vsize] OK — 행 셀 세로 사이징 일관")
+    return fixed[0]
+
+
+def _enforce_action_bar_equal_height(root_id: str) -> int:
+    """하단 액션바(Bottom Action Bar / Action Bar / CTA Bar)의 버튼/아이콘 박스 높이를
+    가장 큰 것에 통일 (2026-06-02 사용자: "버튼의 높이가 왜 다르지? 제일 큰거와 같아야 되").
+
+    원인: 아이콘 박스(Bookmark/Chat 등)는 VERTICAL HUG 라 콘텐츠 높이(아이콘 ~22 /
+    아이콘+라벨 ~37)로 붕괴하는데, 옆의 DS CTA 버튼은 ~44 라 높이가 제각각이 된다.
+
+    판정 (보수적):
+      - 이름에 'action bar' / 'cta bar' / 'bottom bar' 포함된 HORIZONTAL FRAME parent
+        (Tab Bar 는 _enforce_tab_bar_children_fill_live 가 따로 처리 — 제외)
+      - 직계 자식 중 버튼/박스류(FRAME 또는 INSTANCE; divider/home indicator/spacer 제외)
+        가 2개 이상
+    Fix:
+      - 그 자식들 중 최대 높이 H 계산 → H 보다 낮은 자식을 vertical FIXED + height=H 로 통일
+        (DS 버튼 인스턴스 높이가 보통 최대 → 아이콘 박스가 버튼 높이에 맞춰짐)
+    Returns: 통일한 액션바 수.
+    """
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [action-bar-eq-h] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+
+    fixed = [0]
+    _BAR_HINTS = ("action bar", "cta bar", "bottom bar", "bottom action")
+    _SKIP_CHILD = ("divider", "separator", "home indicator", "homeindicator",
+                   "spacer", "gap")
+
+    def _is_interactive_child(c):
+        t = (c.get("type") or "").upper()
+        if t not in ("FRAME", "INSTANCE", "COMPONENT"):
+            return False
+        nm = (c.get("name") or "").lower()
+        if any(k in nm for k in _SKIP_CHILD):
+            return False
+        return True
+
+    def _walk(node):
+        if not isinstance(node, dict):
+            return
+        nm = (node.get("name") or "").lower()
+        is_bar = ((node.get("layoutMode") or "").upper() == "HORIZONTAL"
+                  and any(h in nm for h in _BAR_HINTS)
+                  and "tab bar" not in nm and "tabbar" not in nm)
+        if is_bar:
+            kids = [c for c in (node.get("children") or []) if _is_interactive_child(c)]
+            if len(kids) >= 2:
+                heights = [_node_wh(c)[1] for c in kids]
+                widths = [_node_wh(c)[0] for c in kids]
+                max_w = max(widths) if widths else 0
+
+                def _is_fill_cta(c, w):
+                    t = (c.get("type") or "").upper()
+                    nm = (c.get("name") or "").lower()
+                    if t in ("INSTANCE", "COMPONENT"):
+                        return True
+                    if any(k in nm for k in ("btn", "button", "cta", "submit", "참여")):
+                        return True
+                    # icon 박스(작은 정사각)보다 확연히 넓으면 CTA
+                    return bool(w and max_w and w >= max_w - 1 and w > 100)
+
+                # 🔴 target = CTA(전폭 버튼/INSTANCE) 높이가 기준 (2026-06-04 사용자 의도:
+                # 작은 아이콘 박스를 'CTA(제일 큰 버튼) 높이에 맞춰라'). DS 버튼은 자연 높이를
+                # 유지(억지로 키우면 안 붙음)하고, 나머지(아이콘 박스)가 거기 맞춘다.
+                # CTA 가 없으면 max 높이로 폴백.
+                cta_heights = [h for c, h, w in zip(kids, heights, widths)
+                               if _is_fill_cta(c, w) and h]
+                target = cta_heights[0] if cta_heights else (max(heights) if heights else 0)
+
+                if target and target > 0:
+                    changed = 0
+                    for c, h, w in zip(kids, heights, widths):
+                        # CTA(기준)는 높이 안 건드림 — 단, 직전 패스가 폭을 FIXED 로
+                        # 깨뜨렸을 수 있으니 가로 FILL 을 항상 재단언(라벨 잘림 방지).
+                        if _is_fill_cta(c, w):
+                            if (c.get("layoutSizingHorizontal") or "").upper() != "FILL":
+                                try:
+                                    call_tool("set_layout_sizing",
+                                              {"nodeId": c["id"], "horizontal": "FILL"})
+                                except Exception:
+                                    pass
+                            continue
+                        if abs(h - target) > 1.5:
+                            try:
+                                # ⚠️ resize_node 는 폭·높이 둘 다 FIXED 로 박는다. 전폭 CTA
+                                # 버튼은 FILL 이어야 하므로(안 그러면 폭이 고정돼 라벨 잘림),
+                                # height 만 맞추고 CTA 는 **무조건 horizontal=FILL 재단언**한다.
+                                # (이전 '원래 모드 보존' 방식은 직전 패스에서 이미 FIXED 가
+                                #  돼버린 버튼의 FIXED 를 그대로 보존하는 버그가 있었음 — 2026-06-04.)
+                                call_tool("set_layout_sizing",
+                                          {"nodeId": c["id"], "vertical": "FIXED"})
+                                call_tool("resize_node",
+                                          {"nodeId": c["id"],
+                                           "width": round(w) if w else 56,
+                                           "height": round(target)})
+                                if _is_fill_cta(c, w):
+                                    call_tool("set_layout_sizing",
+                                              {"nodeId": c["id"], "horizontal": "FILL"})
+                                changed += 1
+                            except Exception as e:
+                                print(f"  [action-bar-eq-h] '{c.get('name')}' fail: {e}")
+                    if changed:
+                        fixed[0] += 1
+                        print(f"  [action-bar-eq-h] ✓ '{node.get('name')}' 버튼 {changed}개 "
+                              f"→ height={round(target)} 통일 (제일 큰 것에 맞춤)")
+        for c in node.get("children", []) or []:
+            _walk(c)
+
+    _walk(root)
+    if not fixed[0]:
+        print("  [action-bar-eq-h] OK — 액션바 버튼 높이 일관")
     return fixed[0]
 
 

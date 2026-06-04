@@ -626,11 +626,19 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > **빌드 후 검증:** 빌드 로그의 `[색상]` 라인에 Aqua 보조 액센트가 잡히는지 + 스크린샷에서
 > 브랜드 퍼플 외 Aqua가 보조 지점에 절제되어 들어갔는지 확인.
 
-### 2-B. ⚠️ 카드 표면 — bg-primary + 보더 (root 위 카드, 2026-05-23 룰)
-- **루트 위 최상위 카드의 표면 = `$token(bg-primary)` fill + `$token(border-secondary)` 1px 보더** — `bg-secondary`(회색)로 채우지 말 것. 흰 카드를 보더(+ 자동 주입되는 subtle shadow)로 정의한다.
+### 2-B. ⚠️ 카드 표면 — bg-primary + 보더 (root 위 카드, 2026-05-23 룰 / 2026-06-02 보더색 갱신)
+- **루트 위 최상위 카드의 표면 = `$token(bg-primary)` fill + 보더 1px** — `bg-secondary`(회색)로 채우지 말 것. 흰 카드를 보더로 정의한다.
+- 🔴 **보더 색 = 뒤(배경) fill 에 따라 결정 (2026-06-02 사용자 룰):**
+  - **뒤 배경이 `bg-primary`(흰색)면 보더는 `$token(border-primary)`** — 흰 배경 위 흰 카드는
+    연한 `border-secondary` 로는 경계가 거의 안 보여, **더 진한 `border-primary`(#d2d6db)** 로 정의한다.
+  - 뒤 배경이 `bg-secondary`/`bg-tertiary` 등 비-흰색이면 보더는 `$token(border-secondary)`.
+  - 사용자 명시: *"뒤에 fill color가 bg-primary일때 바로 위 frame의 border color는 border-primary를 사용할 것!"*
 - 카드 안의 인셋·서브카드는 대상 아님 (필요 시 `bg-secondary`/`bg-tertiary` 유지). 브랜드 컬러 카드(`bg-brand-solid` 등)도 그대로 둔다.
 - **예외 — 맨 아래 Footer**: Footer는 `$token(bg-secondary)` fill + **보더 없음**(그림자도 없음). 페이지를 닫는 회색 띠이지 카드가 아니다.
-- `cmd_build`의 `_enforce_card_surface`가 최상위 그레이 카드를 bg-primary + border-secondary로 자동 교정하고, Footer는 bg-secondary + 보더 제거로 처리 — blueprint에서 어떻게 쓰든 빌드가 바로잡는다.
+- **시스템 강제 (자동):** `_enforce_white_card_border_live`(post-fix)가 walk 하며 **각 카드의 뒤
+  배경 fill 을 추적** — bg-primary 위면 border-primary, 그 외면 border-secondary 로 stroke 강제 +
+  DS 변수 바인딩. 기존에 border-secondary 가 박힌 흰-배경 카드도 border-primary 로 업그레이드(idempotent).
+  blueprint 에서 어떻게 쓰든 빌드가 바로잡는다.
 
 ### 2-C. ⚠️ 타이포 위계 — 크기·굵기로 시각 리듬 (2026-05-23 룰)
 - **컬러가 절제될수록 시각 위계는 폰트 크기·굵기로 강화한다.** 표준 type scale:
@@ -664,6 +672,61 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **라벨:** Action Button 라벨은 nested TEXT("Button CTA") 라 `properties.label` 로 **안 바뀐다**. `set_text_content` 또는 inject 의 `_instanceText` / label_map 로 override. ⚠️ Size 등 **variant 변경 후엔 라벨 재확인** (variant swap 이 override 를 리셋할 수 있음).
 - **시스템 강제 (기존):** R23 inject 의 `detect_button_shape` 가 raw button frame 을 자동 swap. catalog 미스 시 build ERROR.
 - Blueprint 작성 시: `{"type":"instance","componentKey":"ed0032bcf28f03da97e4b3006f54d30a0fbe5914","_instanceText":"참여하기","properties":{"Size":"lg","State":"Disabled"}}` 패턴.
+- 🔴 **instanceProperties(variant flip) 자동 적용 — 수동 flip 영구 제거 (2026-06-04):**
+  `batch_build_screen` 의 `create_component_instance` 는 blueprint 의 `instanceProperties`/
+  `_instanceVariants`(Hierarchy=Primary, Color=Warning, Size=lg 등)를 **적용하지 않는다**(인스턴스만 생성).
+  그래서 'Action Button md Secondary' 키로 import 후 Hierarchy=Primary 로 flip 하려던 CTA 가
+  매 빌드 Secondary(연보라)로 남아 **매번 수동 flip** 하던 회귀가 있었다. → `_collect_instance_variant_paths`
+  + `_enforce_ds_instance_variants`(post-fix, ds-button-sizing **직전** 실행)가 경로 매칭으로
+  `set_instance_properties` 자동 적용. blueprint 인스턴스에 `"instanceProperties":{"Hierarchy":"Primary",...}`
+  박으면 빌드 후 자동 flip(로그 `[ds-instance-variant] ✓`). [[ds-action-button-primary-key-broken]] 우회 자동화.
+
+> 🔴 **2-G-2. ⚠️ 하단 액션바 버튼 높이 통일 — 제일 큰 것에 맞춤 (2026-06-02 사용자 룰)**
+>
+> 사용자 명시: *"버튼의 높이가 왜 다르지? 제일 큰거와 같아야 되. 이건 수정하고 규칙 강화하고 코드에 박아."*
+>
+> **하단 액션바(Bottom Action Bar / Action Bar / CTA Bar) 안의 모든 버튼·아이콘 박스는 높이가
+> 같아야 한다 — 그 중 제일 큰 것의 높이로 통일.** (북마크·채팅 아이콘 박스가 DS CTA 버튼보다
+> 낮게 찌부러지는 회귀 차단.)
+>
+> **회귀 원인:** 아이콘 박스(VERTICAL HUG)는 콘텐츠 높이(아이콘 ~22 / 아이콘+라벨 ~37)로
+> 붕괴하는데 옆 DS CTA 버튼은 ~44~56 라 높이 제각각.
+>
+> **시스템 강제 (코드 박힘, 자동):** `_enforce_action_bar_equal_height(root_id)` (cmd_post_fix,
+> **size-invariant 이후**에 실행해 최종 권한 — size-invariant 의 icon-box 정사각화가 한쪽만
+> 키우는 충돌 방지). 액션바 직계 버튼/박스 중 최대 높이 H 계산 → 낮은 것들을 vertical FIXED +
+> height=H 로 통일. ⚠️ Bottom **Tab Bar** 는 `_enforce_tab_bar_children_fill_live` 가 따로 처리(제외).
+>
+> 🔴 **함정 (2026-06-04 회귀): `resize_node` 는 폭·높이 둘 다 FIXED 로 박는다.** height 통일
+> 하려고 전폭 CTA 버튼에 `resize_node` 를 호출하면 **가로 FILL 이 깨져 폭이 고정 → "참여하기"
+> 라벨이 잘린다**(이미지에 "참"만 보임). 그래서 이 룰은 CTA(액션바 최대폭 자식 / INSTANCE /
+> 이름에 btn·button·cta·submit·참여)에 대해선 height 조정 후 **무조건 `horizontal=FILL` 재단언**
+> 한다. ⚠️ '원래 가로 모드 보존' 방식은 NG — 직전 패스에서 이미 FIXED 가 된 버튼의 FIXED 를
+> 그대로 보존하는 버그가 있었다. 전폭 CTA 는 항상 FILL 로 강제.
+>
+> 🔴 **target = CTA 버튼 높이 기준 (2026-06-04 재정의):** 처음엔 'max 높이'를 target 으로
+> 썼는데, size-invariant 가 아이콘 박스(단일자식)를 정사각(56)으로 키우면 박스(56) > CTA(44) 가
+> 되어 역전 → 사용자 원래 의도("작은 아이콘 박스를 **CTA 높이에 맞춰라**")와 어긋났다. 이제
+> **target = CTA 높이**, 아이콘 박스가 거기 맞추고 **CTA 자신은 높이 안 건드림**(DS 버튼은
+> 억지로 키우면 안 붙음). CTA 없으면 max 폴백.
+
+> 🔴 **2-G-3. ⚠️ 상단 NavBar 우측 액션 = 아이콘 버튼 (텍스트는 특수 케이스만, 2026-06-04 사용자 룰)**
+>
+> 사용자 명시: *"상단 네비게이션바 우측에 일반적으로 아이콘 버튼이 위치하는데 지금처럼 텍스트
+> 버튼이 들어가면 안되. 아주 특수한 경우에만 텍스트 버튼을 사용할거야."*
+>
+> NavBar 우측의 액션 라벨(공유/완료/편집/저장/닫기/취소/다음/더보기/검색/알림 등)은 **텍스트가
+> 아니라 아이콘 버튼**. **아주 특수한 경우**만 텍스트 — 매핑에 없는 라벨이거나 노드에
+> `"_navTextAllowed": true` 마커가 있으면 텍스트 유지.
+>
+> **시스템 강제 (코드 박힘):** `scripts/design_rules/R62_navbar_icon_action.py`
+> - L2 lint: NavBar 안 액션 라벨 TEXT 발견 시 WARN.
+> - L3 inject: 알려진 액션 라벨(`_ACTION_ICON` 맵: 공유→share-07, 완료/저장→check, 편집→edit-02,
+>   닫기/취소→x-close, 다음→arrow-right, 더보기→dots-vertical, 검색→search-lg …)에 **정확히 일치**
+>   하는 TEXT 를 ICON 노드로 교체 → build 가 svg_icon 생성. **제목(매핑에 없음)은 안전하게 유지.**
+> - L5 verify: 빌드 후에도 액션 라벨 텍스트가 남으면 WARN.
+> - blueprint 작성 시 NavBar 우측에 "공유" 같은 액션은 처음부터 `{"type":"icon","iconName":"share-07"}`
+>   로 써도 되고, 텍스트로 써도 R62 가 자동 교체한다. 새 액션 라벨은 `_ACTION_ICON` 맵에 추가.
 
 ### 2-I. ⚠️ 폼 컨트롤(체크박스/토글/라디오/인풋)은 DS 컴포넌트 인스턴스 — raw frame 금지 (2026-05-28 사용자 분노)
 - **체크박스를 raw 원형/사각 frame + check 아이콘으로 그리지 말 것.** DS 컴포넌트 인스턴스 사용:
@@ -684,6 +747,26 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   2. 그 그룹의 `layoutSizingVertical` 이 섞였거나 height 가 2px 초과로 다르면 → **다수 사이징으로 통일**(다수가 FIXED 인데 height 들쭉날쭉이면 HUG 로 — 텍스트 셀은 HUG 가 정답)
   3. idempotent — 일관되면 no-op
 - **회귀 신호**: 숫자/날짜 셀 행에서 일부 셀(보통 2자리)의 텍스트만 위/아래로 어긋남, 언더라인이 두 높이로 끊김
+- 🔴 **2026-06-02 원형 셀 찌부 회귀 + 근본 버그 fix (사용자 "왜 순번 블록들이 찌부되어있지?"):**
+  - **증상**: 원형 순번 셀(cornerRadius 999, 32×32)이 세로 HUG 로 붕괴해 **h=14 타원(pill)** 이 됨.
+    한 행에서 셀 개수 다르면(1~9 행 vs 10~13 행) 타원 폭도 달라 보임.
+  - **뿌리 1 — size-invariant 가드 무력화**: `_enforce_fixed_size_invariants_final`(원형→정사각 복원
+    최종 가드)이 `node.get("width")` 를 읽었는데, **`get_nodes_info` 는 width/height 를 top-level 이
+    아니라 `absoluteBoundingBox` 에만 담아 반환** → 항상 `None` → 가드가 **통째로 0건** 동작.
+    → `_node_wh(n)` 헬퍼 신설(absoluteBoundingBox 폴백)로 수정 → 이제 정상 복원.
+  - **뿌리 2 — HUG 룰이 원형 셀까지 붕괴**: `_enforce_horizontal_row_hug_v_live`(HORIZONTAL + 자식
+    전부 TEXT → HUG)가 원형 셀을 HUG 로 만듦. `_qualifies` 에 **원형(cornerRadius≥w/2) · 작은
+    정사각(폭≤60, |w−h|≤8) 셀 예외** 추가 — FIXED 정사각 유지.
+  - blueprint 의 round_cell 은 FIXED 32×32 로 작성하면 됨(post-fix 가드가 보장).
+- 🔴 **2026-06-04 참여자 아바타 원형 붕괴(가로만 좁아짐) — size-invariant min-width 버그:**
+  - **증상**: 참여자 썸네일 아바타(원형 36×36)가 가로만 FIXED→**HUG 로 붕괴해 폭=아이콘폭(16px)**,
+    세로 30 그대로 → 세로로 긴 좁은 pill. (셀이 가로로 줄어든 케이스 — 위 round 셀은 세로 붕괴.)
+  - **뿌리**: `_enforce_fixed_size_invariants_final._is_circle_iconbox` 가 `20 <= w` 를 요구해,
+    **한 축이 16px(<20)로 붕괴한 원형을 감지 못 함** → 복원 누락. → `max(w,h)` 기준으로 범위
+    체크하고 `cornerRadius>=100`(999 류) 이면 붕괴해도 원형으로 인식하도록 수정 → max(w,h) 정사각 복원.
+  - **참여자/멤버 아바타는 랜덤 이미지 사용** (사용자 OK): blueprint 아바타 frame 에
+    `"imageQuery":"portrait,face,person"` 박으면 `apply_image_queries` 가 loremflickr 랜덤 사진을
+    `set_image_fill` + placeholder 아이콘 제거. `clipsContent:true` + cornerRadius 999 로 원형 클립.
 
 ### 2-E-4. ⚠️ Bottom Tab Bar 자식 FILL + 라벨 wrap 차단 (2026-05-28 사용자 분노)
 - **사례**: Bottom Tab Bar 5개 자식 (Tab 홈/커뮤니티/스테이지/라운지/나) 이 HUG horizontal 로 박혀, tab-label TEXT 가 width=24 (아이콘 width 따라가서) 좁아져 "커뮤/니티", "스테/이지", "라운/지" 같이 두 줄 wrap. R13.3 inject 후에도 회귀 가능.
