@@ -1,0 +1,743 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>31-UC-DEFAULT-ForceWithdraw 강제 약정 철회</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+/* Override strong tags inside headings to maintain consistent weight */
+h1 strong,
+h2 strong,
+h3 strong {
+	font-weight: 600;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+
+	table.collection-content {
+		width: 100%;
+		table-layout: fixed;
+	}
+
+	table.collection-content th,
+	table.collection-content td {
+		overflow-wrap: anywhere;
+	}
+
+	table.collection-content td > .user,
+	table.collection-content td > time {
+		white-space: pre-wrap;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content-wrapper {
+	overflow-x: auto;
+}
+
+@media only print {
+	.collection-content-wrapper {
+		overflow-x: visible;
+	}
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	gap: 46px;
+}
+
+.column {
+	min-width: 0;
+	overflow: hidden;
+}
+
+.column > *:first-child {
+	margin-top: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+table {
+	border-collapse: collapse;
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol.numbered-list.numbered-list-digits-2 {
+	padding-inline-start: 2em;
+}
+
+ol.numbered-list.numbered-list-digits-3plus {
+	padding-inline-start: 2.4em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="372c5b86-712e-810d-875d-eaf1cb44ece5" class="page sans"><header><h1 class="page-title" dir="auto">31-UC-DEFAULT-ForceWithdraw 강제 약정 철회</h1><p class="page-description" dir="auto"></p></header><div class="page-body"><div style="display:contents" dir="auto"><h2 id="6fb96b51-733d-437c-b7c1-665612b02700" class="">1. 메타정보</h2></div><div style="display:contents" dir="ltr"><table id="1ada5a4f-ed0a-48a3-8835-7d34b7d6ce28" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="025d58c6-c36a-4975-b7ca-f98df9d8b163"><th id="HZ:]" class="simple-table-header-color simple-table-header">항목</th><th id=":VDH" class="simple-table-header-color simple-table-header">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="419675b3-adee-43f5-94c4-efa58b601b0e"><td id="HZ:]" class="">UC ID</td><td id=":VDH" class="">31-UC-DEFAULT-ForceWithdraw</td></tr></div><div style="display:contents" dir="ltr"><tr id="67f4e65f-a336-464f-bb08-fa22803d40f4"><td id="HZ:]" class="">목표</td><td id=":VDH" class="">불이행 회원을 스테이지에서 강제 철회하여 나머지 참여자를 보호한다</td></tr></div><div style="display:contents" dir="ltr"><tr id="0b723b5b-02e1-47bd-ab9c-238a07a47f9f"><td id="HZ:]" class="">액터</td><td id=":VDH" class="">시스템, 관리자</td></tr></div><div style="display:contents" dir="ltr"><tr id="27730247-8138-49b4-bd4d-f468ae84a444"><td id="HZ:]" class="">상태</td><td id=":VDH" class="">작성중</td></tr></div><div style="display:contents" dir="ltr"><tr id="df8f98e0-04c3-40de-a873-82a6399f3d7d"><td id="HZ:]" class="">트리거</td><td id=":VDH" class="">스테이지 불이행 임계 충족 또는 관리자 수동 처리</td></tr></div><div style="display:contents" dir="ltr"><tr id="1f4321be-e304-438c-9aa2-c5eb443d6805"><td id="HZ:]" class="">우선순위</td><td id=":VDH" class="">P0</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="f6cc1473-fa50-46cc-aa7a-67aa300965d0" class="">2. 정상 플로우</h2></div><div style="display:contents" dir="auto"><ol type="1" id="7e249ab5-7e2d-4a67-881f-ece37f4d6c20" class="numbered-list" start="1"><li>강제 철회 조건 충족 확인</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="8e5e1efe-8589-4590-8df7-bc162f5e6c92" class="numbered-list" start="2"><li>회원에게 강제 철회 예정 안내 (처리 전 마지막 통보)</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="f1ebc4b8-d122-4586-8833-6eee9b74d194" class="numbered-list" start="3"><li>순번 양도 프로세스 시작 (50-UC-EXIT-TurnTransfer)</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="008cfa3b-aba2-47f6-aaaa-445825f8d6f8" class="numbered-list" start="4"><li>순번양수인 미확정 시 관리자 직접 철회</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="3f46c272-0e6f-4a09-95ef-1c4d0a543d43" class="numbered-list" start="5"><li>체납 주도금 환급 처리 (55-UC-EXIT-RefundWithdraw)</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="a10b4882-af70-4b5a-aa63-1c460466e6b8" class="numbered-list" start="6"><li>철회 허원자 i-CSS 점수 갱신</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="fbfe50e6-f349-4beb-a792-9d9358631b07" class="numbered-list" start="7"><li>블랙리스트 등록 (07-UC-MEMBER-Blacklist)</li></ol></div><div style="display:contents" dir="auto"><h2 id="dece3202-242d-4968-bd31-42bd22f6e18d" class="">3. 대안/예외 플로우</h2></div><div style="display:contents" dir="ltr"><table id="e2cef259-11ad-4298-a167-868d1dfd6fba" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="fc64fd6b-efed-4e58-8187-f98bc8b807de"><th id="tfAL" class="simple-table-header-color simple-table-header">#</th><th id="&lt;IMR" class="simple-table-header-color simple-table-header">조건</th><th id="NgU\" class="simple-table-header-color simple-table-header">처리</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="6a540843-4502-49de-90e9-82d7d72a8332"><td id="tfAL" class="">3a</td><td id="&lt;IMR" class="">순번양수인 없음</td><td id="NgU\" class="">순번 철회 후 관리자 직접 환급</td></tr></div><div style="display:contents" dir="ltr"><tr id="dcf6525f-b645-4b32-8cf5-ce5de6d371b3"><td id="tfAL" class="">5a</td><td id="&lt;IMR" class="">환급금 부족</td><td id="NgU\" class="">관리자 에스케레이션</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="87f6d596-32a1-4481-a5b6-d1d15b7ed14e" class="">4. 비즈니스 룰</h2></div><div style="display:contents" dir="ltr"><table id="18287e5f-a792-4ab7-a12e-ba740d9cd4a6" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="6535ea93-ad6e-4c73-a937-1f8256d20da3"><th id=":fFP" class="simple-table-header-color simple-table-header">BR#</th><th id="\\vt" class="simple-table-header-color simple-table-header">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="bda7903b-2bfc-4abc-bcdb-76ffe66d35fd"><td id=":fFP" class="">BR-01</td><td id="\\vt" class="">철회 전 순번 양도 시도 우선</td></tr></div><div style="display:contents" dir="ltr"><tr id="745e8fb2-fd5f-4e95-ac8c-4363c5086667"><td id=":fFP" class="">BR-02</td><td id="\\vt" class="">철회 후 환급금 = 납입 누계액 - 대납액 - 펙널티</td></tr></div><div style="display:contents" dir="ltr"><tr id="6f33c62f-ab5b-4082-b2fc-0e0e9f1eeaca"><td id=":fFP" class="">BR-03</td><td id="\\vt" class="">강제 철회 이력은 i-CSS OPR 컴포넌트에 반영</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="a7d61a0f-6cfd-4b93-999e-5d650a6b0288" class="">5. 연결 화면</h2></div><div style="display:contents" dir="ltr"><table id="d4b6c533-a1d0-4ccc-9421-538dd1c02f5d" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="98820e9b-d1a7-42e8-bbf1-d3a5d5ccb18c"><th id="zgSw" class="simple-table-header-color simple-table-header">화면 ID</th><th id="&gt;;}x" class="simple-table-header-color simple-table-header">화면명</th><th id="YZ[n" class="simple-table-header-color simple-table-header">비고</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="26a2db09-ae0d-4bca-8e95-304e86aa7925"><td id="zgSw" class="">SCR-ADMIN-DEFAULT-01</td><td id="&gt;;}x" class="">불이행 관리</td><td id="YZ[n" class="">강제 철회 목록</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="24419e90-249e-4172-875e-ef1838cb3c9b" class="">6. 수용 기준</h2></div><div style="display:contents" dir="ltr"><table id="a4b06298-7b40-4a3e-b1c5-c5694a552ed2" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="f18312b8-4f62-413b-9699-e8572610054d"><th id="SBZb" class="simple-table-header-color simple-table-header">AC#</th><th id="FWSP" class="simple-table-header-color simple-table-header">기준</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="4dfba391-2899-44f1-94fd-d62c39d3a5b6"><td id="SBZb" class="">AC-01</td><td id="FWSP" class="">강제 철회 후 사용자에게 철회 안내 통지</td></tr></div><div style="display:contents" dir="ltr"><tr id="4846a339-fe00-4f39-901c-6be7dbc06cea"><td id="SBZb" class="">AC-02</td><td id="FWSP" class="">환급 처리 및 블랙리스트 등록 자동 실행</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="a71533a2-9f61-4888-a098-95d713b1f109" class="">7. 백엔드 참고</h2></div><div style="display:contents" dir="ltr"><table id="365b0855-6843-4c3a-8c86-3b4615906c52" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="5e7f3447-1c72-4223-80e3-89ec63ba91ea"><th id="&lt;Lmb" class="simple-table-header-color simple-table-header">항목</th><th id="qCl^" class="simple-table-header-color simple-table-header">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="bb11b409-4382-4cea-8e3d-ac362d454f03"><td id="&lt;Lmb" class="">API</td><td id="qCl^" class="">POST /v1/admin/participants/{participantId}/force-withdraw</td></tr></div><div style="display:contents" dir="ltr"><tr id="2f7f87e8-ec49-4221-865d-47adf2ddaeb3"><td id="&lt;Lmb" class="">연관 UC</td><td id="qCl^" class="">07-UC-MEMBER-Blacklist, 50-UC-EXIT-TurnTransfer, 55-UC-EXIT-RefundWithdraw</td></tr></div><div style="display:contents" dir="ltr"><tr id="4c919aa2-15b9-4dfd-b169-1f4cf0f59c40"><td id="&lt;Lmb" class="">관련 도메인</td><td id="qCl^" class="">StageParticipant, Default, Blacklist</td></tr></div></tbody></table></div></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>

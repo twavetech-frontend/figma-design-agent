@@ -1,0 +1,743 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>11-UC-STAGE-Join 스테이지 참여</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+/* Override strong tags inside headings to maintain consistent weight */
+h1 strong,
+h2 strong,
+h3 strong {
+	font-weight: 600;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+
+	table.collection-content {
+		width: 100%;
+		table-layout: fixed;
+	}
+
+	table.collection-content th,
+	table.collection-content td {
+		overflow-wrap: anywhere;
+	}
+
+	table.collection-content td > .user,
+	table.collection-content td > time {
+		white-space: pre-wrap;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content-wrapper {
+	overflow-x: auto;
+}
+
+@media only print {
+	.collection-content-wrapper {
+		overflow-x: visible;
+	}
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	gap: 46px;
+}
+
+.column {
+	min-width: 0;
+	overflow: hidden;
+}
+
+.column > *:first-child {
+	margin-top: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+table {
+	border-collapse: collapse;
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol.numbered-list.numbered-list-digits-2 {
+	padding-inline-start: 2em;
+}
+
+ol.numbered-list.numbered-list-digits-3plus {
+	padding-inline-start: 2.4em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="372c5b86-712e-8149-a300-d161e5685b41" class="page sans"><header><h1 class="page-title" dir="auto">11-UC-STAGE-Join 스테이지 참여</h1><p class="page-description" dir="auto"></p></header><div class="page-body"><div style="display:contents" dir="auto"><h2 id="13be4962-04bf-4984-862a-4e69bc7a9437" class="">1. 메타정보</h2></div><div style="display:contents" dir="ltr"><table id="b25c923d-49a2-4c8d-a58a-dfc5aee076e1" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="69732a54-aba8-4970-9855-8465ae97a192"><th id="{`XG" class="simple-table-header-color simple-table-header">항목</th><th id="{`Zj" class="simple-table-header-color simple-table-header">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="54f58717-3310-406e-9bf8-f735056b5f8b"><td id="{`XG" class="">UC ID</td><td id="{`Zj" class="">11-UC-STAGE-Join</td></tr></div><div style="display:contents" dir="ltr"><tr id="dec29a22-03fd-4c90-983e-72534a16209d"><td id="{`XG" class="">목표</td><td id="{`Zj" class="">회원이 모집 중인 스테이지에 참여 신청한다</td></tr></div><div style="display:contents" dir="ltr"><tr id="751db861-0d4a-499b-a6d7-051d521757a6"><td id="{`XG" class="">액터</td><td id="{`Zj" class="">사용자</td></tr></div><div style="display:contents" dir="ltr"><tr id="4ef4716f-1484-4d22-81af-232c2e380ae5"><td id="{`XG" class="">상태</td><td id="{`Zj" class="">작성중</td></tr></div><div style="display:contents" dir="ltr"><tr id="611b604e-3986-42ad-96cb-0f85a625fe6a"><td id="{`XG" class="">트리거</td><td id="{`Zj" class="">회원이 스테이지 목록에서 참여하기 선택</td></tr></div><div style="display:contents" dir="ltr"><tr id="49147799-a839-4583-80b4-a416d8e70851"><td id="{`XG" class="">우선순위</td><td id="{`Zj" class="">P0</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="0448546f-75e4-4be4-b5ea-01ffecfda2b8" class="">2. 정상 플로우</h2></div><div style="display:contents" dir="auto"><ol type="1" id="321a3ed2-4431-44fd-8864-848f3494e2ab" class="numbered-list" start="1"><li>회원이 스테이지 목록/상세에서 &#x27;참여하기&#x27; 선택</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="b975cd3b-906f-4067-b368-4741a2679139" class="numbered-list" start="2"><li>참여 자격 검증 (i-CSS 등급, 블랙리스트, 중복 참여)</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="7c1d40b8-1463-435f-a325-b6c677b7ed5f" class="numbered-list" start="3"><li>약정 정보 확인 (총 회차, 납입금, 예상 순번)</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="2a359961-61ea-4c95-8637-2944bc80ccf6" class="numbered-list" start="4"><li>약정서 동의 및 전자서명</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="610f6bb3-513a-4fb9-9e0c-b2fa55e146ed" class="numbered-list" start="5"><li>순번 배정 (지급 순번 방식에 따라)</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="ace4b8db-3b68-4f56-9936-bebbc4903bf2" class="numbered-list" start="6"><li>참여자 목록 등록</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="8b5534e5-e04b-4139-95b3-eb88e122760f" class="numbered-list" start="7"><li>참여 완료 알림</li></ol></div><div style="display:contents" dir="auto"><h2 id="ff27a497-56c4-4089-8e8f-6e568b7483d6" class="">3. 대안/예외 플로우</h2></div><div style="display:contents" dir="ltr"><table id="0cf358d1-97c8-479d-926b-552d4ad57a31" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="1e5c2c60-4a91-449d-96a6-92fb20eb0829"><th id="hPA[" class="simple-table-header-color simple-table-header">#</th><th id="sjZG" class="simple-table-header-color simple-table-header">조건</th><th id="Wii&gt;" class="simple-table-header-color simple-table-header">처리</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="82820931-9272-41de-8909-fd3bcc170750"><td id="hPA[" class="">2a</td><td id="sjZG" class="">i-CSS 등급 미달</td><td id="Wii&gt;" class="">참여 불가 안내</td></tr></div><div style="display:contents" dir="ltr"><tr id="4feadb79-a619-4ad4-86a9-8aa1a8d218c9"><td id="hPA[" class="">2b</td><td id="sjZG" class="">블랙리스트 회원</td><td id="Wii&gt;" class="">참여 불가</td></tr></div><div style="display:contents" dir="ltr"><tr id="5a9e46a9-30d2-441e-b541-f83e8f8ca94a"><td id="hPA[" class="">2c</td><td id="sjZG" class="">동일 스테이지 중복 참여</td><td id="Wii&gt;" class="">참여 불가</td></tr></div><div style="display:contents" dir="ltr"><tr id="c07cdd67-2a3c-465c-a9f3-f45318d85aca"><td id="hPA[" class="">2d</td><td id="sjZG" class="">모집 인원 마감</td><td id="Wii&gt;" class="">마감 안내</td></tr></div><div style="display:contents" dir="ltr"><tr id="61a5c64a-dde7-498c-99f2-157a85c6f003"><td id="hPA[" class="">4a</td><td id="sjZG" class="">약정서 동의 거부</td><td id="Wii&gt;" class="">참여 취소</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><blockquote id="5583e3e8-39ff-471f-929f-ce3d7bf25ef0" class=""><strong>[2a]</strong> 현재 i-CSS 등급과 최소 요구 등급을 함께 표시</blockquote></div><div style="display:contents" dir="auto"><h2 id="7615c064-03e6-4ed9-85f0-d0c2f910891a" class="">4. 비즈니스 룰</h2></div><div style="display:contents" dir="ltr"><table id="7159b36b-5ddf-4163-8374-9ebea97cdcd1" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="93301697-34dc-40a4-a7e3-342c089d7dfa"><th id="mBx^" class="simple-table-header-color simple-table-header">BR#</th><th id="EZTr" class="simple-table-header-color simple-table-header">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="0e4f150e-c902-4805-8b43-b605c1c60873"><td id="mBx^" class="">BR-01</td><td id="EZTr" class="">참여 가능 상태: RECRUITING인 경우만</td></tr></div><div style="display:contents" dir="ltr"><tr id="e4b4caa2-bca6-4e40-b68e-74563ef777e9"><td id="mBx^" class="">BR-02</td><td id="EZTr" class="">회원당 동일 스테이지 1회 참여</td></tr></div><div style="display:contents" dir="ltr"><tr id="68aa5317-a677-4de3-a1d4-aa562fee2bd7"><td id="mBx^" class="">BR-03</td><td id="EZTr" class="">i-CSS 등급 최소 요구 등급 이상</td></tr></div><div style="display:contents" dir="ltr"><tr id="08c234e9-0b0c-4a4e-9eb2-e07a3e16b7f9"><td id="mBx^" class="">BR-04</td><td id="EZTr" class="">약정서 전자서명 필수</td></tr></div><div style="display:contents" dir="ltr"><tr id="853f27a5-96ed-482d-98b3-bf571247021f"><td id="mBx^" class="">BR-05</td><td id="EZTr" class="">동시 참여 시 Race Condition 방지 접수 사 정원 마감 동시성 제어 필요</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="e95abad2-3d85-453d-9bc0-294c75cfb868" class="">5. 연결 화면</h2></div><div style="display:contents" dir="ltr"><table id="ae443fbd-cf08-4b0a-a045-67a3d6ae62d9" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="02fba5f1-7563-4d71-b4c3-ce0f1f2dedda"><th id="fg}j" class="simple-table-header-color simple-table-header">화면 ID</th><th id="\?:]" class="simple-table-header-color simple-table-header">화면명</th><th id="Mf^O" class="simple-table-header-color simple-table-header">비고</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="ade80562-7530-4078-bef4-921fa3f1a140"><td id="fg}j" class="">SCR-STAGE-LIST-01</td><td id="\?:]" class="">스테이지 목록</td><td id="Mf^O" class="">참여하기 버튼</td></tr></div><div style="display:contents" dir="ltr"><tr id="979d818d-57a8-4919-ae82-15c458b8e37c"><td id="fg}j" class="">SCR-STAGE-DETAIL-01</td><td id="\?:]" class="">스테이지 상세</td><td id="Mf^O" class="">조건, 약정 정보</td></tr></div><div style="display:contents" dir="ltr"><tr id="23eac157-c126-46b0-8085-4c1014dc6eed"><td id="fg}j" class="">SCR-STAGE-JOIN-01</td><td id="\?:]" class="">약정서 동의</td><td id="Mf^O" class="">전자서명</td></tr></div><div style="display:contents" dir="ltr"><tr id="8b41ee7a-4b83-46a5-b401-710d12a1886f"><td id="fg}j" class="">SCR-STAGE-JOIN-02</td><td id="\?:]" class="">참여 완료</td><td id="Mf^O" class="">배정 순번 확인</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="89156c90-d1da-4b7a-a4f9-289a93cb97db" class="">6. 수용 기준</h2></div><div style="display:contents" dir="ltr"><table id="efad978a-3c20-4da6-8938-2eb6bbbda976" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="51b25fec-c42d-4809-8ad1-26e3e465b27e"><th id="|lLN" class="simple-table-header-color simple-table-header">AC#</th><th id="HDI}" class="simple-table-header-color simple-table-header">기준</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="313350f3-1dc9-4265-a266-3cb218262043"><td id="|lLN" class="">AC-01</td><td id="HDI}" class="">참여 자격 검증 실시간 수행</td></tr></div><div style="display:contents" dir="ltr"><tr id="cf0bc5fd-77ec-48c6-bdd8-2f5ea804d464"><td id="|lLN" class="">AC-02</td><td id="HDI}" class="">참여 완료 즉시 참여자 목록 반영</td></tr></div><div style="display:contents" dir="ltr"><tr id="75b54891-6005-4ceb-800a-f46b0fe04db8"><td id="|lLN" class="">AC-03</td><td id="HDI}" class="">약정서 데이터 저장 및 다운로드 가능</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="f25ac29b-012c-4843-8e39-1646fae49fdf" class="">7. 백엔드 참고</h2></div><div style="display:contents" dir="ltr"><table id="1e275008-1baf-4a71-912a-f2243cf4e4ce" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="a2382e5e-d18d-48e4-a0de-ae950bd8b6e9"><th id="UgST" class="simple-table-header-color simple-table-header">항목</th><th id="jCFl" class="simple-table-header-color simple-table-header">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="d818440c-641e-4cf5-8adb-0e516424ed9f"><td id="UgST" class="">API</td><td id="jCFl" class="">POST /v1/stages/{stageId}/participants</td></tr></div><div style="display:contents" dir="ltr"><tr id="41e44258-be9d-4e6a-a770-98bd0d0fa4b3"><td id="UgST" class="">관련 도메인</td><td id="jCFl" class="">Stage, StageParticipant, Contract, TurnAssignment</td></tr></div><div style="display:contents" dir="ltr"><tr id="b8074a48-3b4a-466b-9e89-8a36db02db0f"><td id="UgST" class="">비고</td><td id="jCFl" class="">모집 완료 시 Stage → CLOSED 자동 전환</td></tr></div><div style="display:contents" dir="ltr"><tr id="c88f0c04-2ade-47b8-9f6d-cdcd52a139e7"><td id="UgST" class="">추첨 방식</td><td id="jCFl" class="">모집 마감 후 별도 배치에서 순번 확정</td></tr></div></tbody></table></div></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>

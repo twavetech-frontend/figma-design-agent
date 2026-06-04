@@ -1,0 +1,743 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>30-UC-DEFAULT-SavingDefault 적립 불이행 임시 대납</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+/* Override strong tags inside headings to maintain consistent weight */
+h1 strong,
+h2 strong,
+h3 strong {
+	font-weight: 600;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+
+	table.collection-content {
+		width: 100%;
+		table-layout: fixed;
+	}
+
+	table.collection-content th,
+	table.collection-content td {
+		overflow-wrap: anywhere;
+	}
+
+	table.collection-content td > .user,
+	table.collection-content td > time {
+		white-space: pre-wrap;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content-wrapper {
+	overflow-x: auto;
+}
+
+@media only print {
+	.collection-content-wrapper {
+		overflow-x: visible;
+	}
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	gap: 46px;
+}
+
+.column {
+	min-width: 0;
+	overflow: hidden;
+}
+
+.column > *:first-child {
+	margin-top: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+table {
+	border-collapse: collapse;
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol.numbered-list.numbered-list-digits-2 {
+	padding-inline-start: 2em;
+}
+
+ol.numbered-list.numbered-list-digits-3plus {
+	padding-inline-start: 2.4em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="372c5b86-712e-8184-99ac-dafd00e35584" class="page sans"><header><h1 class="page-title" dir="auto">30-UC-DEFAULT-SavingDefault 적립 불이행 임시 대납</h1><p class="page-description" dir="auto"></p></header><div class="page-body"><div style="display:contents" dir="auto"><h2 id="483b4ede-c92c-4e96-bd31-b4e367b6fb8d" class="">1. 메타정보</h2></div><div style="display:contents" dir="ltr"><table id="49770980-2c7c-47b8-836d-00ee7bc49a40" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="7d4a63d4-487e-41a6-ae11-b1df8f7df538"><th id="RKXJ" class="simple-table-header-color simple-table-header">항목</th><th id="hv_d" class="simple-table-header-color simple-table-header" style="width:422.0625px">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="885c56da-e748-427a-b267-7433769a7328"><td id="RKXJ" class="">UC ID</td><td id="hv_d" class="" style="width:422.0625px">30-UC-DEFAULT-SavingDefault</td></tr></div><div style="display:contents" dir="ltr"><tr id="91230a3c-9cce-469c-8f22-1335a40918c0"><td id="RKXJ" class="">목표</td><td id="hv_d" class="" style="width:422.0625px">회원이 적립금 납입을 실패할 시 시스템이 임시 대납하여 스테이지 보호</td></tr></div><div style="display:contents" dir="ltr"><tr id="a7d8bdc6-4120-41d8-ad8a-b28c98e1012e"><td id="RKXJ" class="">액터</td><td id="hv_d" class="" style="width:422.0625px">시스템</td></tr></div><div style="display:contents" dir="ltr"><tr id="762347b9-e173-4ef4-a2c9-ef2441bf98f6"><td id="RKXJ" class="">상태</td><td id="hv_d" class="" style="width:422.0625px">작성중</td></tr></div><div style="display:contents" dir="ltr"><tr id="7b174710-71ae-4b0e-a82b-900849617a16"><td id="RKXJ" class="">트리거</td><td id="hv_d" class="" style="width:422.0625px">납입 마감일 경과 시 미납금 감지</td></tr></div><div style="display:contents" dir="ltr"><tr id="24fcaacf-a083-452f-b6b8-b0b638c6a0a9"><td id="RKXJ" class="">우선순위</td><td id="hv_d" class="" style="width:422.0625px">P0</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="750128a9-291f-41a0-a43c-470f75fc7fd0" class="">2. 정상 플로우</h2></div><div style="display:contents" dir="auto"><ol type="1" id="8855867e-6148-428d-ad8b-2b741301b65e" class="numbered-list" start="1"><li>납입 마감일 경과 시 미납금 감지</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="f795bb1e-49c4-4db0-8214-6aa026cddb5d" class="numbered-list" start="2"><li>회원에게 대납 예정 알림</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="6cc8f558-433a-4bea-bdce-addb456f7528" class="numbered-list" start="3"><li>대납 유예 기간 내 회원 납입 여부 모니터링</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="22383b8e-c253-4ebc-9e39-afdf0fa290a3" class="numbered-list" start="4"><li>대납 유예 기간 경과 시 대납 실행 (스테이지 운영 잠당 재원에서)</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="29e24895-d13b-4207-96f9-2e62f0d52817" class="numbered-list" start="5"><li>불이행 내역 기록</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="0d644b08-9158-4a85-8409-96120319c21d" class="numbered-list" start="6"><li>회원 i-CSS 점수 갱신 트리거</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="49e658d4-9e06-4864-aff3-5f8c08a5da94" class="numbered-list" start="7"><li>대납금 상환 안내 알림</li></ol></div><div style="display:contents" dir="auto"><h2 id="34588447-760e-4db9-a188-9a5689b212e0" class="">3. 대안/예외 플로우</h2></div><div style="display:contents" dir="ltr"><table id="7df525a7-739c-42d7-b418-dce9d58fcab1" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="39fb8603-c6e8-4e61-aa0f-625aea839684"><th id="mG&lt;&gt;" class="simple-table-header-color simple-table-header">#</th><th id="lA?t" class="simple-table-header-color simple-table-header">조건</th><th id="TdnQ" class="simple-table-header-color simple-table-header">처리</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="629f9c9d-e436-4f45-9209-1876663d51dd"><td id="mG&lt;&gt;" class="">3a</td><td id="lA?t" class="">대납 유예 기간 내 자동 납입 완료</td><td id="TdnQ" class="">대납 미실행</td></tr></div><div style="display:contents" dir="ltr"><tr id="d819f111-77d8-4abb-8185-7029bd0e9a9e"><td id="mG&lt;&gt;" class="">4a</td><td id="lA?t" class="">대납 재원 부족</td><td id="TdnQ" class="">관리자 에스케레이션</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><blockquote id="7c5c1d1a-cffe-4906-ba16-8f929e732cf9" class=""><strong>[3a]</strong> 대납 유예 기간은 운영 정책에 따라 설정 (실시간유 D+N일)</blockquote></div><div style="display:contents" dir="auto"><h2 id="699967b2-16cc-4fcb-92e2-7455aa870f2f" class="">4. 비즈니스 룰</h2></div><div style="display:contents" dir="ltr"><table id="3f124f40-cc70-446a-af9b-3a5d5b663cf4" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="ff436959-584b-4e64-9286-d7d373c114fd"><th id="S?wd" class="simple-table-header-color simple-table-header">BR#</th><th id="[m:H" class="simple-table-header-color simple-table-header">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="17e7511b-5fe4-4be3-9e5a-7aa6f01c5c0d"><td id="S?wd" class="">BR-01</td><td id="[m:H" class="">대납 대상: 회차 납입 실패자만</td></tr></div><div style="display:contents" dir="ltr"><tr id="170d149a-e2cb-4ab1-a272-f5af83e40d39"><td id="S?wd" class="">BR-02</td><td id="[m:H" class="">대납금은 스테이지 운영 잠당에서 실행</td></tr></div><div style="display:contents" dir="ltr"><tr id="ac098506-d0cd-42d6-b1ad-5a08155484e4"><td id="S?wd" class="">BR-03</td><td id="[m:H" class="">대납 후 회원에게 상환의무 발생</td></tr></div><div style="display:contents" dir="ltr"><tr id="be873b7d-bc13-41d4-934c-a7d06d624d90"><td id="S?wd" class="">BR-04</td><td id="[m:H" class="">OPR 컴포넌트에 적립 불이행 이력 반영</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="bced6ac7-a409-4656-8207-7cfd8c954127" class="">5. 연결 화면</h2></div><div style="display:contents" dir="ltr"><table id="c6139e0e-4542-4482-9a62-1afc629cbebc" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="654826c5-0816-4b1b-8f02-1a8b999ddde5"><th id="?[u^" class="simple-table-header-color simple-table-header">화면 ID</th><th id="PFOh" class="simple-table-header-color simple-table-header">화면명</th><th id="KqXC" class="simple-table-header-color simple-table-header">비고</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="0c6c1e60-499d-4386-909c-eddf700fc80a"><td id="?[u^" class="">SCR-STAGE-MY-02</td><td id="PFOh" class="">납입 현황</td><td id="KqXC" class="">상환의무 표시</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="00b73e4d-d0c9-4077-ab34-c813583605fd" class="">6. 수용 기준</h2></div><div style="display:contents" dir="ltr"><table id="65f01259-5c16-49c3-9093-fc81792e3f7b" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="0732d8c1-5792-4668-9209-a1b6021dc55f"><th id="\LLk" class="simple-table-header-color simple-table-header">AC#</th><th id="Bd@O" class="simple-table-header-color simple-table-header">기준</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="01f9aad9-e662-4435-b793-bde044793614"><td id="\LLk" class="">AC-01</td><td id="Bd@O" class="">미납 감지 즉시 대납 예정 안내 알림</td></tr></div><div style="display:contents" dir="ltr"><tr id="43b1dc43-e1c7-41c0-8cad-b5780687e5b9"><td id="\LLk" class="">AC-02</td><td id="Bd@O" class="">대납 실행 시 회원에게 상환 안내</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="9ef1392e-6523-4bb1-91c7-f27ca372c744" class="">7. 백엔드 참고</h2></div><div style="display:contents" dir="ltr"><table id="07113354-9624-4e3d-bbbc-131f964d6068" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="66f82b24-5d06-47e8-a956-a0f368f6a977"><th id="OzVj" class="simple-table-header-color simple-table-header">항목</th><th id="Il{a" class="simple-table-header-color simple-table-header">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="80da0425-aec7-49ec-b009-e1e65db5ba37"><td id="OzVj" class="">트리거</td><td id="Il{a" class="">PaymentDeadlinePassed</td></tr></div><div style="display:contents" dir="ltr"><tr id="a6dac0d4-2117-454f-8fb5-3e8ff6b55e32"><td id="OzVj" class="">관련 도메인</td><td id="Il{a" class="">Payment, Default, StageReserve</td></tr></div><div style="display:contents" dir="ltr"><tr id="f60b39f1-1635-4d93-9a60-d410113777f0"><td id="OzVj" class="">대납 재원</td><td id="Il{a" class="">스테이지 운영 잠당 (별도 설계 필요)</td></tr></div></tbody></table></div></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>

@@ -1,0 +1,743 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>10-UC-STAGE-Create 스테이지 생성</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+/* Override strong tags inside headings to maintain consistent weight */
+h1 strong,
+h2 strong,
+h3 strong {
+	font-weight: 600;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+
+	table.collection-content {
+		width: 100%;
+		table-layout: fixed;
+	}
+
+	table.collection-content th,
+	table.collection-content td {
+		overflow-wrap: anywhere;
+	}
+
+	table.collection-content td > .user,
+	table.collection-content td > time {
+		white-space: pre-wrap;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content-wrapper {
+	overflow-x: auto;
+}
+
+@media only print {
+	.collection-content-wrapper {
+		overflow-x: visible;
+	}
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	gap: 46px;
+}
+
+.column {
+	min-width: 0;
+	overflow: hidden;
+}
+
+.column > *:first-child {
+	margin-top: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+table {
+	border-collapse: collapse;
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol.numbered-list.numbered-list-digits-2 {
+	padding-inline-start: 2em;
+}
+
+ol.numbered-list.numbered-list-digits-3plus {
+	padding-inline-start: 2.4em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="372c5b86-712e-8166-94af-dda675993ad3" class="page sans"><header><h1 class="page-title" dir="auto">10-UC-STAGE-Create 스테이지 생성</h1><p class="page-description" dir="auto"></p></header><div class="page-body"><div style="display:contents" dir="auto"><h2 id="086605bd-b79d-4b2c-9dc0-db6ca85714a5" class="">1. 메타정보</h2></div><div style="display:contents" dir="ltr"><table id="10ef0155-bb5d-486f-b0cd-ad920b83b075" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="c11136e5-d587-41b4-b6ab-4b5de1e502c8"><th id="&gt;I`A" class="simple-table-header-color simple-table-header">항목</th><th id="_D{I" class="simple-table-header-color simple-table-header" style="width:245.9375px">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="2adb74b5-0574-407c-871a-205748416b17"><td id="&gt;I`A" class="">UC ID</td><td id="_D{I" class="" style="width:245.9375px">10-UC-STAGE-Create</td></tr></div><div style="display:contents" dir="ltr"><tr id="1d93a383-2223-4e4f-a3f1-8b4afed43a0a"><td id="&gt;I`A" class="">목표</td><td id="_D{I" class="" style="width:245.9375px">운영자가 새로운 스테이지를 생성한다</td></tr></div><div style="display:contents" dir="ltr"><tr id="6a6ab90a-b00c-4ce8-91cc-79f0cf6e36e5"><td id="&gt;I`A" class="">액터</td><td id="_D{I" class="" style="width:245.9375px">관리자</td></tr></div><div style="display:contents" dir="ltr"><tr id="12a11899-71ea-496d-a177-84541ffa4473"><td id="&gt;I`A" class="">상태</td><td id="_D{I" class="" style="width:245.9375px">작성중</td></tr></div><div style="display:contents" dir="ltr"><tr id="d528d473-f43d-464d-be18-cf7cd73c1eaa"><td id="&gt;I`A" class="">트리거</td><td id="_D{I" class="" style="width:245.9375px">관리자가 스테이지 생성 요청</td></tr></div><div style="display:contents" dir="ltr"><tr id="ecce7764-4283-46be-8b1a-53cb5324688a"><td id="&gt;I`A" class="">우선순위</td><td id="_D{I" class="" style="width:245.9375px">P0</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="3ee78b45-8beb-4d65-95ca-5de2880d9e9a" class="">2. 정상 플로우</h2></div><div style="display:contents" dir="auto"><ol type="1" id="b1574519-6bc7-4fe8-84f6-176de727f2eb" class="numbered-list" start="1"><li>관리자가 스테이지 관리 &gt; 스테이지 생성 진입</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="3095b2dd-98f4-437b-82e1-12ae3a64b414" class="numbered-list" start="2"><li>기본 정보 입력: 이름, 총 회차, 회차별 납입금, 모집 인원, 모집 기간, 지급 순번 방식</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="4513ef06-355a-4986-a2c6-7f76a324c6c4" class="numbered-list" start="3"><li>참여 조건 설정: i-CSS 최소 등급, 연령 제한</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="3d5cb9b5-807d-44de-adbc-27f205a73849" class="numbered-list" start="4"><li>쿠폰 적용 설정</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="0349c462-f348-4dd4-b537-c6bfde951c50" class="numbered-list" start="5"><li>유효성 검증</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="71b72ec3-2526-413b-8dd6-d821734bf4f9" class="numbered-list" start="6"><li>스테이지 생성 → 상태: DRAFT</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="4ada27f3-4869-4369-86c7-c5810c33f830" class="numbered-list" start="7"><li>모집 공개 시 → RECRUITING 전환</li></ol></div><div style="display:contents" dir="auto"><h2 id="2a66edb2-c501-4434-8205-b3b23f033716" class="">3. 대안/예외 플로우</h2></div><div style="display:contents" dir="ltr"><table id="22321408-714d-4f51-83dd-87ef759aff91" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="cff33b58-ffc6-4476-b101-ab2365637b03"><th id="Q_C&gt;" class="simple-table-header-color simple-table-header">#</th><th id="vt_x" class="simple-table-header-color simple-table-header">조건</th><th id="miv;" class="simple-table-header-color simple-table-header" style="width:219.890625px">처리</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="2c293725-7069-4ce6-92ea-77bcb881edb3"><td id="Q_C&gt;" class="">5a</td><td id="vt_x" class="">필수값 누락</td><td id="miv;" class="" style="width:219.890625px">해당 필드 오류 표시</td></tr></div><div style="display:contents" dir="ltr"><tr id="3969c26f-6bef-4c5f-bfc1-a041c2901246"><td id="Q_C&gt;" class="">5b</td><td id="vt_x" class="">모집 인원 &lt; 최소 운영 인원</td><td id="miv;" class="" style="width:219.890625px">유효성 오류</td></tr></div><div style="display:contents" dir="ltr"><tr id="e4a2fd9a-2be7-4924-9284-1236a4c71b9a"><td id="Q_C&gt;" class="">7a</td><td id="vt_x" class="">임시 저장(DRAFT) 선택</td><td id="miv;" class="" style="width:219.890625px">DRAFT 상태로 저장</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><blockquote id="2587d449-b052-4ac8-932b-cdc7be227e22" class=""><strong>[7a]</strong> DRAFT 상태 스테이지는 회원에게 노출 안 됨</blockquote></div><div style="display:contents" dir="auto"><h2 id="02c29398-b7b9-485c-a7b3-1f67d29c9bdf" class="">4. 비즈니스 룰</h2></div><div style="display:contents" dir="ltr"><table id="29a155ff-e71e-4f53-ba6f-7da1066abda9" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="daef118f-7388-420f-ad06-e61898f0d279"><th id="@][a" class="simple-table-header-color simple-table-header">BR#</th><th id="~Kzi" class="simple-table-header-color simple-table-header" style="width:523.3125px">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="6f250fb6-a65b-4ae3-b32e-281a997458b8"><td id="@][a" class="">BR-01</td><td id="~Kzi" class="" style="width:523.3125px">생애주기: DRAFT → RECRUITING → CLOSED → IN_PROGRESS → ENDED → DELETED</td></tr></div><div style="display:contents" dir="ltr"><tr id="d30b6aba-17d1-4bee-a2d1-ad2504639f57"><td id="@][a" class="">BR-02</td><td id="~Kzi" class="" style="width:523.3125px">총 회차 = 모집 인원</td></tr></div><div style="display:contents" dir="ltr"><tr id="62165ee6-a20f-4f69-97af-24bb1ec19286"><td id="@][a" class="">BR-03</td><td id="~Kzi" class="" style="width:523.3125px">지급 순번 방식: 추첨(RANDOM) / 선착순(FCFS) / 관리자 지정(MANUAL)</td></tr></div><div style="display:contents" dir="ltr"><tr id="83eab433-be38-41b3-8abc-82b0c843bb55"><td id="@][a" class="">BR-04</td><td id="~Kzi" class="" style="width:523.3125px">i-CSS 최소 등급 미달 회원은 참여 불가</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="c57e8feb-024c-470b-83f8-7de4d0fffe02" class="">5. 연결 화면</h2></div><div style="display:contents" dir="ltr"><table id="fa71a173-b2a0-437a-b5f7-4b338090508c" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="5f0c0bab-389e-46e4-ba2f-579201a85e63"><th id="UQE@" class="simple-table-header-color simple-table-header">화면 ID</th><th id="gP|r" class="simple-table-header-color simple-table-header">화면명</th><th id="INyT" class="simple-table-header-color simple-table-header">비고</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="241df4ca-533f-4c06-b066-c4b3bfd2deb1"><td id="UQE@" class="">SCR-ADMIN-STAGE-01</td><td id="gP|r" class="">스테이지 목록</td><td id="INyT" class="">생성 진입점</td></tr></div><div style="display:contents" dir="ltr"><tr id="fd12d5dd-1900-444b-8229-a3898b60a830"><td id="UQE@" class="">SCR-ADMIN-STAGE-02</td><td id="gP|r" class="">스테이지 생성/편집</td><td id="INyT" class="">기본 정보, 조건, 쿠폰 설정</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="5bf5a1a5-fa51-40e0-a238-d30b35e8dc0c" class="">6. 수용 기준</h2></div><div style="display:contents" dir="ltr"><table id="03fcc90f-69fa-4df2-8be9-8c0d035796eb" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="794cab54-791a-45ae-9cd2-6765642c92c8"><th id="_Jab" class="simple-table-header-color simple-table-header">AC#</th><th id="ggb:" class="simple-table-header-color simple-table-header">기준</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="fbf321bd-c742-484c-a32d-82e7c7bb7e5e"><td id="_Jab" class="">AC-01</td><td id="ggb:" class="">필수 항목 입력 시에만 생성 가능</td></tr></div><div style="display:contents" dir="ltr"><tr id="7c04fbce-1d07-4e2f-a998-9559eb715568"><td id="_Jab" class="">AC-02</td><td id="ggb:" class="">RECRUITING 공개 시 회원 앱 노출</td></tr></div></tbody></table></div><div style="display:contents" dir="auto"><h2 id="53c978b4-19df-4109-b72b-a12bb60aaf3b" class="">7. 백엔드 참고</h2></div><div style="display:contents" dir="ltr"><table id="77f2bdf7-6649-4d75-b285-746b67260a10" class="simple-table"><thead class="simple-table-header"><div style="display:contents" dir="ltr"><tr id="66fad28e-7528-486f-9007-08b786d02e72"><th id="XTAI" class="simple-table-header-color simple-table-header">항목</th><th id=":]s]" class="simple-table-header-color simple-table-header" style="width:248.515625px">내용</th></tr></div></thead><tbody><div style="display:contents" dir="ltr"><tr id="c2dd0ca9-a07f-4839-94f6-04e8d2009049"><td id="XTAI" class="">API</td><td id=":]s]" class="" style="width:248.515625px">POST /v1/admin/stages</td></tr></div><div style="display:contents" dir="ltr"><tr id="114707ea-7c7f-4c71-b52d-4722ecfd7130"><td id="XTAI" class="">관련 도메인</td><td id=":]s]" class="" style="width:248.515625px">Stage, StageCondition, CouponPolicy</td></tr></div><div style="display:contents" dir="ltr"><tr id="12dac3db-6618-42ed-a144-53320f81c107"><td id="XTAI" class="">초기 상태</td><td id=":]s]" class="" style="width:248.515625px">stage_status: DRAFT</td></tr></div></tbody></table></div></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
