@@ -1004,6 +1004,30 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
    직계 frame 자식 중 width ≤ 3px(붕괴 신호)가 보이면, 작은 고정 요소(아이콘/버튼 ≤56px FIXED)를
    제외한 모든 컬럼 자식을 `set_layout_sizing(FILL)` 로 균등 복원. 붕괴 없으면 no-op.
    회귀 사례: 추천 스테이지 '기간/월 입금' 2-col 스테퍼에서 기간이 1px 로 사라짐 → 자동 복원.
+9. 텍스트 박스 상하 여백 복원 (2026-06-04 사용자 "프레임 안 텍스트 위아래 딱 붙으면 안 된다"):
+   `_enforce_text_box_padding_live`가 multicol-fill *뒤*에 실행 — batch_build 가 HORIZONTAL row
+   안 **FILL 박스의 세로 패딩을 0 으로** 떨어뜨려(stat 박스 '완료한 스테이지/3,000개' 가 패딩 0 →
+   텍스트가 박스 모서리에 밀착) 발생하는 회귀를 교정. 대상: **VERTICAL FRAME + 보이는 SOLID fill
+   + cornerRadius≥6 + 직계 TEXT≥2** 인데 세로 패딩 < 12 또는 itemSpacing < 6 → paddingTop/Bottom
+   = max(현재,14), itemSpacing = max(현재,6) 로 복원. 투명 텍스트 그룹(fill 없음/cornerRadius 0)·
+   DS 인스턴스 내부는 제외. 판별: `_text_box_needs_padding` (회귀 테스트 `test_text_box_padding.py`).
+10. ⭐ blueprint 명시 FIXED 폭/padding 최종 복원 — **AUTO_FIX 이후** (2026-06-04 "내 스케줄" 회귀 뿌리):
+   🔴 **순서가 핵심**: `design_rules:AUTO_FIX`(Step E.7.5)가 **cmd_post_fix 보다 *나중*에** 돌면서
+   author 레이아웃을 다시 덮어쓴다. 그래서 cmd_post_fix 안에서 폭/padding 을 고쳐도 무력화됐다.
+   → **Step E.7.7**(`cmd_build`, AUTO_FIX + size-invariant *이후*, 모든 단계 맨 끝)에서
+   `_enforce_fixed_widths`(blueprint `layoutSizingHorizontal:"FIXED"`+width)·`_enforce_blueprint_padding`
+   (blueprint autoLayout padding)을 **무조건 재단언**해 최종 권한을 갖는다. (get_nodes_info 의 padding
+   직렬화가 None/stale 이라 '바뀐 것만' 판정이 카드를 놓쳐 → 멱등 재단언.)
+   회귀 사례: 2-line Date Cell 이 FILL 로 늘어남(56→161) / Sched 카드 paddingLeft 0(본문 우측 밀림).
+11. col-baseline 오매칭 차단 (2026-06-04): `_fix_space_between_col_baseline`(3-col stat grid 중앙정렬)이
+   '내 스케줄' 같은 **리스트 행**(작은 날짜셀 56 + 넓은 본문 267)을 grid 로 오인해 본문을 FILL+가운데
+   정렬시키던 회귀. → 컬럼 폭이 크게 불균등(max>2.2×min)하거나 작은 셀(≤72px)이 섞이면 list row 로
+   보고 skip. (진짜 균등 3-col 요약만 중앙정렬.)
+12. padding `... or 0` None 버그 (2026-06-04): get_nodes_info 가 paddingLeft 등을 **None 으로 누락**
+   직렬화 → `node.get("paddingLeft") or 0` = 0 으로 실제 16 패딩을 파괴(paddingLeft 만 0 회귀).
+   → padding 재설정 enforcer 들(col-baseline·`_restore_content_section_padding`)은 **숫자로 확인된
+   필드만 set_auto_layout 에 전달, 모르는 필드는 생략**(code.js 가 기존값 보존). multicol-fill 의
+   작은요소 제외도 sizingH 플래그 대신 **폭(≤64px) 기준**으로 판별(플래그 직렬화 불안정 대응).
 [규칙] 루트 프레임 배경 = bg-primary 강제 (절대 규칙 0 — 리터럴 + DS 변수 바인딩)
 ```
 

@@ -3721,6 +3721,20 @@ def cmd_build(blueprint_file: str):
         except Exception as e:
             print(f"  [size-invariant-2] 실패 (무시): {e}")
 
+    # ⚠️ Step E.7.7 — blueprint 명시 FIXED 폭/padding 최종 복원 (2026-06-04).
+    # design_rules AUTO_FIX(E.7.5)·spacing 바인더가 author padding(paddingLeft 0 회귀)·
+    # FIXED 폭(Date Cell)을 다시 망치므로, **모든 단계의 맨 끝**에서 blueprint 값을 재단언해
+    # 최종 권한을 갖는다. (cmd_post_fix 안에서 해도 AUTO_FIX 가 뒤에 돌아 덮어써서 무력화됨.)
+    if root_id:
+        try:
+            _final_bp = blueprint if isinstance(blueprint, dict) else original_blueprint
+            n_fw = _enforce_fixed_widths(root_id, _collect_fixed_widths(_final_bp))
+            n_bp = _enforce_blueprint_padding(root_id, _collect_blueprint_padding(_final_bp))
+            if n_fw or n_bp:
+                print(f"[Step E.7.7] blueprint FIXED 폭 {n_fw}건 + padding {n_bp}건 최종 복원")
+        except Exception as e:
+            print(f"  [bp-final] 실패 (무시): {e}")
+
     # Step G: NavBar 로고 인스턴스 교체
     if node_map and "Logo Placeholder" in node_map:
         print("\n🔲 NavBar 로고 교체 중...")
@@ -5735,6 +5749,214 @@ def _enforce_tooltip_arrow_live(root_id: str, target_map: Optional[dict] = None)
     return fixed
 
 
+def _tbp_num(v, d=0):
+    return v if isinstance(v, (int, float)) else d
+
+
+def _text_box_needs_padding(n: dict, min_gap: int = 6) -> bool:
+    """라운드 필 박스 안 라벨+값 텍스트가 모서리에 밀착했는지 (순수 판별 — 테스트용).
+
+    True 조건: VERTICAL FRAME + 보이는 SOLID fill + cornerRadius≥6 + 직계 TEXT≥2
+    + (세로 패딩 < 12 또는 itemSpacing < min_gap). 투명 텍스트 그룹/DS 인스턴스 제외.
+    """
+    if not isinstance(n, dict):
+        return False
+    if (n.get("type") or "").upper() != "FRAME" or (n.get("layoutMode") or "") != "VERTICAL":
+        return False
+    fills = n.get("fills")
+    has_fill = isinstance(fills, list) and any(
+        isinstance(f, dict) and f.get("type") == "SOLID" and f.get("visible", True) for f in fills)
+    if not has_fill or _tbp_num(n.get("cornerRadius")) < 6:
+        return False
+    tkids = [c for c in (n.get("children") or []) if (c.get("type") or "").upper() == "TEXT"]
+    if len(tkids) < 2:
+        return False
+    return (_tbp_num(n.get("paddingTop")) < 12 or _tbp_num(n.get("paddingBottom")) < 12
+            or _tbp_num(n.get("itemSpacing")) < min_gap)
+
+
+def _collect_fixed_widths(blueprint: Optional[dict]) -> dict:
+    """blueprint 에서 명시적 FIXED 폭 프레임의 {이름경로: width} 수집 (2026-06-04).
+
+    여러 enforcer(_fix_fill_sizing/multicol-fill/batch_build)가 author 가 명시한
+    `layoutSizingHorizontal:"FIXED"` + width 를 무시하고 FILL 로 늘리는 회귀가 있어
+    (2-line Date Cell 56→161), 빌드 후 이 맵으로 원래 FIXED 폭을 재단언한다.
+    """
+    out = {}
+    if not isinstance(blueprint, dict):
+        return out
+    root = blueprint.get("root") or blueprint
+
+    def walk(node, chain):
+        if not isinstance(node, dict):
+            return
+        cur = chain + (node.get("name") or "",)
+        if (node.get("type") or "").lower() == "frame" \
+                and (node.get("layoutSizingHorizontal") or "").upper() == "FIXED" \
+                and isinstance(node.get("width"), (int, float)):
+            out[cur] = node["width"]
+        for c in (node.get("children") or node.get("_originalChildren") or []):
+            walk(c, cur)
+    walk(root, ())
+    return out
+
+
+def _collect_blueprint_padding(blueprint: Optional[dict]) -> dict:
+    """blueprint 에서 명시 autoLayout padding 을 가진 프레임의 {이름경로: layout dict} 수집.
+
+    여러 post-fix enforcer 가 author 의 padding 을 파괴(paddingLeft 0 회귀 등)하므로
+    빌드 후 이 맵으로 원래 padding 을 재단언한다. (2026-06-04)
+    """
+    out = {}
+    if not isinstance(blueprint, dict):
+        return out
+    root = blueprint.get("root") or blueprint
+
+    def walk(node, chain):
+        if not isinstance(node, dict):
+            return
+        cur = chain + (node.get("name") or "",)
+        al = node.get("autoLayout")
+        if isinstance(al, dict) and (node.get("type") or "").lower() == "frame":
+            pads = {k: al[k] for k in ("paddingLeft", "paddingRight", "paddingTop", "paddingBottom")
+                    if isinstance(al.get(k), (int, float))}
+            if pads:
+                pads["layoutMode"] = al.get("layoutMode") or "VERTICAL"
+                for k in ("primaryAxisAlignItems", "counterAxisAlignItems", "itemSpacing"):
+                    if al.get(k) is not None:
+                        pads[k] = al[k]
+                out[cur] = pads
+        for cc in (node.get("children") or node.get("_originalChildren") or []):
+            walk(cc, cur)
+    walk(root, ())
+    return out
+
+
+def _enforce_blueprint_padding(root_id: str, pad_map: dict) -> int:
+    """빌드 트리에서 blueprint 가 명시한 autoLayout padding 을 재단언 (2026-06-04 — 회귀 차단).
+
+    post-fix enforcer 들이 paddingLeft 등을 0 으로 파괴한 프레임을 원래 값으로 복원.
+    built 값이 None(직렬화 누락)이거나 blueprint 와 다르면 재설정. INSTANCE 는 제외.
+    """
+    if not pad_map:
+        return 0
+    fixed = [0]
+
+    def walk(n, chain):
+        if not isinstance(n, dict):
+            return
+        cur = chain + (n.get("name") or "",)
+        if cur in pad_map and (n.get("type") or "").upper() == "FRAME":
+            # ⚠️ get_nodes_info 의 padding 직렬화가 불안정(None/stale)해 '바뀐 것만' 판정이
+            # 카드를 놓친다 → blueprint padding 을 **무조건 재단언**(멱등). FRAME 만(인스턴스
+            # 제외)이라 호출 수도 적다.
+            try:
+                call_tool("set_auto_layout", dict(pad_map[cur], nodeId=n["id"]))
+                fixed[0] += 1
+            except Exception as e:
+                print(f"  [bp-padding] '{n.get('id')}' fail: {e}")
+        for cc in n.get("children", []) or []:
+            walk(cc, cur)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0], ())
+    except Exception as e:
+        print(f"  [bp-padding] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [bp-padding] ✓ blueprint 명시 padding {fixed[0]}개 복원 (enforcer 파괴 차단)")
+    return fixed[0]
+
+
+def _enforce_fixed_widths(root_id: str, width_map: dict) -> int:
+    """빌드 트리에서 blueprint 가 FIXED 로 명시한 폭을 재단언 (2026-06-04 — 회귀 차단).
+
+    enforcer 들이 늘려놓은 FIXED-width 프레임을 원래 폭으로 되돌린다(2px 초과 차이 시).
+    """
+    if not width_map:
+        return 0
+    fixed = [0]
+
+    def walk(n, chain):
+        if not isinstance(n, dict):
+            return
+        cur = chain + (n.get("name") or "",)
+        if cur in width_map and (n.get("type") or "").upper() in ("FRAME", "INSTANCE"):
+            want = width_map[cur]
+            cur_w = (n.get("absoluteBoundingBox") or {}).get("width")
+            if isinstance(cur_w, (int, float)) and abs(cur_w - want) > 2:
+                try:
+                    call_tool("set_layout_sizing", {"nodeId": n["id"], "horizontal": "FIXED"})
+                    call_tool("resize_node", {"nodeId": n["id"], "width": want,
+                                              "height": (n.get("absoluteBoundingBox") or {}).get("height") or want})
+                    fixed[0] += 1
+                except Exception as e:
+                    print(f"  [fixed-width] '{n.get('id')}' fail: {e}")
+        for c in n.get("children", []) or []:
+            walk(c, cur)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0], ())
+    except Exception as e:
+        print(f"  [fixed-width] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [fixed-width] ✓ blueprint 명시 FIXED 폭 {fixed[0]}개 복원 (FILL 늘어남 차단)")
+    return fixed[0]
+
+
+def _enforce_text_box_padding_live(root_id: str, min_pad: int = 14, min_gap: int = 6) -> int:
+    """라운드 필 박스 안 텍스트(라벨+값)가 상하 모서리에 붙는 것 차단 (2026-06-04 사용자 룰).
+
+    사용자 명시: "프레임 안 텍스트가 위아래로 딱 붙어있으면 안 된다." — batch_build_screen
+    이 HORIZONTAL row 안 FILL 박스의 세로 패딩을 0 으로 떨어뜨리는 경우가 있어(stat 박스
+    '완료한 스테이지/3,000개' 가 패딩 0 → 텍스트가 박스 위/아래 모서리에 붙음) 라이브 교정.
+
+    대상: VERTICAL auto-layout FRAME 중 (1) 보이는 SOLID fill (2) cornerRadius ≥ 6
+    (= 시각적 '박스/칩') (3) 직계 TEXT 자식 ≥ 2 (라벨+값) 인데 세로 패딩 < 12 또는
+    itemSpacing < min_gap → paddingTop/Bottom = max(현재, min_pad), itemSpacing = max(현재, min_gap).
+    투명 텍스트 그룹(fill 없음/cornerRadius 0)·DS 인스턴스 내부는 제외. idempotent.
+
+    ⚠️ get_nodes_info 가 padding 을 None(=0/직렬화 누락)으로 줄 수 있어, 박스류는 좌우도
+    min_pad 로 정규화한다(작은 info 박스 표준 = 14).
+    """
+    fixed = [0]
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        if _text_box_needs_padding(n, min_gap):
+            pt, pb = _tbp_num(n.get("paddingTop")), _tbp_num(n.get("paddingBottom"))
+            isp = _tbp_num(n.get("itemSpacing"))
+            pl = _tbp_num(n.get("paddingLeft"), min_pad) or min_pad
+            pr = _tbp_num(n.get("paddingRight"), min_pad) or min_pad
+            args = {"nodeId": n["id"], "layoutMode": "VERTICAL",
+                    "paddingTop": max(pt, min_pad), "paddingBottom": max(pb, min_pad),
+                    "paddingLeft": pl, "paddingRight": pr,
+                    "itemSpacing": max(isp, min_gap)}
+            if n.get("counterAxisAlignItems"):
+                args["counterAxisAlignItems"] = n["counterAxisAlignItems"]
+            try:
+                call_tool("set_auto_layout", args)
+                fixed[0] += 1
+            except Exception as e:
+                print(f"  [text-box-pad] '{n.get('id')}' fail: {e}")
+        for c in n.get("children", []) or []:
+            walk(c)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [text-box-pad] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [text-box-pad] ✓ 텍스트 박스 {fixed[0]}개 상하 여백 복원 (모서리 밀착 차단)")
+    return fixed[0]
+
+
 def _enforce_multicol_fill_live(root_id: str) -> int:
     """2-col(N-col) FILL 붕괴 자동 복구 (2026-06-04 사용자 룰 — 재발 방지).
 
@@ -5751,9 +5973,11 @@ def _enforce_multicol_fill_live(root_id: str) -> int:
         return b.get("width")
 
     def _is_fixed_small(c):
+        # 작은 고정 요소(아이콘/날짜셀/버튼 박스 등)는 **폭으로** 판별 — get_nodes_info 의
+        # layoutSizingHorizontal 직렬화가 불안정(None)이라 플래그에 의존하면 56px 날짜셀이
+        # 컬럼으로 오인돼 FILL 로 늘어남(2026-06-04 회귀). 4~64px = 컬럼 아님 → FILL 제외.
         w = _w(c)
-        return (isinstance(w, (int, float)) and 3 < w <= 56
-                and (c.get("layoutSizingHorizontal") or "").upper() == "FIXED")
+        return isinstance(w, (int, float)) and 3 < w <= 64
 
     fixed = [0]
 
@@ -6985,6 +7209,15 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     except Exception as e:
         print(f"  [multicol-fill] 실패 (무시): {e}")
 
+    # ⚠️ 시스템 규칙 (2026-06-04 사용자 "프레임 안 텍스트 위아래 딱 붙으면 안 된다"):
+    # 라운드 필 박스 안 라벨+값 텍스트가 세로 패딩 0 으로 모서리에 밀착하는 것 차단.
+    # multicol-fill(패딩 잃는 FILL 박스 복구) *뒤*에 실행해 최종 여백을 보장.
+    print("\n[규칙] 텍스트 박스 상하 여백 복원 적용 중...")
+    try:
+        _enforce_text_box_padding_live(root_node_id)
+    except Exception as e:
+        print(f"  [text-box-pad] 실패 (무시): {e}")
+
     # ⚠️ 시스템 규칙 (2026-05-28 사용자 "padding, gap 절대값인데 spacing- 토큰 바인딩 안돼. 박아"
     # / 2026-05-29 사용자 "primitive(Spacing/) 쓰면 안돼. 3. Spacing 의 spacing- 토큰으로 바인딩"):
     # 모든 레이아웃 강제가 끝난 *가장 마지막* 에 padding/gap 라이브 최종 값을 "3. Spacing"
@@ -6995,6 +7228,23 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _bind_spacing_tokens_live(root_node_id)
     except Exception as e:
         print(f"  [spacing-bind] 실패 (무시): {e}")
+
+    # ⚠️ 시스템 규칙 (2026-06-04): blueprint 가 명시한 FIXED 폭 + padding 을 **가장 마지막**
+    # (spacing 바인더 *뒤*) 에 재단언 — enforcer/바인더가 FILL 로 늘리거나 paddingLeft 을
+    # 0(spacing-none) 으로 만든 프레임(2-line Date Cell, Sched 카드)을 원래 값으로 복원.
+    # 바인더 뒤라야 최종 권한을 갖는다(바인더가 다시 0 으로 만드는 회귀 차단).
+    print("\n[규칙] blueprint 명시 FIXED 폭/padding 최종 복원 적용 중...")
+    try:
+        _fw_bp = injected_blueprint or original_blueprint
+        if _fw_bp is None:
+            _lt = _load_latest_build(); _fp = _lt.get("blueprintPath")
+            if _fp and os.path.exists(_fp):
+                with open(_fp) as _ff:
+                    _fw_bp = json.load(_ff)
+        _enforce_fixed_widths(root_node_id, _collect_fixed_widths(_fw_bp))
+        _enforce_blueprint_padding(root_node_id, _collect_blueprint_padding(_fw_bp))
+    except Exception as e:
+        print(f"  [fixed-width] 실패 (무시): {e}")
 
     elapsed = time.time() - start
     print(f"\n{'='*50}")
@@ -8663,16 +8913,23 @@ def _fix_space_between_col_baseline(root_id: str) -> int:
         col_kids = [c for c in kids if _is_label_value_stack(c)]
         if len(col_kids) < 2:
             return False
+        # ⚠️ 2026-06-04 회귀 차단: '내 스케줄' 같은 **리스트 행**(작은 날짜셀 56 + 넓은 본문
+        # 267)을 3-col stat grid 로 오인해 본문을 FILL+가운데 정렬시켜 레이아웃이 깨졌다.
+        # 진짜 grid 는 컬럼 폭이 비슷하다(월입금/완료/남은 ≈ 균등). 컬럼 폭이 크게
+        # 불균등(max > 2.2×min)하거나 작은 셀(≤72px)이 섞이면 list row → grid 아님, skip.
+        _cw = [(_node_wh(c)[0] or 0) for c in col_kids]
+        _cw = [w for w in _cw if w > 0]
+        if _cw and (max(_cw) > 2.2 * min(_cw) or min(_cw) <= 72):
+            return False
         spacing = parent.get("itemSpacing")
         if not isinstance(spacing, (int, float)) or spacing <= 0:
             spacing = 12
-        # padding 유지
-        pads = {
-            "paddingTop": parent.get("paddingTop") or 0,
-            "paddingBottom": parent.get("paddingBottom") or 0,
-            "paddingLeft": parent.get("paddingLeft") or 0,
-            "paddingRight": parent.get("paddingRight") or 0,
-        }
+        # padding 유지 — ⚠️ get_nodes_info 가 padding 을 None 으로 누락 직렬화할 수 있어
+        # `or 0` 로 읽으면 실제 16 패딩이 0 으로 파괴된다(2026-06-04 paddingLeft만 0 회귀).
+        # 숫자로 확인된 값만 전달하고, 모르는 필드는 **생략**(set_auto_layout 가 기존값 보존).
+        pads = {k: parent.get(k) for k in
+                ("paddingTop", "paddingBottom", "paddingLeft", "paddingRight")
+                if isinstance(parent.get(k), (int, float))}
         # 1) parent → HORIZONTAL + MIN + CENTER + itemSpacing
         try:
             call_tool("set_auto_layout", {
@@ -9639,15 +9896,16 @@ def _restore_content_section_padding(root_id: str, min_pad: int = 8) -> int:
         new_pt = max(pt, min_pad)
         new_pb = max(pb, min_pad)
         try:
-            call_tool("set_auto_layout", {
-                "nodeId": child.get("id"),
-                "layoutMode": child.get("layoutMode"),
-                "paddingTop": new_pt,
-                "paddingBottom": new_pb,
-                "paddingLeft": child.get("paddingLeft") or 0,
-                "paddingRight": child.get("paddingRight") or 0,
-                "itemSpacing": child.get("itemSpacing") or 0,
-            })
+            # ⚠️ paddingLeft/Right/itemSpacing 은 변경 대상 아님 → **생략**해 보존.
+            # `... or 0` 으로 읽으면 get_nodes_info 의 None 직렬화 때문에 실제 패딩이 0 으로
+            # 파괴된다(2026-06-04 paddingLeft만 0 회귀). 바꿀 top/bottom 만 전달.
+            args = {"nodeId": child.get("id"), "layoutMode": child.get("layoutMode"),
+                    "paddingTop": new_pt, "paddingBottom": new_pb}
+            for k in ("paddingLeft", "paddingRight", "itemSpacing"):
+                v = child.get(k)
+                if isinstance(v, (int, float)):
+                    args[k] = v
+            call_tool("set_auto_layout", args)
             fixed += 1
         except Exception:
             pass

@@ -375,6 +375,8 @@ def _v_padding(node: dict) -> float:
 _STATUS_WORDS = (
     "미납", "연체", "완료", "진행중", "진행", "지급예정", "지급", "예정", "오늘 납입",
     "납입 완료", "납입완료", "신규", "new", "hot", "done", "active", "pending",
+    # 결제 상태(2026-06-04) — '입금 전' 등이 status badge 로 일관 swap 되도록(원형화 방지)
+    "입금 전", "입금전", "지급 전", "지급전", "출금 전", "납입 전", "납입전", "입금 완료",
     # 2026-05-28 — onboarding 성공/실패 후기 status. 이전엔 누락되어 status pill 이
     # button 으로 오인 → WARN-only raw frame. 이제 badge 로 confident swap.
     "성공", "실패", "달성", "도전", "참여", "마감", "대기", "성공!", "success", "fail", "failed",
@@ -610,6 +612,9 @@ def button_variant_props(node: dict) -> dict:  # noqa: D401
 
 # Status-badge / tag colors → DS Badge sm component
 _BADGE_COLOR_ROLE = [
+    # 결제 '입금 전/지급 전' 등 예정/대기 상태(2026-06-04) — 먼저 매칭(완료보다 우선).
+    # '입금 완료' 는 '완료'(Success) 가 잡으므로 여기 '입금 전' 류만 Brand 로.
+    (("입금 전", "입금전", "지급 전", "지급전", "출금 전", "납입 전", "납입전"), "Badge sm Brand"),
     (("success", "진행", "완료", "납입 완료", "지급", "성공", "달성"), "Badge sm Success"),
     (("warning", "예정", "곧", "오늘", "대기", "마감"), "Badge sm Warning"),
     (("error", "미납", "연체", "긴급", "실패"), "Badge sm Warning"),  # no error badge → warning
