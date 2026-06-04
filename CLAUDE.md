@@ -551,6 +551,33 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > - ⚠️ 과거 버그: 토큰 매칭이 `startswith(name + "_")`를 허용해 `$token(bg-secondary)`가
 >   `bg-secondary_alt`로 오매칭됐다 — 이제 '정확 일치' 우선이라 해결됨.
 
+> 🔴 **절대 규칙 0-N — 다른 정보는 다른 레이아웃/UI / 와이어 1:1 복제 금지 (2026-06-04 사용자 룰)**
+>
+> 사용자 명시: *"다른 정보인데 같은 레이아웃, UI로 표현하지 말것! 똑같아서 같은 정보
+> 같잖아. 와이어프레임 그대로 레이아웃과 정렬 및 크기 생성하지 말것!"*
+>
+> **두 가지 의무:**
+> 1. **인접 섹션 시각 언어 차별화** — 내용이 다른 두 섹션을 **동일한 카드 구조**(같은
+>    2-up 그리드 + 같은 [아이콘 원 + 제목 + 부제] 패턴)로 그리면 같은 정보처럼 보인다.
+>    한쪽의 시각 언어를 바꾼다: **2-up 그리드 ↔ 리스트 행**, 카드 크기·틴트·아이콘 배치
+>    차등, 강조 카드 등. (사례: '시작 방법 카드' vs '출석/초대 카드' 가 똑같던 회귀 →
+>    시작=틴트 2-up 그리드, 출석/초대=흰 리스트 행으로 분리.)
+> 2. **와이어프레임 레이아웃/정렬/크기 1:1 복제 금지** — 와이어는 **콘텐츠 source**일 뿐
+>    레이아웃 blueprint 가 아니다(절대 규칙 0-C). 와이어의 박스 배치·정렬·크기를 그대로
+>    옮기지 말고 **가독성·시각 위계·미학** 기준으로 재구성한다. 콘텐츠(텍스트/숫자)는 1:1
+>    (0-E), **레이아웃/스타일은 창의적 재해석**.
+>
+> **시스템 강제 (코드 박힘):**
+> - `scripts/design_rules/R63_distinct_section_ui.py` — **L2 lint**: root 직계 섹션 중
+>   '카드 그리드'를 가진 인접 두 섹션의 구조 시그니처(텍스트/색 무시, layout mode +
+>   rounded + 자식 구조)가 같으면 WARN("동일한 카드 레이아웃 — 시각 언어 차별화하라").
+>   자동 차단 X(디자인 판단) — blueprint 작성 시 Claude 가 차별화.
+> - 와이어 1:1 복제는 코드 자동검출 불가(와이어 ref 없음) — 매 빌드 시 사람(Claude)이
+>   스크린샷을 와이어 옆에 놓고 **레이아웃/위계/액센트가 달라야 정상**임을 자체 검증(0-C).
+>
+> **빌드 후 검증:** 빌드 로그에 `R63-distinct-section-ui` WARN 이 보이면 인접 섹션 UI 가
+> 똑같다는 뜻 → 한쪽 재설계. 스크린샷에서 인접 카드 영역이 서로 다른 시각 언어인지 확인.
+
 ### 1. ⚠️ Status Bar는 blueprint에 넣지 말 것 — 빌드가 DS Status Bar를 자동 삽입
 - **Status Bar를 텍스트/프레임으로 직접 그리거나 blueprint 노드로 넣지 말 것.**
 - `batch_build_screen`은 blueprint root.children에 status bar 노드가 **없으면 DS "Status Bar" 인스턴스를 루트 첫 자식으로 자동 삽입**한다. blueprint에 "Status Bar" 같은 노드를 넣으면 빌드가 그걸 그대로 써서 직접 그린 status bar가 박힌다(= 버그).
@@ -971,6 +998,12 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
    토큰 value == 현재 값이라 시각 변화 0. DS 인스턴스 + 인스턴스 내부 노드(`I…;…`)는 제외.
    스케일 밖 값(10/14/18/22/28 등)은 토큰이 없어 리터럴 유지 — 임의 snap 금지(레이아웃 보존).
    → blueprint 의 padding/gap 은 스케일 값(0/2/4/6/8/12/16/20/24/32/40/48...)으로 쓰면 전부 바인딩됨.
+8. 2-col FILL 붕괴 자동 복구 (2026-06-04 사용자 "코드에 박아"): `_enforce_multicol_fill_live`가
+   모든 sizing 강제 *뒤*에 실행 — HORIZONTAL row 의 FILL 컬럼이 **1px 로 붕괴**하고 형제가
+   전폭(FIXED)을 먹는 batch_build_screen 버그([[two-col-fill-card-collapse]])를 라이브에서 교정.
+   직계 frame 자식 중 width ≤ 3px(붕괴 신호)가 보이면, 작은 고정 요소(아이콘/버튼 ≤56px FIXED)를
+   제외한 모든 컬럼 자식을 `set_layout_sizing(FILL)` 로 균등 복원. 붕괴 없으면 no-op.
+   회귀 사례: 추천 스테이지 '기간/월 입금' 2-col 스테퍼에서 기간이 1px 로 사라짐 → 자동 복원.
 [규칙] 루트 프레임 배경 = bg-primary 강제 (절대 규칙 0 — 리터럴 + DS 변수 바인딩)
 ```
 

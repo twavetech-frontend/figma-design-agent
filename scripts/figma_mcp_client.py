@@ -5735,6 +5735,59 @@ def _enforce_tooltip_arrow_live(root_id: str, target_map: Optional[dict] = None)
     return fixed
 
 
+def _enforce_multicol_fill_live(root_id: str) -> int:
+    """2-col(N-col) FILL 붕괴 자동 복구 (2026-06-04 사용자 룰 — 재발 방지).
+
+    HORIZONTAL auto-layout 부모에서 FILL 컬럼이 1px 로 붕괴하고 형제가 전폭(FIXED)을
+    차지하는 batch_build_screen 버그([[two-col-fill-card-collapse]])를 라이브에서 교정.
+    붕괴 신호(직계 frame/instance 자식 중 width ≤ 3px)가 보이면, 작은 고정 요소
+    (아이콘/버튼 ≤56px FIXED)를 제외한 모든 '컬럼' 자식을 layoutSizingHorizontal=FILL
+    로 재설정해 균등 분배를 복원한다. 붕괴가 없으면 no-op (idempotent).
+
+    ⚠️ get_nodes_info(복수형)만 absoluteBoundingBox/layoutMode/layoutSizingHorizontal 노출.
+    """
+    def _w(n):
+        b = n.get("absoluteBoundingBox") or {}
+        return b.get("width")
+
+    def _is_fixed_small(c):
+        w = _w(c)
+        return (isinstance(w, (int, float)) and 3 < w <= 56
+                and (c.get("layoutSizingHorizontal") or "").upper() == "FIXED")
+
+    fixed = [0]
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        # DS 컴포넌트 내부(INSTANCE 자식)는 건드리지 않음 — FRAME 부모만 처리
+        if (n.get("type") or "").upper() == "FRAME" and (n.get("layoutMode") or "").upper() == "HORIZONTAL":
+            kids = [c for c in (n.get("children") or [])
+                    if (c.get("type") or "").upper() in ("FRAME", "INSTANCE")]
+            collapsed = [c for c in kids
+                         if isinstance(_w(c), (int, float)) and 0 < _w(c) <= 3]
+            if collapsed and len(kids) >= 2:
+                cols = [c for c in kids if not _is_fixed_small(c)]
+                for c in cols:
+                    try:
+                        call_tool("set_layout_sizing", {"nodeId": c["id"], "horizontal": "FILL"})
+                        fixed[0] += 1
+                    except Exception as e:
+                        print(f"  [multicol-fill] '{c.get('id')}' fail: {e}")
+        for c in n.get("children", []) or []:
+            walk(c)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [multicol-fill] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [multicol-fill] ✓ 붕괴 컬럼 {fixed[0]}개 FILL 복원 (2-col collapse 차단)")
+    return fixed[0]
+
+
 def _enforce_ds_instance_text(root_id: str, path_text_map: dict) -> int:
     """빌드 트리 DS instance 의 내부 첫 TEXT 를 원래 콘텐츠로 override (2026-05-28).
 
@@ -6922,6 +6975,15 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_action_bar_equal_height(root_node_id)
     except Exception as e:
         print(f"  [action-bar-eq-h] 실패 (무시): {e}")
+
+    # ⚠️ 시스템 규칙 (2026-06-04 사용자): 2-col FILL 붕괴 자동 복구 — HORIZONTAL row 의
+    # FILL 컬럼이 1px 로 무너지고 형제가 전폭을 먹는 batch_build 버그 차단. 모든 sizing
+    # 강제 *뒤*에 실행해 최종 균등 분배를 보장한다.
+    print("\n[규칙] 2-col FILL 붕괴 복구 적용 중...")
+    try:
+        _enforce_multicol_fill_live(root_node_id)
+    except Exception as e:
+        print(f"  [multicol-fill] 실패 (무시): {e}")
 
     # ⚠️ 시스템 규칙 (2026-05-28 사용자 "padding, gap 절대값인데 spacing- 토큰 바인딩 안돼. 박아"
     # / 2026-05-29 사용자 "primitive(Spacing/) 쓰면 안돼. 3. Spacing 의 spacing- 토큰으로 바인딩"):
