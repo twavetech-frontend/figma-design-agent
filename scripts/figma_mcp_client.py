@@ -4336,6 +4336,50 @@ def cmd_build(blueprint_file: str):
         print(f"   re-post-fix:    python3 scripts/figma_mcp_client.py post-fix {root_id}")
     print(f"{'='*50}")
 
+    # 🔴 2026-06-05 절대 규칙 0-R (사용자: "디자인 생성이 완료되면 디자인 생성 시 만들었던
+    #    블루프린트 json 파일은 자동 삭제 되도록 할 것! 코드로도 강제해"):
+    #    빌드 성공(root_id 존재) 시 그 빌드에 쓴 blueprint/spec json 을 즉시 자동 삭제.
+    if root_id:
+        _cleanup_build_input(blueprint_file)
+
+
+def _cleanup_build_input(input_path: str) -> None:
+    """🔴 절대 규칙 0-R (2026-06-05): 디자인 생성 완료 후 사용한 blueprint/spec json 자동 삭제.
+
+    빌드가 끝나면 화면은 Figma 에 생성됐으니 blueprint json 은 불필요 → 레포·scripts/ 에
+    산출물이 쌓이지 않도록 즉시 삭제(생성 7일 대기하는 cleanup_old_blueprints 와 별개로,
+    빌드 직후 즉시). **소스/입력 자산은 보존:**
+      - blueprint_templates.json · blueprint_unified_imin_home.json (소스 템플릿)
+      - archetype_specs/*.json (unified spec 소스)
+      - 이름에 'PRD' (사용자 입력 PRD) · 'wireframe_content' (와이어 콘텐츠 dict)
+    삭제 대상: 빌드 입력으로 쓴 `blueprint_*.json` · `spec_*.json` · `*assembled*.json` ·
+    `*_blueprint.json` 산출물.
+    """
+    try:
+        if not input_path or not os.path.exists(input_path):
+            return
+        base = os.path.basename(input_path)
+        low = base.lower()
+        # 보존 예외 — 소스/입력 자산
+        if base in ("blueprint_templates.json", "blueprint_unified_imin_home.json"):
+            return
+        if "prd" in low or "wireframe_content" in low:
+            return
+        norm = input_path.replace("\\", "/")
+        if "/archetype_specs/" in norm or norm.startswith("archetype_specs/"):
+            return
+        # 삭제 대상 판별 — 빌드 입력 blueprint/spec 산출물만
+        is_target = low.endswith(".json") and (
+            low.startswith("blueprint_") or low.startswith("spec_")
+            or "assembled" in low or low.endswith("_blueprint.json"))
+        if not is_target:
+            print(f"  🧹 [cleanup] '{base}' 는 blueprint/spec 산출물 패턴이 아님 — 보존")
+            return
+        os.remove(input_path)
+        print(f"  🧹 [cleanup] 빌드 완료 — 사용한 blueprint json 자동 삭제: {base} (절대 규칙 0-R)")
+    except Exception as e:
+        print(f"  [cleanup] blueprint 자동 삭제 실패(무시): {e}")
+
 
 def _self_verify_section_qa_export(root_id: str, blueprint: dict) -> None:
     """Step H — 빌드 후 self-verify 강제 시스템 (2026-05-28 사용자 옵션 B).

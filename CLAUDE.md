@@ -666,6 +666,27 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > spacing 바인더 직후). 0=none 4=xxs 6=xs 8=sm 10=md 12=lg 14=xl 16=2xl 20=3xl 24=4xl 28=5xl
 > 32=6xl, ≥100=full. 위 post-fix 항목 7-b 참조. blueprint 의 radius 는 이 스케일 값으로 쓸 것.
 
+> 🔴 **절대 규칙 0-R — 디자인 생성 완료 시 사용한 blueprint json 자동 삭제 (2026-06-05 사용자 룰)**
+>
+> 사용자 명시: *"디자인 생성이 완료되면 디자인 생성 시 만들었던 블루프린트 json 파일은 자동 삭제
+> 되도록 할 것! 코드로도 강제해."*
+>
+> 빌드가 끝나면 화면은 Figma 에 생성됐으니 그 빌드에 쓴 **blueprint/spec json 은 불필요** →
+> `scripts/` 에 산출물이 쌓이지 않도록 **빌드 직후 즉시 자동 삭제**한다(생성 7일 대기하는
+> `cleanup_old_blueprints.py` 와 별개 — 이건 즉시).
+>
+> **시스템 강제 (코드 박힘, 자동):** `figma_mcp_client.cmd_build` 가 빌드 성공(root_id 존재) 시
+> 맨 끝에서 `_cleanup_build_input(blueprint_file)` 호출. 삭제 대상 = 빌드 입력으로 쓴
+> `blueprint_*.json` · `spec_*.json` · `*assembled*.json` · `*_blueprint.json`.
+> 🔴 **보존(소스/입력 자산은 삭제 안 함):** `blueprint_templates.json` ·
+> `blueprint_unified_imin_home.json`(소스 템플릿) · `archetype_specs/*.json`(unified spec 소스) ·
+> 이름에 `PRD`(사용자 입력) · `wireframe_content`(와이어 콘텐츠 dict).
+>
+> **빌드 후 검증:** 빌드 로그에 `🧹 [cleanup] 빌드 완료 — 사용한 blueprint json 자동 삭제: <파일>`
+> 라인이 보이면 자동 삭제 성공. 단위 테스트로 삭제 대상/보존 분기 검증됨.
+> ⚠️ blueprint 가 삭제되므로 동일 화면을 다시 빌드하려면 blueprint 를 새로 작성/조립해야 한다
+> (의도된 동작 — 화면은 Figma 에 이미 있고 source 만 정리).
+
 ### 1. ⚠️ Status Bar는 blueprint에 넣지 말 것 — 빌드가 DS Status Bar를 자동 삽입
 - **Status Bar를 텍스트/프레임으로 직접 그리거나 blueprint 노드로 넣지 말 것.**
 - `batch_build_screen`은 blueprint root.children에 status bar 노드가 **없으면 DS "Status Bar" 인스턴스를 루트 첫 자식으로 자동 삽입**한다. blueprint에 "Status Bar" 같은 노드를 넣으면 빌드가 그걸 그대로 써서 직접 그린 status bar가 박힌다(= 버그).
