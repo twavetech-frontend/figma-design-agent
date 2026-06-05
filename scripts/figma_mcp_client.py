@@ -3151,6 +3151,50 @@ _STROKE_KEYS = ("stroke", "strokes", "strokeWeight", "strokeTopWeight",
                 "strokeBottomWeight", "strokeLeftWeight", "strokeRightWeight")
 
 
+# 세로 패딩 대칭 강제 — 의도적 비대칭만 허용할 frame 이름(상하 다른 게 자연스러운 chrome/특수)
+_ASYM_PAD_EXEMPT_NAME_KW = (
+    "navbar", "nav bar", "app bar", "top bar", "header bar", "status bar", "status ribbon",
+    "ribbon", "hero", "tab bar", "tabbar", "fab", "wallet", "footer",
+    "button", "btn", "cta", "submit", "banner", "carousel", "stepper",
+)
+
+
+def _enforce_symmetric_vpad(blueprint: dict) -> None:
+    """컨테이너 frame 의 세로 패딩 비대칭(paddingTop != paddingBottom) 자동 교정 (2026-06-05 사용자 룰).
+
+    사용자: *"특별한 이유 없는 비대칭을 하지 못하도록 규칙을 만들어라."* — 무의식적으로 상/하
+    padding 을 다르게 박던 회귀(Content pt=12/pb=24, Hero pt=16/pb=12 등) 차단. **세로 패딩은
+    기본 대칭(pt==pb)**, 비대칭이 정말 필요하면 노드에 `"_asymPad": true` 마커를 박아야 한다.
+
+    대상: autoLayout layoutMode==VERTICAL + 자식 2개 이상인 컨테이너 frame.
+    교정: pt != pb 이고 `_asymPad` 없고 이름이 chrome/특수(_ASYM_PAD_EXEMPT_NAME_KW)가 아니면
+          → 둘 다 max(pt, pb) 로(콘텐츠가 안 눌리게). DS 인스턴스 제외.
+    (가로 pl/pr 은 캐로셀 peek 등 정당한 비대칭이 많아 건드리지 않음 — 세로만.)"""
+    fixed = [0]
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        if (n.get("type") in (None, "frame", "FRAME")) and n.get("_asymPad") is not True:
+            al = n.get("autoLayout")
+            nm = (n.get("name") or "").lower()
+            kids = n.get("children") or []
+            if (isinstance(al, dict) and (al.get("layoutMode") or "").upper() == "VERTICAL"
+                    and len(kids) >= 2 and not any(k in nm for k in _ASYM_PAD_EXEMPT_NAME_KW)):
+                pt = al.get("paddingTop", 0) or 0
+                pb = al.get("paddingBottom", 0) or 0
+                if isinstance(pt, (int, float)) and isinstance(pb, (int, float)) and pt != pb:
+                    m = max(pt, pb)
+                    al["paddingTop"] = m
+                    al["paddingBottom"] = m
+                    fixed[0] += 1
+        for c in (n.get("children") or []):
+            walk(c)
+    walk(blueprint)
+    if fixed[0]:
+        print(f"[규칙] 세로 패딩 대칭 교정 {fixed[0]}건 (pt≠pb → max 로 통일; 비대칭은 _asymPad 마커 필요)")
+
+
 def _enforce_section_band(blueprint: dict) -> None:
     """중요 섹션 = root 직계 풀폭 배경 밴드 패턴 표준화 (2026-06-05 사용자 룰).
 
@@ -4229,6 +4273,7 @@ def cmd_build(blueprint_file: str):
     _enforce_card_surface(blueprint)
     _enforce_card_elevation(blueprint)  # 2026-05-27 — shadow 자동 주입 폐기 (제거기로 작동)
     _enforce_no_large_brand_fill(blueprint)  # 2026-05-27 — 큰 면적 frame brand fill 금지
+    _enforce_symmetric_vpad(blueprint)  # 2026-06-05 — 세로 패딩 대칭 강제(무의식적 비대칭 차단)
     _enforce_section_band(blueprint)  # 2026-06-05 — 중요 섹션 풀폭 밴드(_band) 표준화
     _enforce_brand_tint_surface_primary(blueprint)  # 2026-06-05 — 브랜드 틴트 면=bg-brand-primary
     _enforce_white_card_border(blueprint)  # 2026-05-27 — fill=bg-primary frame 자동 border

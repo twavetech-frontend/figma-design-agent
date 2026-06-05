@@ -1241,6 +1241,19 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - 하나라도 안 보이면 **완료 선언 금지** — 원인 파악 후 수정
 - 체크 순서: PRD 섹션 목록 나열 → 스크린샷에서 각 섹션 존재 확인 → 누락 시 수정
 
+### 19-B. 🔴 세로 패딩은 기본 대칭 (pt==pb) — 무의식적 비대칭 금지 (2026-06-05 사용자 룰)
+- 사용자 명시: *"특별한 이유 없는 비대칭을 하지 못하도록 규칙을 만들어라."* — 컨테이너 frame 의
+  **상/하 padding 은 기본적으로 같아야 한다(paddingTop == paddingBottom).** 무의식적으로
+  pt=12/pb=24, pt=16/pb=12 처럼 다르게 박지 말 것.
+- **비대칭이 정말 필요한 경우만** 노드에 **`"_asymPad": true`** 마커를 박아 허용한다.
+- **시스템 강제 (코드 박힘):** `_enforce_symmetric_vpad(blueprint)` (cmd_build pre-process,
+  no-large-brand-fill 직후) — autoLayout VERTICAL + 자식 2개 이상 컨테이너에서 pt != pb 이고
+  `_asymPad` 없고 이름이 chrome/특수(`navbar/status/ribbon/hero/tab bar/fab/wallet/footer/
+  button/cta/banner/carousel/stepper`)가 아니면 → **둘 다 max(pt,pb) 로 통일**(콘텐츠 안 눌리게).
+  가로 pl/pr 은 캐로셀 peek 등 정당한 비대칭이 있어 건드리지 않음(세로만 자동 교정).
+- **빌드 후 검증:** 빌드 로그 `[규칙] 세로 패딩 대칭 교정 N건` 확인. 섹션/카드/콘텐츠 frame 의
+  상단·하단 여백이 같은지 스크린샷 확인.
+
 ### 20. ⚠️ CTA/Button 프레임 — autoLayout에 paddingTop/Bottom 필수
 - CTA Button, Submit Button 등 **텍스트를 포함한 버튼 프레임**에 `autoLayout` padding 필수
 - `height: 52`만 지정하고 padding을 빼면, HUG 사이징에서 높이가 텍스트(~20px)로 축소됨
