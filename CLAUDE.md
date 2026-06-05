@@ -690,6 +690,18 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > ⚠️ blueprint 가 삭제되므로 동일 화면을 다시 빌드하려면 blueprint 를 새로 작성/조립해야 한다
 > (의도된 동작 — 화면은 Figma 에 이미 있고 source 만 정리).
 
+> 🔴 **절대 규칙 0-T — 하단 월렛 바는 top-left/top-right radius 16 (2026-06-05 사용자 룰)**
+>
+> 하단 고정 **월렛 바('마이 월렛')** 는 시트처럼 **위쪽 두 코너만 둥글게(topLeftRadius=topRightRadius=16
+> = radius-2xl)**, 아래 두 코너는 0. 평평한 사각형 금지. blueprint 작성 시 월렛 바 frame 에
+> `topLeftRadius:16, topRightRadius:16, clipsContent:true` 명시.
+>
+> **시스템 강제 (코드 박힘, 자동):** `_enforce_wallet_bar_radius(root_id)` (cmd_post_fix, section-bg-gap
+> 직후) — 이름에 'wallet'/'월렛' 든 frame 의 top-left/top-right radius 를 16 으로 강제(`set_corner_radius`
+> corners=[T,T,F,F]). radius>0 이라 0-Q 클립 enforcer 가 clipsContent=true 보장, 16 은 radius 바인더가
+> radius-2xl 토큰으로 자동 바인딩. 생성기 6종 wallet_bar 에도 topLeftRadius/topRightRadius=16 박음.
+> ⚠️ 이전엔 이 룰이 **없어서** 월렛 바가 평평했음(위반이 아니라 미구현) — 이제 박혔으니 재빌드에도 유지.
+
 > 🔴 **절대 규칙 0-S — 텍스트 스타일 바인딩을 절대 깨지 말 것 (2026-06-05 사용자 룰)**
 >
 > 사용자 명시: *"텍스트 크기만 조절하려고 텍스트 스타일 바인딩이 깨졌는데 좀더 큰 사이즈를
@@ -788,7 +800,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   - 뒤 배경이 `bg-secondary`/`bg-tertiary` 등 비-흰색이면 보더는 `$token(border-secondary)`.
   - 사용자 명시: *"뒤에 fill color가 bg-primary일때 바로 위 frame의 border color는 border-primary를 사용할 것!"*
 - 카드 안의 인셋·서브카드는 대상 아님 (필요 시 `bg-secondary`/`bg-tertiary` 유지). 브랜드 컬러 카드(`bg-brand-solid` 등)도 그대로 둔다.
-- **예외 — 맨 아래 Footer**: Footer는 `$token(bg-secondary)` fill + **보더 없음**(그림자도 없음). 페이지를 닫는 회색 띠이지 카드가 아니다.
+- **예외 — 맨 아래 Footer (2026-06-05 사용자 룰: 배경색 없음)**: Footer는 **배경색 없음**(`$token(bg-primary)` = 루트와 블렌딩, 회색 띠 X) + **보더 없음**(그림자도 없음). 사용자 명시 *"footer의 bg color는 없는게 나을거 같다."* 강제: `_enforce_card_surface` 의 footer 분기가 footer fill 을 `bg-primary` 로 설정(과거 bg-secondary 회색 띠 폐기).
 - **시스템 강제 (자동):** `_enforce_white_card_border_live`(post-fix)가 walk 하며 **각 카드의 뒤
   배경 fill 을 추적** — bg-primary 위면 border-primary, 그 외면 border-secondary 로 stroke 강제 +
   DS 변수 바인딩. 기존에 border-secondary 가 박힌 흰-배경 카드도 border-primary 로 업그레이드(idempotent).
@@ -1153,6 +1165,16 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **`itemSpacing: 12`** — Banner 2가 우측에 약 8px peek 보여 스와이프 가능 힌트 제공
 - **Blueprint 작성 시**: 캐로셀 래퍼 노드를 명시적으로 포함하고, `clipsContent: true` 설정
 - 배너 카드는 FIXED 사이징 (FILL로 하면 캐로셀 내에서 줄어듦)
+- 🔴 **인디케이터(dot)는 DS `Pagination dot group` 컴포넌트 인스턴스 (2026-06-05 사용자 룰):**
+  캐로셀/배너 인디케이터는 raw bullet("●")·dot frame 으로 그리지 말고 **Imin DS `Pagination dot group`**
+  인스턴스를 쓴다. 사용자 명시 *"imin DS에 Pagination dot group component가 있어서 그걸 쓰면 돼."*
+  - 기본 키 (Style=Dot, Framed=False): **lg** `2ac006ab01ff82ad9b74c16d4cf6c17609a02d79` /
+    md `347badbada16ce6814540e82246101d2dc65a295` (catalog `COMPONENT_KEYS["Pagination dot group"]`).
+  - blueprint: `{"name":"Indicator","type":"instance","componentKey":"2ac006ab…","layoutSizingHorizontal":"HUG"}`.
+  - **시스템 강제:** 홈 생성기(`gen_*home*.py`)의 캐로셀 Indicator 를 이 인스턴스로 **직접 작성**(explicit)
+    + `ds_catalog.COMPONENT_KEYS["Pagination dot group"]` 에 키 등록. 새 blueprint 작성 시 캐로셀
+    인디케이터는 반드시 이 인스턴스로 쓸 것. (스케줄 dot 등 **캐로셀이 아닌** 작은 dot 은 인디케이터가
+    아니므로 text bullet 유지 — 캐로셀 인디케이터만 이 컴포넌트.)
 
 ### 11. ⚠️ 카드 내 레이블/버튼 텍스트는 반드시 가시적으로
 - 카드 내 텍스트가 배경색과 비슷하면 안 보임
@@ -1164,6 +1186,17 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 ### 12. 섹션 간 간격 — 배경색 동일 + divider 없으면 gap 0
 - 인접한 섹션의 배경색이 동일(둘 다 투명/white)이고 사이에 divider가 없으면 **gap 0px** — 섹션 내부 padding이 여백 역할
 - 배경색이 다르거나(컬러 → white 등) 사이에 divider가 있으면 gap 유지
+- 🔴 **섹션 bg 색 경계 = 아래 섹션 상단 padding 증가 (2026-06-05 사용자 룰):** 인접 섹션의 배경색이
+  다를 때(예: 그레이 밴드 → 흰 섹션) **아래 섹션의 paddingTop 을 그 섹션의 좌우 padding 값과 동일하게(대칭)** 맞춘다 — 과하게 늘리지
+  말 것. 사용자 명시 *"섹션간 bg color가 다를때 아래 frame의 상단 padding값을 늘려야한다 → 상단
+  padding은 좌우 패딩값과 똑같으면 된다."* **시스템 강제 (코드 박힘):** `_enforce_section_bg_gap_padding(root_id)`
+  (cmd_post_fix, brand-tint 직후) — 루트 직계 섹션을 위→아래로 훑어 위 섹션과 보이는 SOLID 배경색이
+  다르면: **채워진 밴드(자체 bg fill)면 상/하 padding=24(`_BAND_VPAD`=spacing-3xl)**, 빈/흰 섹션이면
+  **paddingTop=paddingLeft**(대칭) 로 설정. 같은 색/무배경 경계·고정 바(NavBar/Tab Bar/Wallet)·pl=0 섹션 제외.
+- 🔴 **채워진 풀폭 밴드 섹션 = 상/하 padding 24(spacing-3xl) + 토큰 바인딩 (2026-06-05 사용자 룰):**
+  자체 bg fill 을 가진 풀폭 밴드(시작유도·추천 등)는 상단=좌우(20)가 아니라 **상/하 24(대칭)**. 사용자:
+  *"위아래 패딩값 24로 맞추고 토큰 바인딩도 해."* 24 는 post-fix `_bind_spacing_tokens_live` 가
+  **spacing-3xl 토큰으로 자동 바인딩**(절대값 아님). 위 enforcer 의 '밴드' 분기가 강제 → 재빌드에도 유지.
 
 ### 14. ⚠️ 스테이지 카드 — 아이콘/이미지 삽입 금지
 - Stage Card 안에 아이콘, 이미지를 **절대 넣지 말 것**

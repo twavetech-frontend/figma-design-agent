@@ -3175,7 +3175,7 @@ def _enforce_card_surface(blueprint: dict) -> None:
 
     그레이(bg-secondary/tertiary)로 채운 카드 대신 흰 카드 + 보더로 표면을 정의한다.
     중첩 카드(카드 안의 인셋)·브랜드 컬러 카드는 건드리지 않는다.
-    예외 — 맨 아래 Footer: bg-secondary fill + 보더 없음(카드 아닌 회색 띠).
+    예외 — 맨 아래 Footer: 배경색 없음(bg-primary 블렌딩) + 보더 없음 (2026-06-05 사용자 룰).
     """
     flipped = [0]
     footer_fixed = [0]
@@ -3192,8 +3192,8 @@ def _enforce_card_surface(blueprint: dict) -> None:
             return
         is_footer = (not in_footer) and _is_footer(node)
         if is_footer:
-            # Footer 예외 — bg-secondary 채움, 보더 제거
-            node["fill"] = "$token(bg-secondary)"
+            # Footer 예외 — 배경색 없음(루트 bg-primary 와 블렌딩) + 보더 제거 (2026-06-05 사용자 룰)
+            node["fill"] = "$token(bg-primary)"
             for k in _STROKE_KEYS:
                 node.pop(k, None)
             footer_fixed[0] += 1
@@ -3215,7 +3215,7 @@ def _enforce_card_surface(blueprint: dict) -> None:
     if flipped[0]:
         print(f"[규칙] 카드 표면 교정 — 최상위 카드 {flipped[0]}건: bg-secondary → bg-primary + border-secondary")
     if footer_fixed[0]:
-        print(f"[규칙] Footer 표면 교정 — bg-secondary 채움 + 보더 제거 ({footer_fixed[0]}건)")
+        print(f"[규칙] Footer 표면 교정 — 배경 없음(bg-primary) + 보더 제거 ({footer_fixed[0]}건)")
 
 
 def _enforce_card_elevation(blueprint: dict) -> None:
@@ -3310,6 +3310,100 @@ def _enforce_brand_tint_surface_primary(blueprint: dict) -> None:
     walk(blueprint)
     if cnt[0]:
         print(f"[규칙] 브랜드 틴트 면 {cnt[0]}건 → bg-brand-primary (secondary 는 면 표면 금지)")
+
+
+_BAND_VPAD = 24   # 채워진 풀폭 밴드 섹션의 상/하 padding (= spacing-3xl, spacing 바인더가 토큰 바인딩)
+
+
+def _enforce_section_bg_gap_padding(root_node_id: str) -> int:
+    """섹션 bg 색 경계의 padding 정렬 (2026-06-05 사용자 룰).
+
+    루트 직계 섹션을 위→아래로 훑으며, 바로 위 섹션과 **보이는 SOLID 배경색이 다른** 섹션을 처리:
+      - **채워진 밴드**(자체 bg fill 보유): 상/하 padding = 24(`_BAND_VPAD`, = spacing-3xl). 사용자:
+        "위아래 패딩값 24로 맞추고 토큰 바인딩도 해". (좌우 padding 은 그대로 — 보통 20.) 24 는
+        post-fix 의 `_bind_spacing_tokens_live` 가 spacing-3xl 로 자동 바인딩.
+      - **빈/흰 섹션**(fill 없음): 상단 padding = 좌우 padding(대칭) — 색 경계에서 균형 여백.
+    같은 색 경계는 손대지 않음. NavBar·Status Bar·Tab Bar·Wallet 등 고정 바 제외."""
+    SKIP = ("status bar", "navbar", "nav bar", "tab bar", "tabbar", "wallet")
+
+    def _bg(node):
+        fills = node.get("fills") or []
+        if fills and isinstance(fills[0], dict):
+            f = fills[0]
+            if f.get("type") == "SOLID" and f.get("visible", True):
+                c = f.get("color") or {}
+                return (round(c.get("r", 0), 3), round(c.get("g", 0), 3), round(c.get("b", 0), 3))
+        return None  # 무배경(투명) = 루트색으로 간주
+
+    fixed = [0]
+    try:
+        doc = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_node_id]})).get("json")[0]["document"]
+    except Exception as e:
+        print(f"  [section-bg-gap] root fetch fail: {e}")
+        return 0
+    root_bg = _bg(doc) or (0.988, 0.990, 0.992)  # bg-primary 기본
+    kids = [c for c in (doc.get("children") or []) if (c.get("type") or "").upper() == "FRAME"]
+    prev_bg = root_bg
+    for ch in kids:
+        nm = (ch.get("name") or "").lower()
+        cur_fill = _bg(ch)              # None = 무배경
+        cur_bg = cur_fill or root_bg
+        if not any(s in nm for s in SKIP) and cur_bg != prev_bg:
+            try:
+                if cur_fill is not None:
+                    # 채워진 밴드 → 상/하 padding 24 (대칭, spacing-3xl 자동 바인딩)
+                    pt = ch.get("paddingTop"); pb = ch.get("paddingBottom")
+                    if pt != _BAND_VPAD or pb != _BAND_VPAD:
+                        call_tool("set_auto_layout", {"nodeId": ch["id"],
+                                  "paddingTop": _BAND_VPAD, "paddingBottom": _BAND_VPAD})
+                        fixed[0] += 1
+                else:
+                    # 빈/흰 섹션 → 상단 padding = 좌우 padding (대칭)
+                    pl = ch.get("paddingLeft"); pt = ch.get("paddingTop")
+                    if isinstance(pl, (int, float)) and pl > 0 and pt != pl:
+                        call_tool("set_auto_layout", {"nodeId": ch["id"], "paddingTop": pl})
+                        fixed[0] += 1
+            except Exception as e:
+                print(f"  [section-bg-gap] '{ch.get('name')}' fail: {e}")
+        prev_bg = cur_bg
+    if fixed[0]:
+        print(f"  [section-bg-gap] ✓ bg 색 경계 {fixed[0]}건 정렬 (밴드 상/하 {_BAND_VPAD} · 흰 섹션 pt=pl)")
+    return fixed[0]
+
+
+def _enforce_wallet_bar_radius(root_node_id: str) -> int:
+    """월렛 바(마이 월렛)의 top-left/top-right 코너 radius = 16 강제 (2026-06-05 사용자 룰).
+
+    하단 고정 월렛 바는 시트처럼 위쪽 두 코너만 둥글게(16=radius-2xl), 아래는 0. blueprint 가
+    개별 코너를 안 박았거나 빠뜨려도 라이브에서 박는다(평평한 사각형 회귀 차단). radius>0 이므로
+    clipsContent 는 0-Q 클립 enforcer 가 별도로 보장. radius 16 은 post-fix radius 바인더가
+    radius-2xl 토큰으로 자동 바인딩."""
+    fixed = [0]
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        nm = (node.get("name") or "").lower()
+        if (node.get("type") or "").upper() == "FRAME" and ("wallet" in nm or "월렛" in nm):
+            if node.get("topLeftRadius") != 16 or node.get("topRightRadius") != 16:
+                try:
+                    call_tool("set_corner_radius", {"nodeId": node["id"], "radius": 16,
+                              "corners": [True, True, False, False]})
+                    fixed[0] += 1
+                except Exception as e:
+                    print(f"  [wallet-radius] '{node.get('name')}' fail: {e}")
+            return  # 월렛 바 내부는 더 안 내려감
+        for ch in node.get("children", []) or []:
+            walk(ch)
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_node_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [wallet-radius] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [wallet-radius] ✓ 월렛 바 {fixed[0]}건 top-left/top-right radius 16 적용")
+    return fixed[0]
 
 
 def _enforce_brand_tint_surface_primary_live(root_node_id: str) -> int:
@@ -8212,6 +8306,18 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_brand_tint_surface_primary_live(root_node_id)
     except Exception as e:
         print(f"  [brand-tint-surface-live] 실패 (무시하고 계속): {e}")
+
+    print("\n[규칙] 섹션 bg 색 경계 — 아래 섹션 상단 padding 증가 (2026-06-05) 적용 중...")
+    try:
+        _enforce_section_bg_gap_padding(root_node_id)
+    except Exception as e:
+        print(f"  [section-bg-gap] 실패 (무시하고 계속): {e}")
+
+    print("\n[규칙] 월렛 바 top-left/top-right radius 16 (2026-06-05) 적용 중...")
+    try:
+        _enforce_wallet_bar_radius(root_node_id)
+    except Exception as e:
+        print(f"  [wallet-radius] 실패 (무시하고 계속): {e}")
 
     print("\n[규칙] 흰 카드 border 라이브 강제 (batch_build stroke 무시 버그 우회) 적용 중...")
     try:

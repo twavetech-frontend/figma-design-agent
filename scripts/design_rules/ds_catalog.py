@@ -19,6 +19,15 @@ COMPONENT_KEYS = {
     "Logo":                 "81efeddd245e95f31a2724aa370ee54d3caf93d0",
     "Logo (alt)":           "13b53a11b20a467ad465deb4cf2611cb3aa0c804",
 
+    # ── Pagination dot group (캐로셀 인디케이터, 2026-06-05 추출) ──────
+    # 캐로셀/배너 인디케이터는 raw bullet/dot frame 금지 → 이 DS 컴포넌트 인스턴스 사용.
+    # 기본 = lg, Style=Dot, Framed=False (사용자 선택). variant 키 전체 등록.
+    "Pagination dot group":               "2ac006ab01ff82ad9b74c16d4cf6c17609a02d79",  # lg Dot Framed=False (default)
+    "Pagination dot group lg Dot":        "2ac006ab01ff82ad9b74c16d4cf6c17609a02d79",
+    "Pagination dot group md Dot":        "347badbada16ce6814540e82246101d2dc65a295",
+    "Pagination dot group lg Dot Framed": "242fd303853f217a9a4abe26a9994654071ccdde",
+    "Pagination dot group md Dot Framed": "62c7b2992edd5f2b5ae5273cb89b2588894bdc3d",
+
     # ── Mobile system chrome ───────────────────────────────────
     "Status Bar":           "e11cb49d275c972b7d40242be9b22c26b3dd633a",  # iPhone 9:41
 
