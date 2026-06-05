@@ -393,10 +393,15 @@
             // 🔴 통독 진행 상태 (2026-06-05 사용자: "통독할 때 상태가 보여야 한다")
             // Claude 가 digest 를 Read 로 읽는 동안 커버리지 훅이 실시간 진행률 전송.
             dsLoadingEl.classList.add("visible");
-            var rpct = msg.total ? Math.round((msg.current / msg.total) * 100) : 0;
+            // 🔴 36개(문서) 단위 진행 표시 (2026-06-05 사용자: "36개 단위로 진행바 표시").
+            //    currentUc/totalUc 가 있으면 'n/36' 으로(learn 단계와 동일 단위), 없으면 줄 % 폴백.
+            var useUc = msg.totalUc && msg.totalUc > 0;
+            var rpct = useUc ? Math.round((msg.currentUc / msg.totalUc) * 100)
+                             : (msg.total ? Math.round((msg.current / msg.total) * 100) : 0);
             // 🔴 어떤 기획문서를 읽는지 함께 표시 (2026-06-05 사용자: "어떤 기획문서를 읽고 있는지 표시되어야해")
             var rName = msg.name ? " · " + msg.name : "";
-            dsLoadingText.textContent = "기획 문서 통독 중... (" + rpct + "%)" + rName;
+            var rCounter = useUc ? " (" + msg.currentUc + "/" + msg.totalUc + ")" : " (" + rpct + "%)";
+            dsLoadingText.textContent = "기획 문서 통독 중..." + rCounter + rName;
             dsLoadingText.classList.remove("done");
             dsLoadingFill.parentElement.style.display = "";
             dsLoadingFill.className = "ds-loading-fill";

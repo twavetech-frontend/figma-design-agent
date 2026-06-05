@@ -83,22 +83,32 @@ def _digest_total_lines():
         return 0
 
 
-def _current_section_name(upto_line):
-    """digest 에서 upto_line 줄까지 중 마지막 '## ' 섹션 헤더 제목 반환 (2026-06-05 사용자:
-    "어떤 기획문서를 읽고 있는지 표시되어야해"). digest 는 각 유스케이스를 '## 05-UC-... 제목'
-    헤더로 구분하므로, 가장 최근 읽은 위치(upto_line) 이하의 마지막 헤더가 '지금 읽는 문서'다."""
+def _section_progress(upto_line):
+    """digest 의 '## ' 섹션(=기획 문서 1개) 기준 통독 진행을 반환: (현재 섹션 번호, 전체
+    섹션 수, 현재 섹션명). (2026-06-05 사용자: "36개 단위로 진행바 표시" + "어떤 기획문서를
+    읽고 있는지 표시".)
+
+    digest 의 '## ' 헤더 수 = src/기획/ 의 html 파일 수 = learn-planning 의 'n/36' 학습
+    progress 단위와 동일하다(문서가 추가되면 37·38 로 자동 증가 — read_planning_docs 가
+    폴더를 재귀 스캔하므로). upto_line(가장 최근 읽은 줄) 이하의 마지막 '## ' 헤더가
+    '지금 읽는 문서', 그 헤더의 순번이 '현재 섹션 번호'다."""
     try:
-        name = ""
+        headers = []  # (line_no, title)
         with open(_DIGEST, encoding="utf-8") as fh:
             for i, line in enumerate(fh, 1):
-                if i > upto_line:
-                    break
                 s = line.strip()
                 if s.startswith("## "):
-                    name = s[3:].strip()
-        return name
+                    headers.append((i, s[3:].strip()))
+        total = len(headers)
+        cur, name = 0, ""
+        for idx, (ln, title) in enumerate(headers, 1):
+            if ln <= upto_line:
+                cur, name = idx, title
+            else:
+                break
+        return cur, total, name
     except Exception:
-        return ""
+        return 0, 0, ""
 
 
 def _digest_hash():
@@ -289,10 +299,12 @@ def _handle_post_read(data):
             pass
         _notify_plugin("done", count=cnt)
     else:
-        # 가장 멀리(=가장 최근) 읽은 줄 근처의 UC 섹션명을 함께 전송 → UI 가 "지금 읽는 문서" 표시.
+        # 36개(문서) 단위 진행 + 현재 읽는 문서명을 함께 전송.
+        # currentUc/totalUc → UI 가 'n/36' 으로 표시(learn 단계와 동일 단위), current/total(줄)은 폴백.
         upto = max((b for _, b in merged), default=0)
+        cur_uc, total_uc, name = _section_progress(upto)
         _notify_plugin("reading", current=out["covered_lines"], total=total,
-                       name=_current_section_name(upto)[:40])
+                       currentUc=cur_uc, totalUc=total_uc, name=name[:40])
 
 
 def main():
