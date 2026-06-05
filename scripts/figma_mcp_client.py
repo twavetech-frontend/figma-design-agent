@@ -3151,6 +3151,46 @@ _STROKE_KEYS = ("stroke", "strokes", "strokeWeight", "strokeTopWeight",
                 "strokeBottomWeight", "strokeLeftWeight", "strokeRightWeight")
 
 
+def _enforce_section_band(blueprint: dict) -> None:
+    """중요 섹션 = root 직계 풀폭 배경 밴드 패턴 표준화 (2026-06-05 사용자 룰).
+
+    사용자 명시: *"중요한 섹션은 배경 컬러를 두고 content frame에서 벗어나 root 위 별도
+    프레임으로 분리하고, frame에 fill color를 넣는다."* — 핵심/강조 섹션(시작 유도·추천 등)은
+    좌우 padding 있는 content 안 흰 카드가 아니라, **root 직계 풀폭 밴드(bg fill, 좌우 끝까지)**
+    로 둔다. 보조 섹션(이용한도·출석/친구 등)은 content 안 흰 카드 유지.
+
+    구현: blueprint 노드에 `"_band": true` 마커를 박으면(그리고 root.children 직계에 배치하면)
+    이 함수가 밴드 스타일을 표준화한다 — fill 없으면 bg-secondary, layoutSizingHorizontal=FILL,
+    autoLayout 상/하 padding 24·좌우 20, 보더 제거. fill 을 명시(예: bg-brand-primary)하면 존중.
+    ⚠️ 풀폭이 되려면 content(좌우 padding 프레임) 밖 **root 직계**에 둬야 한다(규칙 문서 참조)."""
+    cnt = [0]
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        if n.get("_band") is True and (n.get("type") or "frame") in ("frame", "FRAME"):
+            if not n.get("fill"):
+                n["fill"] = "$token(bg-secondary)"
+            n["layoutSizingHorizontal"] = "FILL"
+            al = n.get("autoLayout")
+            if not isinstance(al, dict):
+                al = {"layoutMode": "VERTICAL", "itemSpacing": 0}
+                n["autoLayout"] = al
+            al.setdefault("layoutMode", "VERTICAL")
+            al["paddingTop"] = 24
+            al["paddingBottom"] = 24
+            al.setdefault("paddingLeft", 20)
+            al.setdefault("paddingRight", 20)
+            for k in _STROKE_KEYS:
+                n.pop(k, None)
+            cnt[0] += 1
+        for c in (n.get("children") or []):
+            walk(c)
+    walk(blueprint)
+    if cnt[0]:
+        print(f"[규칙] 풀폭 밴드 섹션 표준화 {cnt[0]}건 (_band → bg fill·FILL·상하24/좌우20·보더제거)")
+
+
 def _is_footer(node: dict) -> bool:
     """맨 아래 Footer 섹션인가 — 이름에 'footer' 포함."""
     return "footer" in (node.get("name") or "").lower()
@@ -4185,6 +4225,7 @@ def cmd_build(blueprint_file: str):
     _enforce_card_surface(blueprint)
     _enforce_card_elevation(blueprint)  # 2026-05-27 — shadow 자동 주입 폐기 (제거기로 작동)
     _enforce_no_large_brand_fill(blueprint)  # 2026-05-27 — 큰 면적 frame brand fill 금지
+    _enforce_section_band(blueprint)  # 2026-06-05 — 중요 섹션 풀폭 밴드(_band) 표준화
     _enforce_brand_tint_surface_primary(blueprint)  # 2026-06-05 — 브랜드 틴트 면=bg-brand-primary
     _enforce_white_card_border(blueprint)  # 2026-05-27 — fill=bg-primary frame 자동 border
     _enforce_text_hierarchy(blueprint)

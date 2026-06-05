@@ -1202,6 +1202,27 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   *"위아래 패딩값 24로 맞추고 토큰 바인딩도 해."* 24 는 post-fix `_bind_spacing_tokens_live` 가
   **spacing-3xl 토큰으로 자동 바인딩**(절대값 아님). 위 enforcer 의 '밴드' 분기가 강제 → 재빌드에도 유지.
 
+### 13. 🔴 중요 섹션 = root 직계 풀폭 배경 밴드 (2026-06-05 사용자 룰 — 새 세션·다른 화면도 적용)
+- 사용자 명시: *"중요한 섹션은 배경 컬러를 두고 content frame에서 벗어나 root 위 별도 프레임으로
+  분리하고, frame에 fill color를 넣는다. 새 세션에서 다시 디자인 생성할 때도 이렇게 생성되도록."*
+- **패턴 (홈 등 모든 화면 기본):**
+  - **중요/강조 섹션**(시작 유도, 추천 스테이지, 핵심 현황 등)은 좌우 padding 있는 `Content`
+    프레임 **안 흰 카드로 두지 말고**, **root.children 직계에 별도 프레임**으로 분리해 **좌우 끝까지
+    풀폭(FILL) + 배경 fill(bg-secondary, 또는 brand tint=bg-brand-primary)** 을 넣는다.
+  - **보조 섹션**(이용한도, 출석/친구 등)은 `Content`(좌우 padding 20) 안 **흰 카드(bg-primary +
+    border)** 로 유지.
+  - 결과: 흰 배경 위에 중요 섹션만 풀폭 컬러 밴드로 떠서 위계가 분명해진다(2시간 전 '전부 흰 카드'
+    버전 대비 핵심 개선).
+- **작성법:** 중요 섹션 노드를 **root.children 직계**에 배치(Content 밖) + 노드에 **`"_band": true`**
+  마커를 박는다.
+- **시스템 강제 (코드 박힘):** `_enforce_section_band(blueprint)` (cmd_build pre-process,
+  no-large-brand-fill 직후) — `_band:true` 노드를 **fill 없으면 bg-secondary, layoutSizingHorizontal
+  =FILL, autoLayout 상/하 24·좌우 20, 보더 제거** 로 표준화(fill 명시 시 존중). 이후 `_bind_spacing_tokens_live`
+  가 24→spacing-3xl 바인딩, `_enforce_section_bg_gap_padding`/`_enforce_indicator_symmetric_gap` 가 경계 여백 정리.
+  ⚠️ 풀폭이 되려면 반드시 **Content 밖 root 직계**에 둬야 함(content 안에 두면 좌우 padding 에 갇혀 인셋됨).
+- **빌드 후 검증:** 빌드 로그 `[규칙] 풀폭 밴드 섹션 표준화 N건` + 스크린샷에서 중요 섹션이 좌우
+  끝까지 컬러 밴드, 보조 섹션은 흰 카드인지 확인.
+
 ### 14. ⚠️ 스테이지 카드 — 아이콘/이미지 삽입 금지
 - Stage Card 안에 아이콘, 이미지를 **절대 넣지 말 것**
 - Stage Card 구성: 태그(포인트/기프티콘) + 금액 텍스트 + 이율/기간 정보 + 북마크 — **이것만**
