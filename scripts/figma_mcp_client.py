@@ -723,6 +723,317 @@ def cmd_init():
     print("Ready.")
 
 
+def _notify_plugin(event: str, **data) -> None:
+    """플러그인 UI 에 one-way progress 알림 전송 (실패 무시). MCP 도구 notify_plugin 사용."""
+    try:
+        call_tool("notify_plugin", {"event": event, "data": data})
+    except Exception:
+        pass  # 알림은 부가기능 — 실패해도 본 작업 진행
+
+
+def _load_planning_module():
+    import importlib.util
+    _here = os.path.dirname(os.path.abspath(__file__))
+    _rp_path = os.path.join(_here, "read_planning_docs.py")
+    spec = importlib.util.spec_from_file_location("read_planning_docs", _rp_path)
+    rp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rp)
+    return rp
+
+
+def _planning_meta_path(out_rel: str = "scripts/_planning_digest.txt") -> str:
+    _here = os.path.dirname(os.path.abspath(__file__))
+    out_path = out_rel if os.path.isabs(out_rel) else os.path.join(os.path.dirname(_here), out_rel)
+    return out_path + ".meta.json"
+
+
+def _planning_changed(out_rel: str = "scripts/_planning_digest.txt"):
+    """기획 문서가 마지막 학습 이후 변경(추가/수정/삭제)됐는지 + 현재 fingerprint 반환.
+
+    Returns (changed: bool, fp: dict, digest_exists: bool).
+    digest/meta 가 없으면 changed=True (아직 학습 안 함).
+    """
+    rp = _load_planning_module()
+    fp = rp.fingerprint()
+    _here = os.path.dirname(os.path.abspath(__file__))
+    out_path = out_rel if os.path.isabs(out_rel) else os.path.join(os.path.dirname(_here), out_rel)
+    meta_path = out_path + ".meta.json"
+    digest_exists = os.path.exists(out_path)
+    if not digest_exists or not os.path.exists(meta_path):
+        return True, fp, digest_exists
+    try:
+        with open(meta_path, encoding="utf-8") as fh:
+            prev = json.load(fh)
+        return (prev.get("hash") != fp.get("hash")), fp, digest_exists
+    except Exception:
+        return True, fp, digest_exists
+
+
+def _planning_read_ack_path(out_rel: str = "scripts/_planning_digest.txt") -> str:
+    """통독 ack 파일 경로 (digest 옆 .read.json)."""
+    _here = os.path.dirname(os.path.abspath(__file__))
+    out_path = out_rel if os.path.isabs(out_rel) else os.path.join(os.path.dirname(_here), out_rel)
+    return out_path + ".read.json"
+
+
+# ── Read 커버리지 게이트 (2026-06-05 사용자: "Read 커버리지 훅으로 구현") ────────────
+# 토큰 ack 는 1회 영속이라 "새 세션이 끝까지 읽었는가" 를 분간 못 한다. PostToolUse(Read)
+# 훅(scripts/hooks/planning_read_hook.py)이 _planning_digest.txt Read 의 실제 반환 줄
+# 범위를 세션별 cov_<sid>.json 에 누적하고, UserPromptSubmit 훅이 현재 세션 ID 를
+# current_session 에 기록한다. 훅이 활성(=current_session 존재)이면 이 게이트가 **현재
+# 세션의 완독 커버리지**를 요구한다(비활성이면 기존 토큰 ack 로 폴백).
+_PLANNING_COMPLETE_RATIO = 0.97
+_PLANNING_END_SLACK = 8
+_PLANNING_START_SLACK = 3
+
+
+def _planning_gate_dir() -> str:
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), ".planning_gate")
+
+
+def _current_claude_session():
+    """UserPromptSubmit 훅이 기록한 현재 Claude 세션 ID. 없으면 None(훅 비활성)."""
+    p = os.path.join(_planning_gate_dir(), "current_session")
+    try:
+        with open(p, encoding="utf-8") as fh:
+            sid = fh.read().strip()
+        return sid or None
+    except Exception:
+        return None
+
+
+def _planning_covered_count(ranges) -> int:
+    return sum(b - a + 1 for a, b in ranges)
+
+
+def _planning_coverage_complete(ranges, total: int) -> bool:
+    if total <= 0 or not ranges:
+        return False
+    mn = min(a for a, _ in ranges)
+    mx = max(b for _, b in ranges)
+    if mn > _PLANNING_START_SLACK or mx < total - _PLANNING_END_SLACK:
+        return False
+    return _planning_covered_count(ranges) >= _PLANNING_COMPLETE_RATIO * total
+
+
+def _planning_session_read_ok(out_rel: str = "scripts/_planning_digest.txt"):
+    """현재 Claude 세션이 digest 를 끝까지 Read 했는지.
+
+    Returns (active: bool, ok: bool, reason: str).
+    active=False → 훅 비활성(current_session 없음) → 호출측이 토큰 ack 로 폴백.
+    """
+    sid = _current_claude_session()
+    if not sid:
+        return False, False, "Read 커버리지 훅 비활성"
+    cov_path = os.path.join(_planning_gate_dir(), "cov_%s.json" % sid)
+    if not os.path.exists(cov_path):
+        return True, False, "이 세션에서 digest 통독 기록 없음 — Read 도구로 끝까지 통독 필요"
+    try:
+        with open(cov_path, encoding="utf-8") as fh:
+            cov = json.load(fh)
+    except Exception:
+        return True, False, "이 세션 커버리지 손상 — 재통독 필요"
+    meta_path = _planning_meta_path(out_rel)
+    try:
+        with open(meta_path, encoding="utf-8") as fh:
+            meta_hash = json.load(fh).get("hash")
+    except Exception:
+        meta_hash = None
+    if cov.get("hash") != meta_hash:
+        return True, False, "이 세션 통독이 옛 digest 기준 — 재통독 필요"
+    _here = os.path.dirname(os.path.abspath(__file__))
+    out_path = out_rel if os.path.isabs(out_rel) else os.path.join(os.path.dirname(_here), out_rel)
+    try:
+        with open(out_path, "rb") as fh:
+            total = sum(1 for _ in fh)
+    except Exception:
+        total = cov.get("total", 0)
+    ranges = cov.get("covered") or []
+    if _planning_coverage_complete(ranges, total):
+        return True, True, "이 세션 통독 완료 (Read 커버리지 %d/%d줄)" % (
+            _planning_covered_count(ranges), total)
+    return True, False, "이 세션 통독 불완전 (%d/%d줄) — Read 도구로 끝까지 통독 필요" % (
+        _planning_covered_count(ranges), total)
+
+
+def _planning_read_ok(out_rel: str = "scripts/_planning_digest.txt"):
+    """기획 통독 게이트 통과 여부. Returns (ok: bool, reason: str).
+
+    digest 존재 + 기획 폴더 변경 없음(fingerprint 일치)을 먼저 검사(항상 필수).
+    그 다음:
+      - Read 커버리지 훅 활성 시 → **현재 세션의 완독 커버리지**를 요구(새 세션 강제).
+      - 훅 비활성(cron/CLI) 시 → 기존 토큰 ack(read_token 일치)로 폴백.
+    기획 폴더 0건이면 ok=True(무관).
+    """
+    rp = _load_planning_module()
+    fp = rp.fingerprint()
+    if fp.get("count", 0) == 0:
+        return True, "기획 폴더 없음 — 무관"
+    meta_path = _planning_meta_path(out_rel)
+    ack_path = _planning_read_ack_path(out_rel)
+    _here = os.path.dirname(os.path.abspath(__file__))
+    out_path = out_rel if os.path.isabs(out_rel) else os.path.join(os.path.dirname(_here), out_rel)
+    if not os.path.exists(out_path) or not os.path.exists(meta_path):
+        return False, "digest 없음 — learn-planning 미실행"
+    try:
+        with open(meta_path, encoding="utf-8") as fh:
+            meta = json.load(fh)
+    except Exception:
+        return False, "meta 손상 — learn-planning 재실행"
+    if meta.get("hash") != fp.get("hash"):
+        return False, "기획 문서 변경됨 — learn-planning 재실행 + 재통독 필요"
+
+    # 훅 활성 시: 현재 세션이 직접 끝까지 읽었어야 통과 (토큰 영속 우회 차단)
+    active, sess_ok, sess_reason = _planning_session_read_ok(out_rel)
+    if active:
+        return (sess_ok, sess_reason)
+
+    # 훅 비활성(cron/CLI): 기존 토큰 ack 로 폴백
+    if not os.path.exists(ack_path):
+        return False, "통독 ack 없음 — digest 통독 후 ack-planning 필요"
+    try:
+        with open(ack_path, encoding="utf-8") as fh:
+            ack = json.load(fh)
+    except Exception:
+        return False, "ack 손상 — 재통독 + ack-planning 필요"
+    if ack.get("read_token") != meta.get("read_token"):
+        return False, "ack 토큰 불일치 — 최신 digest 통독 후 ack-planning 필요"
+    return True, "통독 완료"
+
+
+def cmd_ack_planning(token: str, out_rel: str = "scripts/_planning_digest.txt"):
+    """🔴 기획 통독 확인 ack — digest 끝의 통독 확인 토큰으로 검증 후 ack 기록.
+
+    digest 맨 끝에만 토큰이 있으므로, 정확한 토큰을 제출했다 = 끝까지 통독했다.
+    ack 후에야 디자인 빌드 게이트가 통과된다.
+    """
+    meta_path = _planning_meta_path(out_rel)
+    if not os.path.exists(meta_path):
+        print("[기획] meta 없음 — 먼저 `learn-planning` 실행 후 digest 통독")
+        sys.exit(1)
+    with open(meta_path, encoding="utf-8") as fh:
+        meta = json.load(fh)
+    expected = meta.get("read_token")
+    if not token or token.strip() != expected:
+        print(f"❌ [기획] 통독 토큰 불일치 (제출={token!r}). digest 파일 **맨 끝**의 "
+              f"'통독 확인 토큰'을 끝까지 통독한 뒤 정확히 입력할 것.")
+        print(f"   digest: {out_rel} — Read 도구로 끝까지 읽으면 토큰이 마지막에 있음.")
+        sys.exit(1)
+    ack = {"read_token": expected, "hash": meta.get("hash"), "count": meta.get("count")}
+    with open(_planning_read_ack_path(out_rel), "w", encoding="utf-8") as fh:
+        json.dump(ack, fh, ensure_ascii=False)
+    _notify_plugin("planning-docs", status="done", count=meta.get("count"))
+    print(f"✅ [기획] 통독 확인 완료 (토큰 {expected}) — 이제 디자인 빌드 게이트 통과. "
+          f"서비스 맥락 이해 상태로 디자인 생성 가능.")
+
+
+def _enforce_planning_read_gate() -> None:
+    """🔴 디자인 빌드 하드 게이트 — 기획 통독 안 했으면 빌드 차단 (references S20~S23 패턴).
+
+    매번 디자인 생성 시 기획 맥락을 충분히 이해한 상태를 시스템이 보장.
+    bypass: 환경변수 IMIN_SKIP_PLANNING_GATE=1 (긴급 시).
+    """
+    if os.environ.get("IMIN_SKIP_PLANNING_GATE") == "1":
+        print("⚠️ [기획] 통독 게이트 우회됨 (IMIN_SKIP_PLANNING_GATE=1)")
+        return
+    try:
+        ok, reason = _planning_read_ok()
+    except Exception as e:
+        print(f"  [기획-게이트] 검사 실패 (무시): {e}")
+        return
+    if ok:
+        return
+    print("\n" + "=" * 64)
+    print("❌ 빌드 차단 — 기획 문서 통독이 필요합니다 (시스템 강제)")
+    print(f"   사유: {reason}")
+    print("   imin 서비스 맥락을 이해한 상태에서만 디자인을 생성할 수 있습니다. 절차:")
+    print("   1) python3 scripts/figma_mcp_client.py learn-planning")
+    print("   2) scripts/_planning_digest.txt 를 Read 도구로 **이 세션에서 끝까지** 통독")
+    print("      (Read 커버리지 훅이 실제 읽은 줄 범위를 추적 — 끝까지 읽으면 ack 자동 기록)")
+    print("      ※ 훅 비활성 환경이면 추가로: ack-planning <digest 끝의 토큰>")
+    print("   (긴급 우회: IMIN_SKIP_PLANNING_GATE=1)")
+    print("=" * 64)
+    sys.exit(2)
+
+
+def cmd_learn_planning(out_rel: str = "scripts/_planning_digest.txt", force: bool = False):
+    """🔴 디자인 생성 준비 마지막 단계 — src/기획/ 기획 문서 학습 + 플러그인 progress 표시.
+
+    36개 유스케이스 HTML 을 통합 digest 로 만들며 플러그인 UI 에 '기획 문서 학습 중 (n/총)'
+    progress 를 보여준다(2026-06-04 사용자). 완료 후 digest 경로를 출력 → Claude 가 Read 로 통독.
+
+    🔴 변경 감지: 기획 문서가 마지막 학습과 동일(fingerprint 일치)하면 재생성 스킵(효율) —
+    변경(추가/수정/삭제)됐을 때만 재학습. `--force` 로 무조건 재학습.
+    """
+    rp = _load_planning_module()
+    _here = os.path.dirname(os.path.abspath(__file__))
+    out_path = out_rel if os.path.isabs(out_rel) else os.path.join(os.path.dirname(_here), out_rel)
+    meta_path = out_path + ".meta.json"
+
+    _ensure_bridge_server()
+    init_session()  # 플러그인 연결 (알림이 UI 에 도달하려면 세션 필요)
+
+    fp = rp.fingerprint()
+    if fp.get("count", 0) == 0:
+        print(f"[기획] src/기획/ 문서 0건 — 학습 단계 건너뜀 ({rp._PLAN_DIR})")
+        _notify_plugin("planning-docs", status="done", count=0)
+        return
+
+    # 변경 감지 — 동일하면 digest 재생성 스킵. 단, 아직 통독 ack 안 했으면 통독 안내.
+    changed, _fp2, digest_exists = _planning_changed(out_rel)
+    if digest_exists and not changed and not force:
+        read_ok, _reason = _planning_read_ok(out_rel)
+        print(f"[기획] 변경 없음 ({fp['count']}개 UC, hash={fp['hash'][:10]}) — 기존 digest 재사용")
+        if read_ok:
+            # 이미 통독+ack 완료 → 플러그인 UI 에 완료 상태 표시.
+            _notify_plugin("planning-docs", status="done", count=fp["count"])
+            print(f"[기획] ✅ 통독 ack 이미 완료 — 디자인 생성 가능. (재통독 원하면 {out_rel} Read)")
+        else:
+            # digest 는 있으나 (이 세션) 미통독 → '통독 중' 상태로 바를 띄워 둠.
+            # 이후 Claude 가 Read 로 통독하면 커버리지 훅이 실시간 진행률로 갱신한다.
+            _notify_plugin("planning-docs", status="reading", current=0, total=0)
+            try:
+                with open(meta_path, encoding="utf-8") as _mf:
+                    _tok = json.load(_mf).get("read_token")
+            except Exception:
+                _tok = "<digest 끝 토큰>"
+            print(f"[기획] 👉 아직 통독 ack 안 됨 — {out_rel} 를 Read 로 **끝까지** 통독 후 "
+                  f"`ack-planning {_tok}` 실행 (안 하면 빌드 차단)")
+        return
+
+    total = fp["count"]
+    why = "최초 학습" if not digest_exists else ("강제 재학습" if force else "문서 변경 감지 → 재학습")
+    print(f"[기획] {total}개 유스케이스 문서 학습 시작 ({why})...")
+    _notify_plugin("planning-docs", status="loading")
+
+    def _progress(cur, tot, name):
+        short = (name or "")[:40]
+        _notify_plugin("planning-docs", status="syncing", current=cur, total=tot, name=short)
+        if cur == 1 or cur % 6 == 0 or cur == tot:
+            print(f"  [기획] {cur}/{tot} — {short}")
+
+    digest, count, read_token = rp.build_digest(progress=_progress)
+    with open(out_path, "w", encoding="utf-8") as fh:
+        fh.write(digest)
+    meta = dict(fp)
+    meta["read_token"] = read_token
+    with open(meta_path, "w", encoding="utf-8") as fh:
+        json.dump(meta, fh, ensure_ascii=False)
+    # digest 가 새로 생성됐으므로 이전 통독 ack 무효화 (다시 통독해야 함)
+    try:
+        _ack = _planning_read_ack_path(out_rel)
+        if os.path.exists(_ack):
+            os.remove(_ack)
+    except Exception:
+        pass
+
+    _notify_plugin("planning-docs", status="done", count=count)
+    print(f"[기획] ✓ {count}개 유스케이스 학습 digest 생성 → {out_path} ({len(digest):,}자)")
+    print(f"[기획] 👉 다음(필수): 이 파일을 Read 도구로 **끝까지** 통독 → 맨 끝 토큰으로")
+    print(f"[기획]    `python3 scripts/figma_mcp_client.py ack-planning {read_token}` 실행")
+    print(f"[기획]    (통독+ack 해야 디자인 빌드가 통과됨 — 시스템 강제)")
+
+
 def cmd_call(tool_name: str, args_json: str, compact: bool = False):
     ensure_session()
     args = json.loads(args_json) if args_json else {}
@@ -3406,6 +3717,10 @@ def cmd_build(blueprint_file: str):
     These are resolved to {"r": ..., "g": ..., "b": ..., "a": ...} at build time.
     """
     ensure_session()
+
+    # 🔴 기획 통독 하드 게이트 — 통독+ack 안 했으면 빌드 차단 (2026-06-04 사용자: 매 디자인
+    # 생성 시 서비스 맥락을 충분히 이해한 상태 시스템 보장). references S20~S23 와 동일 철학.
+    _enforce_planning_read_gate()
 
     with open(blueprint_file) as f:
         blueprint = json.load(f)
@@ -11010,6 +11325,15 @@ def main():
 
     if cmd == "init":
         cmd_init()
+    elif cmd == "learn-planning":
+        _force = "--force" in sys.argv
+        _out = next((a for a in sys.argv[2:] if a != "--force"), "scripts/_planning_digest.txt")
+        cmd_learn_planning(_out, force=_force)
+    elif cmd == "ack-planning":
+        if len(sys.argv) < 3:
+            print("Usage: figma_mcp_client.py ack-planning <통독토큰>  (digest 맨 끝의 토큰)")
+            sys.exit(1)
+        cmd_ack_planning(sys.argv[2])
     elif cmd == "call":
         if len(sys.argv) < 3:
             print("Usage: figma_mcp_client.py call <tool_name> [args_json] [--compact]")

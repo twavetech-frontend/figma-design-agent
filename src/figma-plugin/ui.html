@@ -371,6 +371,46 @@
             dsLoadingFill.parentElement.style.display = "none";
             if (dsLoadingTimer) clearTimeout(dsLoadingTimer);
           }
+        } else if (msg.type === "planning-docs") {
+          // 🔴 기획 문서 학습 progress (2026-06-04 사용자) — ds-loading bar 재사용
+          if (msg.status === "loading") {
+            dsLoadingEl.classList.add("visible");
+            dsLoadingText.textContent = "기획 문서 학습 중...";
+            dsLoadingText.classList.remove("done");
+            dsLoadingFill.parentElement.style.display = "";
+            dsLoadingFill.className = "ds-loading-fill indeterminate";
+            dsLoadingFill.style.width = "";
+            if (dsLoadingTimer) clearTimeout(dsLoadingTimer);
+          } else if (msg.status === "syncing") {
+            dsLoadingEl.classList.add("visible");
+            var ppct = msg.total ? Math.round((msg.current / msg.total) * 100) : 0;
+            dsLoadingText.textContent = "기획 문서 학습 중... (" + msg.current + "/" + msg.total + ") " + (msg.name || "");
+            dsLoadingText.classList.remove("done");
+            dsLoadingFill.parentElement.style.display = "";
+            dsLoadingFill.className = "ds-loading-fill";
+            dsLoadingFill.style.width = ppct + "%";
+          } else if (msg.status === "reading") {
+            // 🔴 통독 진행 상태 (2026-06-05 사용자: "통독할 때 상태가 보여야 한다")
+            // Claude 가 digest 를 Read 로 읽는 동안 커버리지 훅이 실시간 진행률 전송.
+            dsLoadingEl.classList.add("visible");
+            var rpct = msg.total ? Math.round((msg.current / msg.total) * 100) : 0;
+            dsLoadingText.textContent = "기획 문서 통독 중... (" + rpct + "%)";
+            dsLoadingText.classList.remove("done");
+            dsLoadingFill.parentElement.style.display = "";
+            dsLoadingFill.className = "ds-loading-fill";
+            dsLoadingFill.style.width = rpct + "%";
+            if (dsLoadingTimer) clearTimeout(dsLoadingTimer);
+          } else if (msg.status === "done") {
+            var ucText = msg.count ? " (" + msg.count + "개 유스케이스)" : "";
+            dsLoadingText.textContent = "기획 문서 학습 완료 — 서비스 맥락 이해" + ucText;
+            dsLoadingText.classList.add("done");
+            dsLoadingFill.className = "ds-loading-fill complete";
+            dsLoadingFill.parentElement.style.display = "";
+            if (dsLoadingTimer) clearTimeout(dsLoadingTimer);
+            dsLoadingTimer = setTimeout(function () {
+              dsLoadingEl.classList.remove("visible");
+            }, 6000);
+          }
         }
       }
 

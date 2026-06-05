@@ -27,8 +27,12 @@ json/*.json
 !json/*PRD*.json
 scripts/qa_screenshots/
 scripts/ref_thumbnails/
-# 기획 문서 통합 digest (read_planning_docs.py 가 매 디자인 준비마다 src/기획/ 에서 재생성)
+# 기획 문서 통합 digest + 변경감지 메타 + 통독 ack (learn-planning/ack-planning 이 재생성)
 scripts/_planning_digest.txt
+scripts/_planning_digest.txt.meta.json
+scripts/_planning_digest.txt.read.json
+# Read 커버리지 게이트 — 세션별 통독 추적 (planning_read_hook.py 가 기록)
+scripts/.planning_gate/
 
 # Claude Code 로컬 세션·설정
 .claude/projects/

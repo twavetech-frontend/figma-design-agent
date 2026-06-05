@@ -21,5 +21,28 @@
   "env": {
     "FIGMA_MCP_SKIP_ENHANCE": "1",
     "FIGMA_MCP_REQUEST_TIMEOUT": "600"
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hooks/planning_read_hook.py\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hooks/planning_read_hook.py\""
+          }
+        ]
+      }
+    ]
   }
 }

@@ -46,17 +46,35 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
    ⚠️ 플러그인 이름은 정확히 **"Figma Design Agent"** — "Claude MCP" 등 다른 이름으로 부르지 말 것.
 5. 🔴 **기획 문서 전체 학습 (맥락 100% — 2026-06-04 사용자 필수 룰)** — 디자인 생성 전,
    `src/기획/` 폴더의 **모든 기획 HTML(유스케이스 스펙)을 읽어 imin 서비스 맥락을 완전히
-   이해한 상태**로 만든다. 36개 HTML 을 개별로 읽지 말고 **통합 리더로 한 번에**:
+   이해한 상태**로 만든다. 🔴 **목표: 준비가 끝나면 사용자가 곧바로 "메인화면 그려"라고만 해도
+   맥락을 충분히 이해한 상태로 바로 그릴 수 있어야 한다** (2026-06-04 사용자). 그래서 준비
+   단계에서 통독+ack 까지 끝낸다. 3-스텝(한 번씩만):
    ```bash
-   python3 scripts/read_planning_docs.py --out scripts/_planning_digest.txt
+   # ① 학습 digest 생성 (플러그인 UI 에 '기획 문서 학습 중 (n/총)' progress 표시)
+   python3 scripts/figma_mcp_client.py learn-planning
    ```
-   → 그 다음 **`scripts/_planning_digest.txt` 를 Read 도구로 1회 통독**한다(HTML 태그 제거된
-   깨끗한 텍스트, ~8만 자, 36개 UC 의 메타정보·정상/예외 플로우·비즈니스 룰·**연결 화면(SCR-*)**·
-   수용 기준·백엔드 API 가 UC 번호 순으로 정리됨). 이후 사용자가 PRD/와이어프레임으로 디자인을
-   지시하면, **그 화면이 어느 유스케이스·플로우·상태에 속하는지, 비즈니스 룰·연결 화면을
-   충분히 반영**해 생성한다. (폴더가 없거나 0건이면 스킵 — 리더가 stderr 로 알리고 빈손으로 끝.)
-   ⚠️ 이 단계를 건너뛰면 맥락 없는 표면적 디자인이 된다 — **반드시 통독 후** 다음으로.
-6. **완료 보고** — 준비 완료(기획 문서 학습 포함)를 알리고, 디자인할 화면의 PRD/요구사항을 요청한다.
+   → ② 생성된 `scripts/_planning_digest.txt` 를 **Read 도구로 처음부터 끝까지 통독**한다
+   (HTML 태그 제거된 깨끗한 텍스트, ~8만 자 = Read 가 한 번에 안 읽히므로 **여러 번 offset 으로
+   끝까지**. 36개 UC 의 메타정보·정상/예외 플로우·비즈니스 룰·**연결 화면(SCR-*)**·수용 기준·
+   백엔드 API + 마스터 Product Spec/운영정책/약관). 파일 **맨 끝에 '통독 확인 토큰'** 이 있다.
+   ```bash
+   # ③ digest 맨 끝의 토큰으로 통독 확인 (이게 있어야 디자인 빌드가 통과)
+   python3 scripts/figma_mcp_client.py ack-planning <digest 맨 끝 토큰>
+   ```
+   이후 사용자가 PRD/와이어/짧은 한마디("메인화면 그려")로 지시하면, **그 화면이 어느 유스케이스·
+   플로우·상태에 속하는지, 비즈니스 룰·연결 화면을 충분히 반영**해 **바로** 생성한다.
+   (폴더 없거나 0건이면 스킵 + 플러그인에 `status:done count:0` 알림.)
+   - 🔴 **통독 하드 게이트 (시스템 강제 — references S20~S23 와 동일 철학):** `cmd_build` 시작 시
+     `_enforce_planning_read_gate()` 가 **통독 ack 가 없거나 stale 하면 빌드를 차단**(exit 2)한다.
+     즉 통독 안 하면 디자인을 못 만든다 — "매번 통독해서 이해도 높인 상태" 를 시스템이 보장.
+     ack 의 토큰은 digest **맨 끝**에만 있어, 끝까지 통독해야만 정확한 토큰으로 ack 가능(cheat 방지).
+     긴급 우회: `IMIN_SKIP_PLANNING_GATE=1`.
+   - 🔴 **변경 감지 + ack 무효화:** `learn-planning` 은 `src/기획/` fingerprint(파일+mtime+size)를
+     `_planning_digest.txt.meta.json` 에 저장. **변경 없으면 재생성 스킵**(단 ack 안 됐으면 통독 안내),
+     **변경되면 자동 재학습 + 이전 ack 무효화**(`_planning_digest.txt.read.json` 삭제) → 다시 통독+ack
+     해야 빌드 통과. 강제 재학습: `learn-planning --force`. 세션 도중 문서가 바뀌어도 빌드 게이트가
+     stale 을 잡아 재통독을 강제한다.
+6. **완료 보고** — 준비 완료(기획 문서 통독+ack 포함)를 알리고, 디자인할 화면의 PRD/요구사항을 요청한다.
 
 > 🧹 **오래된 산출물 자동 정리 (생성 7일 경과 → 삭제)** — 1단계 setup 스크립트의
 > **마지막 프로세스**로 `scripts/cleanup_old_blueprints.py` 가 자동 실행돼, 생성 **7일**

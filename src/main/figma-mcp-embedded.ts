@@ -52,6 +52,20 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     return { success: true, channel: params.channel };
   });
 
+  // One-way progress notification to the plugin UI (server-side — does NOT forward to plugin
+  // as a command). Used e.g. for "기획 문서 학습" progress (event='planning-docs').
+  reg('notify_plugin', 'Send a one-way progress notification to the plugin UI (e.g. planning-docs learning progress)', {
+    type: 'object',
+    properties: {
+      event: { type: 'string', description: 'Notification type, e.g. "planning-docs"' },
+      data: { type: 'object', description: 'Arbitrary payload (status, current, total, name, count, ...)' }
+    },
+    required: ['event']
+  }, async (params) => {
+    figmaWS.sendNotification(params.event as string, (params.data as Record<string, unknown>) || {});
+    return { ok: true };
+  });
+
   reg('get_document_info', 'Get information about the current Figma document', {
     type: 'object', properties: {}
   }, async () => cmd('get_document_info'));
