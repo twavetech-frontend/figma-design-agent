@@ -4305,15 +4305,9 @@ def cmd_build(blueprint_file: str):
         except Exception as e:
             print(f"  ⚠️ 로고 교체 실패 (무시): {e}")
 
-    # ⚠️ Step F (2026-05-27 박음) — frontend spec 자동 추출 → json/<화면이름>_<날짜>_<시간>.json
-    # 메모리 feedback_frontend_json_export 에 "빌드 후 자동" 박혔지만 실제 코드에 없어서
-    # 2026-05-21 이후 모든 빌드에서 spec 누락. 이제 cmd_build 가 직접 호출.
-    if root_id:
-        try:
-            print("\n[Step F] Frontend spec 추출 중...")
-            _export_frontend_spec(root_id)
-        except Exception as e:
-            print(f"  ⚠️ Frontend spec 추출 실패 (무시): {e}")
+    # ⚠️ Step F (frontend spec → json/) 폐기 (2026-06-05 사용자: "디자인 생성되면 json 폴더에
+    # json 생성되게 하는것도 삭제해. 생성할 필요없어졌어"). 더 이상 빌드 때 json/ 에 frontend
+    # spec 을 쓰지 않는다. _export_frontend_spec / gen_frontend_spec.py 는 호출하지 않는다.
 
     # ⚠️ Step H (2026-05-28 박음) — self-verify 강제 시스템.
     # Claude 가 "검증 ✅" 보고 전 무조건 섹션별 zoom-in PNG 6장 Read + 12-checklist
@@ -4503,47 +4497,6 @@ def _self_verify_section_qa_export(root_id: str, blueprint: dict) -> None:
     print("    4. 절대 미완료 상태로 '검증 ✅' / '완료' 보고 금지")
     print("    → [feedback_self_verify_required_after_build] 메모리 룰")
     print("=" * 60)
-
-
-def _export_frontend_spec(root_id: str) -> Optional[str]:
-    """Frontend spec JSON 추출 — gen_frontend_spec.py 를 subprocess 로 호출 (2026-05-27).
-
-    cmd_build 끝의 Step F. 빌드된 root 의 flexbox 스펙 + 토큰명·hex 병기를
-    json/<화면이름>_<날짜>_<시간>.json 으로 저장. gen_frontend_spec.py 내부 main 이
-    sys.argv 기반이라 subprocess 로 호출하는 게 안전.
-
-    실패하면 무시 (Step F 는 빌드 자체엔 영향 없음).
-    """
-    import subprocess
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    gen_script = os.path.join(project_root, "scripts", "gen_frontend_spec.py")
-    if not os.path.exists(gen_script):
-        print(f"  ⚠️ gen_frontend_spec.py 없음 — skip")
-        return None
-    json_dir = os.path.join(project_root, "json")
-    os.makedirs(json_dir, exist_ok=True)
-    try:
-        result = subprocess.run(
-            ["python3", gen_script, root_id],
-            cwd=project_root,
-            capture_output=True, text=True,
-            timeout=60,
-        )
-        if result.returncode == 0:
-            # gen_frontend_spec 가 stdout 마지막 줄에 출력 경로 명시
-            out = (result.stdout or "").strip().split("\n")
-            saved_line = next((ln for ln in reversed(out) if "json/" in ln), None)
-            if saved_line:
-                print(f"  ✓ {saved_line}")
-            else:
-                print(f"  ✓ Frontend spec 추출 완료")
-            return saved_line
-        else:
-            print(f"  ⚠️ gen_frontend_spec exit {result.returncode}: {(result.stderr or '')[:200]}")
-            return None
-    except subprocess.TimeoutExpired:
-        print(f"  ⚠️ gen_frontend_spec timeout (60s)")
-        return None
 
 
 def _collect_tree(node_id: str, depth: int = 0, max_depth: int = 6) -> dict:

@@ -81,8 +81,11 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
 > 지난 blueprint(`scripts/blueprint_*.json`)·**디자인별 일회성 생성기(`scripts/gen_*.py`)**·
 > 빌드 산출물(`json/*.json`)·QA 스크린샷(`scripts/qa_screenshots/`)·레퍼런스
 > 썸네일(`scripts/ref_thumbnails/`)을 삭제한다.
-> ⚠️ **`gen_frontend_spec.py` 는 예외(보존)** — gen_ 접두사지만 일회성이 아니라
-> `figma_mcp_client.py` 가 매 빌드(Step F)에서 호출하는 공용 유틸리티다.
+> ⚠️ **`json/` frontend spec 생성은 폐기됨 (2026-06-05 사용자: "디자인 생성되면 json 폴더에
+> json 생성되게 하는것도 삭제해. 생성할 필요없어졌어")** — 빌드의 옛 Step F(`_export_frontend_spec`
+> → `json/<화면>_<날짜>.json`)와 `_export_frontend_spec` 함수를 제거했다. 이제 빌드가 `json/`
+> 에 spec 을 만들지 않는다. `gen_frontend_spec.py` 도 더 이상 호출하지 않는다(파일은 잔존하나
+> 미사용). `json/` 의 기존 산출물은 cleanup 이 정리하되 **PRD 입력 `json/*PRD*.json` 은 보존**.
 > blueprint·산출물이 무한 누적되는 문제 방지. 기준은 파일 mtime(생성 후 미수정이라 ≈ 생성일).
 > **보존**: `blueprint_templates.json`·`blueprint_unified_imin_home.json`(소스 템플릿),
 > `gen_*.py`·`spec_*.json`·`wireframe_content_*.json`(패턴 밖이라 애초에 미대상),
