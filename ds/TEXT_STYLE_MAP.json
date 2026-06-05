@@ -1,482 +1,324 @@
 [
   {
-    "name": "Display 2xl/Regular",
-    "key": "19cc397311e5d9288630c501ba9eb0d492c132b7",
-    "fontSize": 72,
-    "style": "Regular"
-  },
-  {
-    "name": "Display 2xl/Medium",
-    "key": "c12240d30b8cd87e5aa49b7ab23e031456dc5e3d",
-    "fontSize": 72,
-    "style": "Medium"
-  },
-  {
-    "name": "Display 2xl/Semibold",
-    "key": "1c5d18ce22dcb1698e59844459e6641d6c3c6249",
-    "fontSize": 72,
-    "style": "SemiBold"
-  },
-  {
-    "name": "Display 2xl/Bold",
-    "key": "9dcd3588ec0724e7640c14f0ba0e09c50c202a67",
-    "fontSize": 72,
-    "style": "Bold"
-  },
-  {
-    "name": "Display xl/Regular",
-    "key": "c0220a7e75dd222255d09e5f7b6fec8e537b5013",
-    "fontSize": 60,
-    "style": "Regular"
-  },
-  {
-    "name": "Display xl/Medium",
-    "key": "528fe7522bc8e5f90a943fadac18c724522f4ec3",
-    "fontSize": 60,
-    "style": "Medium"
-  },
-  {
-    "name": "Display xl/Semibold",
-    "key": "487cd7ccaa02a10fd0bda6bec19d7a30f970b20c",
-    "fontSize": 60,
-    "style": "SemiBold"
-  },
-  {
-    "name": "Display xl/Bold",
-    "key": "c96d09bbc9c975851bb3ef943e393073e62c2c56",
-    "fontSize": 60,
-    "style": "Bold"
-  },
-  {
-    "name": "Display lg/Regular",
-    "key": "96113eaf50f709c92e4308bfe963f85b02da6d72",
-    "fontSize": 48,
-    "style": "Regular"
-  },
-  {
-    "name": "Display lg/Medium",
-    "key": "56bde433a12e64bbea92ce8e8e4d294124392472",
-    "fontSize": 48,
-    "style": "Medium"
-  },
-  {
-    "name": "Display lg/Semibold",
-    "key": "a9ab0de940368788224cae509b2d0ed555fb9680",
-    "fontSize": 48,
-    "style": "SemiBold"
-  },
-  {
-    "name": "Display lg/Bold",
-    "key": "f1273a1585a991538a93d5b683253ee0c6cf82b3",
-    "fontSize": 48,
-    "style": "Bold"
-  },
-  {
-    "name": "Display md/Regular",
+    "name": "Heading md/Regular",
     "key": "4c77a0ebfdf37285f409855f19433da21dac8934",
     "fontSize": 36,
+    "family": "Pretendard",
     "style": "Regular"
   },
   {
-    "name": "Display md/Medium",
+    "name": "Heading md/Medium",
     "key": "e25ce974ea625deef606ae582955f52c069a7f27",
     "fontSize": 36,
+    "family": "Pretendard",
     "style": "Medium"
   },
   {
-    "name": "Display md/Semibold",
+    "name": "Heading md/Semibold",
     "key": "01ca3686542f4ad43260611ab674990a54bb05f8",
     "fontSize": 36,
+    "family": "Pretendard",
     "style": "SemiBold"
   },
   {
-    "name": "Display md/Bold",
+    "name": "Heading md/Bold",
     "key": "81fdbc67d40fabde7444d74c263baa3f8694936d",
     "fontSize": 36,
+    "family": "Pretendard",
     "style": "Bold"
   },
   {
-    "name": "Display sm/Regular",
+    "name": "Heading sm/Regular",
     "key": "fe63d2c35c964a97275c56ee108c7755e87f4598",
     "fontSize": 30,
+    "family": "Pretendard",
     "style": "Regular"
   },
   {
-    "name": "Display sm/Medium",
+    "name": "Heading sm/Medium",
     "key": "a32a5613ece514f40203f52b215819e9ffd3bf5e",
     "fontSize": 30,
+    "family": "Pretendard",
     "style": "Medium"
   },
   {
-    "name": "Display sm/Semibold",
+    "name": "Heading sm/Semibold",
     "key": "a780757e8b82f65679fb1ebf7356b9312c93ecfc",
     "fontSize": 30,
+    "family": "Pretendard",
     "style": "SemiBold"
   },
   {
-    "name": "Display sm/Bold",
+    "name": "Heading sm/Bold",
     "key": "8eb397ce4a1b370f2c6b40ad2eb6f1ee2b13345b",
     "fontSize": 30,
+    "family": "Pretendard",
     "style": "Bold"
   },
   {
-    "name": "Display xs/Regular",
+    "name": "Heading xs/Regular",
     "key": "1d62c9b45cd293ad5ee31090cf632d620f2a1794",
     "fontSize": 24,
+    "family": "Pretendard",
     "style": "Regular"
   },
   {
-    "name": "Display xs/Medium",
+    "name": "Heading xs/Medium",
     "key": "dd3a9c292dfd791ee35f05981325a7df4f03da76",
     "fontSize": 24,
+    "family": "Pretendard",
     "style": "Medium"
   },
   {
-    "name": "Display xs/Semibold",
+    "name": "Heading xs/Semibold",
     "key": "29ec008472f4a59c5179a9350317a581045f8e18",
     "fontSize": 24,
+    "family": "Pretendard",
     "style": "SemiBold"
   },
   {
-    "name": "Display xs/Bold",
+    "name": "Heading xs/Bold",
     "key": "6c81548af82cd0b044305864a42b6a09e83f8542",
     "fontSize": 24,
+    "family": "Pretendard",
     "style": "Bold"
   },
   {
-    "name": "Text xl/Regular",
-    "key": "ca87fb436bbe2d1cf245a3d963c840ed1ed49287",
-    "fontSize": 20,
-    "style": "Regular"
-  },
-  {
-    "name": "Text xl/Medium",
-    "key": "8efd4f2857b52698696fff13b6e417d71999f4ea",
-    "fontSize": 20,
-    "style": "Medium"
-  },
-  {
-    "name": "Text xl/Semibold",
-    "key": "cd226efd3c90f720099da49cbd24e6f01aaeb6be",
-    "fontSize": 20,
-    "style": "SemiBold"
-  },
-  {
-    "name": "Text xl/Bold",
-    "key": "6e310cb993cbd6e3e28282af322cca4434772c40",
-    "fontSize": 20,
-    "style": "Bold"
-  },
-  {
-    "name": "Text lg/Regular",
+    "name": "Body lg/Regular",
     "key": "f816b5d92fd8c8ca5c9c1dbaa52ba3ea1267a26f",
     "fontSize": 18,
+    "family": "Pretendard",
     "style": "Regular"
   },
   {
-    "name": "Text lg/Medium",
+    "name": "Body lg/Medium",
     "key": "fb77de65d7e3087995470473b9f94358a34c8d7e",
     "fontSize": 18,
+    "family": "Pretendard",
     "style": "Medium"
   },
   {
-    "name": "Text lg/Semibold",
+    "name": "Body lg/Semibold",
     "key": "7e9ee0fa774acf1b4869d2a0787df75258d2a532",
     "fontSize": 18,
+    "family": "Pretendard",
     "style": "SemiBold"
   },
   {
-    "name": "Text lg/Bold",
+    "name": "Body lg/Bold",
     "key": "2557390b1d5f2c04c81f617f78f8e5526a7ff735",
     "fontSize": 18,
+    "family": "Pretendard",
     "style": "Bold"
   },
   {
-    "name": "Text md/Regular",
+    "name": "Body md/Regular",
     "key": "81c47bd23cc77d917dc7724a34f41e234d559e54",
     "fontSize": 16,
+    "family": "Pretendard",
     "style": "Regular"
   },
   {
-    "name": "Text md/Medium",
+    "name": "Body md/Medium",
     "key": "8aacbab3582f93060081e02f1757c9b127a0be40",
     "fontSize": 16,
+    "family": "Pretendard",
     "style": "Medium"
   },
   {
-    "name": "Text md/Semibold",
+    "name": "Body md/Semibold",
     "key": "8b09aa1bb785b987f259fecaefed7fa39b99194d",
     "fontSize": 16,
+    "family": "Pretendard",
     "style": "SemiBold"
   },
   {
-    "name": "Text md/Bold",
+    "name": "Body md/Bold",
     "key": "0868e2434dd94c70016d1ce52216230de461b1d5",
     "fontSize": 16,
+    "family": "Pretendard",
     "style": "Bold"
   },
   {
-    "name": "Text sm/Regular",
+    "name": "Body sm/Regular",
+    "key": "aa4783034b9f6d1855d840018d986358aa76d0ad",
+    "fontSize": 14,
+    "family": "Pretendard",
+    "style": "Regular"
+  },
+  {
+    "name": "Body sm/Medium",
+    "key": "5f84038a501fe2ae7d85649892ef19de818ff6fb",
+    "fontSize": 14,
+    "family": "Pretendard",
+    "style": "Medium"
+  },
+  {
+    "name": "Body sm/Semibold",
+    "key": "7ea4b98c4e7d5cb7e12df524738e47ab93c97cbc",
+    "fontSize": 14,
+    "family": "Pretendard",
+    "style": "SemiBold"
+  },
+  {
+    "name": "Body sm/Bold",
+    "key": "3ef42fc77cb08e839fa0663c242e1ce40e72cf92",
+    "fontSize": 14,
+    "family": "Pretendard",
+    "style": "Bold"
+  },
+  {
+    "name": "Body xs/Regular",
     "key": "cb6c93643609cf5a2c1d9811b7c4e39cad1cdfa1",
-    "fontSize": 14,
+    "fontSize": 12,
+    "family": "Pretendard",
     "style": "Regular"
   },
   {
-    "name": "Text sm/Medium",
+    "name": "Body xs/Medium",
     "key": "59a819665bab8d04eda39c4993dc325f68df9da1",
-    "fontSize": 14,
+    "fontSize": 12,
+    "family": "Pretendard",
     "style": "Medium"
   },
   {
-    "name": "Text sm/Semibold",
+    "name": "Body xs/Semibold",
     "key": "0ffe54f8efccb1c91adc682692485a6628742feb",
-    "fontSize": 14,
+    "fontSize": 12,
+    "family": "Pretendard",
     "style": "SemiBold"
   },
   {
-    "name": "Text sm/Bold",
+    "name": "Body xs/Bold",
     "key": "7aec2f4caac6eeefd1c72548c2ec844db26ffec5",
-    "fontSize": 14,
-    "style": "Bold"
-  },
-  {
-    "name": "Text xs/Regular",
-    "key": "bd9be6ef8e9237f4e86ab4c7d4bfd41c541a1170",
     "fontSize": 12,
-    "style": "Regular"
-  },
-  {
-    "name": "Text xs/Medium",
-    "key": "1af25be171bedcb67ec5c70e0bc2687500e1b30e",
-    "fontSize": 12,
-    "style": "Medium"
-  },
-  {
-    "name": "Text xs/Semibold",
-    "key": "4ef10d5783d8976531e1346298c336349c49cc00",
-    "fontSize": 12,
-    "style": "SemiBold"
-  },
-  {
-    "name": "Text xs/Bold",
-    "key": "c929c99ba1a2a89c1b3f6151fbbf865ff9c537d7",
-    "fontSize": 12,
+    "family": "Pretendard",
     "style": "Bold"
   },
   {
-    "name": "Carmen sans/Regular/32px",
-    "key": "ae6cfd8994c08f97b44df6d5a65cbe02ba632348",
-    "fontSize": 32,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/24px",
-    "key": "e14b966ed96f0dd0cc449bf8799f0bd5f15bdd2a",
-    "fontSize": 24,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/20px",
-    "key": "13328aba155114eb3261ecf02236c755ba0defd0",
-    "fontSize": 20,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/16px",
-    "key": "7e0a7802af82f94eb79a7db258ad6360e6763f96",
-    "fontSize": 16,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/14px",
-    "key": "1185088304ab5e906b43c4f2597ce3c23cfac74d",
-    "fontSize": 14,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/12px",
-    "key": "ba41e3553b3362e402b9573f04ddc45648e2c32f",
-    "fontSize": 12,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/32px",
-    "key": "378e413c85ffcad5dae5b66ef2acb6ddf0ac94c4",
-    "fontSize": 32,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/24px",
-    "key": "33346de4e8604170a5025225f8dcdc66747e576f",
-    "fontSize": 24,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/20px",
-    "key": "864ef535dbdeb29fec3de745d1253080f1b7e6b8",
-    "fontSize": 20,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/16px",
-    "key": "39601967f1244d2b832eae5e3410ff87e49b26ad",
-    "fontSize": 16,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/14px",
-    "key": "fd934991485c55f55907ca23b144cfc67afeda09",
-    "fontSize": 14,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Regular/12px",
-    "key": "cefddd4bd5b026e76f887c1d9afe88b56efd015e",
-    "fontSize": 12,
-    "style": "Regular"
-  },
-  {
-    "name": "Carmen sans/Bold/32px",
-    "key": "663716f64a34affccab318c161cbf36edd27e0c7",
-    "fontSize": 32,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/24px",
-    "key": "45df72b32a0a6628d860aa37ee5c4efd67ed2f19",
-    "fontSize": 24,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/20px",
-    "key": "49e916fcd930938290cf4ecf65de15e3351a5b79",
-    "fontSize": 20,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/16px",
-    "key": "81aa25f3ef85fcb1dea37dd184fcde3531ee6233",
-    "fontSize": 16,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/14px",
-    "key": "72dafa911624db6c209e341296d2a8723b94161a",
-    "fontSize": 14,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/12px",
-    "key": "fe2ecb04e71a6ac0546b69afc74ab5d5d9264842",
-    "fontSize": 12,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/32px",
-    "key": "ac86a75021fdffd861098caccdefa0b86ac74aba",
-    "fontSize": 32,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/24px",
-    "key": "108ce5a2734654b719f918b66de0b634a59be888",
-    "fontSize": 24,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/20px",
-    "key": "a5c1283b92107abfd8dbed5250e395af74135819",
-    "fontSize": 20,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/16px",
-    "key": "6dfcafcb8be9371b2a6d739c5ef821a311135c08",
-    "fontSize": 16,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/14px",
-    "key": "7594ff9a441d42641c631613140e9bd841ff4c2f",
-    "fontSize": 14,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/Bold/12px",
-    "key": "64ec86264d71f911220fb0771d42dbd1271da1dd",
-    "fontSize": 12,
-    "style": "Bold"
-  },
-  {
-    "name": "Carmen sans/ExtraBold/32px",
+    "name": "Carmen sans/Heading md/ExtraBold",
     "key": "b00ce81b8d27fa1d6d32f2f05c84246be3790c4a",
     "fontSize": 32,
+    "family": "Carmen Sans",
     "style": "ExtraBold"
   },
   {
-    "name": "Carmen sans/ExtraBold/24px",
+    "name": "Carmen sans/Heading md/Bold",
+    "key": "663716f64a34affccab318c161cbf36edd27e0c7",
+    "fontSize": 32,
+    "family": "Carmen Sans",
+    "style": "Bold"
+  },
+  {
+    "name": "Carmen sans/Heading md/Regular",
+    "key": "ae6cfd8994c08f97b44df6d5a65cbe02ba632348",
+    "fontSize": 32,
+    "family": "Carmen Sans",
+    "style": "Regular"
+  },
+  {
+    "name": "Carmen sans/Heading sm/ExtraBold",
     "key": "f3a0460bf16b848bbc4fb14e29e24793fd442974",
     "fontSize": 24,
+    "family": "Carmen Sans",
     "style": "ExtraBold"
   },
   {
-    "name": "Carmen sans/ExtraBold/20px",
+    "name": "Carmen sans/Heading sm/Bold",
+    "key": "45df72b32a0a6628d860aa37ee5c4efd67ed2f19",
+    "fontSize": 24,
+    "family": "Carmen Sans",
+    "style": "Bold"
+  },
+  {
+    "name": "Carmen sans/Heading sm/Regular",
+    "key": "e14b966ed96f0dd0cc449bf8799f0bd5f15bdd2a",
+    "fontSize": 24,
+    "family": "Carmen Sans",
+    "style": "Regular"
+  },
+  {
+    "name": "Carmen sans/Heading xs/ExtraBold",
     "key": "044d5b2267ed7f10af269cb1b3c3bdae4d04b8eb",
     "fontSize": 20,
+    "family": "Carmen Sans",
     "style": "ExtraBold"
   },
   {
-    "name": "Carmen sans/ExtraBold/16px",
+    "name": "Carmen sans/Heading xs/Bold",
+    "key": "49e916fcd930938290cf4ecf65de15e3351a5b79",
+    "fontSize": 20,
+    "family": "Carmen Sans",
+    "style": "Bold"
+  },
+  {
+    "name": "Carmen sans/Heading xs/Regular",
+    "key": "13328aba155114eb3261ecf02236c755ba0defd0",
+    "fontSize": 20,
+    "family": "Carmen Sans",
+    "style": "Regular"
+  },
+  {
+    "name": "Carmen sans/Body lg/ExtraBold",
     "key": "96f9a75a203a9c230245af32c7ed1bf54782ba82",
     "fontSize": 16,
+    "family": "Carmen Sans",
     "style": "ExtraBold"
   },
   {
-    "name": "Carmen sans/ExtraBold/14px",
+    "name": "Carmen sans/Body lg/Bold",
+    "key": "81aa25f3ef85fcb1dea37dd184fcde3531ee6233",
+    "fontSize": 16,
+    "family": "Carmen Sans",
+    "style": "Bold"
+  },
+  {
+    "name": "Carmen sans/Body lg/Regualr",
+    "key": "7e0a7802af82f94eb79a7db258ad6360e6763f96",
+    "fontSize": 16,
+    "family": "Carmen Sans",
+    "style": "Regular"
+  },
+  {
+    "name": "Carmen sans/Body md/ExtraBold",
     "key": "d16b1cb66fa1dba3d484611ee0125603f3b7f369",
     "fontSize": 14,
+    "family": "Carmen Sans",
     "style": "ExtraBold"
   },
   {
-    "name": "Carmen sans/ExtraBold/12px",
+    "name": "Carmen sans/Body md/Bold",
+    "key": "72dafa911624db6c209e341296d2a8723b94161a",
+    "fontSize": 14,
+    "family": "Carmen Sans",
+    "style": "Bold"
+  },
+  {
+    "name": "Carmen sans/Body md/Regular",
+    "key": "1185088304ab5e906b43c4f2597ce3c23cfac74d",
+    "fontSize": 14,
+    "family": "Carmen Sans",
+    "style": "Regular"
+  },
+  {
+    "name": "Carmen sans/Body sm/ExtraBold",
     "key": "c378d00374cd75d33c6eade06e528d6d8944631a",
     "fontSize": 12,
+    "family": "Carmen Sans",
     "style": "ExtraBold"
   },
   {
-    "name": "Carmen sans/ExtraBold/32px",
-    "key": "c8443929a30ad35fc5572c154b2227b19459d9f1",
-    "fontSize": 32,
-    "style": "ExtraBold"
-  },
-  {
-    "name": "Carmen sans/ExtraBold/24px",
-    "key": "eec822263964a5b301c13a0de560637a609ba5a7",
-    "fontSize": 24,
-    "style": "ExtraBold"
-  },
-  {
-    "name": "Carmen sans/ExtraBold/20px",
-    "key": "19c9486e40753a72c8afb83266592dc4c6ce6533",
-    "fontSize": 20,
-    "style": "ExtraBold"
-  },
-  {
-    "name": "Carmen sans/ExtraBold/16px",
-    "key": "66ce0755ee8549f663f3b02e7c72fc9228eb7113",
-    "fontSize": 16,
-    "style": "ExtraBold"
-  },
-  {
-    "name": "Carmen sans/ExtraBold/14px",
-    "key": "92e97525eb521436e35ee7f088365d1c8612de90",
-    "fontSize": 14,
-    "style": "ExtraBold"
-  },
-  {
-    "name": "Carmen sans/ExtraBold/12px",
-    "key": "985a8ed7b47961c70aa8e5cb8305d6de1e042094",
+    "name": "Carmen sans/Body sm/Bold",
+    "key": "fe2ecb04e71a6ac0546b69afc74ab5d5d9264842",
     "fontSize": 12,
-    "style": "ExtraBold"
+    "family": "Carmen Sans",
+    "style": "Bold"
+  },
+  {
+    "name": "Carmen sans/Body sm/Regular",
+    "key": "ba41e3553b3362e402b9573f04ddc45648e2c32f",
+    "fontSize": 12,
+    "family": "Carmen Sans",
+    "style": "Regular"
   }
 ]

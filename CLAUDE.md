@@ -690,6 +690,33 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > ⚠️ blueprint 가 삭제되므로 동일 화면을 다시 빌드하려면 blueprint 를 새로 작성/조립해야 한다
 > (의도된 동작 — 화면은 Figma 에 이미 있고 source 만 정리).
 
+> 🔴 **절대 규칙 0-S — 텍스트 스타일 바인딩을 절대 깨지 말 것 (2026-06-05 사용자 룰)**
+>
+> 사용자 명시: *"텍스트 크기만 조절하려고 텍스트 스타일 바인딩이 깨졌는데 좀더 큰 사이즈를
+> 적용하려면 텍스트 스타일에서 좀 더 큰걸 쓰면 되. 바인딩을 깨면 안된다!"*
+>
+> **텍스트 크기를 바꿀 때 raw `set_font_size` 로 styled 텍스트의 크기를 덮어쓰지 말 것** —
+> 그러면 DS text style 바인딩이 detach(깨짐)된다. 크기를 키우려면 **같은 weight 의 더 큰
+> DS 텍스트 스타일을 `set_text_style_id` 로 적용**한다(바인딩 유지). 줄이는 것도 동일.
+>
+> **시스템 강제 (코드 박힘, 자동):**
+> - `_enforce_min_text_size_live(root_id)` (cmd_post_fix) 는 **절대 `set_font_size` 를 쓰지
+>   않는다.** 작은 텍스트의 (size, weight) 를 읽어 floor 이상이 되는 DS 텍스트 스타일을
+>   `set_text_style_id` 로 입힌다. DS 인스턴스 내부(';')·장식 기호 제외.
+> - 🔴 **stale 맵 대응 — 실제 적용 크기 검증 + 에스컬레이션:** `ds/TEXT_STYLE_MAP.json` 이
+>   stale 하면 (예: '14px' 키가 라이브 DS 에선 12px 로 import 됨) 적용 후 실제 size 가 floor
+>   미달일 수 있다. 그래서 적용 후 `get_nodes_info` 로 실제 size 를 검증하고, 미달이면 다음
+>   DS 스케일(16…)로 올려 재적용한다 — 항상 `set_text_style_id` 만 사용(바인딩 유지).
+> - blueprint pre-process `_enforce_min_text_size` 는 fontSize 숫자만 올리고(텍스트 스타일
+>   매핑 *전*), 이후 text-style 단계가 그 크기의 스타일을 바인딩 → raw size 가 남지 않는다.
+>
+> ⚠️ **TEXT_STYLE_MAP.json stale 시 (Pretendard 14px 등 일부 tier 가 깨졌을 때) 근본 해결:**
+> 플러그인을 **DS 파일('Imin Design System')에 연결**한 뒤 `python3 scripts/figma_mcp_client.py
+> sync-text-styles` 1회 실행 → 최신 키로 재추출·커밋. (variables 의 sync-variable-keys 와 동일 패턴.)
+>
+> **빌드 후 검증:** 텍스트 노드가 **size ≥ 하한 + textStyle 바인딩 유지**(get_nodes_info 의
+> `styles.text` 존재) 인지 확인. raw fontSize 만 박히고 styles.text 가 빈 노드 = 위반.
+
 ### 1. ⚠️ Status Bar는 blueprint에 넣지 말 것 — 빌드가 DS Status Bar를 자동 삽입
 - **Status Bar를 텍스트/프레임으로 직접 그리거나 blueprint 노드로 넣지 말 것.**
 - `batch_build_screen`은 blueprint root.children에 status bar 노드가 **없으면 DS "Status Bar" 인스턴스를 루트 첫 자식으로 자동 삽입**한다. blueprint에 "Status Bar" 같은 노드를 넣으면 빌드가 그걸 그대로 써서 직접 그린 status bar가 박힌다(= 버그).
@@ -767,14 +794,59 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   DS 변수 바인딩. 기존에 border-secondary 가 박힌 흰-배경 카드도 border-primary 로 업그레이드(idempotent).
   blueprint 에서 어떻게 쓰든 빌드가 바로잡는다.
 
-### 2-C. ⚠️ 타이포 위계 — 크기·굵기로 시각 리듬 (2026-05-23 룰)
+### 2-B-2. ⚠️ 브랜드 틴트 '면'(블록/카드 표면)은 `bg-brand-primary` (2026-06-05 사용자 룰)
+- 사용자 명시: *"이런건 컬러를 `bg-brand-primary` 를 사용게 시각적으로 맞아."* (강조된 '오늘'
+  스케줄 블록 등 브랜드 틴트 면을 가리키며)
+- **브랜드 틴트를 '면'(자식을 담는 블록/카드 표면)으로 쓸 때는 `$token(bg-brand-primary)`(#f4ecff,
+  연한 라벤더)** 를 쓴다. **`bg-brand-secondary`(#e6d4ff)·`bg-brand-secondary-hover`(#cfaeff) 는 더
+  진해 면 표면에 쓰면 시각적으로 무겁다 → 면에는 금지.** secondary 계열은 작은 액센트/상태(badge·
+  dot·hover 등)에만.
+- 적용 예: '오늘' 입금/지급 강조 블록, '차근차근 모을게요' 같은 틴트 카드 표면 → 모두 bg-brand-primary.
+- **시스템 강제 (자동, 2중):**
+  1. `_enforce_brand_tint_surface_primary(blueprint)` (cmd_build pre-process, no-large-brand-fill 직후) —
+     **children 을 가진 frame** 의 fill 이 `$token(bg-brand-secondary[-hover])`/`bg-brand-primary_alt`
+     면 `$token(bg-brand-primary)` 로 교정.
+  2. `_enforce_brand_tint_surface_primary_live(root_id)` (cmd_post_fix, white-card-border *직전*) —
+     라이브 트리에서 children 가진 FRAME 의 fill 이 #e6d4ff/#cfaeff 면 #f4ecff(bg-brand-primary)로
+     교정 + 토큰 바인딩. DS 인스턴스·내부(`;`) 노드 제외.
+- **빌드 후 검증:** 빌드 로그에 `[규칙] 브랜드 틴트 면 N건 → bg-brand-primary` 또는
+  `[brand-tint-surface-live] ✓` 라인 확인. 틴트 블록/카드가 진한 보라(secondary)가 아니라 연한
+  라벤더(primary)인지 스크린샷 확인.
+
+### 2-C. ⚠️ 타이포 위계 — 크기·굵기로 시각 리듬 (2026-05-23 룰 / 2026-06-05 크기 정책 갱신)
 - **컬러가 절제될수록 시각 위계는 폰트 크기·굵기로 강화한다.** 표준 type scale:
   - **HERO** (카드 안 핵심 금액·수치) — `28~36px Bold`
   - **TITLE** — `22~26px Bold`
   - **SECTION** (섹션 헤더) — `17~19px Bold`
-  - **BODY** — `14~16px Medium/SemiBold`
-  - **CAPTION** (라벨·메타) — `11~13px Medium/Regular`, 컬러 `fg-tertiary`
-- 같은 카드 안에 **최소 3단계 이상 차이**를 둔다 — HERO 금액은 본문(BODY)의 2배 안팎이어야 리듬이 산다. 16px 본문 옆에 16px Bold 금액 = 단조로움(금지).
+  - **BODY (기본)** — `16px Medium/SemiBold` (DS `Body md`) ← 🔴 **기본 텍스트는 16**
+  - **보조 (라벨·캡션·부제)** — `14px` (DS **`Body sm`**) ← 🔴 **간혹 쓰는 보조 크기**
+  - **미세 (푸터·법적 고지·정말 작아야 하는 fine print)** — `12px` (DS `Body xs`) ← 🔴 **정말 작게 표현해야 할 때만**
+- 🔴 **보조 텍스트는 DS `Body sm`(14) 스타일 (2026-06-05 사용자 룰):** 현황 라벨("총 스테이지 수
+  86,696개"), 안내/재참여 문구("함께 모은 목돈, 다시 모아볼까요?"), 한도 디테일("한도 … 이용 중
+  잔여 …"), 리스트 부제("출석 체크하고 포인트 받아요") 같은 보조 텍스트는 **`Body sm`(14px)** 이
+  적절하다. (기본 본문=`Body md` 16, 미세=`Body xs` 12.)
+- 🔴 **타이틀 아래 디스크립션 텍스트는 `Body sm`(14) ~ `Body xs`(12) (2026-06-05 사용자 룰):**
+  사용자 명시 *"타이틀 아래 디스크립션 텍스트들은 sm, xs 정도로 쓰면 된다."* 섹션/카드 타이틀 바로
+  아래 부제·설명("목돈을 이만큼 모았어요", "매월 얼마나 모을까요?", "어떤 방법으로 시작할까요?",
+  리스트 부제 등)은 **16(Body md)으로 키우지 말고 `Body sm`(14) 또는 `Body xs`(12)** 로 둔다.
+  타이틀(16~18)보다 작아야 위계가 산다 — 디스크립션을 16으로 올리면 타이틀과 동급이 돼 단조로움.
+  - ⚠️ `ds/TEXT_STYLE_MAP.json` 이 stale 하면 Pretendard `Body sm`(14) 키가 빠져 있어(파일의 옛
+    'Text sm' 키가 라이브 DS 에선 `Body xs`/12 로 import 됨) **Body sm 을 바인딩할 수 없다** →
+    플러그인을 DS 파일('Imin Design System')에 연결 후 `sync-text-styles` 로 재추출해야 Body sm
+    키가 맵에 들어온다(절대 규칙 0-S 참조). 재싱크 후엔 enforcer 의 (14,bucket) 조회가 Body sm 을
+    바인딩한다.
+- 같은 카드 안에 **최소 3단계 이상 차이**를 둔다 — HERO 금액은 본문(BODY)의 2배 안팎이어야 리듬이 산다.
+- 🔴 **크기 하한 정책 (2026-06-05 사용자 룰): 기본 16 / 보조 14 / 12 는 정말 작은 경우(푸터·미세 문구)만.**
+  사용자: *"기본이 16이고 아래 14를 간혹 쓰고 12는 정말 작게 표현해야 되는 경우일때만. 12pt 텍스트가
+  너무 많이 쓰이고 있어."* → **일반 텍스트에 12pt 남용 금지.** 12/13pt 라벨은 14 로 올린다. 11/10pt 는
+  쓰지 않는다(푸터 fine print 도 최소 12).
+- **시스템 강제 (자동, 2중):**
+  1. `_enforce_min_text_size(blueprint)` (cmd_build pre-process, font weight 정규화 직후) — 일반 텍스트
+     fontSize < 14 → 14, 푸터(조상 이름 'footer') 안 미세 문구 < 12 → 12 로 상향. 장식 기호(●/>/−/+ 등
+     단일문자·비문자)·제목·hero 는 제외. text-style 매핑 *전* 에 올려 올바른 DS 스타일 버킷이 선택됨.
+  2. `_enforce_min_text_size_live(root_id)` (cmd_post_fix, 브랜드 틴트 면 직전) — 라이브 백스톱.
+     get_nodes_info(batch)는 styled 텍스트 fontSize 를 None 으로 주므로 **TEXT 노드별 get_node_info 로
+     실제 fontSize 를 읽어** 하한 미만이면 `set_font_size` 로 상향. DS 인스턴스 내부(';') 제외.
 - `cmd_build`의 `_enforce_text_hierarchy`가 카드 안의 통화 hero(부호 `+/−` 또는 천단위 콤마가 있는 금액 텍스트)를 자동으로 **30px Bold**로 승격 — 본문이 hero보다 작게 작성되어 있어도 hero가 본문 위로 올라온다.
 
 ### 2-D. ⚠️ Modal 화면 패턴 — 상단 X만, Footer·Tab Bar·상단 탭 없음 (2026-05-24 룰)

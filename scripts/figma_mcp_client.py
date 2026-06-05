@@ -3272,6 +3272,225 @@ def _enforce_white_card_border(blueprint: dict) -> None:
         print(f"[규칙] 흰 카드 보더 자동 — fill=bg-primary frame {added[0]}건에 border-secondary 1px 추가")
 
 
+# 브랜드 틴트 '면'(블록/카드 표면) 토큰 — 면 표면에 쓰면 무거운 secondary 계열
+_BRAND_TINT_SURFACE_TOKENS = {
+    "bg-brand-secondary", "bg-brand-secondary-hover",
+    "bg-brand-primary_alt", "bg-brand-primary-alt",
+}
+
+
+def _enforce_brand_tint_surface_primary(blueprint: dict) -> None:
+    """브랜드 틴트 '면'(자식 가진 frame 표면)은 bg-brand-primary 사용 (2026-06-05 사용자 룰).
+
+    `bg-brand-secondary`(#e6d4ff)는 더 진해 면(블록/카드) 표면에 쓰면 시각적으로
+    무겁다 → children 을 가진 frame(틴트 면)이 brand-secondary 계열 fill 이면
+    `bg-brand-primary`(#f4ecff, 더 연함)로 교정한다. 작은 액센트/상태(badge·dot 등
+    자식 없는 요소·DS 인스턴스)는 대상 아님(secondary 유지 가능).
+    사용자: "이런건 컬러를 bg-brand-primary 를 사용게 시각적으로 맞아."
+    """
+    cnt = [0]
+
+    def _tok(fill):
+        if not isinstance(fill, str):
+            return None
+        s = fill.strip()
+        if s.startswith("$token(") and s.endswith(")"):
+            return s[7:-1].strip()
+        return None
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        if n.get("type") in ("frame", "FRAME") and n.get("children"):
+            if _tok(n.get("fill")) in _BRAND_TINT_SURFACE_TOKENS:
+                n["fill"] = "$token(bg-brand-primary)"
+                cnt[0] += 1
+        for c in (n.get("children") or []):
+            walk(c)
+    walk(blueprint)
+    if cnt[0]:
+        print(f"[규칙] 브랜드 틴트 면 {cnt[0]}건 → bg-brand-primary (secondary 는 면 표면 금지)")
+
+
+def _enforce_brand_tint_surface_primary_live(root_node_id: str) -> int:
+    """라이브: 브랜드 틴트 면(children 가진 FRAME)이 bg-brand-secondary(#e6d4ff /
+    hover #cfaeff) fill 이면 bg-brand-primary(#f4ecff)로 교정 + 토큰 바인딩.
+    DS 인스턴스 / 내부 노드(';') 제외. blueprint 단계가 놓친 회귀 차단."""
+    SEC = (0.902, 0.831, 1.0)    # #e6d4ff bg-brand-secondary
+    SECH = (0.812, 0.682, 1.0)   # #cfaeff bg-brand-secondary-hover
+    PRIM = (0.957, 0.925, 1.0)   # #f4ecff bg-brand-primary
+    fixed = [0]
+
+    def near(c, t):
+        return (abs(c.get("r", 0) - t[0]) < 0.02 and abs(c.get("g", 0) - t[1]) < 0.02
+                and abs(c.get("b", 0) - t[2]) < 0.02)
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").upper() == "INSTANCE":
+            return
+        nid = node.get("id", "")
+        if node.get("type") in ("FRAME", "frame") and node.get("children") and ";" not in nid:
+            fills = node.get("fills") or []
+            if fills and isinstance(fills[0], dict):
+                f = fills[0]
+                if f.get("type") == "SOLID" and f.get("visible", True):
+                    c = f.get("color") or {}
+                    if near(c, SEC) or near(c, SECH):
+                        try:
+                            call_tool("set_fill_color", {"nodeId": nid,
+                                "color": {"r": PRIM[0], "g": PRIM[1], "b": PRIM[2], "a": 1}})
+                            fp = _token_to_figma_path("bg-brand-primary")
+                            if fp:
+                                call_tool("set_bound_variables", {"nodeId": nid,
+                                    "bindings": {"fills/0": fp}})
+                            fixed[0] += 1
+                        except Exception as e:
+                            print(f"  [brand-tint-surface-live] '{node.get('name')}' fail: {e}")
+        for ch in node.get("children", []) or []:
+            walk(ch)
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_node_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [brand-tint-surface-live] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [brand-tint-surface-live] ✓ 브랜드 틴트 면 {fixed[0]}건 → bg-brand-primary")
+    return fixed[0]
+
+
+# 텍스트 크기 정책 (2026-06-05 사용자 룰): 기본 16 / 보조 14 / 12 는 정말 작은 경우만.
+_TEXT_FLOOR_BODY = 14   # 일반 텍스트 하한 (보조 라벨/캡션 포함)
+_TEXT_FLOOR_FINE = 12   # 푸터·미세 문구(법적 고지 등) 하한 — 12 미만 금지
+
+
+def _is_symbol_only_text(t: str) -> bool:
+    """장식/기호 전용 텍스트(●, >, −, + 등)는 크기 강제 대상에서 제외."""
+    s = (t or "").strip()
+    if len(s) <= 1:
+        return True
+    return not any(ch.isalnum() or ('가' <= ch <= '힣') for ch in s)
+
+
+def _enforce_min_text_size(blueprint: dict) -> None:
+    """텍스트 크기 하한 강제 (2026-06-05 사용자 룰): 12pt 남용 차단.
+
+    기본 16 / 보조 14 / 12 는 푸터·미세 문구일 때만. 일반 텍스트의 fontSize 가
+    14 미만이면 14 로, 푸터(조상 이름에 'footer') 안 미세 문구는 12 미만이면 12 로 올린다.
+    장식 기호(●/>/−/+)·이미 하한 이상은 건드리지 않는다. (제목·hero 는 영향 없음.)
+    """
+    bumped = [0]
+
+    def walk(node, in_footer):
+        if not isinstance(node, dict):
+            return
+        nm = (node.get("name") or "").lower()
+        in_footer = in_footer or ("footer" in nm)
+        if node.get("type") in ("text", "TEXT"):
+            txt = node.get("text") or node.get("characters") or ""
+            cur = node.get("fontSize")
+            if isinstance(cur, (int, float)) and not _is_symbol_only_text(txt):
+                floor = _TEXT_FLOOR_FINE if in_footer else _TEXT_FLOOR_BODY
+                if cur < floor:
+                    node["fontSize"] = floor
+                    bumped[0] += 1
+        for c in (node.get("children") or []):
+            walk(c, in_footer)
+    walk(blueprint, False)
+    if bumped[0]:
+        print(f"[규칙] 텍스트 크기 하한 — {bumped[0]}건 상향 (기본16/보조14/푸터·미세12)")
+
+
+def _enforce_min_text_size_live(root_node_id: str) -> int:
+    """라이브: 작은 텍스트(<14, 푸터<12)를 하한으로 상향.
+
+    🔴 절대 규칙: **텍스트 스타일 바인딩을 깨지 않는다.** raw `set_font_size` 금지 —
+    그건 DS text style 바인딩을 detach 한다. 대신 같은 weight 의 **더 큰 DS 텍스트 스타일**
+    (size=floor)을 `set_text_style_id` 로 입혀 크기를 키운다(바인딩 유지). DS 스케일에 12/14
+    스타일이 전 weight 로 존재한다. DS 인스턴스 내부(';')·장식 기호 제외.
+
+    get_nodes_info 는 TEXT 폰트 속성을 node.style 하위(style.fontSize/fontStyle)에 둔다."""
+    style_map = _load_text_style_map()
+    if not style_map:
+        print("  [min-text-size-live] DS text-style 맵 비어있음 — 건너뜀")
+        return 0
+    fixed = [0]
+    # (floor, bucket) → 실제 적용 시 size>=floor 가 되는 DS 스타일 key (run 내 캐시).
+    # ⚠️ ds/TEXT_STYLE_MAP.json 이 stale 하면 (예: 14키가 실제 12px) 적용해도 floor 미달 →
+    # 다음 스케일로 올려 재검증한다. 바인딩은 항상 유지(set_text_style_id 만 사용).
+    resolved = {}
+
+    def _node_style_size(nid):
+        try:
+            r = parse_content(call_tool("get_nodes_info", {"nodeIds": [nid]})).get("json")
+            if isinstance(r, list) and r:
+                return ((r[0].get("document") or {}).get("style") or {}).get("fontSize")
+        except Exception:
+            pass
+        return None
+
+    def _resolve_key(floor, bucket, sample_nid):
+        if (floor, bucket) in resolved:
+            return resolved[(floor, bucket)]
+        for t in [s for s in _DS_TEXT_SIZE_SCALE if s >= floor]:
+            key = style_map.get((t, bucket)) or style_map.get((t, "medium"))
+            if not key:
+                continue
+            try:
+                call_tool("set_text_style_id", {"nodeId": sample_nid,
+                          "textStyleId": f"S:{key},{root_node_id}"})
+            except Exception:
+                continue
+            real = _node_style_size(sample_nid)
+            if isinstance(real, (int, float)) and real >= floor:
+                resolved[(floor, bucket)] = key   # 이 노드는 이미 적용됨
+                return key
+        resolved[(floor, bucket)] = None
+        return None
+
+    def walk(node, in_footer):
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").upper() == "INSTANCE":
+            return  # 컴포넌트가 제어 — 건드리지 않음
+        nm = (node.get("name") or "").lower()
+        in_footer = in_footer or ("footer" in nm)
+        nid = node.get("id", "")
+        if (node.get("type") or "").upper() == "TEXT" and ";" not in nid:
+            tstyle = node.get("style") or {}
+            size = tstyle.get("fontSize")
+            txt = node.get("characters") or node.get("text") or ""
+            if isinstance(size, (int, float)) and not _is_symbol_only_text(txt):
+                floor = _TEXT_FLOOR_FINE if in_footer else _TEXT_FLOOR_BODY
+                if size < floor:
+                    bucket = _weight_bucket(tstyle.get("fontStyle"))
+                    cached = resolved.get((floor, bucket), "MISS")
+                    if cached == "MISS":
+                        key = _resolve_key(floor, bucket, nid)  # 해석 + 이 노드 적용
+                        if key:
+                            fixed[0] += 1
+                    elif cached:
+                        try:
+                            call_tool("set_text_style_id", {"nodeId": nid,
+                                      "textStyleId": f"S:{cached},{root_node_id}"})
+                            fixed[0] += 1
+                        except Exception as e:
+                            print(f"  [min-text-size-live] '{txt[:12]}' fail: {e}")
+        for ch in node.get("children", []) or []:
+            walk(ch, in_footer)
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_node_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0], False)
+    except Exception as e:
+        print(f"  [min-text-size-live] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [min-text-size-live] ✓ 작은 텍스트 {fixed[0]}건 → 더 큰 DS 텍스트 스타일 재적용(바인딩 유지)")
+    return fixed[0]
+
+
 def _enforce_white_card_border_live(root_node_id: str) -> int:
     """빌드 후 라이브 트리에서 fill=bg-primary frame 에 보더 1px 강제 (2026-05-27 사용자 분노).
 
@@ -3812,6 +4031,9 @@ def cmd_build(blueprint_file: str):
     # 평평해진다. 빌드 전 문자열 weight 를 숫자로 강제 변환 (어느 세션에서 작성하든 보장).
     _normalize_text_font_weight(blueprint)
 
+    # ⚠️ 텍스트 크기 하한 (2026-06-05): 기본16/보조14/12는 미세문구만 — 12pt 남용 차단
+    _enforce_min_text_size(blueprint)
+
     # ⚠️ 시스템 규칙: 루트 프레임 배경은 반드시 bg-primary — 다른 값이 와도 강제 교정
     _enforce_root_bg_primary(blueprint)
 
@@ -3823,6 +4045,7 @@ def cmd_build(blueprint_file: str):
     _enforce_card_surface(blueprint)
     _enforce_card_elevation(blueprint)  # 2026-05-27 — shadow 자동 주입 폐기 (제거기로 작동)
     _enforce_no_large_brand_fill(blueprint)  # 2026-05-27 — 큰 면적 frame brand fill 금지
+    _enforce_brand_tint_surface_primary(blueprint)  # 2026-06-05 — 브랜드 틴트 면=bg-brand-primary
     _enforce_white_card_border(blueprint)  # 2026-05-27 — fill=bg-primary frame 자동 border
     _enforce_text_hierarchy(blueprint)
     _enforce_section_dividers(blueprint)
@@ -6837,14 +7060,30 @@ def _enforce_multicol_fill_live(root_id: str) -> int:
                     if (c.get("type") or "").upper() in ("FRAME", "INSTANCE")]
             collapsed = [c for c in kids
                          if isinstance(_w(c), (int, float)) and 0 < _w(c) <= 3]
+            to_fill = {}  # id -> node (dedup)
             if collapsed and len(kids) >= 2:
-                cols = [c for c in kids if not _is_fixed_small(c)]
-                for c in cols:
-                    try:
-                        call_tool("set_layout_sizing", {"nodeId": c["id"], "horizontal": "FILL"})
-                        fixed[0] += 1
-                    except Exception as e:
-                        print(f"  [multicol-fill] '{c.get('id')}' fail: {e}")
+                for c in kids:
+                    if not _is_fixed_small(c):
+                        to_fill[c["id"]] = c
+            # ⚠️ 둥근 '타일/카드' 컬럼 불균형 (2026-06-05 재발방지): batch_build 가 한 타일만
+            # 전폭, 형제를 ~20px 로 찌부러뜨리는 2-col 붕괴는 ≤3px 가드를 비껴간다([[two-col-fill-card-collapse]]).
+            # cornerRadius 4~60(둥근 타일, 원형 999/아이콘 제외) + children 보유 + 같은 HORIZONTAL
+            # 부모의 그런 타일이 2개+ 인데 폭이 2.5배 넘게 불균형이면 전부 FILL 로 균등 복원.
+            tiles = [c for c in kids
+                     if (c.get("type") or "").upper() == "FRAME" and c.get("children")
+                     and isinstance(c.get("cornerRadius"), (int, float)) and 4 <= c["cornerRadius"] <= 60
+                     and isinstance(_w(c), (int, float))]
+            if len(tiles) >= 2:
+                tw = [_w(c) for c in tiles]
+                if min(tw) > 0 and max(tw) > 2.5 * min(tw):
+                    for c in tiles:
+                        to_fill[c["id"]] = c
+            for c in to_fill.values():
+                try:
+                    call_tool("set_layout_sizing", {"nodeId": c["id"], "horizontal": "FILL"})
+                    fixed[0] += 1
+                except Exception as e:
+                    print(f"  [multicol-fill] '{c.get('id')}' fail: {e}")
         for c in n.get("children", []) or []:
             walk(c)
 
@@ -7962,6 +8201,18 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
 
     # ⚠️ 시스템 규칙 (2026-05-27 사용자 분노 fix): batch_build_screen 이 blueprint 의
     # strokeColor/strokeWeight 를 무시함. live 트리에 직접 박아서 회귀 차단.
+    print("\n[규칙] 텍스트 크기 하한 라이브 강제 (2026-06-05, 12pt 남용 차단) 적용 중...")
+    try:
+        _enforce_min_text_size_live(root_node_id)
+    except Exception as e:
+        print(f"  [min-text-size-live] 실패 (무시하고 계속): {e}")
+
+    print("\n[규칙] 브랜드 틴트 면 → bg-brand-primary 라이브 강제 (2026-06-05) 적용 중...")
+    try:
+        _enforce_brand_tint_surface_primary_live(root_node_id)
+    except Exception as e:
+        print(f"  [brand-tint-surface-live] 실패 (무시하고 계속): {e}")
+
     print("\n[규칙] 흰 카드 border 라이브 강제 (batch_build stroke 무시 버그 우회) 적용 중...")
     try:
         _enforce_white_card_border_live(root_node_id)
