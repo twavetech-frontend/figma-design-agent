@@ -3128,17 +3128,17 @@ def _enforce_color_restraint(blueprint: dict) -> None:
             walk(child)
 
     walk(blueprint)
-    print(f"[색상] 브랜드 액센트 {counts['brand']}곳 · Aqua 보조 액센트 "
-          f"{counts['aqua']}곳 · 상태 컬러 {counts['feedback']}곳")
+    print(f"[색상] 브랜드 액센트 {counts['brand']}곳 · Aqua {counts['aqua']}곳 · "
+          f"상태 컬러 {counts['feedback']}곳")
     if counts["brand"] == 0:
         print("  ⚠️  브랜드 액센트 0곳 — 완전 무채색은 와이어프레임처럼 보임. "
               "주 액션·active 등에 브랜드 컬러를 단일 액센트로 줄 것.")
-    # 2026-06-02 사용자 룰: 브랜드 단일 액센트만 쓰면 화면 컬러감이 단조로움.
-    # 보조 액센트로 Aqua(Colors/Aqua/*) 를 의도된 지점에 절제 사용할 것.
-    if counts["brand"] >= 3 and counts["aqua"] == 0:
-        print("  ⚠️  Aqua 보조 액센트 0곳 — 브랜드 단색만 쓰면 단조롭다(사용자 룰 2026-06-02). "
-              "보조 아이콘/틴트/정보 하이라이트 등 의도된 지점에 Aqua "
-              "($token(utility-aqua-500) · 틴트 utility-aqua-50·100 · 텍스트 utility-aqua-700) 를 절제 사용할 것.")
+    # 🔴 2026-06-05 사용자 룰 (정책 재반전): "이젠 아쿠아 컬러 사용을 자제하도록".
+    # 2026-06-02 의 'Aqua 보조 액센트 권장' 을 폐기 — 이제 Aqua 사용 시 자제 권고.
+    if counts["aqua"] > 0:
+        print(f"  ⚠️  Aqua {counts['aqua']}곳 사용 — 사용자 룰(2026-06-05): Aqua 컬러 사용을 자제할 것. "
+              "브랜드 퍼플(주 액센트) + 상태색(진짜 상태에만) 위주로, Aqua 는 꼭 필요한 경우가 아니면 "
+              "중립(bg-secondary/text-secondary) 또는 brand tint(bg-brand-secondary/text-brand-primary)로 대체.")
     if counts["feedback"] > 8:
         print(f"  ⚠️  상태 컬러 {counts['feedback']}곳 — 진짜 상태 정보(미납·완료 등)에만 "
               "절제 사용할 것. 장식·태그·통계 전반에 색을 까는 건 금지.")
@@ -6131,6 +6131,100 @@ def _enforce_consecutive_cta_hierarchy(root_id: str, blueprint: Optional[dict] =
     return n
 
 
+def _enforce_horizontal_repeated_cta_tertiary(root_id: str) -> int:
+    """🔴 수평 연속 동일 성격 CTA → Tertiary (2026-06-05 사용자: "fab 버튼도 있는 화면에서
+    수평으로 연속된 버튼 같은 경우는 성격까지 같다면 버튼 위계를 tertiary 로 설정").
+
+    캐로셀 등에서 가로로 나열된 DS Action Button 이 2개 이상이고 **라벨(성격)이 동일**하면
+    (예: 추천 카드 2장의 '참여하기' × 2) 위계 경쟁이 무의미 + brand 과다(FAB 가 이미 화면의
+    brand 주 액션)이므로 전부 **Tertiary**(폴백 Outline→Secondary)로 다운그레이드한다.
+    FAB 가 있는 화면에만 적용(brand 강조점이 이미 있다는 전제 — 사용자 명시 "fab 도 있는 화면").
+    '수평/같은 행' = 같은 라벨 CTA 들의 top 편차 < 40px 이고 x 는 서로 다름(겹침 아님).
+    세로 규칙 `_enforce_consecutive_cta_hierarchy`(전폭 width≥250)와 대상이 갈린다 —
+    캐로셀 카드 CTA 는 폭<250 이라 세로 규칙은 건드리지 않음.
+    """
+    cta = []
+    has_fab = [False]
+
+    def _walk(node):
+        if not isinstance(node, dict):
+            return
+        ntype = (node.get("type") or "").upper()
+        name = node.get("name") or ""
+        nl = name.lower()
+        if "fab" in nl:
+            has_fab[0] = True
+        is_btn = ntype == "INSTANCE" and ("action button" in nl or nl == "button"
+                                          or nl.endswith(" button") or nl.endswith(" btn")
+                                          or nl.endswith(" cta") or "cta" in nl)
+        if is_btn:
+            bb = node.get("absoluteBoundingBox") or {}
+            x, y = bb.get("x"), bb.get("y")
+            label, hier = "", None
+            try:
+                props = parse_content(call_tool("get_instance_properties", {"nodeId": node["id"]})).get("json") or {}
+                for pn, pi in (props.get("properties") or {}).items():
+                    if not isinstance(pi, dict):
+                        continue
+                    pl = pn.lower()
+                    if pl == "hierarchy":
+                        hier = str(pi.get("value"))
+                    elif pl.startswith("label"):
+                        label = str(pi.get("value") or "")
+            except Exception:
+                pass
+            if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+                cta.append({"id": node["id"], "name": name, "label": label.strip(),
+                            "x": x, "top": y, "hier": hier})
+        for c in node.get("children", []) or []:
+            _walk(c)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            _walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [cta-horiz-tertiary] root fetch fail: {e}")
+        return 0
+
+    if not has_fab[0]:
+        return 0  # FAB(brand 주 액션) 있는 화면에만 적용
+
+    by_label = {}
+    for c in cta:
+        if c["label"]:
+            by_label.setdefault(c["label"], []).append(c)
+
+    def _flip_tertiary(nid):
+        for opt in ("Tertiary", "Outline", "Secondary"):
+            try:
+                call_tool("set_instance_properties", {"nodeId": nid, "properties": {"Hierarchy": opt}})
+                return opt
+            except Exception:
+                continue
+        return None
+
+    n = 0
+    for lbl, group in by_label.items():
+        if len(group) < 2:
+            continue
+        if (max(c["top"] for c in group) - min(c["top"] for c in group)) >= 40:
+            continue  # 같은 행 아님 (세로로 떨어진 동일 라벨 — 수평 반복 아님)
+        xs = sorted(c["x"] for c in group)
+        if xs[-1] - xs[0] < 20:
+            continue  # x 가 거의 같음 — 겹침/단일, 수평 나열 아님
+        for c in group:
+            if (c["hier"] or "").lower() == "tertiary":
+                continue
+            opt = _flip_tertiary(c["id"])
+            if opt:
+                print(f"  [cta-horiz-tertiary] '{c['name']}' ({lbl}) → {opt} (수평 반복 동일 성격 CTA)")
+                n += 1
+    if n:
+        print(f"  [cta-horiz-tertiary] ✓ 수평 반복 동일 성격 CTA {n}건 → Tertiary (FAB 화면)")
+    return n
+
+
 def _collect_instance_text_paths(blueprint: Optional[dict]) -> dict:
     """inject 된 blueprint 에서 {이름 경로 tuple: _instanceText} 맵 수집.
     R23 가 swap 한 instance 노드의 원래 텍스트(_instanceText)를 빌드 후 적용하기 위함."""
@@ -8091,6 +8185,16 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
             print("  [cta-hierarchy] OK — 연속 Primary CTA 없음")
     except Exception as e:
         print(f"  [cta-hierarchy] 실패 (무시): {e}")
+
+    # 🔴 2026-06-05 사용자 룰: "fab 버튼도 있는 화면에서 수평으로 연속된 버튼 같은 경우는
+    #    성격까지 같다면 버튼 위계를 tertiary 로". 캐로셀 반복 동일 라벨 CTA → Tertiary.
+    print("\n[규칙] 수평 반복 동일 성격 CTA 위계 (Tertiary) 적용 중...")
+    try:
+        n_ht = _enforce_horizontal_repeated_cta_tertiary(root_node_id)
+        if not n_ht:
+            print("  [cta-horiz-tertiary] OK — 수평 반복 동일 CTA 없음(또는 FAB 없는 화면)")
+    except Exception as e:
+        print(f"  [cta-horiz-tertiary] 실패 (무시): {e}")
 
     # ⚠️ 시스템 규칙 (2026-06-04 사용자 "프레임 안 텍스트 위아래 딱 붙으면 안 된다"):
     # 라운드 필 박스 안 라벨+값 텍스트가 세로 패딩 0 으로 모서리에 밀착하는 것 차단.

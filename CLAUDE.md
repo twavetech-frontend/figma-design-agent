@@ -698,48 +698,36 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **베이스는 뉴트럴 그레이** — `bg-/fg-/border-` 그레이 계열 중심이되, 완전 무채색 평면은 금지.
 - **Why**: 회사가 "브랜드/피드백 컬러 난무"를 거부 → 절제. 그러나 완전 그레이톤 + 버튼 1개는 "와이어프레임 같다"고 재피드백 (2026-05-23). 적정선 = 절제된 단일 액센트 + 상태 컬러 소량 + 입체감 폴리시.
 
-### 2-J. ⚠️ Aqua 보조 액센트 — 브랜드 단색 단조로움 방지 (2026-06-02 사용자 룰)
-> 사용자 명시: *"현재 포인트 컬러로 브랜드 컬러만 쓰고 있는데, 그로인해 생성된 디자인
-> 화면들의 컬러감이 너무 단조로워서 보조 컬러로 Utility / Aqua 컬러를 사용하도록 추가."*
+### 2-J. ⚠️ Aqua 컬러 사용 자제 (2026-06-05 정책 재반전)
+> 🔴 사용자 명시 (2026-06-05): *"전에 아쿠아 컬러 사용하라고 했었는데 이젠 아쿠아 컬러 사용을
+> 자제하도록 규칙과 코드 수정해."* → 2026-06-02 의 **"Aqua 보조 액센트 권장"을 폐기**한다.
+> 이제 **Aqua 컬러 사용을 자제**한다.
 >
-> ⚠️ **정책 반전**: 2026-05-05엔 사용자가 "aqua 쓰지마라"라고 했었으나 **2026-06-02
-> 뒤집음**. 이제 Aqua는 **승인된 보조 액센트**다. (옛 R26 "aqua 차단"은 폐기됨.)
+> ⚠️ **정책 이력 (3번 반전):** 2026-05-05 "aqua 쓰지마"(차단) → 2026-06-02 "Aqua 보조 액센트
+> 권장"(반전) → **2026-06-05 "Aqua 자제"(재반전, 현재)**.
 >
-> - **브랜드 퍼플 = 주 액센트** (그대로): 주 액션(CTA)·active 탭/네비·핵심 hero 수치.
-> - **Aqua = 보조 액센트**: 브랜드 단색만 깔면 화면이 단조로우니, **의도된 지점에 Aqua를
->   절제 사용**해 컬러 리듬을 만든다 —
->   - 보조 아이콘 + 그 틴트 원형 (예: 한 쌍의 카드 중 하나를 Aqua로 차등화)
->   - 정보/팁 하이라이트, 보조 통계 강조, 보조 인디케이터·도트·작은 바
->   - **보조 금융 정보 텍스트** — 예: 스테이지 카드의 "총 이자 비용/수익 N원" (주 금액은
->     dark/brand, 이 보조 라인은 `utility-aqua-700`로 차등화). 2026-06-02 사용자 명시 적정 사례.
-> - 단, **"여러 색 난무"는 여전히 금지** — Aqua는 *하나의 보조* 액센트일 뿐 모든
->   카드·태그·통계에 무분별하게 깔지 않는다. 상태 컬러(success/warning/error)는 진짜 상태에만.
->
-> **토큰 (DS semantic — 2026-06-02 사용자 명명 `utility-aqua-*`):**
-> | 용도 | 토큰 | hex |
-> |------|------|-----|
-> | solid / 아이콘 | `$token(utility-aqua-500)` | #00c6d4 |
-> | 텍스트 대비(진한 면) | `$token(utility-aqua-600)` | #009eaa |
-> | 흰 배경 위 텍스트 | `$token(utility-aqua-700)` | #007b84 |
-> | 연한 틴트 배경 | `$token(utility-aqua-50)` · `utility-aqua-100` | #eaf9fb · #d9f5f8 |
->
-> figmaPath는 `Component colors/Utility/Aqua/utility-aqua-{N}`. 토큰 export에 아직
-> 반영 안 됐어도 `_normalize_aqua_token`이 **동일 값 primitive `Colors/Aqua/{N}`로 폴백**해
-> 해석·변수 바인딩 모두 동작한다. primitive `$token(Colors/Aqua/{N})` 직접 사용도 가능.
-> ⚠️ `utility-blue-*`(aqua 없는 이름)는 **파랑**이다 — Aqua가 아니므로 보조 액센트로 쓰지 말 것.
+> - **주 액센트 = 브랜드 퍼플** (그대로): 주 액션(CTA)·active 탭/네비·핵심 hero 수치·진행바.
+> - **상태색 = 진짜 상태에만** 소량: success(완료/곧 수령)·warning(미납/D-day)·error(연체).
+> - **Aqua 는 자제** — 꼭 필요한 특수 케이스가 아니면 쓰지 않는다. 단조로움이 우려되면 Aqua
+>   대신 **중립(`bg-secondary`/`bg-tertiary`/`text-secondary`)** 으로 카드·섹션을 차별화하거나
+>   **brand tint(`bg-brand-secondary`/`text-brand-primary`)** 를 절제 사용한다. 🔴 **인접 섹션
+>   시각 언어 차별화(0-N)는 색이 아니라 레이아웃·구조로도 한다** — 굳이 Aqua 같은 별도 색을
+>   끌어오지 말 것.
+> - **"여러 색 난무" 금지** 는 그대로.
 >
 > **시스템 강제 (코드 박힘):**
-> 1. `scripts/design_rules/R26_second_accent.py` — **L2 lint advisory**: 브랜드 액센트가
->    충분한데(≥4) Aqua 보조 액센트가 0곳이면 WARN("단조로움 — Aqua 보조 액센트 추가 권장").
->    차단 안 함(색 적용은 디자인 판단 — Claude가 blueprint 저작 시 적용).
-> 2. `figma_mcp_client.py _enforce_color_restraint` — 빌드 로그에 `[색상] 브랜드 N곳 ·
->    Aqua 보조 N곳 · 상태 N곳` 집계 출력 + 브랜드≥3·Aqua=0이면 단조로움 경고.
-> 3. `figma_mcp_client.py _normalize_aqua_token` — `utility-aqua-*` / `aqua-*` /
->    `Component colors/Utility/Aqua/...` 를 모두 올바른 Aqua로 해석·바인딩(Blue 충돌 방지).
-> 4. `scripts/design_rules/schema.py` — `aqua` 명시 토큰은 primitive-prefix ban 예외.
+> 1. `scripts/design_rules/R26_second_accent.py` (rule_id `R26-aqua-restraint`) — **L2 lint
+>    advisory**: Aqua 토큰이 화면에 쓰이면 WARN("Aqua 자제 — 중립/brand tint 로 대체"). 차단은
+>    안 함(자제이지 완전 금지는 아님).
+> 2. `figma_mcp_client.py _enforce_color_restraint` — 빌드 로그 `[색상]` 에 Aqua N곳 집계 +
+>    N>0 이면 자제 권고 출력. (구: Aqua=0 단조 경고 → **폐기**.)
+> 3. `figma_mcp_client.py _normalize_aqua_token` — **유지**. Aqua 를 정말 써야 할 특수 케이스
+>    에서 올바른 색으로 해석·바인딩하기 위함(`utility-blue`=파랑 오염 방지). Aqua 토큰 자체가
+>    죽은 건 아니다 — 자제할 뿐.
+> 4. `scripts/design_rules/schema.py` — `aqua` 명시 토큰의 primitive-prefix ban 예외도 유지.
 >
-> **빌드 후 검증:** 빌드 로그의 `[색상]` 라인에 Aqua 보조 액센트가 잡히는지 + 스크린샷에서
-> 브랜드 퍼플 외 Aqua가 보조 지점에 절제되어 들어갔는지 확인.
+> **빌드 후 검증:** 빌드 로그 `[색상]` 에 Aqua 가 **0곳이거나 최소**인지 + 스크린샷에 청록색이
+> 거의 없는지(브랜드 퍼플 + 상태색 + 중립 위주) 확인.
 
 ### 2-B. ⚠️ 카드 표면 — bg-primary + 보더 (root 위 카드, 2026-05-23 룰 / 2026-06-02 보더색 갱신)
 - **루트 위 최상위 카드의 표면 = `$token(bg-primary)` fill + 보더 1px** — `bg-secondary`(회색)로 채우지 말 것. 흰 카드를 보더로 정의한다.
@@ -875,6 +863,29 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > 적용 성공. 스크린샷에서 **맥락상 더 중요한 CTA 가 채움(Primary), 덜 중요한 것이 테두리(Outline)**
 > 인지 확인. 🔴 **새 화면 작성 시 연속 전폭 CTA 가 생기면 Claude 가 반드시 더 중요한 쪽에
 > `_ctaKeepPrimary` 를 명시**한다(휴리스틱·맨아래 폴백에 의존하지 말 것).
+
+> 🔴 **2-G-5. ⚠️ 수평 연속 동일 성격 CTA = Tertiary (FAB 있는 화면, 2026-06-05 사용자 룰)**
+>
+> 사용자 명시: *"fab 버튼도 있는 화면에서 수평으로 연속된 버튼 같은 경우는 성격까지 같다면
+> 버튼 위계를 tertiary 로 설정되게 규칙 추가하고 코드에 박아."*
+>
+> 캐로셀 등에서 **가로로 나열된 DS Action Button 이 2개 이상 + 라벨(성격)이 동일**하면(예:
+> 추천 카드 2장의 "참여하기" × 2) 위계 경쟁이 무의미하고, FAB(brand 주 액션)가 이미 화면의
+> brand 강조점이라 **brand 과다**가 된다 → 그 CTA 들을 전부 **Tertiary**(폴백 Outline→Secondary)로
+> 자동 다운그레이드한다. **FAB 가 있는 화면에만** 적용(brand 강조점이 이미 있다는 전제).
+>
+> **세로 규칙(2-G-4)과 구분:** 2-G-4 는 전폭(width≥250) 세로 연속 CTA 의 위계 차등(주 액션 1개만
+> Primary). 2-G-5 는 캐로셀 카드 안 **수평 반복 동일 라벨** CTA(폭<250 라 2-G-4 대상 아님)를 전부
+> Tertiary. 두 규칙은 대상이 갈려 충돌 없음.
+>
+> **시스템 강제 (코드 박힘, 자동):** `figma_mcp_client._enforce_horizontal_repeated_cta_tertiary(root_id)`
+> — cmd_post_fix chain 의 `_enforce_consecutive_cta_hierarchy`(세로) 직후. 같은 라벨(`Label#` prop)
+> CTA 들의 top 편차 < 40px(같은 행) + x 가 서로 다름 → 수평 반복으로 보고 Tertiary flip. FAB(이름에
+> 'fab') 없는 화면은 skip.
+>
+> **빌드 후 검증:** 빌드 로그 `[cta-horiz-tertiary] '<name>' (<라벨>) → Tertiary` 라인 확인.
+> 스크린샷에서 캐로셀 반복 CTA 가 채움(Primary)이 아니라 약한 위계(Tertiary)이고 FAB 만 brand
+> 강조점인지 확인.
 
 ### 2-I. ⚠️ 폼 컨트롤(체크박스/토글/라디오/인풋)은 DS 컴포넌트 인스턴스 — raw frame 금지 (2026-05-28 사용자 분노)
 - **체크박스를 raw 원형/사각 frame + check 아이콘으로 그리지 말 것.** DS 컴포넌트 인스턴스 사용:

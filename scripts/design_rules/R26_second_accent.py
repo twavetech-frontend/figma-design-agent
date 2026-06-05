@@ -69,33 +69,30 @@ def _scan_token_refs(obj, depth: int = 0):
 
 
 def _check(bp: dict, ctx: dict) -> Iterable[Violation]:
-    brand = 0
+    # 🔴 2026-06-05 정책 재반전 (사용자: "전에 아쿠아 컬러 사용하라고 했었는데 이젠 아쿠아
+    #    컬러 사용을 자제하도록"): Aqua 권장 폐기 → Aqua 사용 자제. 사용 시 advisory 로
+    #    중립/brand tint 대체를 권고한다(완전 차단은 아님 — '자제').
     aqua = 0
     for node, _path in walk_blueprint(bp):
         scan_target = {k: v for k, v in node.items() if k != "children"}
         for tok in _scan_token_refs(scan_target):
-            tl = tok.lower()
-            if "aqua" in tl:
+            if "aqua" in tok.lower():
                 aqua += 1
-            elif "brand" in tl:
-                brand += 1
-
-    # 브랜드 액센트가 충분한데 보조 액센트(Aqua)가 전무 → 단조로움 advisory
-    if brand >= 4 and aqua == 0:
+    if aqua > 0:
         yield Violation(
-            "R26-monotone-no-aqua", Severity.WARN, "root",
-            "브랜드 단색 액센트만 사용 — 컬러감이 단조롭다(사용자 룰 2026-06-02). "
-            "보조 아이콘/틴트/정보 하이라이트 등 의도된 지점에 Aqua 보조 액센트를 절제 추가: "
-            "solid `$token(utility-aqua-500)` · 틴트 `$token(utility-aqua-50|100)` · "
-            "텍스트 `$token(utility-aqua-700)`.",
+            "R26-aqua-restraint", Severity.WARN, "root",
+            f"Aqua {aqua}곳 사용 — 2026-06-05 사용자 룰: Aqua 컬러 사용을 자제한다. "
+            "주 액센트 브랜드 퍼플 + 상태색(success/warning/error, 진짜 상태에만) 위주로 구성하고, "
+            "Aqua 는 꼭 필요한 경우가 아니면 중립(bg-secondary/text-secondary 등) 또는 brand tint "
+            "(bg-brand-secondary/text-brand-primary)로 대체할 것.",
             Phase.LINT,
         )
 
 
 register(Rule(
-    rule_id="R26-second-accent-aqua",
-    title="Aqua 보조 액센트 권장 (브랜드 단색 단조로움 방지)",
-    description="브랜드=주 액센트, Aqua=보조 액센트. 브랜드만 쓰면 단조 → Aqua advisory. "
-                "(2026-06-02 정책 반전 — 이전 aqua 차단 폐기)",
+    rule_id="R26-aqua-restraint",
+    title="Aqua 보조 액센트 자제 (2026-06-05 정책 재반전)",
+    description="브랜드 퍼플=주 액센트, 상태색=진짜 상태에만. Aqua 는 자제 — 사용 시 중립/brand "
+                "tint 대체 advisory. (2026-06-02 'Aqua 권장' → 2026-06-05 '자제' 재반전)",
     check_blueprint_fn=_check,
 ))
