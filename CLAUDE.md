@@ -843,6 +843,39 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > - blueprint 작성 시 NavBar 우측에 "공유" 같은 액션은 처음부터 `{"type":"icon","iconName":"share-07"}`
 >   로 써도 되고, 텍스트로 써도 R62 가 자동 교체한다. 새 액션 라벨은 `_ACTION_ICON` 맵에 추가.
 
+> 🔴 **2-G-4. ⚠️ 연속된 전폭 CTA 는 위계 차등 — 덜 중요한 것은 Outline/Tertiary (2026-06-05 사용자 룰)**
+>
+> 사용자 명시: *"CTA 버튼이 위 아래 연속적으로 있을땐 좀 더 덜 중요한 버튼의 위계를 tertiary 나
+> outline 으로 설정하도록 규칙 추가하고 코드에 박아."*
+>
+> 세로로 인접한 전폭 DS Action Button **Primary** 인스턴스가 2개 이상이면 한 화면에 같은 강조색
+> CTA 가 위계 없이 경쟁한다(예: 월렛 "목돈 출금하기" 바로 아래 납입 "지금 납입하기" 둘 다 보라).
+> → **화면 맥락상 더 중요한 액션 1개만 Primary 로 두고 나머지를 `Outline`(실패 시 Tertiary→
+> Secondary 폴백)으로 자동 다운그레이드**한다.
+>
+> 🔴 **어느 게 더 중요한가 = 맥락 판단 (2026-06-05 사용자: "화면상에서 맥락을 고려해 더 중요한
+> 액션은 primary 로"):** 코드가 의미를 완벽히 알 순 없으므로 **3단 우선순위**로 keeper(=Primary
+> 유지) 를 정한다:
+> 1. **blueprint `_ctaKeepPrimary: true` 마커 (최우선·원칙)** — 🔴 Claude 가 blueprint 작성 시
+>    화면 맥락(어느 액션이 더 긴급·의무·핵심인가)을 판단해 더 중요한 CTA 에 직접 박는다. 예:
+>    D-1 납입(의무·놓치면 미납/i-CSS 하락) > 월렛 출금(선택) → 납입에 마커.
+> 2. **라벨 의미 휴리스틱** — 마커 없으면 라벨로 추론: '주 액션' 동사(납입/결제/제출/참여/신청/
+>    확인/시작/완료/동의/송금/주문/가입…)가 '보조'(출금/취소/나중에/더보기/공유/저장/닫기…)보다
+>    우선. 그룹 일부만 주 액션이면 그것을 Primary 유지.
+> 3. **맨 아래 폴백** — 둘 다 판단 불가(모두 주 액션 / 모두 중립)일 때만 맨 아래(엄지 영역) 유지.
+>
+> **시스템 강제 (코드 박힘, 자동):** `figma_mcp_client._enforce_consecutive_cta_hierarchy(root_id, bp)`
+> — cmd_post_fix chain 의 **multicol-fill *뒤*** 에 실행(button-sizing 직후엔 set_layout_sizing(FILL)
+> 리렌더 전이라 전폭 width 가 stale → 못 잡음. 모든 width/sizing 강제가 끝난 뒤라야 신뢰성 있음).
+> 전폭 = absoluteBoundingBox width ≥ 250. '연속' = 두 전폭 Primary CTA 사이 세로 간격 < 320px
+> (카드 1개 경계 정도). 멀리 떨어진(스크롤상 다른 맥락) CTA·캐로셀 카드 안 CTA(폭 < 250) 는 제외.
+> 라벨은 인스턴스의 `Label#…` prop 에서 읽는다.
+>
+> **빌드 후 검증:** 빌드 로그에 `[cta-hierarchy] '<name>' Primary → Outline` 라인이 보이면 자동
+> 적용 성공. 스크린샷에서 **맥락상 더 중요한 CTA 가 채움(Primary), 덜 중요한 것이 테두리(Outline)**
+> 인지 확인. 🔴 **새 화면 작성 시 연속 전폭 CTA 가 생기면 Claude 가 반드시 더 중요한 쪽에
+> `_ctaKeepPrimary` 를 명시**한다(휴리스틱·맨아래 폴백에 의존하지 말 것).
+
 ### 2-I. ⚠️ 폼 컨트롤(체크박스/토글/라디오/인풋)은 DS 컴포넌트 인스턴스 — raw frame 금지 (2026-05-28 사용자 분노)
 - **체크박스를 raw 원형/사각 frame + check 아이콘으로 그리지 말 것.** DS 컴포넌트 인스턴스 사용:
   - `Checkbox md` (`bbd5c20958464e51295e73c3c90ef7d54c0b0b69`, 20×20, unchecked) / `Checkbox md checked` (`73691ec35c62c70735d61722347dfd995b32c5ec`)

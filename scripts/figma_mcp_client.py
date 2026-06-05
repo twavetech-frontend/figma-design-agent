@@ -5988,6 +5988,149 @@ def _enforce_ds_button_sizing(root_id: str, label_map: Optional[dict] = None) ->
     return fixed[0]
 
 
+def _enforce_consecutive_cta_hierarchy(root_id: str, blueprint: Optional[dict] = None) -> int:
+    """🔴 연속 전폭 CTA 위계 차등 (2026-06-05 사용자: "CTA 버튼이 위 아래 연속적으로 있을땐
+    좀 더 덜 중요한 버튼의 위계를 tertiary 나 outline 으로 설정").
+
+    세로로 인접한 전폭 DS Action Button 'Primary' 인스턴스가 2개 이상이면 한 화면에 같은
+    강조색 CTA 가 위계 없이 경쟁한다 → **맨 아래(주 액션·엄지 영역) 1개만 Primary 로 두고
+    위쪽들을 'Outline' 으로 자동 다운그레이드**(set_instance_properties Hierarchy). blueprint
+    CTA 에 `_ctaKeepPrimary: true` 마커가 있으면 그 버튼(들)을 Primary 로 유지하고 같은 그룹의
+    나머지를 Outline 으로 내린다.
+
+    '연속' = 두 전폭 Primary CTA 사이 세로 간격이 GAP(320px, 카드 1개 경계 정도) 미만.
+    멀리 떨어진(스크롤상 다른 맥락) CTA 는 건드리지 않는다. Outline flip 실패 시 Tertiary→
+    Secondary 로 폴백(variant set 마다 Hierarchy 옵션이 다를 수 있어). 라이브 후처리 —
+    button sizing/variant flip *이후* 에 돌아 Primary 로 확정된 CTA 만 대상.
+    """
+    GAP = 320
+    keep_names = set()
+
+    def _ck(node):
+        if not isinstance(node, dict):
+            return
+        if node.get("_ctaKeepPrimary") and node.get("name"):
+            keep_names.add(node["name"])
+        for c in (node.get("children") or node.get("_originalChildren") or []):
+            _ck(c)
+    if blueprint:
+        _ck(blueprint.get("root") or blueprint)
+
+    cta = []
+
+    def _walk(node):
+        if not isinstance(node, dict):
+            return
+        ntype = (node.get("type") or "").upper()
+        name = node.get("name") or ""
+        nl = name.lower()
+        is_btn = ntype == "INSTANCE" and ("action button" in nl or nl == "button"
+                                          or nl.endswith(" button") or nl.endswith(" btn")
+                                          or nl.endswith(" cta") or "cta" in nl)
+        if is_btn:
+            w, h = _node_wh(node)
+            bb = node.get("absoluteBoundingBox") or {}
+            y = bb.get("y")
+            if w and w >= 250 and isinstance(y, (int, float)):  # 전폭 CTA 만
+                hier = None
+                label = ""
+                try:
+                    props = parse_content(call_tool("get_instance_properties", {"nodeId": node["id"]})).get("json") or {}
+                    for pn, pi in (props.get("properties") or {}).items():
+                        if not isinstance(pi, dict):
+                            continue
+                        pl = pn.lower()
+                        if pl == "hierarchy":
+                            hier = str(pi.get("value"))
+                        elif pl.startswith("label"):  # 'Label#17537:16' 등 — CTA 문구
+                            label = str(pi.get("value") or "")
+                except Exception:
+                    pass
+                cta.append({"id": node["id"], "name": name, "top": y, "bottom": y + (h or 0), "hier": hier, "label": label})
+        for c in node.get("children", []) or []:
+            _walk(c)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            _walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [cta-hierarchy] root fetch fail: {e}")
+        return 0
+
+    prim = sorted([c for c in cta if (c["hier"] or "").lower() == "primary"], key=lambda c: c["top"])
+    if len(prim) < 2:
+        return 0
+
+    # 연속 그룹핑 (세로 간격 < GAP)
+    groups, cur = [], []
+    for c in prim:
+        if cur and (c["top"] - cur[-1]["bottom"]) < GAP:
+            cur.append(c)
+        else:
+            if cur:
+                groups.append(cur)
+            cur = [c]
+    if cur:
+        groups.append(cur)
+
+    def _flip_outline(nid):
+        for opt in ("Outline", "Tertiary", "Secondary"):
+            try:
+                call_tool("set_instance_properties", {"nodeId": nid, "properties": {"Hierarchy": opt}})
+                return opt
+            except Exception:
+                continue
+        return None
+
+    # 🔴 2026-06-05 사용자: "화면상에서 맥락을 고려해 더 중요한 액션을 primary 로". 어느 CTA 가
+    #    더 중요한지는 의미 판단이라 코드가 완벽히 알 순 없다 → 3단 우선순위:
+    #      1) blueprint `_ctaKeepPrimary` 마커 (Claude 가 맥락 판단으로 명시 — 최우선/원칙)
+    #      2) 라벨 의미 휴리스틱 — '주 액션' 동사(납입/참여/확인/제출 등)가 '보조'(출금/취소/
+    #         나중에 등)보다 우선. 그룹 일부만 주 액션이면 그것을 Primary 유지.
+    #      3) 둘 다 판단 불가(모두 주 액션 / 모두 중립)면 맨 아래(엄지 영역) 폴백.
+    _PRIMARY_ACTION_HINT = ("납입", "결제", "제출", "참여", "신청", "확인", "시작", "다음",
+                            "완료", "동의", "송금", "이체", "보내기", "주문", "등록", "예약",
+                            "가입", "인증", "충전하기")
+    _SECONDARY_ACTION_HINT = ("출금", "취소", "나중", "더보기", "공유", "저장", "닫기",
+                              "건너", "임시", "삭제", "뒤로", "이전")
+
+    def _action_weight(lbl):
+        s = lbl or ""
+        if any(h in s for h in _SECONDARY_ACTION_HINT):
+            return -1
+        if any(h in s for h in _PRIMARY_ACTION_HINT):
+            return 1
+        return 0
+
+    n = 0
+    for g in groups:
+        if len(g) < 2:
+            continue
+        g = sorted(g, key=lambda c: c["top"])
+        marked = [c for c in g if c["name"] in keep_names]
+        if marked:
+            keeper_ids = {c["id"] for c in marked}  # 1) Claude 맥락 마커 (최우선)
+        else:
+            weights = [(_action_weight(c.get("label")), c) for c in g]
+            top_w = max(w for w, _ in weights)
+            best = [c for w, c in weights if w == top_w]
+            if top_w > min(w for w, _ in weights):  # 2) 의미 차등 — 가장 중요한 액션만 Primary
+                keeper_ids = {sorted(best, key=lambda c: c["top"])[-1]["id"]}
+            else:                                    # 3) 동률 → 맨 아래 폴백
+                keeper_ids = {g[-1]["id"]}
+        for c in g:
+            if c["id"] in keeper_ids:
+                continue
+            opt = _flip_outline(c["id"])
+            if opt:
+                print(f"  [cta-hierarchy] '{c['name']}' Primary → {opt} (연속 CTA 위계 차등)")
+                n += 1
+    if n:
+        print(f"  [cta-hierarchy] ✓ 연속 전폭 Primary CTA {n}건 다운그레이드 (주 액션만 Primary 유지)")
+    return n
+
+
 def _collect_instance_text_paths(blueprint: Optional[dict]) -> dict:
     """inject 된 blueprint 에서 {이름 경로 tuple: _instanceText} 맵 수집.
     R23 가 swap 한 instance 노드의 원래 텍스트(_instanceText)를 빌드 후 적용하기 위함."""
@@ -7935,6 +8078,19 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_multicol_fill_live(root_node_id)
     except Exception as e:
         print(f"  [multicol-fill] 실패 (무시): {e}")
+
+    # 🔴 2026-06-05 사용자 룰: "CTA 버튼이 위 아래 연속적으로 있을땐 좀 더 덜 중요한 버튼의
+    #    위계를 tertiary 나 outline 으로". 세로로 인접한 전폭 Primary CTA 위계 차등.
+    #    ⚠️ 모든 width/sizing 강제(button-sizing·action-bar·multicol-fill) *뒤* 에 실행 —
+    #    button-sizing 직후엔 set_layout_sizing(FILL) 리렌더 전이라 전폭 width 가 stale 해
+    #    연속 CTA 를 못 잡는다(직접 호출은 잡힘). 트리 안정 후라야 신뢰성 있음.
+    print("\n[규칙] 연속 전폭 CTA 위계 차등 (덜 중요한 Primary → Outline) 중...")
+    try:
+        n_cta = _enforce_consecutive_cta_hierarchy(root_node_id, injected_blueprint or original_blueprint)
+        if not n_cta:
+            print("  [cta-hierarchy] OK — 연속 Primary CTA 없음")
+    except Exception as e:
+        print(f"  [cta-hierarchy] 실패 (무시): {e}")
 
     # ⚠️ 시스템 규칙 (2026-06-04 사용자 "프레임 안 텍스트 위아래 딱 붙으면 안 된다"):
     # 라운드 필 박스 안 라벨+값 텍스트가 세로 패딩 0 으로 모서리에 밀착하는 것 차단.
