@@ -11278,7 +11278,8 @@ def _enforce_no_large_brand_fill(blueprint: dict) -> None:
         if not isinstance(node, dict):
             return
         ntype = node.get("type")
-        if ntype in (None, "frame", "FRAME"):
+        # _band:true (중요 섹션 풀폭 밴드, 규칙 13) 는 의도된 brand tint 면 — 스트립 예외
+        if ntype in (None, "frame", "FRAME") and node.get("_band") is not True:
             fill = node.get("fill") or ""
             if isinstance(fill, str) and any(p in fill for p in BRAND_FILL_PARTS):
                 if is_large_container(node):

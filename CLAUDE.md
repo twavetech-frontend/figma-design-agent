@@ -1208,7 +1208,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **패턴 (홈 등 모든 화면 기본):**
   - **중요/강조 섹션**(시작 유도, 추천 스테이지, 핵심 현황 등)은 좌우 padding 있는 `Content`
     프레임 **안 흰 카드로 두지 말고**, **root.children 직계에 별도 프레임**으로 분리해 **좌우 끝까지
-    풀폭(FILL) + 배경 fill(bg-secondary, 또는 brand tint=bg-brand-primary)** 을 넣는다.
+    풀폭(FILL) + 배경 fill(bg-secondary)** 을 넣는다. ⚠️ **brand tint(bg-brand-primary)는 절대규칙 2-H(큰 면적 brand fill 금지)가 벗겨서 흰색이 되므로 밴드 배경엔 쓰지 말 것 — bg-secondary 사용.**
   - **보조 섹션**(이용한도, 출석/친구 등)은 `Content`(좌우 padding 20) 안 **흰 카드(bg-primary +
     border)** 로 유지.
   - 결과: 흰 배경 위에 중요 섹션만 풀폭 컬러 밴드로 떠서 위계가 분명해진다(2시간 전 '전부 흰 카드'
@@ -1217,7 +1217,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   마커를 박는다.
 - **시스템 강제 (코드 박힘):** `_enforce_section_band(blueprint)` (cmd_build pre-process,
   no-large-brand-fill 직후) — `_band:true` 노드를 **fill 없으면 bg-secondary, layoutSizingHorizontal
-  =FILL, autoLayout 상/하 24·좌우 20, 보더 제거** 로 표준화(fill 명시 시 존중). 이후 `_bind_spacing_tokens_live`
+  =FILL, autoLayout 상/하 24·좌우 20, 보더 제거** 로 표준화(fill 명시 시 존중). `_band` 노드는 no-large-brand-fill 스트립에서 예외(brand tint 면 보호) — 단 라이브 strip 은 _band 를 못 봐 bg-secondary 권장. 이후 `_bind_spacing_tokens_live`
   가 24→spacing-3xl 바인딩, `_enforce_section_bg_gap_padding`/`_enforce_indicator_symmetric_gap` 가 경계 여백 정리.
   ⚠️ 풀폭이 되려면 반드시 **Content 밖 root 직계**에 둬야 함(content 안에 두면 좌우 padding 에 갇혀 인셋됨).
 - **빌드 후 검증:** 빌드 로그 `[규칙] 풀폭 밴드 섹션 표준화 N건` + 스크린샷에서 중요 섹션이 좌우
