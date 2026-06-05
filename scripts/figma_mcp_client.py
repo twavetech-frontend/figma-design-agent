@@ -979,30 +979,15 @@ def cmd_learn_planning(out_rel: str = "scripts/_planning_digest.txt", force: boo
         _notify_plugin("planning-docs", status="done", count=0)
         return
 
-    # 변경 감지 — 동일하면 digest 재생성 스킵. 단, 아직 통독 ack 안 했으면 통독 안내.
+    # 🔴 2026-06-05 사용자 룰 — digest 재사용 금지, **매번 새로 작성**.
+    #   ("digest 재사용하지말고 매번 새로 작성해") 변경 감지로 스킵하던 분기를 제거하고
+    #   항상 build_digest 로 재생성한다. 이래야 (1) digest 생성 progress("기획 문서 학습 중
+    #   n/총 + 문서명", syncing)가 매 준비마다 플러그인 UI 에 또렷이 표시되고 (2) 내용도 항상
+    #   최신이다. 새로 쓰면 아래에서 이전 ack 를 무효화 → 매 세션 재통독 강제와도 일관.
     changed, _fp2, digest_exists = _planning_changed(out_rel)
-    if digest_exists and not changed and not force:
-        read_ok, _reason = _planning_read_ok(out_rel)
-        print(f"[기획] 변경 없음 ({fp['count']}개 UC, hash={fp['hash'][:10]}) — 기존 digest 재사용")
-        if read_ok:
-            # 이미 통독+ack 완료 → 플러그인 UI 에 완료 상태 표시.
-            _notify_plugin("planning-docs", status="done", count=fp["count"])
-            print(f"[기획] ✅ 통독 ack 이미 완료 — 디자인 생성 가능. (재통독 원하면 {out_rel} Read)")
-        else:
-            # digest 는 있으나 (이 세션) 미통독 → '통독 중' 상태로 바를 띄워 둠.
-            # 이후 Claude 가 Read 로 통독하면 커버리지 훅이 실시간 진행률로 갱신한다.
-            _notify_plugin("planning-docs", status="reading", current=0, total=0)
-            try:
-                with open(meta_path, encoding="utf-8") as _mf:
-                    _tok = json.load(_mf).get("read_token")
-            except Exception:
-                _tok = "<digest 끝 토큰>"
-            print(f"[기획] 👉 아직 통독 ack 안 됨 — {out_rel} 를 Read 로 **끝까지** 통독 후 "
-                  f"`ack-planning {_tok}` 실행 (안 하면 빌드 차단)")
-        return
 
     total = fp["count"]
-    why = "최초 학습" if not digest_exists else ("강제 재학습" if force else "문서 변경 감지 → 재학습")
+    why = "최초 학습" if not digest_exists else ("강제 재학습" if force else "재학습 (매번 새로 작성)")
     print(f"[기획] {total}개 유스케이스 문서 학습 시작 ({why})...")
     _notify_plugin("planning-docs", status="loading")
 

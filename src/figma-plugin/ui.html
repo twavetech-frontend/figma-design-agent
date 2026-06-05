@@ -394,7 +394,9 @@
             // Claude 가 digest 를 Read 로 읽는 동안 커버리지 훅이 실시간 진행률 전송.
             dsLoadingEl.classList.add("visible");
             var rpct = msg.total ? Math.round((msg.current / msg.total) * 100) : 0;
-            dsLoadingText.textContent = "기획 문서 통독 중... (" + rpct + "%)";
+            // 🔴 어떤 기획문서를 읽는지 함께 표시 (2026-06-05 사용자: "어떤 기획문서를 읽고 있는지 표시되어야해")
+            var rName = msg.name ? " · " + msg.name : "";
+            dsLoadingText.textContent = "기획 문서 통독 중... (" + rpct + "%)" + rName;
             dsLoadingText.classList.remove("done");
             dsLoadingFill.parentElement.style.display = "";
             dsLoadingFill.className = "ds-loading-fill";

@@ -83,6 +83,24 @@ def _digest_total_lines():
         return 0
 
 
+def _current_section_name(upto_line):
+    """digest 에서 upto_line 줄까지 중 마지막 '## ' 섹션 헤더 제목 반환 (2026-06-05 사용자:
+    "어떤 기획문서를 읽고 있는지 표시되어야해"). digest 는 각 유스케이스를 '## 05-UC-... 제목'
+    헤더로 구분하므로, 가장 최근 읽은 위치(upto_line) 이하의 마지막 헤더가 '지금 읽는 문서'다."""
+    try:
+        name = ""
+        with open(_DIGEST, encoding="utf-8") as fh:
+            for i, line in enumerate(fh, 1):
+                if i > upto_line:
+                    break
+                s = line.strip()
+                if s.startswith("## "):
+                    name = s[3:].strip()
+        return name
+    except Exception:
+        return ""
+
+
 def _digest_hash():
     try:
         with open(_META, encoding="utf-8") as fh:
@@ -271,7 +289,10 @@ def _handle_post_read(data):
             pass
         _notify_plugin("done", count=cnt)
     else:
-        _notify_plugin("reading", current=out["covered_lines"], total=total)
+        # 가장 멀리(=가장 최근) 읽은 줄 근처의 UC 섹션명을 함께 전송 → UI 가 "지금 읽는 문서" 표시.
+        upto = max((b for _, b in merged), default=0)
+        _notify_plugin("reading", current=out["covered_lines"], total=total,
+                       name=_current_section_name(upto)[:40])
 
 
 def main():
