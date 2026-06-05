@@ -25,10 +25,25 @@ export class FigmaWSServer extends EventEmitter {
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private lastPongTime: number = 0;
   private currentInputMode: InputMode = 'app';
+  // 🔴 DS 문서 로딩 상태 (2026-06-05 사용자: "learn-planning 을 디자인 시스템 로딩
+  //    완료 후에 시작하도록 코드에 박아"). 플러그인 연결 시 'loading', syncComponentDocs
+  //    완료/실패 시 'done', 미연결/해제 시 'idle'. learn-planning(Python)이 get_ds_loading_status
+  //    로 이 값을 폴링해 'done' 이후에만 통독 progress 를 시작한다.
+  private dsLoadingStatus: 'idle' | 'loading' | 'done' = 'idle';
 
   constructor(port: number = 8767) {
     super();
     this.port = port;
+  }
+
+  /** DS 문서 로딩 상태 설정 (bridge 가 connection-change 핸들러에서 갱신) */
+  setDsLoadingStatus(status: 'idle' | 'loading' | 'done'): void {
+    this.dsLoadingStatus = status;
+  }
+
+  /** 현재 DS 문서 로딩 상태 (learn-planning 대기용 get_ds_loading_status 도구가 노출) */
+  get dsLoading(): 'idle' | 'loading' | 'done' {
+    return this.dsLoadingStatus;
   }
 
   /** Start the WebSocket server */
@@ -67,6 +82,7 @@ export class FigmaWSServer extends EventEmitter {
           this.pluginSocket = null;
           this.currentChannel = null;
           this.currentInputMode = 'app';
+          this.dsLoadingStatus = 'idle'; // 연결 해제 시 DS 로딩 상태 리셋 (재연결 시 다시 loading→done)
           this.emitConnectionState('disconnected');
 
           // Reject all pending requests

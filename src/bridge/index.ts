@@ -75,6 +75,10 @@ async function main() {
 
     if (state.status === 'connected') {
       // Notify plugin: DS loading started
+      // 🔴 즉시(동기) loading 상태 set — learn-planning 이 폴링하는 get_ds_loading_status 가
+      //    connected 직후 곧바로 'loading' 을 보게 해, 통독이 DS 로딩보다 먼저 시작되는
+      //    레이스를 막는다 (2026-06-05 사용자: "learn-planning 을 DS 로딩 완료 후에 시작").
+      figmaWS.setDsLoadingStatus('loading');
       figmaWS.sendNotification('ds-loading', { status: 'loading' });
 
       // Async: fetch docs from GitHub Pages with progress
@@ -83,10 +87,12 @@ async function main() {
       })
         .then((count) => {
           figmaWS.sendNotification('ds-loading', { status: 'done', count });
+          figmaWS.setDsLoadingStatus('done'); // 통독(learn-planning) 진행 허용
         })
         .catch((e) => {
           console.warn('[Bridge] DS docs sync failed:', e);
           figmaWS.sendNotification('ds-loading', { status: 'done', count: 0 });
+          figmaWS.setDsLoadingStatus('done'); // 실패해도 통독은 막지 않는다 (DS 로딩은 best-effort)
         });
     }
   });

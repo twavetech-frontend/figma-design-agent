@@ -43,24 +43,49 @@ def _ensure_gate_dir():
     os.makedirs(_GATE_DIR, exist_ok=True)
 
 
-def _notify_plugin(status, **data):
-    """통독 진행 상태를 Figma 플러그인 UI 에 전송 (2026-06-05 사용자: "통독할 때 상태가 보여야").
+_MCP_HEADERS = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
 
-    figma_mcp_client._notify_plugin 과 동일 경로(MCP notify_plugin 도구)이나, 훅은 무거운
-    모듈 import 없이 기존 세션(SESSION_FILE)을 재사용해 직접 1회 POST 한다. 설계 원칙대로
-    **절대 흐름을 막지 않는다** — 짧은 timeout + 모든 예외 삼킴 (플러그인 미연결/브리지 down 무해).
-    """
-    try:
-        import requests  # setup 으로 설치됨 — 없으면 알림만 생략
-    except Exception:
-        return
+
+def _read_session():
     try:
         with open(_SESSION_FILE, encoding="utf-8") as fh:
-            sid = fh.read().strip()
+            return fh.read().strip() or None
     except Exception:
-        return
-    if not sid:
-        return
+        return None
+
+
+def _init_session(requests):
+    """브리지에 MCP initialize 핸드셰이크로 새 세션을 발급받아 .mcp_session 에 저장(실패 시 None).
+
+    🔴 2026-06-05: 브리지가 재시작되면 .mcp_session 의 세션이 만료(stale)되는데, 훅은 그 파일을
+    읽기만 해 알림 POST 가 전부 실패했다(통독 progress 가 플러그인에 안 뜸). figma_mcp_client
+    가 .mcp_session 을 갱신하기 전에 통독 Read 가 일어나면 stale 세션을 그대로 써 실패. 이제
+    훅이 stale 을 만나면 스스로 새 세션을 발급해 자가복구한다. figma_mcp_client.init_session 과
+    동일한 핸드셰이크(initialize → notifications/initialized)."""
+    try:
+        r = requests.post(_MCP_URL, json={
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {"protocolVersion": "2025-03-26", "capabilities": {},
+                       "clientInfo": {"name": "planning-read-hook", "version": "1.0"}},
+        }, headers=_MCP_HEADERS, timeout=2)
+        sid = r.headers.get("mcp-session-id")
+        if not sid:
+            return None
+        h = dict(_MCP_HEADERS); h["mcp-session-id"] = sid
+        requests.post(_MCP_URL, json={"jsonrpc": "2.0", "method": "notifications/initialized"},
+                      headers=h, timeout=2)
+        try:
+            with open(_SESSION_FILE, "w", encoding="utf-8") as fh:
+                fh.write(sid)
+        except Exception:
+            pass
+        return sid
+    except Exception:
+        return None
+
+
+def _post_notify(requests, sid, status, data):
+    """notify_plugin 1회 POST. (성공, 세션유효) 튜플 반환. 세션 만료면 (False, False)."""
     payload = {
         "jsonrpc": "2.0", "id": 1, "method": "tools/call",
         "params": {
@@ -68,11 +93,45 @@ def _notify_plugin(status, **data):
             "arguments": {"event": "planning-docs", "data": dict(status=status, **data)},
         },
     }
-    headers = {"Content-Type": "application/json", "mcp-session-id": sid}
+    h = dict(_MCP_HEADERS); h["mcp-session-id"] = sid
     try:
-        requests.post(_MCP_URL, json=payload, headers=headers, timeout=2)
+        r = requests.post(_MCP_URL, json=payload, headers=h, timeout=2)
+    except Exception:
+        return False, True  # 통신 실패(브리지 down 등) — 세션 문제 아님, 재초기화 무의미
+    if r.status_code >= 400:
+        return False, False  # 4xx (세션 만료/없음) → 재초기화 후 재시도 가치 있음
+    try:
+        j = r.json()
+        if isinstance(j, dict) and j.get("error"):
+            return False, False
     except Exception:
         pass
+    return True, True
+
+
+def _notify_plugin(status, **data):
+    """통독 진행 상태를 Figma 플러그인 UI 에 전송 (2026-06-05 사용자: "통독할 때 상태가 보여야").
+
+    figma_mcp_client._notify_plugin 과 동일 경로(MCP notify_plugin 도구). 훅은 기존
+    세션(.mcp_session)을 재사용하되, **stale(만료)이면 스스로 새 세션을 발급해 재시도**한다
+    (브리지 재시작에도 통독 progress 가 안정적으로 뜨도록). 설계 원칙대로 **절대 흐름을 막지
+    않는다** — 짧은 timeout + 모든 예외 삼킴.
+    """
+    try:
+        import requests  # setup 으로 설치됨 — 없으면 알림만 생략
+    except Exception:
+        return
+    sid = _read_session()
+    if sid:
+        ok, session_valid = _post_notify(requests, sid, status, data)
+        if ok:
+            return
+        if session_valid:
+            return  # 브리지 down 등 — 재초기화해도 소용없음
+    # 세션 없음/만료 → 새 세션 발급 후 재시도 (자가복구)
+    new_sid = _init_session(requests)
+    if new_sid:
+        _post_notify(requests, new_sid, status, data)
 
 
 def _digest_total_lines():

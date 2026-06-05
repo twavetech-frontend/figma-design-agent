@@ -731,6 +731,57 @@ def _notify_plugin(event: str, **data) -> None:
         pass  # 알림은 부가기능 — 실패해도 본 작업 진행
 
 
+def _extract_tool_json(content) -> dict:
+    """call_tool 이 돌려준 content array 에서 첫 text 항목을 JSON 으로 파싱(실패 시 {})."""
+    if not content:
+        return {}
+    for item in content:
+        if isinstance(item, dict) and item.get("type") == "text":
+            try:
+                return json.loads(item.get("text") or "")
+            except Exception:
+                return {}
+    return {}
+
+
+def _wait_for_ds_loading_done(timeout: float = 90.0) -> None:
+    """🔴 통독(learn-planning) progress 를 시작하기 전에 브리지의 '디자인 시스템 문서 로딩'
+    완료를 대기한다 (2026-06-05 사용자: "learn-planning 을 디자인 시스템 로딩 완료 후에
+    시작하도록 코드에 박아").
+
+    브리지 도구 `get_ds_loading_status` 를 폴링:
+      - 'done'  → DS 로딩 완료, 통독 시작 (통과)
+      - 'loading' → DS 로딩 진행 중, 대기
+      - 'idle'  → 플러그인 미연결/로딩 없음. connected 직후 레이스로 잠깐 idle 일 수 있어
+                  3초 재확인 후에도 idle 이면 통과(통독 progress 는 어차피 UI 에 못 뜸).
+    구버전 브리지(도구 없음)·통신 에러는 게이트 없이 그냥 통과(하위호환). 타임아웃도 진행."""
+    start = time.time()
+    announced = False
+    idle_since = None
+    while time.time() - start < timeout:
+        try:
+            res = call_tool("get_ds_loading_status", {})
+        except Exception:
+            return  # 도구 없음(구버전 브리지) 또는 통신 에러 — 막지 않고 진행
+        status = _extract_tool_json(res).get("status")
+        if status == "done":
+            if announced:
+                print("[기획] ✓ 디자인 시스템 로딩 완료 — 기획 통독 시작")
+            return
+        if status == "loading":
+            idle_since = None
+            if not announced:
+                print("[기획] 디자인 시스템 로딩 완료 대기 중... (완료 후 통독 시작)")
+                announced = True
+        else:  # 'idle' 또는 None
+            if idle_since is None:
+                idle_since = time.time()
+            elif time.time() - idle_since >= 3.0:
+                return  # 3초간 계속 idle = 플러그인 미연결/DS 로딩 없음 — 통독 진행
+        time.sleep(1.0)
+    print("[기획] ⚠ DS 로딩 대기 타임아웃 — 통독 진행")
+
+
 def _load_planning_module():
     import importlib.util
     _here = os.path.dirname(os.path.abspath(__file__))
@@ -989,6 +1040,10 @@ def cmd_learn_planning(out_rel: str = "scripts/_planning_digest.txt", force: boo
     total = fp["count"]
     why = "최초 학습" if not digest_exists else ("강제 재학습" if force else "재학습 (매번 새로 작성)")
     print(f"[기획] {total}개 유스케이스 문서 학습 시작 ({why})...")
+    # 🔴 디자인 시스템 로딩 완료 후 통독 시작 (2026-06-05 사용자 룰). 플러그인 연결 직후
+    #    브리지가 DS 문서를 동기화하는 동안 대기 → 완료되면 통독 progress 를 UI 에 띄운다.
+    #    이래야 플러그인 UI 에서 'DS 로딩 → 기획 통독' 이 순서대로 또렷이 보인다.
+    _wait_for_ds_loading_done()
     _notify_plugin("planning-docs", status="loading")
 
     def _progress(cur, tot, name):

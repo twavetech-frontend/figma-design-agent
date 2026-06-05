@@ -66,6 +66,14 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     return { ok: true };
   });
 
+  // 🔴 DS 문서 로딩 상태 조회 (2026-06-05 사용자: "learn-planning 을 디자인 시스템 로딩
+  //    완료 후에 시작하도록 코드에 박아"). 플러그인 미연결/미시작이면 'idle', 로딩 중이면
+  //    'loading', 완료/실패면 'done'. learn-planning(Python)이 'done'/'idle' 될 때까지
+  //    폴링한 뒤 통독 progress 를 시작한다. 플러그인 연결 불필요(서버 인메모리 상태).
+  reg('get_ds_loading_status', 'Get current DS docs loading status: "idle" (plugin not connected / no load), "loading" (DS docs syncing), or "done" (finished). Used to gate planning-doc learning until DS loading completes.', {
+    type: 'object', properties: {}
+  }, async () => ({ status: figmaWS.dsLoading }));
+
   reg('get_document_info', 'Get information about the current Figma document', {
     type: 'object', properties: {}
   }, async () => cmd('get_document_info'));

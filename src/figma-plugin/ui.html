@@ -185,6 +185,10 @@
       // === Reconnect (unlimited, exponential backoff + jitter) ===
       function scheduleReconnect() {
         if (state.intentionalDisconnect) return;
+        // 이미 재연결이 예약돼 있으면 중복 스케줄 방지 (onerror + onclose 가 둘 다
+        // 발화해도 1회만). 단 setTimeout 콜백 진입 시 reconnectTimer 를 비워(아래)
+        // 다음 실패 때 다시 스케줄될 수 있게 한다.
+        if (state.reconnectTimer) return;
         state.reconnectAttempts++;
         // Exponential backoff: 1s * 1.5^n, capped at 30s, plus random jitter
         const base = Math.min(1000 * Math.pow(1.5, state.reconnectAttempts - 1), 30000);
@@ -196,6 +200,7 @@
           `Next attempt in ${(delay / 1000).toFixed(1)}s`
         );
         state.reconnectTimer = setTimeout(() => {
+          state.reconnectTimer = null; // 비우고 재시도 → 다음 실패 시 또 스케줄 가능
           connectToServer();
         }, delay);
       }
@@ -292,7 +297,13 @@
             state.connected = false;
             state.socket = null;
             stopHeartbeat();
-            if (!state.intentionalDisconnect && state.channel) {
+            // 🔴 재연결 조건에서 state.channel 의존 제거 (2026-06-05 사용자: "플러그인 먼저
+            //    실행하고 디자인 생성 준비 입력하면 정상 연결돼야 한다"). state.channel 은
+            //    onopen 에서야 설정되므로, 브리지가 아직 안 떠서 첫 연결이 onopen 도달 전
+            //    실패하면 channel 이 null → 예전엔 재연결을 영영 스케줄 못 해 영구
+            //    disconnected 가 됐다. 이제 intentionalDisconnect 가 아니면 항상 재시도 →
+            //    플러그인을 브리지보다 먼저 켜도 브리지가 뜨는 즉시 자동 연결된다.
+            if (!state.intentionalDisconnect) {
               scheduleReconnect();
             } else {
               updateUI("disconnected", "red", "Disconnected", "Bridge server disconnected");
@@ -304,10 +315,16 @@
             state.connected = false;
             state.socket = null;
             stopHeartbeat();
+            // 안전망: 표준상 onerror 뒤 onclose 가 따라오지만, Figma iframe 환경에서
+            // onclose 가 누락될 경우를 대비해 여기서도 재연결을 보장한다. scheduleReconnect
+            // 의 중복 가드가 onclose 와의 이중 스케줄을 막는다.
+            scheduleReconnect();
           };
         } catch (error) {
           console.error("Connection error:", error);
           updateUI("disconnected", "red", "Connection error", error.message || "Unknown error");
+          // new WebSocket() 생성 자체가 동기 예외를 던진 경우(드묾)에도 재시도.
+          scheduleReconnect();
         }
       }
 
