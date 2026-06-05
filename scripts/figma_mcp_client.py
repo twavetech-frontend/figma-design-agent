@@ -3179,8 +3179,12 @@ def _enforce_section_band(blueprint: dict) -> None:
             al.setdefault("layoutMode", "VERTICAL")
             al["paddingTop"] = 24
             al["paddingBottom"] = 24
-            al.setdefault("paddingLeft", 20)
-            al.setdefault("paddingRight", 20)
+            # ⚠️ setdefault 금지 — AL() 이 paddingLeft=0 을 명시로 넣어 setdefault 가 무력화됨.
+            # 콘텐츠가 좌우 끝에 붙지 않게 0/None 이면 20 으로(다른 섹션과 정렬). 양수 명시는 존중.
+            if not al.get("paddingLeft"):
+                al["paddingLeft"] = 20
+            if not al.get("paddingRight"):
+                al["paddingRight"] = 20
             for k in _STROKE_KEYS:
                 n.pop(k, None)
             cnt[0] += 1
