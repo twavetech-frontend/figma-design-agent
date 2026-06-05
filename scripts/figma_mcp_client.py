@@ -3349,25 +3349,71 @@ def _enforce_section_bg_gap_padding(root_node_id: str) -> int:
         cur_fill = _bg(ch)              # None = 무배경
         cur_bg = cur_fill or root_bg
         if not any(s in nm for s in SKIP) and cur_bg != prev_bg:
+            lm = ch.get("layoutMode") or "VERTICAL"  # ⚠️ set_auto_layout 은 layoutMode 필수
             try:
                 if cur_fill is not None:
                     # 채워진 밴드 → 상/하 padding 24 (대칭, spacing-3xl 자동 바인딩)
                     pt = ch.get("paddingTop"); pb = ch.get("paddingBottom")
                     if pt != _BAND_VPAD or pb != _BAND_VPAD:
-                        call_tool("set_auto_layout", {"nodeId": ch["id"],
+                        call_tool("set_auto_layout", {"nodeId": ch["id"], "layoutMode": lm,
                                   "paddingTop": _BAND_VPAD, "paddingBottom": _BAND_VPAD})
                         fixed[0] += 1
                 else:
                     # 빈/흰 섹션 → 상단 padding = 좌우 padding (대칭)
                     pl = ch.get("paddingLeft"); pt = ch.get("paddingTop")
                     if isinstance(pl, (int, float)) and pl > 0 and pt != pl:
-                        call_tool("set_auto_layout", {"nodeId": ch["id"], "paddingTop": pl})
+                        call_tool("set_auto_layout", {"nodeId": ch["id"], "layoutMode": lm,
+                                  "paddingTop": pl})
                         fixed[0] += 1
             except Exception as e:
                 print(f"  [section-bg-gap] '{ch.get('name')}' fail: {e}")
         prev_bg = cur_bg
     if fixed[0]:
         print(f"  [section-bg-gap] ✓ bg 색 경계 {fixed[0]}건 정렬 (밴드 상/하 {_BAND_VPAD} · 흰 섹션 pt=pl)")
+    return fixed[0]
+
+
+def _enforce_indicator_symmetric_gap(root_node_id: str) -> int:
+    """캐로셀 인디케이터(Pagination dot group)가 마지막 자식인 프레임은 위 gap = 아래 padding
+    (대칭) 으로 맞춘다 (2026-06-05 사용자 룰).
+
+    Hero 같은 VERTICAL 프레임에서 [Banner Carousel, Indicator] 구조일 때, 인디케이터 위의
+    itemSpacing(gap)과 프레임 paddingBottom 이 다르면 인디케이터가 위아래로 비대칭이라 불안정해
+    보인다 → paddingBottom = itemSpacing 으로 통일. 인디케이터(Pagination dot group / 이름에
+    'indicator'/'pagination') 인스턴스를 마지막 자식으로 가진 VERTICAL 프레임만 대상."""
+    fixed = [0]
+
+    def _is_indicator(n):
+        nm = (n.get("name") or "").lower()
+        return ("pagination" in nm or "indicator" in nm or "인디케이터" in nm)
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").upper() == "FRAME" and (node.get("layoutMode") or "").upper() == "VERTICAL":
+            kids = node.get("children") or []
+            if kids and _is_indicator(kids[-1]):
+                gap = node.get("itemSpacing")
+                pb = node.get("paddingBottom")
+                if isinstance(gap, (int, float)) and pb != gap:
+                    try:
+                        # ⚠️ set_auto_layout 은 layoutMode 필수 — 미지정 시 plugin 이 throw(무효)
+                        call_tool("set_auto_layout", {"nodeId": node["id"],
+                                  "layoutMode": node.get("layoutMode") or "VERTICAL",
+                                  "paddingBottom": gap})
+                        fixed[0] += 1
+                    except Exception as e:
+                        print(f"  [indicator-gap] '{node.get('name')}' fail: {e}")
+        for ch in node.get("children", []) or []:
+            walk(ch)
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_node_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [indicator-gap] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [indicator-gap] ✓ 인디케이터 프레임 {fixed[0]}건 아래 padding = 위 gap 으로 정렬")
     return fixed[0]
 
 
@@ -8318,6 +8364,12 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_wallet_bar_radius(root_node_id)
     except Exception as e:
         print(f"  [wallet-radius] 실패 (무시하고 계속): {e}")
+
+    print("\n[규칙] 인디케이터 프레임 위 gap = 아래 padding 대칭 (2026-06-05) 적용 중...")
+    try:
+        _enforce_indicator_symmetric_gap(root_node_id)
+    except Exception as e:
+        print(f"  [indicator-gap] 실패 (무시하고 계속): {e}")
 
     print("\n[규칙] 흰 카드 border 라이브 강제 (batch_build stroke 무시 버그 우회) 적용 중...")
     try:

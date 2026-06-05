@@ -1171,6 +1171,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   - 기본 키 (Style=Dot, Framed=False): **lg** `2ac006ab01ff82ad9b74c16d4cf6c17609a02d79` /
     md `347badbada16ce6814540e82246101d2dc65a295` (catalog `COMPONENT_KEYS["Pagination dot group"]`).
   - blueprint: `{"name":"Indicator","type":"instance","componentKey":"2ac006ab…","layoutSizingHorizontal":"HUG"}`.
+  - 🔴 **인디케이터 위 gap = 아래 padding (대칭, 2026-06-05 사용자 룰):** 인디케이터가 마지막 자식인
+    프레임(Hero 등)은 인디케이터 위 itemSpacing(gap)과 프레임 paddingBottom 을 **동일**하게 — 위아래
+    비대칭이면 불안정해 보임(사용자 명시). 강제: `_enforce_indicator_symmetric_gap`(cmd_post_fix) 가
+    Pagination 인디케이터를 마지막 자식으로 둔 VERTICAL 프레임의 paddingBottom = itemSpacing 으로 통일.
   - **시스템 강제:** 홈 생성기(`gen_*home*.py`)의 캐로셀 Indicator 를 이 인스턴스로 **직접 작성**(explicit)
     + `ds_catalog.COMPONENT_KEYS["Pagination dot group"]` 에 키 등록. 새 blueprint 작성 시 캐로셀
     인디케이터는 반드시 이 인스턴스로 쓸 것. (스케줄 dot 등 **캐로셀이 아닌** 작은 dot 은 인디케이터가
