@@ -4897,43 +4897,13 @@
     },
     "type": "TYPOGRAPHY"
   },
-  "--carmenSans-bodyMd-extraBold": {
-    "figmaPath": "Carmen sans/Body md/ExtraBold",
+  "--carmenSans-bodyMd-regualr": {
+    "figmaPath": "Carmen sans/Body md/Regualr",
     "value": {
-      "fontFamily": "{fontFamilies.carmen-sans}",
-      "fontWeight": "{fontWeights.carmen-sans-4}",
-      "lineHeight": "{Line height.body-sm}",
-      "fontSize": "{fontSize.1}",
-      "letterSpacing": "{letterSpacing.0}",
-      "paragraphSpacing": "{paragraphSpacing.0}",
-      "paragraphIndent": "{paragraphIndent.0}",
-      "textCase": "{textCase.none}",
-      "textDecoration": "{textDecoration.none}"
-    },
-    "type": "TYPOGRAPHY"
-  },
-  "--carmenSans-bodyMd-bold": {
-    "figmaPath": "Carmen sans/Body md/Bold",
-    "value": {
-      "fontFamily": "{fontFamilies.carmen-sans}",
-      "fontWeight": "{fontWeights.carmen-sans-5}",
-      "lineHeight": "{Line height.body-sm}",
-      "fontSize": "{fontSize.1}",
-      "letterSpacing": "{letterSpacing.0}",
-      "paragraphSpacing": "{paragraphSpacing.0}",
-      "paragraphIndent": "{paragraphIndent.0}",
-      "textCase": "{textCase.none}",
-      "textDecoration": "{textDecoration.none}"
-    },
-    "type": "TYPOGRAPHY"
-  },
-  "--carmenSans-bodyMd-regular": {
-    "figmaPath": "Carmen sans/Body md/Regular",
-    "value": {
-      "fontFamily": "{fontFamilies.carmen-sans}",
+      "fontFamily": "{Font family.font-family-graphic}",
       "fontWeight": "{fontWeights.carmen-sans-6}",
-      "lineHeight": "{Line height.body-sm}",
-      "fontSize": "{fontSize.1}",
+      "lineHeight": "{Line height.body-md}",
+      "fontSize": "{fontSize.3}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
       "paragraphIndent": "{paragraphIndent.0}",
@@ -4979,6 +4949,96 @@
       "fontWeight": "{fontWeights.carmen-sans-6}",
       "lineHeight": "{lineHeights.43}",
       "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingLg-extraBold": {
+    "figmaPath": "Carmen sans/Heading lg/ExtraBold",
+    "value": {
+      "fontFamily": "{Font family.font-family-graphic}",
+      "fontWeight": "{fontWeights.carmen-sans-4}",
+      "lineHeight": "{lineHeights.32}",
+      "fontSize": "{fontSize.10}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingLg-bold": {
+    "figmaPath": "Carmen sans/Heading lg/Bold",
+    "value": {
+      "fontFamily": "{Font family.font-family-graphic}",
+      "fontWeight": "{fontWeights.carmen-sans-5}",
+      "lineHeight": "{lineHeights.32}",
+      "fontSize": "{fontSize.10}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-headingLg-regular": {
+    "figmaPath": "Carmen sans/Heading lg/Regular",
+    "value": {
+      "fontFamily": "{Font family.font-family-graphic}",
+      "fontWeight": "{fontWeights.carmen-sans-6}",
+      "lineHeight": "{lineHeights.32}",
+      "fontSize": "{fontSize.10}",
+      "letterSpacing": "{letterSpacing.0}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodyXs-extraBold": {
+    "figmaPath": "Carmen sans/Body xs/ExtraBold",
+    "value": {
+      "fontFamily": "{Font family.font-family-graphic}",
+      "fontWeight": "{fontWeights.carmen-sans-4}",
+      "lineHeight": "{Line height.body-xs}",
+      "fontSize": "{fontSize.1}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodyXs-bold": {
+    "figmaPath": "Carmen sans/Body xs/Bold",
+    "value": {
+      "fontFamily": "{Font family.font-family-graphic}",
+      "fontWeight": "{fontWeights.carmen-sans-5}",
+      "lineHeight": "{Line height.body-xs}",
+      "fontSize": "{fontSize.1}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--carmenSans-bodyXs-regular": {
+    "figmaPath": "Carmen sans/Body xs/Regular",
+    "value": {
+      "fontFamily": "{Font family.font-family-graphic}",
+      "fontWeight": "{fontWeights.carmen-sans-6}",
+      "lineHeight": "{Line height.body-xs}",
+      "fontSize": "{fontSize.1}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
       "paragraphIndent": "{paragraphIndent.0}",
@@ -6287,6 +6347,11 @@
     "value": "Pretendard",
     "type": "TEXT"
   },
+  "--fontFamily-fontFamilyGraphic": {
+    "figmaPath": "Font family/font-family-graphic",
+    "value": "Carmen Sans",
+    "type": "FONTFAMILIES"
+  },
   "--fontWeight-regular": {
     "figmaPath": "Font weight/regular",
     "value": "Regular",
@@ -6509,23 +6574,23 @@
   },
   "--lineHeight-bodyXs": {
     "figmaPath": "Line height/body-xs",
-    "value": 18,
-    "type": "NUMBER"
+    "value": "18",
+    "type": "LINEHEIGHTS"
   },
   "--lineHeight-bodySm": {
     "figmaPath": "Line height/body-sm",
-    "value": 20,
-    "type": "NUMBER"
+    "value": "20",
+    "type": "LINEHEIGHTS"
   },
   "--lineHeight-bodyMd": {
     "figmaPath": "Line height/body-md",
-    "value": 24,
-    "type": "NUMBER"
+    "value": "24",
+    "type": "LINEHEIGHTS"
   },
   "--lineHeight-bodyLg": {
     "figmaPath": "Line height/body-lg",
-    "value": 28,
-    "type": "NUMBER"
+    "value": "28",
+    "type": "LINEHEIGHTS"
   },
   "--lineHeight-bodyXl": {
     "figmaPath": "Line height/body-xl",
@@ -6534,18 +6599,18 @@
   },
   "--lineHeight-headingXs": {
     "figmaPath": "Line height/heading-xs",
-    "value": 32,
-    "type": "NUMBER"
+    "value": "32",
+    "type": "LINEHEIGHTS"
   },
   "--lineHeight-headingSm": {
     "figmaPath": "Line height/heading-sm",
-    "value": 38,
-    "type": "NUMBER"
+    "value": "38",
+    "type": "LINEHEIGHTS"
   },
   "--lineHeight-headingMd": {
     "figmaPath": "Line height/heading-md",
-    "value": 44,
-    "type": "NUMBER"
+    "value": "44",
+    "type": "LINEHEIGHTS"
   },
   "--lineHeight-headingLg": {
     "figmaPath": "Line height/heading-lg",
@@ -6564,8 +6629,8 @@
   },
   "--lineHeight-bodyXxs": {
     "figmaPath": "Line height/body-xxs",
-    "value": 14,
-    "type": "NUMBER"
+    "value": "14",
+    "type": "LINEHEIGHTS"
   },
   "--containerMaxWidthDesktop": {
     "figmaPath": "container-max-width-desktop",
@@ -6796,5 +6861,65 @@
     "figmaPath": "diabled_opacity",
     "value": 50,
     "type": "NUMBER"
+  },
+  "--bodyXxs-regular": {
+    "figmaPath": "Body xxs/Regular",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.regular}",
+      "lineHeight": "{Line height.body-xxs}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyXxs-medium": {
+    "figmaPath": "Body xxs/Medium",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.medium}",
+      "lineHeight": "{Line height.body-xxs}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyXxs-semibold": {
+    "figmaPath": "Body xxs/Semibold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.semibold}",
+      "lineHeight": "{Line height.body-xxs}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
+  },
+  "--bodyXxs-bold": {
+    "figmaPath": "Body xxs/Bold",
+    "value": {
+      "fontFamily": "{Font family.font-family-heading}",
+      "fontWeight": "{Font weight.bold}",
+      "lineHeight": "{Line height.body-xxs}",
+      "fontSize": "{fontSize.0}",
+      "letterSpacing": "{letterSpacing.1}",
+      "paragraphSpacing": "{paragraphSpacing.0}",
+      "paragraphIndent": "{paragraphIndent.0}",
+      "textCase": "{textCase.none}",
+      "textDecoration": "{textDecoration.none}"
+    },
+    "type": "TYPOGRAPHY"
   }
 }
