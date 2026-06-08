@@ -465,6 +465,34 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > 코드는 Claude 행동 강제 못하지만 stdout 경고가 사용자 화면에도 표시되므로
 > Claude 의 self-verify skip 이 사용자에게 즉시 드러남.
 
+> 🔴 **절대 규칙 0-F-2 — QA 스크린샷 + 레퍼런스 썸네일은 작업 완료 후 즉시 삭제 (2026-06-08 사용자 룰)**
+>
+> 사용자 명시: *"qa 용으로 스크린샷 찍어서 모든 작업 완료 후 qa screenshot json 파일 삭제할 것!"*
+> + *"ref_thumbnails 도 작업 완료 후 자동 삭제되게 해줘."*
+>
+> 작업 중 Claude 가 소비하려고 만든 **임시 산출물 2종**은 검증·학습이 끝나면 불필요하므로
+> **그 작업의 모든 단계가 끝난 직후 즉시 삭제**한다(7일 대기하는 `cleanup_old_blueprints.py`
+> 와 별개로 그 자리에서 비움 — 폴더에 옛 산출물이 쌓이지 않게):
+> - `scripts/qa_screenshots/<root>/` — self-verify(절대 규칙 0-F)용 PNG + `self_verify_checklist.json`
+> - `scripts/ref_thumbnails/` — 레퍼런스 학습(절대 규칙 0-G)용 ≤1200px 썸네일
+>
+> **강제 절차 (Claude):** 화면 작업·검증·보고를 모두 마친 **마지막 단계**에서 1회 실행:
+> ```bash
+> python3 scripts/figma_mcp_client.py cleanup-qa
+> ```
+> → `scripts/qa_screenshots/` + `scripts/ref_thumbnails/` 안의 모든 항목 삭제 +
+> `🧹 [cleanup-qa] … N개 항목 삭제` 로그.
+>
+> **순서 주의 (절대 규칙 0-F / 0-G 와 충돌 금지):** self-verify(0-F)는 **스크린샷을 읽고 끝낸 뒤**,
+> 레퍼런스 학습(0-G)은 **썸네일을 Read 해 references[] 에 반영한 뒤**에 삭제한다. 검증/학습 전에
+> 지우면 self-verify·레퍼런스 Read 를 못 한다. 즉 *빌드 → 썸네일 Read(0-G) → self-verify(0-F) →
+> 보고 → `cleanup-qa`* 순서. 여러 화면이면 **모든 화면의 검증·학습이 끝난 뒤** 한 번만.
+>
+> **시스템 박힘:** `figma_mcp_client.py cmd_cleanup_qa()` (CLI `cleanup-qa`) — `qa_screenshots/`
+> 와 `ref_thumbnails/` 하위 전체(디렉토리·파일) 삭제, 폴더 자체는 유지(다음 빌드가 재생성).
+> 빌드 직후 자동 삭제는 self-verify·레퍼런스 Read 를 깨므로 **하지 않는다** — 작업 종료 시
+> Claude 가 호출하는 방식.
+
 > 🔴 **절대 규칙 0-E — 와이어프레임 콘텐츠 1:1 추출 의무 / archetype config 재사용 금지 (2026-05-27 사용자 분노)**
 >
 > 새 세션에서 와이어프레임을 받아 디자인을 빌드할 때, **와이어의 실제 텍스트/숫자/카운트
@@ -1227,6 +1255,25 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - Stage Card 안에 아이콘, 이미지를 **절대 넣지 말 것**
 - Stage Card 구성: 태그(포인트/기프티콘) + 금액 텍스트 + 이율/기간 정보 + 북마크 — **이것만**
 - 아이콘/이미지를 넣으면 카드가 복잡해지고 PRD 의도에서 벗어남
+
+### 14-B. 🔴 스테퍼 그룹(기간/월 입금 등 `− 값 +`)은 세로 2-row 스택 (2026-06-08 사용자 룰)
+- 사용자 명시: *"회차와 금액을 1 row에 넣었는데 2 row로 하는건 어떠니?"* — 추천 스테이지의
+  `기간`·`월 입금` 같은 스테퍼 묶음을 **가로 2-up(2-col)로 두지 말고 세로 2-row로 스택**한다.
+- **Why:** 가로 2-up 이면 각 스테퍼 control 폭이 ~126px 로 좁아 값 박스가 ~50px 밖에 안 돼,
+  큰 값("110만원"·최대 "160만원")이 `−`/`+` 와 **겹치거나 2줄로 줄바꿈**된다. 세로 2-row 로
+  스택하면 각 control 이 전폭(~313px)이 되어 값이 원래 크기로 한 줄에 들어간다.
+- **작성법 (blueprint/생성기):** 스테퍼 그룹 프레임 = `layoutMode VERTICAL`(gap 10) + 세로 HUG /
+  각 스테퍼 = 가로 FILL·세로 HUG / control = `HORIZONTAL` `primaryAxisAlignItems=MIN` gap 8 /
+  값 텍스트 = 가로 **FILL** + 가운데 정렬 (값 FILL + `−` 좌 / `+` 우 = 겹침 불가). 값 크기는
+  유지(절대 줄이지 말 것 — 폭은 2-row 가 해결). 생성기 `gen_signup_home_v4.py`·
+  `gen_active_home_v3.py`·`gen_done_home_v3.py` 의 `stepper()`/`Steppers` 에 반영됨.
+- **시스템 강제 (코드 박힘, 자동):** `figma_mcp_client._enforce_stepper_two_row_live(root_id)`
+  (cmd_post_fix, indicator-gap 직후) — 직계 frame 자식 2개 이상이 각각 `control`(직계 TEXT 에
+  '−'·'+' 둘 다 가진 HORIZONTAL frame)을 품은 '스테퍼 그룹'을 **이름 무관 구조로 감지**해,
+  그룹을 VERTICAL 스택 + 각 스테퍼 FILL/HUG + control primary=MIN + 값 FILL 로 강제. blueprint 가
+  실수로 2-up 으로 작성돼도 빌드가 자동 교정. DS 인스턴스·내부(';') 제외.
+- **빌드 후 검증:** 빌드 로그에 `[stepper-2row] ✓ 스테퍼 그룹 N건 세로 2-row 스택` 라인 확인.
+  스크린샷에서 `기간`/`월 입금` 스테퍼가 세로로 쌓이고 큰 값도 한 줄에 들어가는지 확인.
 
 ### 18. ⚠️ 루트 프레임 높이 = 전체 콘텐츠 높이 (852px로 줄이지 말 것)
 - **post-fix가 설정한 루트 높이를 임의로 줄이지 말 것**

@@ -3540,6 +3540,110 @@ def _enforce_wallet_bar_radius(root_node_id: str) -> int:
     return fixed[0]
 
 
+def _enforce_stepper_two_row_live(root_node_id: str) -> int:
+    """스테퍼 그룹(기간/월입금 같은 `− 값 +` 컨트롤 묶음)은 세로 2-row 스택으로 강제
+    (2026-06-08 사용자 룰).
+
+    가로 2-up(2-col)로 두면 각 control 폭이 좁아(~126px) 값 박스가 ~50px 로 줄어들어,
+    큰 값("110만원"·"160만원")이 `−`/`+` 와 겹치거나 2줄로 줄바꿈된다. 두 스테퍼를 세로
+    2-row 로 스택하면 각 control 이 전폭이 되어 값이 원래 크기로 한 줄에 들어간다.
+
+    감지: 직계 FRAME 자식 중 2개 이상이 각각 `control`(직계 TEXT 에 '−' 와 '+' 둘 다 포함하는
+    HORIZONTAL frame)을 품은 '스테퍼 그룹' 프레임. (생성기 컨벤션: 그룹 이름 'Steppers',
+    자식 'Stepper' > 'control' > [−btn, 값, +btn].) 이름에 의존하지 않고 구조로 감지.
+
+    강제: 그룹 → VERTICAL(gap 10) + 세로 HUG / 각 스테퍼 → 가로 FILL·세로 HUG /
+    control → HORIZONTAL primary=MIN counter=CENTER gap 8 / 값 텍스트(−·+ 아님) → 가로 FILL·
+    가운데 정렬. (값 FILL + − 좌 / + 우 = 겹침 불가.) DS 인스턴스·내부(';') 제외."""
+    fixed = [0]
+
+    def _subtree_has_minus_plus(n):
+        """n 서브트리에 '−' 와 '+' TEXT 가 모두 있으면 True (− / + 가 stepper-btn frame 안에
+        한 단계 더 들어가 있어도 잡도록 서브트리 전체 스캔)."""
+        chars = []
+
+        def collect(m):
+            if (m.get("type") or "").upper() == "TEXT":
+                chars.append(m.get("characters", ""))
+            for cc in m.get("children", []) or []:
+                collect(cc)
+        collect(n)
+        return ("−" in chars) and ("+" in chars)
+
+    def _find_control(n):
+        """n 서브트리에서 서브트리에 '−'·'+' 를 모두 품은 HORIZONTAL control frame 반환
+        (가장 안쪽 = − 값 + 를 직접 묶는 행). 직계 자식부터 깊이 우선으로 더 안쪽을 우선."""
+        if not isinstance(n, dict):
+            return None
+        # 자식 중 더 안쪽 control 이 있으면 그것을 우선 (control 은 − 값 + 를 직접 감싸는 최내곽)
+        for ch in n.get("children", []) or []:
+            r = _find_control(ch)
+            if r:
+                return r
+        if (n.get("type") or "").upper() == "FRAME" and (n.get("layoutMode") or "").upper() == "HORIZONTAL" \
+                and _subtree_has_minus_plus(n):
+            return n
+        return None
+
+    def _fix_group(group, stepper_kids):
+        # 그룹 → VERTICAL 스택
+        try:
+            call_tool("set_auto_layout", {"nodeId": group["id"], "layoutMode": "VERTICAL",
+                      "itemSpacing": 10, "primaryAxisAlignItems": "MIN", "counterAxisAlignItems": "MIN"})
+            call_tool("set_layout_sizing", {"nodeId": group["id"], "layoutSizingVertical": "HUG"})
+        except Exception as e:
+            print(f"  [stepper-2row] group '{group.get('name')}' fail: {e}")
+            return
+        for sk in stepper_kids:
+            try:
+                call_tool("set_layout_sizing", {"nodeId": sk["id"], "layoutSizingHorizontal": "FILL"})
+                call_tool("set_layout_sizing", {"nodeId": sk["id"], "layoutSizingVertical": "HUG"})
+            except Exception:
+                pass
+            ctrl = _find_control(sk)
+            if not ctrl:
+                continue
+            try:
+                call_tool("set_auto_layout", {"nodeId": ctrl["id"], "layoutMode": "HORIZONTAL",
+                          "primaryAxisAlignItems": "MIN", "counterAxisAlignItems": "CENTER", "itemSpacing": 8})
+            except Exception:
+                pass
+            for v in ctrl.get("children", []) or []:
+                if (v.get("type") or "").upper() == "TEXT" and v.get("characters", "") not in ("−", "+", ""):
+                    try:
+                        call_tool("set_layout_sizing", {"nodeId": v["id"], "layoutSizingHorizontal": "FILL"})
+                        call_tool("set_text_align", {"nodeId": v["id"], "textAlignHorizontal": "CENTER"})
+                    except Exception:
+                        pass
+        fixed[0] += 1
+
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").upper() == "INSTANCE" or ";" in node.get("id", ""):
+            return
+        if (node.get("type") or "").upper() == "FRAME":
+            kids = [c for c in (node.get("children") or []) if (c.get("type") or "").upper() == "FRAME"]
+            stepper_kids = [c for c in kids if _find_control(c)]
+            # 스테퍼 그룹 = control 을 품은 직계 frame 자식이 2개 이상
+            # (이미 VERTICAL 이어도 값 FILL/control 정렬을 항상 멱등 정규화 — 빌드 중 FILL→HUG
+            #  리셋 회귀 대비. _fix_group 은 idempotent.)
+            if len(stepper_kids) >= 2:
+                _fix_group(node, stepper_kids)
+                return  # 그룹 처리 후 내부 재귀 불필요
+        for ch in node.get("children", []) or []:
+            walk(ch)
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_node_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [stepper-2row] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [stepper-2row] ✓ 스테퍼 그룹 {fixed[0]}건 세로 2-row 스택 + 값 FILL 적용")
+    return fixed[0]
+
+
 def _enforce_brand_tint_surface_primary_live(root_node_id: str) -> int:
     """라이브: 브랜드 틴트 면(children 가진 FRAME)이 bg-brand-secondary(#e6d4ff /
     hover #cfaeff) fill 이면 bg-brand-primary(#f4ecff)로 교정 + 토큰 바인딩.
@@ -8461,6 +8565,12 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     except Exception as e:
         print(f"  [indicator-gap] 실패 (무시하고 계속): {e}")
 
+    print("\n[규칙] 스테퍼 그룹 세로 2-row 스택 강제 (2026-06-08) 적용 중...")
+    try:
+        _enforce_stepper_two_row_live(root_node_id)
+    except Exception as e:
+        print(f"  [stepper-2row] 실패 (무시하고 계속): {e}")
+
     print("\n[규칙] 흰 카드 border 라이브 강제 (batch_build stroke 무시 버그 우회) 적용 중...")
     try:
         _enforce_white_card_border_live(root_node_id)
@@ -11878,6 +11988,37 @@ def cmd_interactive():
             print(f"Error: {e}")
 
 
+def cmd_cleanup_qa():
+    """QA 스크린샷/체크리스트 + 레퍼런스 썸네일 즉시 전체 삭제 (2026-06-08 사용자 룰).
+
+    작업 중 Claude 가 소비하려고 만든 임시 산출물 2종을 작업 완료 후 비운다(7일 대기하는
+    cleanup_old_blueprints.py 와 별개로 즉시):
+      - `scripts/qa_screenshots/<root>/` — self-verify(절대 규칙 0-F)용 PNG + self_verify_checklist.json
+      - `scripts/ref_thumbnails/`        — 레퍼런스 학습(절대 규칙 0-G)용 ≤1200px 썸네일
+    각 폴더 자체는 유지(다음 빌드가 재생성). self-verify/레퍼런스 Read 가 모두 끝난 뒤 호출한다."""
+    import shutil
+    here = os.path.dirname(__file__)
+    total = 0
+    for label, folder in (("QA 스크린샷/체크리스트", "qa_screenshots"),
+                          ("레퍼런스 썸네일", "ref_thumbnails")):
+        root = os.path.join(here, folder)
+        removed = 0
+        if os.path.isdir(root):
+            for entry in os.listdir(root):
+                p = os.path.join(root, entry)
+                try:
+                    if os.path.isdir(p):
+                        shutil.rmtree(p)
+                    else:
+                        os.remove(p)
+                    removed += 1
+                except Exception as e:
+                    print(f"  [cleanup-qa] '{folder}/{entry}' 삭제 실패: {e}")
+        total += removed
+        print(f"🧹 [cleanup-qa] {label} {removed}개 항목 삭제 (scripts/{folder} 비움)")
+    return total
+
+
 def cmd_assemble(config_file: str):
     """섹션 템플릿을 조립하여 완전한 Blueprint JSON을 생성.
 
@@ -12246,6 +12387,8 @@ def main():
             print("Usage: figma_mcp_client.py assemble <config.json>")
             sys.exit(1)
         cmd_assemble(sys.argv[2])
+    elif cmd == "cleanup-qa":
+        cmd_cleanup_qa()
     elif cmd == "interactive":
         cmd_interactive()
     else:
