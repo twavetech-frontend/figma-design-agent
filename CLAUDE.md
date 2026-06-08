@@ -87,7 +87,7 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
 > 에 spec 을 만들지 않는다. `gen_frontend_spec.py` 도 더 이상 호출하지 않는다(파일은 잔존하나
 > 미사용). `json/` 의 기존 산출물은 cleanup 이 정리하되 **PRD 입력 `json/*PRD*.json` 은 보존**.
 > blueprint·산출물이 무한 누적되는 문제 방지. 기준은 파일 mtime(생성 후 미수정이라 ≈ 생성일).
-> **보존**: `blueprint_templates.json`·`blueprint_unified_imin_home.json`(소스 템플릿),
+> **보존**: `blueprint_templates.json`(assemble 소스 템플릿),
 > `gen_*.py`·`spec_*.json`·`wireframe_content_*.json`(패턴 밖이라 애초에 미대상),
 > **PRD 입력 파일 `json/*PRD*.json`**(이름에 `PRD` 포함 시 삭제·추적 제외 모두 스킵 — 사용자 소스).
 > 이 산출물들은 `.gitignore` 로 git 추적도 제외된다 — 레포엔 소스만 남는다.
@@ -709,8 +709,8 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > **시스템 강제 (코드 박힘, 자동):** `figma_mcp_client.cmd_build` 가 빌드 성공(root_id 존재) 시
 > 맨 끝에서 `_cleanup_build_input(blueprint_file)` 호출. 삭제 대상 = 빌드 입력으로 쓴
 > `blueprint_*.json` · `spec_*.json` · `*assembled*.json` · `*_blueprint.json`.
-> 🔴 **보존(소스/입력 자산은 삭제 안 함):** `blueprint_templates.json` ·
-> `blueprint_unified_imin_home.json`(소스 템플릿) · `archetype_specs/*.json`(unified spec 소스) ·
+> 🔴 **보존(소스/입력 자산은 삭제 안 함):** `blueprint_templates.json`(assemble 소스 템플릿) ·
+> `archetype_specs/*.json`(unified spec 소스 — 홈 등 unified 빌드는 이 spec 으로 생성) ·
 > 이름에 `PRD`(사용자 입력) · `wireframe_content`(와이어 콘텐츠 dict).
 >
 > **빌드 후 검증:** 빌드 로그에 `🧹 [cleanup] 빌드 완료 — 사용한 blueprint json 자동 삭제: <파일>`

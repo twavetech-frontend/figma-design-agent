@@ -9,7 +9,7 @@ setup-windows.ps1) 의 **마지막 프로세스**로 자동 호출돼 7일 지�
       (생성일을 그대로 보장하는 크로스플랫폼 API 가 없어 mtime 으로 근사).
 
 보존(절대 삭제 안 함):
-  - 소스 템플릿: blueprint_templates.json, blueprint_unified_imin_home.json
+  - 소스 템플릿: blueprint_templates.json (assemble 워크플로우 소스)
   - 소스/입력: gen_*.py · spec_*.json · wireframe_content_*.json · archetype_specs/
     (애초에 아래 TARGETS 패턴에 안 잡힘)
 
@@ -31,7 +31,6 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # 패턴에 잡혀도 절대 삭제하지 않는 소스 파일
 KEEP = {
     "blueprint_templates.json",
-    "blueprint_unified_imin_home.json",
     # ⚠️ gen_frontend_spec.py 는 gen_ 접두사지만 일회성이 아니라 공용 유틸리티 —
     # figma_mcp_client.py 가 매 빌드(Step F)에서 frontend spec 추출에 subprocess
     # 로 호출한다. 삭제하면 빌드의 spec 추출이 깨진다. 절대 보존.

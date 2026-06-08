@@ -4900,8 +4900,8 @@ def _cleanup_build_input(input_path: str) -> None:
     빌드가 끝나면 화면은 Figma 에 생성됐으니 blueprint json 은 불필요 → 레포·scripts/ 에
     산출물이 쌓이지 않도록 즉시 삭제(생성 7일 대기하는 cleanup_old_blueprints 와 별개로,
     빌드 직후 즉시). **소스/입력 자산은 보존:**
-      - blueprint_templates.json · blueprint_unified_imin_home.json (소스 템플릿)
-      - archetype_specs/*.json (unified spec 소스)
+      - blueprint_templates.json (assemble 워크플로우 소스 템플릿)
+      - archetype_specs/*.json (unified spec 소스 — 홈 등 unified 빌드는 이 spec 으로 생성)
       - 이름에 'PRD' (사용자 입력 PRD) · 'wireframe_content' (와이어 콘텐츠 dict)
     삭제 대상: 빌드 입력으로 쓴 `blueprint_*.json` · `spec_*.json` · `*assembled*.json` ·
     `*_blueprint.json` 산출물.
@@ -4912,7 +4912,7 @@ def _cleanup_build_input(input_path: str) -> None:
         base = os.path.basename(input_path)
         low = base.lower()
         # 보존 예외 — 소스/입력 자산
-        if base in ("blueprint_templates.json", "blueprint_unified_imin_home.json"):
+        if base in ("blueprint_templates.json",):
             return
         if "prd" in low or "wireframe_content" in low:
             return
