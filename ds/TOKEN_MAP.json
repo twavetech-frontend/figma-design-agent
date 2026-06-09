@@ -3355,9 +3355,9 @@
   "--display2xl-regular": {
     "figmaPath": "Display 2xl/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.display-2xl}",
+      "lineHeight": "{Line height.heading-2xl}",
       "fontSize": "{fontSize.11}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3370,9 +3370,9 @@
   "--display2xl-medium": {
     "figmaPath": "Display 2xl/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.display-2xl}",
+      "lineHeight": "{Line height.heading-2xl}",
       "fontSize": "{fontSize.11}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3385,9 +3385,9 @@
   "--display2xl-semibold": {
     "figmaPath": "Display 2xl/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.display-2xl}",
+      "lineHeight": "{Line height.heading-2xl}",
       "fontSize": "{fontSize.11}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3400,9 +3400,9 @@
   "--display2xl-bold": {
     "figmaPath": "Display 2xl/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.display-2xl}",
+      "lineHeight": "{Line height.heading-2xl}",
       "fontSize": "{fontSize.11}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3415,9 +3415,9 @@
   "--displayXl-regular": {
     "figmaPath": "Display xl/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.display-xl}",
+      "lineHeight": "{Line height.heading-xl}",
       "fontSize": "{fontSize.10}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3430,9 +3430,9 @@
   "--displayXl-medium": {
     "figmaPath": "Display xl/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.display-xl}",
+      "lineHeight": "{Line height.heading-xl}",
       "fontSize": "{fontSize.10}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3445,9 +3445,9 @@
   "--displayXl-semibold": {
     "figmaPath": "Display xl/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.display-xl}",
+      "lineHeight": "{Line height.heading-xl}",
       "fontSize": "{fontSize.10}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3460,9 +3460,9 @@
   "--displayXl-bold": {
     "figmaPath": "Display xl/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.display-xl}",
+      "lineHeight": "{Line height.heading-xl}",
       "fontSize": "{fontSize.10}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3475,9 +3475,9 @@
   "--displayLg-regular": {
     "figmaPath": "Display lg/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.display-lg}",
+      "lineHeight": "{Line height.heading-lg}",
       "fontSize": "{fontSize.9}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3490,9 +3490,9 @@
   "--displayLg-medium": {
     "figmaPath": "Display lg/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.display-lg}",
+      "lineHeight": "{Line height.heading-lg}",
       "fontSize": "{fontSize.9}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3505,9 +3505,9 @@
   "--displayLg-semibold": {
     "figmaPath": "Display lg/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.display-lg}",
+      "lineHeight": "{Line height.heading-lg}",
       "fontSize": "{fontSize.9}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3520,9 +3520,9 @@
   "--displayLg-bold": {
     "figmaPath": "Display lg/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.display-lg}",
+      "lineHeight": "{Line height.heading-lg}",
       "fontSize": "{fontSize.9}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3535,9 +3535,9 @@
   "--displayMd-regular": {
     "figmaPath": "Display md/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.display-md}",
+      "lineHeight": "{Line height.heading-md}",
       "fontSize": "{fontSize.8}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3550,9 +3550,9 @@
   "--displayMd-medium": {
     "figmaPath": "Display md/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.display-md}",
+      "lineHeight": "{Line height.heading-md}",
       "fontSize": "{fontSize.8}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3565,9 +3565,9 @@
   "--displayMd-semibold": {
     "figmaPath": "Display md/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.display-md}",
+      "lineHeight": "{Line height.heading-md}",
       "fontSize": "{fontSize.8}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3580,9 +3580,9 @@
   "--displayMd-bold": {
     "figmaPath": "Display md/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.display-md}",
+      "lineHeight": "{Line height.heading-md}",
       "fontSize": "{fontSize.8}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3595,9 +3595,9 @@
   "--displaySm-regular": {
     "figmaPath": "Display sm/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.display-sm}",
+      "lineHeight": "{Line height.heading-sm}",
       "fontSize": "{fontSize.6}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3610,9 +3610,9 @@
   "--displaySm-medium": {
     "figmaPath": "Display sm/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.display-sm}",
+      "lineHeight": "{Line height.heading-sm}",
       "fontSize": "{fontSize.6}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3625,9 +3625,9 @@
   "--displaySm-semibold": {
     "figmaPath": "Display sm/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.display-sm}",
+      "lineHeight": "{Line height.heading-sm}",
       "fontSize": "{fontSize.6}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3640,9 +3640,9 @@
   "--displaySm-bold": {
     "figmaPath": "Display sm/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.display-sm}",
+      "lineHeight": "{Line height.heading-sm}",
       "fontSize": "{fontSize.6}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3655,9 +3655,9 @@
   "--displayXs-regular": {
     "figmaPath": "Display xs/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.display-xs}",
+      "lineHeight": "{Line height.heading-xs}",
       "fontSize": "{fontSize.5}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3670,9 +3670,9 @@
   "--displayXs-medium": {
     "figmaPath": "Display xs/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.display-xs}",
+      "lineHeight": "{Line height.heading-xs}",
       "fontSize": "{fontSize.5}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3685,9 +3685,9 @@
   "--displayXs-semibold": {
     "figmaPath": "Display xs/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.display-xs}",
+      "lineHeight": "{Line height.heading-xs}",
       "fontSize": "{fontSize.5}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3700,9 +3700,9 @@
   "--displayXs-bold": {
     "figmaPath": "Display xs/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.display-sm}",
+      "lineHeight": "{Line height.heading-sm}",
       "fontSize": "{fontSize.5}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3715,9 +3715,9 @@
   "--textXl-regular": {
     "figmaPath": "Text xl/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.text-xl}",
+      "lineHeight": "{Line height.body-xl}",
       "fontSize": "{fontSize.4}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3730,9 +3730,9 @@
   "--textXl-medium": {
     "figmaPath": "Text xl/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.text-xl}",
+      "lineHeight": "{Line height.body-xl}",
       "fontSize": "{fontSize.4}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3745,9 +3745,9 @@
   "--textXl-semibold": {
     "figmaPath": "Text xl/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.text-xl}",
+      "lineHeight": "{Line height.body-xl}",
       "fontSize": "{fontSize.4}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3760,9 +3760,9 @@
   "--textXl-bold": {
     "figmaPath": "Text xl/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.text-xl}",
+      "lineHeight": "{Line height.body-xl}",
       "fontSize": "{fontSize.4}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3775,9 +3775,9 @@
   "--textLg-regular": {
     "figmaPath": "Text lg/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.text-lg}",
+      "lineHeight": "{Line height.body-lg}",
       "fontSize": "{fontSize.3}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3790,9 +3790,9 @@
   "--textLg-medium": {
     "figmaPath": "Text lg/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.text-lg}",
+      "lineHeight": "{Line height.body-lg}",
       "fontSize": "{fontSize.3}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3805,9 +3805,9 @@
   "--textLg-semibold": {
     "figmaPath": "Text lg/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.text-lg}",
+      "lineHeight": "{Line height.body-lg}",
       "fontSize": "{fontSize.3}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3820,9 +3820,9 @@
   "--textLg-bold": {
     "figmaPath": "Text lg/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.text-lg}",
+      "lineHeight": "{Line height.body-lg}",
       "fontSize": "{fontSize.3}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3835,9 +3835,9 @@
   "--textMd-regular": {
     "figmaPath": "Text md/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.text-md}",
+      "lineHeight": "{Line height.body-md}",
       "fontSize": "{fontSize.2}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3850,9 +3850,9 @@
   "--textMd-medium": {
     "figmaPath": "Text md/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.text-md}",
+      "lineHeight": "{Line height.body-md}",
       "fontSize": "{fontSize.2}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3865,9 +3865,9 @@
   "--textMd-semibold": {
     "figmaPath": "Text md/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.text-md}",
+      "lineHeight": "{Line height.body-md}",
       "fontSize": "{fontSize.2}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3880,9 +3880,9 @@
   "--textMd-bold": {
     "figmaPath": "Text md/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.text-md}",
+      "lineHeight": "{Line height.body-md}",
       "fontSize": "{fontSize.2}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3895,9 +3895,9 @@
   "--textSm-regular": {
     "figmaPath": "Text sm/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.text-sm}",
+      "lineHeight": "{Line height.body-sm}",
       "fontSize": "{fontSize.1}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3910,9 +3910,9 @@
   "--textSm-medium": {
     "figmaPath": "Text sm/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.text-sm}",
+      "lineHeight": "{Line height.body-sm}",
       "fontSize": "{fontSize.1}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3925,9 +3925,9 @@
   "--textSm-semibold": {
     "figmaPath": "Text sm/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.text-sm}",
+      "lineHeight": "{Line height.body-sm}",
       "fontSize": "{fontSize.1}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3940,9 +3940,9 @@
   "--textSm-bold": {
     "figmaPath": "Text sm/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.text-sm}",
+      "lineHeight": "{Line height.body-sm}",
       "fontSize": "{fontSize.1}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3955,9 +3955,9 @@
   "--textXs-regular": {
     "figmaPath": "Text xs/Regular",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.regular}",
-      "lineHeight": "{Line height.text-xs}",
+      "lineHeight": "{Line height.body-xs}",
       "fontSize": "{fontSize.0}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3970,9 +3970,9 @@
   "--textXs-medium": {
     "figmaPath": "Text xs/Medium",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.medium}",
-      "lineHeight": "{Line height.text-xs}",
+      "lineHeight": "{Line height.body-xs}",
       "fontSize": "{fontSize.0}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -3985,9 +3985,9 @@
   "--textXs-semibold": {
     "figmaPath": "Text xs/Semibold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.semibold}",
-      "lineHeight": "{Line height.text-xs}",
+      "lineHeight": "{Line height.body-xs}",
       "fontSize": "{fontSize.0}",
       "letterSpacing": "{letterSpacing.2}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4000,9 +4000,9 @@
   "--textXs-bold": {
     "figmaPath": "Text xs/Bold",
     "value": {
-      "fontFamily": "{Font family.font-family-display}",
+      "fontFamily": "{Font family.font-family-heading}",
       "fontWeight": "{Font weight.bold}",
-      "lineHeight": "{Line height.text-xs}",
+      "lineHeight": "{Line height.body-xs}",
       "fontSize": "{fontSize.0}",
       "letterSpacing": "{letterSpacing.1}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4467,7 +4467,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-4}",
-      "lineHeight": "{Line height.display-xs}",
+      "lineHeight": "{Line height.heading-xs}",
       "fontSize": "{fontSize.5}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4482,7 +4482,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-4}",
-      "lineHeight": "{Line height.text-lg}",
+      "lineHeight": "{Line height.body-lg}",
       "fontSize": "{fontSize.4}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4497,7 +4497,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-4}",
-      "lineHeight": "{Line height.text-md}",
+      "lineHeight": "{Line height.body-md}",
       "fontSize": "{fontSize.2}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4512,7 +4512,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-4}",
-      "lineHeight": "{Line height.text-sm}",
+      "lineHeight": "{Line height.body-sm}",
       "fontSize": "{fontSize.1}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4557,7 +4557,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-5}",
-      "lineHeight": "{Line height.display-xs}",
+      "lineHeight": "{Line height.heading-xs}",
       "fontSize": "{fontSize.5}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4572,7 +4572,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-5}",
-      "lineHeight": "{Line height.text-lg}",
+      "lineHeight": "{Line height.body-lg}",
       "fontSize": "{fontSize.4}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4587,7 +4587,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-5}",
-      "lineHeight": "{Line height.text-md}",
+      "lineHeight": "{Line height.body-md}",
       "fontSize": "{fontSize.2}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4602,7 +4602,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-5}",
-      "lineHeight": "{Line height.text-sm}",
+      "lineHeight": "{Line height.body-sm}",
       "fontSize": "{fontSize.1}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4647,7 +4647,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-6}",
-      "lineHeight": "{Line height.display-xs}",
+      "lineHeight": "{Line height.heading-xs}",
       "fontSize": "{fontSize.5}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4662,7 +4662,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-6}",
-      "lineHeight": "{Line height.text-lg}",
+      "lineHeight": "{Line height.body-lg}",
       "fontSize": "{fontSize.4}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4677,7 +4677,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-6}",
-      "lineHeight": "{Line height.text-md}",
+      "lineHeight": "{Line height.body-md}",
       "fontSize": "{fontSize.2}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
@@ -4692,7 +4692,7 @@
     "value": {
       "fontFamily": "{fontFamilies.carmen-sans}",
       "fontWeight": "{fontWeights.carmen-sans-6}",
-      "lineHeight": "{Line height.text-sm}",
+      "lineHeight": "{Line height.body-sm}",
       "fontSize": "{fontSize.1}",
       "letterSpacing": "{letterSpacing.0}",
       "paragraphSpacing": "{paragraphSpacing.0}",
