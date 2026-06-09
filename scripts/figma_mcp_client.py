@@ -9550,7 +9550,8 @@ def _bind_icon_color_tokens_live(root_id: str) -> int:
         print(f"  [icon-color-bind] 트리 수집 실패: {e}")
         return 0
 
-    jobs: list = []
+    jobs: list = []         # set_bound_variables 잡
+    clear_jobs: list = []   # 🔴 stroke 아이콘의 spurious fill 제거 잡
     off_palette: list = []
 
     def walk(n: dict):
@@ -9560,17 +9561,34 @@ def _bind_icon_color_tokens_live(root_id: str) -> int:
         ntype = (n.get("type") or "").upper()
         if ntype in _ICON_VECTOR_TYPES and ";" not in nid:
             binds: Dict[str, str] = {}
-            for kind, prop in (("strokes", "strokes/0"), ("fills", "fills/0")):
-                paint = _first_visible_solid_paint(n.get(kind))
-                if not paint or _paint_already_bound(n, paint, kind):
-                    continue
-                c = paint["color"]
-                rgb = (c.get("r", 0), c.get("g", 0), c.get("b", 0))
-                fp, d = _nearest_fg_token(rgb, palette)
-                if fp and d <= _ICON_COLOR_SNAP_THRESH:
-                    binds[prop] = fp
-                elif fp:
-                    off_palette.append(round(d, 2))
+            stroke_paint = _first_visible_solid_paint(n.get("strokes"))
+            fill_list = n.get("fills")
+            fill_paint = _first_visible_solid_paint(fill_list)
+            # 🔴 2026-06-09 사용자: "월렛 아이콘은 stroke 아이콘이야" — Untitled UI 아이콘은
+            # stroke 기반이고 내부는 투명이어야 한다. visible stroke 가 있으면 stroke 아이콘으로
+            # 보고 stroke 만 fg-* 에 바인딩, fill(있으면 spurious 흰 내부)은 제거한다.
+            # stroke 없이 fill 만 있으면 fill 아이콘으로 보고 fill 을 바인딩.
+            if stroke_paint is not None:
+                if not _paint_already_bound(n, stroke_paint, "strokes"):
+                    c = stroke_paint["color"]
+                    rgb = (c.get("r", 0), c.get("g", 0), c.get("b", 0))
+                    fp, d = _nearest_fg_token(rgb, palette)
+                    if fp and d <= _ICON_COLOR_SNAP_THRESH:
+                        binds["strokes/0"] = fp
+                    elif fp:
+                        off_palette.append(round(d, 2))
+                # stroke 아이콘에 fill 이 하나라도 있으면 제거 (내부 투명 — 배경이 비쳐야)
+                if isinstance(fill_list, list) and fill_list and nid:
+                    clear_jobs.append(nid)
+            elif fill_paint is not None:
+                if not _paint_already_bound(n, fill_paint, "fills"):
+                    c = fill_paint["color"]
+                    rgb = (c.get("r", 0), c.get("g", 0), c.get("b", 0))
+                    fp, d = _nearest_fg_token(rgb, palette)
+                    if fp and d <= _ICON_COLOR_SNAP_THRESH:
+                        binds["fills/0"] = fp
+                    elif fp:
+                        off_palette.append(round(d, 2))
             if binds and nid:
                 jobs.append({"nodeId": nid, "bindings": binds})
         if ntype == "INSTANCE":
@@ -9579,8 +9597,8 @@ def _bind_icon_color_tokens_live(root_id: str) -> int:
             walk(c)
     walk(tree)
 
-    if not jobs:
-        print("  [icon-color-bind] 바인딩할 아이콘 색 없음")
+    if not jobs and not clear_jobs:
+        print("  [icon-color-bind] 바인딩/정리할 아이콘 색 없음")
         return 0
 
     ok = 0
@@ -9595,8 +9613,19 @@ def _bind_icon_color_tokens_live(root_id: str) -> int:
         except Exception as e:
             if ok < 3:
                 print(f"    [icon-color-bind] FAIL {job['nodeId']}: {e}")
-    print(f"  [icon-color-bind] ✓ 아이콘 색 토큰 바인딩 — {ok}개 노드 / {field_count}개 paint "
-          f"(stroke·fill → Colors/Foreground/fg-*)")
+    # stroke 아이콘의 spurious fill 제거 (clear → node.fills=[])
+    cleared = 0
+    for i, nid in enumerate(clear_jobs):
+        try:
+            call_tool("set_fill_color",
+                      {"nodeId": nid, "r": 0, "g": 0, "b": 0, "a": 0, "clear": True},
+                      msg_id=i + 1)
+            cleared += 1
+        except Exception as e:
+            if cleared < 3:
+                print(f"    [icon-color-bind] fill clear FAIL {nid}: {e}")
+    print(f"  [icon-color-bind] ✓ 아이콘 색 — 바인딩 {ok}개 노드/{field_count} paint (stroke·fill "
+          f"→ fg-*) + stroke 아이콘 spurious fill 제거 {cleared}개")
     if off_palette:
         ex = ", ".join(str(v) for v in sorted(set(off_palette))[:3])
         print(f"  [icon-color-bind] ⚠️ fg 팔레트와 거리 먼 색 {len(off_palette)}건 리터럴 유지 "

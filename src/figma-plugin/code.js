@@ -6139,11 +6139,14 @@ async function batchBuildScreen(params) {
           function colorizeVectors(n) {
             if (n.type === "VECTOR" || n.type === "LINE" || n.type === "STAR" || n.type === "POLYGON" || n.type === "ELLIPSE" || n.type === "RECTANGLE" || n.type === "BOOLEAN_OPERATION") {
               try {
-                // Untitled UI SVGs use stroke, not fill
+                // Untitled UI SVGs are stroke-based icons (내부는 투명이어야 함).
                 if (n.strokes && n.strokes.length > 0) {
                   n.strokes = [{ type: "SOLID", color: color, opacity: opacity }];
-                }
-                if (n.fills && n.fills.length > 0) {
+                  // 🔴 2026-06-09 사용자 "월렛 아이콘은 stroke 아이콘이야": stroke 아이콘은
+                  // fill 이 없어야 한다 — SVG 가 남긴 spurious fill(흰 내부)을 제거해 배경이 비치게.
+                  n.fills = [];
+                } else if (n.fills && n.fills.length > 0) {
+                  // stroke 없는 순수 fill 아이콘만 fill 을 색칠.
                   n.fills = [{ type: "SOLID", color: color, opacity: opacity }];
                 }
               } catch (e) {}

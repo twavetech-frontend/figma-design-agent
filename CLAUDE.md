@@ -1459,12 +1459,19 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
    추가"): `_bind_icon_color_tokens_live`가 radius 바인더 직후 실행 — `code.js` 의 `colorizeVectors`
    가 아이콘(svg_icon) 색을 **리터럴 RGB 로 박아**(예 #2c3744) 변수에 안 묶이던 회귀를 라이브에서
    교정. 대상 = VECTOR/LINE/STAR/POLYGON/BOOLEAN_OPERATION 노드의 stroke/fill. **`Colors/Foreground/
-   fg-*` 전경 팔레트(16개)에서 가장 가까운(L1) 색을 찾아** `set_bound_variables`(strokes/0·fills/0)로
-   바인딩. 매칭: #2c3744→`fg-primary`, #7700ff→`fg-brand-primary`, #ffffff→`fg-light`, #b1b6be→
+   fg-*` 전경 팔레트(16개)에서 가장 가까운(L1) 색을 찾아** `set_bound_variables`로 바인딩.
+   🔴 **stroke 아이콘 vs fill 아이콘 구분 (2026-06-09 사용자 "월렛 아이콘은 stroke 아이콘이야"):**
+   Untitled UI 아이콘은 stroke 기반이고 내부는 투명이어야 한다. **VECTOR 에 visible stroke 가 있으면
+   = stroke 아이콘 → stroke 만 fg-* 에 바인딩하고, fill(있으면 SVG 가 남긴 spurious 흰 내부)은
+   `set_fill_color(clear)` 로 제거**(배경이 비치게). **stroke 없이 fill 만 있으면 = fill 아이콘 →
+   fill 을 바인딩.** (이전엔 fills·strokes 둘 다 바인딩해서 월렛 같은 stroke 아이콘의 spurious 흰
+   fill 을 fg-light 에 바인딩해 정당화해버리던 버그 → 수정.)
+   매칭: #2c3744→`fg-primary`, #7700ff→`fg-brand-primary`, #ffffff→`fg-light`, #b1b6be→
    `fg-tertiary` 등(토큰 value≈현재 색이라 시각 변화 0). **거리 > 0.30(L1) 인 색은 리터럴 유지**(임의
    스냅 금지 — aqua #009eaa 등 비-전경색은 안 바뀜). 이미 바인딩된 paint·DS INSTANCE·내부(`;`)는
-   skip(규칙 0-K 컴포넌트 색 보호). `'-alt'`/`'_hover'` fg 변형은 팔레트에서 제외. 멱등(paint 레벨
-   `boundVariables.color` 로 재실행 시 skip). 테스트 `test_icon_color_binding.py`.
+   skip(규칙 0-K 컴포넌트 색 보호). `'-alt'`/`'_hover'` fg 변형은 팔레트에서 제외. 멱등. 빌드 소스
+   `code.js colorizeVectors` 도 stroke 있으면 fill=[] 로 비워 새 빌드부터 spurious fill 이 안 생김
+   (⚠️ 플러그인 재실행 후 활성; post-fix 가 그 전에도 보정). 테스트 `test_icon_color_binding.py`.
 7-d. 🔴 아이콘 프레임의 '보이지 않는 잔존 fill' 정리 (2026-06-09 사용자 "프레임 fill 에 바인딩되고
    visibility off 되어있어 → 정리 패스 추가"): `_strip_icon_frame_hidden_fills_live`가 7-c 직후 실행 —
    svg_icon 프레임(작은 정사각 + 자식이 vector 계열, VECTOR ≥1)에 남은 **visibility off fill**(실제
