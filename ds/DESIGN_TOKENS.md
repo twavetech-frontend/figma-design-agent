@@ -665,14 +665,6 @@
 | Line height/heading-2xl | 90 | `--lineHeight-heading2xl` |
 | Line height/body-xxs | 14 | `--lineHeight-bodyXxs` |
 
-## Layout
-
-| Token | Value | CSS Variable |
-|-------|-------|-------------|
-| container-max-width-desktop | 1280 | `--containerMaxWidthDesktop` |
-| container-padding-desktop | 32 | `--containerPaddingDesktop` |
-| container-padding-mobile | 16 | `--containerPaddingMobile` |
-
 ## Width
 
 | Token | Value | CSS Variable |

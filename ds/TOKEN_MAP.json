@@ -5762,19 +5762,69 @@
     "value": "#0000004d",
     "type": "COLOR"
   },
-  "--containerMaxWidthDesktop": {
-    "figmaPath": "container-max-width-desktop",
-    "value": "1280",
+  "--radiusNone": {
+    "figmaPath": "radius-none",
+    "value": "0",
     "type": "NUMBER"
   },
-  "--containerPaddingDesktop": {
-    "figmaPath": "container-padding-desktop",
-    "value": "32",
+  "--radiusXxs": {
+    "figmaPath": "radius-xxs",
+    "value": "4",
     "type": "NUMBER"
   },
-  "--containerPaddingMobile": {
-    "figmaPath": "container-padding-mobile",
+  "--radiusXs": {
+    "figmaPath": "radius-xs",
+    "value": "6",
+    "type": "NUMBER"
+  },
+  "--radiusSm": {
+    "figmaPath": "radius-sm",
+    "value": "8",
+    "type": "NUMBER"
+  },
+  "--radiusMd": {
+    "figmaPath": "radius-md",
+    "value": "10",
+    "type": "NUMBER"
+  },
+  "--radiusXl": {
+    "figmaPath": "radius-xl",
+    "value": "14",
+    "type": "NUMBER"
+  },
+  "--radius2xl": {
+    "figmaPath": "radius-2xl",
     "value": "16",
+    "type": "NUMBER"
+  },
+  "--radius4xl": {
+    "figmaPath": "radius-4xl",
+    "value": "24",
+    "type": "NUMBER"
+  },
+  "--radiusFull": {
+    "figmaPath": "radius-full",
+    "value": "9999",
+    "type": "NUMBER"
+  },
+  "--radiusLg": {
+    "figmaPath": "radius-lg",
+    "value": "12",
+    "type": "NUMBER"
+  },
+  "--radius3xl": {
+    "figmaPath": "radius-3xl",
+    "value": "20",
+    "type": "NUMBER"
+  },
+  "--radius5xl": {
+    "figmaPath": "radius-5xl",
+    "value": "28",
+    "type": "NUMBER"
+  },
+  "--radius6xl": {
+    "figmaPath": "radius-6xl",
+    "value": "32",
     "type": "NUMBER"
   },
   "--spacingNone": {
@@ -5860,71 +5910,6 @@
   "--spacing5xl": {
     "figmaPath": "spacing-5xl",
     "value": "40",
-    "type": "NUMBER"
-  },
-  "--radiusNone": {
-    "figmaPath": "radius-none",
-    "value": "0",
-    "type": "NUMBER"
-  },
-  "--radiusXxs": {
-    "figmaPath": "radius-xxs",
-    "value": "4",
-    "type": "NUMBER"
-  },
-  "--radiusXs": {
-    "figmaPath": "radius-xs",
-    "value": "6",
-    "type": "NUMBER"
-  },
-  "--radiusSm": {
-    "figmaPath": "radius-sm",
-    "value": "8",
-    "type": "NUMBER"
-  },
-  "--radiusMd": {
-    "figmaPath": "radius-md",
-    "value": "10",
-    "type": "NUMBER"
-  },
-  "--radiusXl": {
-    "figmaPath": "radius-xl",
-    "value": "14",
-    "type": "NUMBER"
-  },
-  "--radius2xl": {
-    "figmaPath": "radius-2xl",
-    "value": "16",
-    "type": "NUMBER"
-  },
-  "--radius4xl": {
-    "figmaPath": "radius-4xl",
-    "value": "24",
-    "type": "NUMBER"
-  },
-  "--radiusFull": {
-    "figmaPath": "radius-full",
-    "value": "9999",
-    "type": "NUMBER"
-  },
-  "--radiusLg": {
-    "figmaPath": "radius-lg",
-    "value": "12",
-    "type": "NUMBER"
-  },
-  "--radius3xl": {
-    "figmaPath": "radius-3xl",
-    "value": "20",
-    "type": "NUMBER"
-  },
-  "--radius5xl": {
-    "figmaPath": "radius-5xl",
-    "value": "28",
-    "type": "NUMBER"
-  },
-  "--radius6xl": {
-    "figmaPath": "radius-6xl",
-    "value": "32",
     "type": "NUMBER"
   },
   "--fontFamily-fontFamilyHeading": {
