@@ -349,7 +349,12 @@ def _handle_post_read(data):
     _write_ack_if_complete(merged, total)
 
     # 플러그인 UI 에 통독 진행 상태 표시 — 통독 중이면 진행률, 완독이면 완료.
-    if out["complete"]:
+    # 🔴 monotonic 가드(2026-06-08 사용자: "플러그인이 16/36 에서 멈춰있었다"): 이미 통독
+    #    ack(.read.json) 됐으면 — 이 Read 의 자체 커버리지가 아직 부분(예: 첫 청크 16/36)이라도
+    #    절대 'reading' 으로 되돌리지 않고 'done' 을 보낸다. 비동기 훅 subprocess 가 순서 보장
+    #    없이 알림을 보내 done 뒤 stale reading 이 도착해 진행바가 갇히던 회귀 차단(송신 측).
+    already_acked = os.path.exists(_ACK)
+    if out["complete"] or already_acked:
         cnt = None
         try:
             with open(_META, encoding="utf-8") as fh:

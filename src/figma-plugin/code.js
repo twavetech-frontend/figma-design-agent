@@ -848,10 +848,7 @@ async function createText(params) {
 
 async function setFillColor(params) {
   console.log("setFillColor", params);
-  const {
-    nodeId,
-    color: { r, g, b, a },
-  } = params || {};
+  const nodeId = params && params.nodeId;
 
   if (!nodeId) {
     throw new Error("Missing nodeId parameter");
@@ -865,6 +862,17 @@ async function setFillColor(params) {
   if (!("fills" in node)) {
     throw new Error(`Node does not support fills: ${nodeId}`);
   }
+
+  // 🔴 2026-06-09: clear=true 면 모든 fill paint 를 제거(node.fills = []).
+  // 아이콘 svg_icon 프레임의 '보이지 않는 잔존 fill'(visibility off) 정리용 — 실제 색은
+  // 내부 VECTOR stroke 에 있고 프레임 fill 은 무의미하므로 패널에서 깔끔히 제거한다.
+  if (params && params.clear === true) {
+    node.fills = [];
+    return { id: node.id, name: node.name, fills: [] };
+  }
+
+  const fillColor = (params && params.color) || {};
+  const r = fillColor.r, g = fillColor.g, b = fillColor.b, a = fillColor.a;
 
   // Validate that MCP layer provided complete data
   if (r === undefined || g === undefined || b === undefined || a === undefined) {

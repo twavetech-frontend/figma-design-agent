@@ -1149,6 +1149,11 @@ def _auto_export_canonical_reference(blueprint: dict) -> None:
 # 사용자 명시: "내가 레퍼런스 이미지를 수백장 첨부해놓은거 아니냐! 너 디자인 생성할때
 # 레퍼런스 이미지 검색은 하냐?" → archetype 매칭 PNG path 자동 출력 + Read 강제.
 
+# 마지막 빌드의 reference 썸네일 경로 — cmd_build 끝에서 재출력(tail-visible)용
+_LAST_REFERENCE_THUMBS: list = []
+_LAST_REFERENCE_LABEL: str = ""
+
+
 def _auto_search_uibowl_references(blueprint: dict) -> None:
     """archetype 인식해 references/uibowl 자동 검색 + thumbnail 생성.
 
@@ -1168,6 +1173,19 @@ def _auto_search_uibowl_references(blueprint: dict) -> None:
         if kw in root_name:
             archetype = kw
             break
+    # 🔴 2026-06-08 (사용자: "새 세션 최초 생성 때도 레퍼런스 안 봤다"): home/stage 등 '변형 이름'
+    # (imin_signup_home·imin_active_home·imin_*_home_creative 등)도 archetype 인식한다. 예전엔
+    # 'imin_home' 정확 부분문자열만 봐서 'imin_signup_home' 이 미인식→일반 폴백 되며 진짜 홈
+    # 레퍼런스를 못 받았다. bare word(home/stage/...) 가 이름에 있으면 해당 archetype 으로.
+    if archetype is None:
+        for bare, arch in (("home", "imin_home"), ("stage", "imin_stage"),
+                           ("lounge", "imin_lounge"), ("community", "imin_community"),
+                           ("payment", "imin_payment"), ("onboarding", "imin_onboarding"),
+                           ("notification", "imin_notification"), ("search", "imin_search"),
+                           ("history", "imin_history"), ("settings", "imin_settings")):
+            if bare in root_name:
+                archetype = arch
+                break
 
     # ⚠️ 2026-05-28 사용자 분노 (근본 원인 수정): 예전엔 archetype 미인식 시 여기서
     # 조용히 return → 모달·신규 화면(예: transaction_schedule_modal)은 레퍼런스 검색이
@@ -1229,6 +1247,12 @@ def _auto_search_uibowl_references(blueprint: dict) -> None:
             return
 
         label = archetype if archetype else f"FALLBACK ({fallback_note})"
+        # 🔴 썸네일 경로 저장 — cmd_build 끝에서 재출력해 `tail -N` 으로 로그 봐도 안 놓치게
+        # (2026-06-08 근본 원인: 빌드 출력을 tail/grep 으로 필터해 Step A.0 의 reference 프롬프트를
+        #  통째로 못 봐 0-G 를 매번 빠뜨렸다 → 끝에서 다시 띄운다.)
+        global _LAST_REFERENCE_THUMBS, _LAST_REFERENCE_LABEL
+        _LAST_REFERENCE_THUMBS = [r["thumbPath"] for r in refs]
+        _LAST_REFERENCE_LABEL = label
         print(f"\n📚 [Step A.0] references/uibowl 자동 검색 — {label}")
         if fallback_note:
             print(f"  ⚠️ {fallback_note}")
@@ -3195,26 +3219,70 @@ def _enforce_symmetric_vpad(blueprint: dict) -> None:
         print(f"[규칙] 세로 패딩 대칭 교정 {fixed[0]}건 (pt≠pb → max 로 통일; 비대칭은 _asymPad 마커 필요)")
 
 
+# 🔴 규칙 13 — 메인/탭바 홈 화면의 '중요 섹션' 이름 패턴 (목돈 만들기·스테이지 현황·추천 스테이지).
+# 이 섹션들은 풀폭 bg-secondary 밴드(_band)로 분리해야 한다(2026-06-08 사용자 룰). lint 가 미적용 시 WARN.
+_BAND_IMPORTANT_NAME_KW = (
+    "목돈 만들기", "목돈만들기", "시작 유도", "start guide",
+    "스테이지 현황", "현황 섹션", "stage status",
+    "추천 스테이지", "추천 섹션", "recommend section", "recommend stage",
+)
+# 밴드로 강제하지 않는(보조) 섹션 — 이름이 위 패턴과 겹쳐도 제외 (총 스테이지 수 ribbon 등)
+_BAND_IMPORTANT_EXCLUDE_KW = ("ribbon", "status bar", "total", "summary")
+
+
+def _is_home_blueprint(blueprint: dict) -> bool:
+    nm = ((blueprint.get("rootName") or "") + " " + (blueprint.get("name") or "")).lower()
+    return any(k in nm for k in ("home", "메인", "main dashboard", "main_home"))
+
+
 def _enforce_section_band(blueprint: dict) -> None:
-    """중요 섹션 = root 직계 풀폭 배경 밴드 패턴 표준화 (2026-06-05 사용자 룰).
+    """중요 섹션 = root 직계 풀폭 배경 밴드 패턴 표준화 (2026-06-05 / 강화 2026-06-08 사용자 룰).
 
-    사용자 명시: *"중요한 섹션은 배경 컬러를 두고 content frame에서 벗어나 root 위 별도
-    프레임으로 분리하고, frame에 fill color를 넣는다."* — 핵심/강조 섹션(시작 유도·추천 등)은
-    좌우 padding 있는 content 안 흰 카드가 아니라, **root 직계 풀폭 밴드(bg fill, 좌우 끝까지)**
-    로 둔다. 보조 섹션(이용한도·출석/친구 등)은 content 안 흰 카드 유지.
+    사용자 명시(2026-06-05): *"중요한 섹션은 배경 컬러를 두고 content frame에서 벗어나 root 위
+    별도 프레임으로 분리하고, frame에 fill color를 넣는다."*
+    사용자 명시(2026-06-08): *"목돈만들기, 스테이지 현황 및 추천 스테이지 같은 중요한 섹션들은
+    content frame에서 분리하고 bg fill color를 bg-secondary로 교체해서 다른 섹션과 분리되어
+    보여지게 강조 … 메인화면과 각 탭바 홈화면에서 중요한 섹션은 이런식으로 처리해야 된다."*
 
-    구현: blueprint 노드에 `"_band": true` 마커를 박으면(그리고 root.children 직계에 배치하면)
-    이 함수가 밴드 스타일을 표준화한다 — fill 없으면 bg-secondary, layoutSizingHorizontal=FILL,
-    autoLayout 상/하 padding 24·좌우 20, 보더 제거. fill 을 명시(예: bg-brand-primary)하면 존중.
-    ⚠️ 풀폭이 되려면 content(좌우 padding 프레임) 밖 **root 직계**에 둬야 한다(규칙 문서 참조)."""
+    핵심/강조 섹션(목돈 만들기·스테이지 현황·추천 스테이지 등)은 좌우 padding 있는 content 안
+    흰 카드가 아니라 **풀폭 밴드(bg-secondary, 좌우 끝까지)**로 둔다. 보조 섹션(총 스테이지 수·
+    이용한도·출석/친구·내 스케줄)은 흰 카드 유지.
+
+    구현: blueprint 노드에 `"_band": true` 마커를 박으면(그리고 좌우 padding 없는 프레임 = content
+    또는 root 직계에 배치하면) 이 함수가 표준화한다 —
+      1) fill 없으면 bg-secondary, layoutSizingHorizontal=FILL, autoLayout 상/하 24·좌우 20, 보더 제거.
+      2) 🔴 밴드 내부 sub-card(자식 있는 frame)의 fill 이 밴드와 같은 bg-secondary 면 → bg-primary 로
+         자동 전환(회색 위에 묻히지 않고 흰 카드로 도드라지게). brand tint·aqua 등 다른 fill 은 존중.
+      3) lint: 홈 화면(_is_home_blueprint)에서 중요 이름 섹션이 `_band` 가 아니면 WARN.
+    ⚠️ 풀폭이 되려면 좌우 padding 있는 프레임 안에 두면 안 된다(content 의 가로 padding 0 또는 root 직계).
+    """
     cnt = [0]
+    inner = [0]
+    band_fill = "$token(bg-secondary)"
+
+    def _whiten_inner(n, depth=0):
+        # 밴드 내부에서 밴드와 같은 회색 fill 을 가진 sub-card(자식 보유 frame)는 흰색으로 → 도드라짐.
+        for c in (n.get("children") or []):
+            if not isinstance(c, dict):
+                continue
+            if (c.get("type") or "frame") in ("frame", "FRAME") and c.get("children"):
+                cf = c.get("fill")
+                if isinstance(cf, str) and cf.replace(" ", "") in (
+                        "$token(bg-secondary)", "$token(bg-secondary-alt)", "$token(bg-secondary_alt)"):
+                    c["fill"] = "$token(bg-primary)"
+                    # 흰 카드 경계 — 회색 밴드 위라 border-secondary (live white-card-border 가 백드롭 보정)
+                    if not any(c.get(k) for k in _STROKE_KEYS):
+                        c["strokeColor"] = "$token(border-secondary)"
+                        c["strokeWeight"] = 1
+                    inner[0] += 1
+            _whiten_inner(c, depth + 1)
 
     def walk(n):
         if not isinstance(n, dict):
             return
         if n.get("_band") is True and (n.get("type") or "frame") in ("frame", "FRAME"):
             if not n.get("fill"):
-                n["fill"] = "$token(bg-secondary)"
+                n["fill"] = band_fill
             n["layoutSizingHorizontal"] = "FILL"
             al = n.get("autoLayout")
             if not isinstance(al, dict):
@@ -3231,12 +3299,142 @@ def _enforce_section_band(blueprint: dict) -> None:
                 al["paddingRight"] = 20
             for k in _STROKE_KEYS:
                 n.pop(k, None)
+            # 밴드 fill 이 bg-secondary 계열일 때만 내부 흰색화(brand tint 밴드는 그대로 둠)
+            nf = n.get("fill")
+            if isinstance(nf, str) and "bg-secondary" in nf:
+                _whiten_inner(n)
             cnt[0] += 1
         for c in (n.get("children") or []):
             walk(c)
     walk(blueprint)
     if cnt[0]:
-        print(f"[규칙] 풀폭 밴드 섹션 표준화 {cnt[0]}건 (_band → bg fill·FILL·상하24/좌우20·보더제거)")
+        msg = f"[규칙] 풀폭 밴드 섹션 표준화 {cnt[0]}건 (_band → bg fill·FILL·상하24/좌우20·보더제거)"
+        if inner[0]:
+            msg += f" + 내부 sub-card 흰색화 {inner[0]}건"
+        print(msg)
+
+    # lint — 홈 화면에서 중요 이름 섹션이 밴드가 아니면 WARN (규칙 13, 회귀 차단)
+    if _is_home_blueprint(blueprint):
+        missing = []
+
+        def lint(n, in_band=False):
+            if not isinstance(n, dict):
+                return
+            nm = (n.get("name") or "")
+            nm_low = nm.lower()
+            is_band = bool(n.get("_band"))
+            if (not in_band and not is_band
+                    and (n.get("type") or "frame") in ("frame", "FRAME")
+                    and any(k in nm or k in nm_low for k in _BAND_IMPORTANT_NAME_KW)
+                    and not any(k in nm_low for k in _BAND_IMPORTANT_EXCLUDE_KW)):
+                missing.append(nm)
+            for c in (n.get("children") or []):
+                lint(c, in_band or is_band)
+        lint(blueprint)
+        if missing:
+            print(f"[규칙13-WARN] 홈 화면 중요 섹션이 풀폭 밴드(_band)가 아님 — "
+                  f"bg-secondary 밴드로 분리 권장: {', '.join(missing[:6])}")
+
+
+# 🔴 규칙 13-B — 홈 화면 Content(섹션 스택) 프레임 gap = spacing-2xl(20) (2026-06-08 사용자 룰)
+_HOME_CONTENT_GAP = 20  # spacing-2xl — 섹션 간 간격(32=spacing-4xl 은 과함)
+# Content 스택으로 볼 프레임 이름(섹션들을 담는 세로 컨테이너). 정확/접두 매칭.
+_HOME_CONTENT_NAMES = ("content", "content mid", "content top", "content bottom")
+
+
+def _enforce_home_content_gap(blueprint: dict) -> None:
+    """홈 화면의 Content(섹션 스택) 프레임 itemSpacing 을 spacing-2xl(20) 로 강제 (2026-06-08).
+
+    사용자 명시: *"content gap이 32로 spacing-4xl 로 설정되있는데, spacing-2xl 이여야 해 … 코드에 박아."*
+    메인·모든 탭바 홈 화면의 섹션 스택(Content) 간격은 32(spacing-4xl)가 과해 20(spacing-2xl)로
+    통일한다. post-fix `_bind_spacing_tokens_live` 가 20→spacing-2xl 토큰으로 자동 바인딩.
+
+    대상: `_is_home_blueprint` 화면의 **VERTICAL auto-layout** + 이름이 'Content'/'Content Mid' 등
+    (`_HOME_CONTENT_NAMES`) 인 프레임. 의도적 다른 간격은 노드에 `"_keepContentGap": true` 로 opt-out.
+    """
+    if not _is_home_blueprint(blueprint):
+        return
+    cnt = [0]
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        nm = (n.get("name") or "").strip().lower()
+        if (nm in _HOME_CONTENT_NAMES and not n.get("_keepContentGap")
+                and (n.get("type") or "frame") in ("frame", "FRAME")):
+            al = n.get("autoLayout")
+            if isinstance(al, dict) and (al.get("layoutMode") or "").upper() == "VERTICAL":
+                cur = al.get("itemSpacing")
+                if isinstance(cur, (int, float)) and not isinstance(cur, bool) and cur != _HOME_CONTENT_GAP:
+                    al["itemSpacing"] = _HOME_CONTENT_GAP
+                    cnt[0] += 1
+        for c in (n.get("children") or []):
+            walk(c)
+    walk(blueprint)
+    if cnt[0]:
+        print(f"[규칙13-B] 홈 Content 섹션 gap → spacing-2xl(20) 교정 {cnt[0]}건 "
+              f"(과한 spacing-4xl 등 차단; opt-out: _keepContentGap)")
+
+
+# 🔴 규칙 — CTA 유도 caption 텍스트 = text-secondary (2026-06-08 사용자 룰)
+_CAPTION_CTA_MAX_SIZE = 16  # 이보다 크면 hero/title 로 보고 제외
+_CTA_NAME_KW = ("button", "btn", "cta", "모으러", "참여", "하기", "가기", "신청",
+                "결제", "납입", "제출", "확인", "시작", "받기", "보내기", "구매")
+
+
+def _bp_is_cta(node: dict) -> bool:
+    """blueprint 노드가 CTA(라벨 있는 액션 버튼)인가 — 라벨 텍스트 instance 또는 button 이름 frame."""
+    if not isinstance(node, dict):
+        return False
+    t = (node.get("type") or "").lower()
+    nl = (node.get("name") or "").lower()
+    if t == "instance" and node.get("componentKey"):
+        if node.get("_instanceText"):
+            return True  # 라벨 박힌 DS 버튼 = CTA
+        return any(k in nl for k in _CTA_NAME_KW)
+    if t in ("frame", "") and (nl.endswith(" button") or nl.endswith(" btn")
+                               or nl.endswith(" cta") or nl in ("button", "cta")):
+        return True
+    return False
+
+
+def _enforce_cta_caption_secondary(blueprint: dict) -> None:
+    """CTA 바로 앞의 권유/안내 caption(작은 비-Bold 텍스트)이 text-primary 면 text-secondary 로 교정.
+
+    사용자 명시(2026-06-08): *"'함께 모은 목돈, 다시 모아볼까요?' 같은 텍스트는 중요도에서 최상은
+    아니거든. 그러면 컬러를 secondary 를 써야 하지 않겠어?"* — CTA 를 유도하는 권유 문구는 화면
+    최상위 정보(hero 수치·타이틀)가 아니므로 `text-secondary`(연한 회색)가 맞다. `text-primary`(진한)는
+    hero/타이틀 등 최상위 중요도에만.
+
+    대상: 컨테이너 자식 중 **CTA 의 바로 앞 형제 TEXT** 가 — fontColor=text-primary,
+    fontSize ≤ 16(hero/title 제외), weight ≠ Bold(강조 의도 제외) — 이면 text-secondary 로.
+    의도적 primary 유지는 노드에 `"_keepTextColor": true` 로 opt-out.
+    """
+    cnt = [0]
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        ch = n.get("children") or []
+        for i, c in enumerate(ch):
+            if i > 0 and _bp_is_cta(c):
+                prev = ch[i - 1]
+                if (isinstance(prev, dict) and (prev.get("type") or "").lower() == "text"
+                        and not prev.get("_keepTextColor")):
+                    col = prev.get("fontColor")
+                    size = prev.get("fontSize") or 0
+                    style = ((prev.get("fontName") or {}).get("style") or "")
+                    if (isinstance(col, str) and "text-primary" in col
+                            and isinstance(size, (int, float)) and not isinstance(size, bool)
+                            and size <= _CAPTION_CTA_MAX_SIZE
+                            and style.lower() != "bold"):
+                        prev["fontColor"] = "$token(text-secondary)"
+                        cnt[0] += 1
+        for c in ch:
+            walk(c)
+    walk(blueprint)
+    if cnt[0]:
+        print(f"[규칙] CTA 유도 caption {cnt[0]}건 → text-secondary (최상위 중요도 아님; opt-out: _keepTextColor)")
 
 
 def _is_footer(node: dict) -> bool:
@@ -4379,9 +4577,11 @@ def cmd_build(blueprint_file: str):
     _enforce_no_large_brand_fill(blueprint)  # 2026-05-27 — 큰 면적 frame brand fill 금지
     _enforce_symmetric_vpad(blueprint)  # 2026-06-05 — 세로 패딩 대칭 강제(무의식적 비대칭 차단)
     _enforce_section_band(blueprint)  # 2026-06-05 — 중요 섹션 풀폭 밴드(_band) 표준화
+    _enforce_home_content_gap(blueprint)  # 2026-06-08 — 홈 Content 섹션 gap=spacing-2xl(20)
     _enforce_brand_tint_surface_primary(blueprint)  # 2026-06-05 — 브랜드 틴트 면=bg-brand-primary
     _enforce_white_card_border(blueprint)  # 2026-05-27 — fill=bg-primary frame 자동 border
     _enforce_text_hierarchy(blueprint)
+    _enforce_cta_caption_secondary(blueprint)  # 2026-06-08 — CTA 유도 caption=text-secondary
     _enforce_section_dividers(blueprint)
     _enforce_tooltip_ignore_auto_layout(blueprint)
     _enforce_disabled_slot_pattern(blueprint)
@@ -4802,6 +5002,17 @@ def cmd_build(blueprint_file: str):
         except Exception as e:
             print(f"  [bp-final] 실패 (무시): {e}")
 
+        # 🔴 인디케이터 대칭 gap 최종 재단언 (2026-06-08 사용자: "dot indicator 가 아래 frame 에
+        # 딱 붙어있다"). 원인: blueprint 가 Hero paddingBottom=0 으로 작성되면 post-fix 의
+        # _enforce_indicator_symmetric_gap(pb=gap 교정)이 바로 위 _enforce_blueprint_padding(E.7.7)
+        # 의 blueprint 값(pb=0) 재단언에 덮여 무력화 → 인디케이터가 아래 섹션(밴드)에 밀착.
+        # blueprint padding 재단언 *직후* 다시 적용해 '인디케이터 위 gap = 아래 padding' 규칙이
+        # 최종 권한을 갖게 한다(authoring 이 pb≠gap 이어도 견고). [[autofix-runs-after-postfix]]
+        try:
+            _enforce_indicator_symmetric_gap(root_id)
+        except Exception as e:
+            print(f"  [indicator-gap-final] 실패 (무시): {e}")
+
         # 절대규칙 0-O (2026-06-04): NavBar fill=bg-primary + 좌측 back btn stroke 제거.
         # AUTO_FIX·white-card-border *이후* 에 해야 back btn 에 border 가 재부착되지 않는다.
         try:
@@ -4886,6 +5097,17 @@ def cmd_build(blueprint_file: str):
         print(f"   re-screenshot:  python3 scripts/figma_mcp_client.py call export_node_as_image '{{\"nodeId\":\"{root_id}\",\"format\":\"PNG\",\"scale\":1}}'")
         print(f"   re-post-fix:    python3 scripts/figma_mcp_client.py post-fix {root_id}")
     print(f"{'='*50}")
+
+    # 🔴 레퍼런스 Read 리마인더 — 빌드 끝에서 재출력(tail-visible). 근본 원인(2026-06-08):
+    # 빌드 출력을 `tail -N`/`grep` 으로 필터해 Step A.0(빌드 *앞부분*)의 SECTION-REFERENCE-PNG
+    # 프롬프트를 통째로 못 봐 0-G 를 매번 빠뜨렸다 → 끝에서 한 번 더 띄워 어떤 로그 보기에도 걸리게.
+    if _LAST_REFERENCE_THUMBS:
+        print("📌 SECTION-REFERENCE-PNG (재안내) ⚠️  절대 규칙 0-G — 빌드 진행/완료보고 전에 아래"
+              f" 레퍼런스 {len(_LAST_REFERENCE_THUMBS)}장을 Read 로 열어 시각 학습({_LAST_REFERENCE_LABEL}):")
+        for p in _LAST_REFERENCE_THUMBS:
+            print(f"    Read: {p}")
+        print("    (path 만 references[] 박지 말 것 — 실제 시각 위계/리듬/컬러/카드 패턴 반영)")
+        print(f"{'='*50}")
 
     # 🔴 2026-06-05 절대 규칙 0-R (사용자: "디자인 생성이 완료되면 디자인 생성 시 만들었던
     #    블루프린트 json 파일은 자동 삭제 되도록 할 것! 코드로도 강제해"):
@@ -8829,6 +9051,20 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     except Exception as e:
         print(f"  [radius-bind] 실패 (무시): {e}")
 
+    # 🔴 2026-06-09 사용자: SVG 아이콘 VECTOR 의 리터럴 stroke/fill 색 → 가장 가까운 fg-* 토큰 바인딩.
+    print("\n[규칙] 아이콘 stroke/fill 색 → fg-* DS 변수 바인딩 적용 중...")
+    try:
+        _bind_icon_color_tokens_live(root_node_id)
+    except Exception as e:
+        print(f"  [icon-color-bind] 실패 (무시): {e}")
+
+    # 🔴 2026-06-09 사용자: 아이콘 프레임의 '보이지 않는 잔존 fill'(visibility off) 정리 패스.
+    print("\n[규칙] 아이콘 프레임 숨은 fill 정리 적용 중...")
+    try:
+        _strip_icon_frame_hidden_fills_live(root_node_id)
+    except Exception as e:
+        print(f"  [icon-fill-strip] 실패 (무시): {e}")
+
     # ⚠️ 시스템 규칙 (2026-06-04): blueprint 가 명시한 FIXED 폭 + padding 을 **가장 마지막**
     # (spacing 바인더 *뒤*) 에 재단언 — enforcer/바인더가 FILL 로 늘리거나 paddingLeft 을
     # 0(spacing-none) 으로 만든 프레임(2-line Date Cell, Sched 카드)을 원래 값으로 복원.
@@ -9202,6 +9438,246 @@ def _bind_radius_tokens_live(root_id: str, blueprint: Optional[dict] = None) -> 
     return ok
 
 
+_fg_color_palette_cache: Optional[list] = None
+# 아이콘 색을 fg-* 토큰으로 스냅할 최대 L1 거리 (RGB 0-1, 합산 max 3). 이내면 nearest 바인딩.
+_ICON_COLOR_SNAP_THRESH = 0.30
+# createNodeFromSvg 가 만드는 아이콘 path 노드 타입 (DS 인스턴스/장식 RECT·ELLIPSE 제외).
+_ICON_VECTOR_TYPES = frozenset({"VECTOR", "LINE", "STAR", "POLYGON", "BOOLEAN_OPERATION"})
+
+
+def _load_fg_color_palette() -> list:
+    """아이콘 색 매칭용 팔레트 — Colors/Foreground/fg-* COLOR 토큰만 [(figmaPath,(r,g,b))].
+
+    아이콘(svg_icon VECTOR)의 stroke/fill 은 fg-* 전경색이 정답이라, 전경 팔레트에서만
+    nearest 매칭한다(text-/gray primitive 와 hex 가 겹쳐도 시맨틱하게 fg-* 로 바인딩).
+    '-alt'(규칙 0-B)·'_hover'(정적 아이콘 무관) 변형은 제외.
+    """
+    global _fg_color_palette_cache
+    if _fg_color_palette_cache is not None:
+        return _fg_color_palette_cache
+    out: list = []
+    seen: set = set()
+    for _k, v in load_token_map().items():
+        if v.get("type") != "COLOR":
+            continue
+        fp = v.get("figmaPath", "")
+        if not isinstance(fp, str) or not fp.startswith("Colors/Foreground/fg-"):
+            continue
+        low = fp.lower()
+        if low.endswith("_alt") or "_hover" in low or fp in seen:
+            continue
+        try:
+            c = hex_to_rgba(v["value"])
+        except (KeyError, ValueError, TypeError):
+            continue
+        seen.add(fp)
+        out.append((fp, (c["r"], c["g"], c["b"])))
+    _fg_color_palette_cache = out
+    return out
+
+
+def _fg_token_rank(fp: str) -> int:
+    """동일 hex fg 토큰 간 tiebreak 우선순위 (낮을수록 선호).
+
+    fg-tertiary 와 fg-disabled 처럼 **값이 같은**(#b1b6be) 토큰이 있어, 거리가 동률일 때
+    상태/엣지 토큰보다 코어 전경 tier 를 우선한다(아이콘은 상태색보다 일반 전경이 정답).
+    """
+    name = fp.rsplit("/", 1)[-1].lower()
+    if "disabled" in name or "quaternary" in name:
+        return 2  # 상태/거의-흰 엣지
+    if any(s in name for s in ("brand", "success", "warning", "error")):
+        return 1  # 시맨틱 액센트
+    return 0      # 코어: primary/secondary/tertiary/light/dark
+
+
+def _nearest_fg_token(rgb: tuple, palette: list) -> tuple:
+    """rgb(0-1)에 L1 거리가 가장 가까운 fg-* 토큰 figmaPath + 거리. (None, 9.0) if 팔레트 빔.
+
+    거리 동률(같은 hex)이면 `_fg_token_rank` 로 코어 tier 우선(disabled/quaternary 회피).
+    """
+    best = None
+    best_key = (9.0, 9)
+    for fp, prgb in palette:
+        d = abs(rgb[0] - prgb[0]) + abs(rgb[1] - prgb[1]) + abs(rgb[2] - prgb[2])
+        key = (round(d, 4), _fg_token_rank(fp))
+        if key < best_key:
+            best_key = key
+            best = fp
+    return best, best_key[0]
+
+
+def _first_visible_solid_paint(paints: Any) -> Optional[dict]:
+    """paints 배열의 첫 visible SOLID paint(color 보유). 없으면 None."""
+    if not isinstance(paints, list):
+        return None
+    for p in paints:
+        if (isinstance(p, dict) and p.get("type") == "SOLID"
+                and p.get("visible", True) and isinstance(p.get("color"), dict)):
+            return p
+    return None
+
+
+def _paint_already_bound(node: dict, paint: dict, kind: str) -> bool:
+    """node/paint 의 boundVariables 로 이미 변수에 묶인 paint 인지 판정 (kind: 'fills'|'strokes')."""
+    nbv = node.get("boundVariables")
+    if isinstance(nbv, dict) and nbv.get(kind):
+        return True
+    pbv = paint.get("boundVariables") if isinstance(paint, dict) else None
+    if isinstance(pbv, dict) and pbv.get("color"):
+        return True
+    return False
+
+
+def _bind_icon_color_tokens_live(root_id: str) -> int:
+    """SVG 아이콘(VECTOR) 의 리터럴 stroke/fill 색을 가장 가까운 fg-* DS 토큰에 바인딩.
+
+    🔴 2026-06-09 사용자: "아이콘 frame 안 vector 의 stroke color 바인딩이 안 됨 → svg 삽입
+    시 가장 가까운 컬러로 바인딩하는 프로세스 추가." code.js `colorizeVectors` 가 아이콘 색을
+    리터럴 RGB 로 박아(예 #2c3744) 변수에 안 묶이던 회귀를 라이브에서 교정.
+
+    - 대상: VECTOR/LINE/STAR/POLYGON/BOOLEAN_OPERATION (createNodeFromSvg 아이콘 path).
+    - fg-* 전경 팔레트에서 nearest(L1) 매칭. 거리 ≤ 0.30 만 바인딩(아이콘은 DS 색이라 ≈0,
+      시각 변화 0 — spacing/radius 바인더와 동형). 그보다 먼 색은 리터럴 유지.
+    - 이미 바인딩된 paint·DS INSTANCE·인스턴스 내부(';') 는 skip (규칙 0-K 컴포넌트 색 보호).
+    """
+    palette = _load_fg_color_palette()
+    if not palette:
+        print("  [icon-color-bind] fg-* 토큰 없음 — skip")
+        return 0
+    try:
+        tree = _collect_tree(root_id)
+    except Exception as e:
+        print(f"  [icon-color-bind] 트리 수집 실패: {e}")
+        return 0
+
+    jobs: list = []
+    off_palette: list = []
+
+    def walk(n: dict):
+        if not isinstance(n, dict):
+            return
+        nid = n.get("id") or ""
+        ntype = (n.get("type") or "").upper()
+        if ntype in _ICON_VECTOR_TYPES and ";" not in nid:
+            binds: Dict[str, str] = {}
+            for kind, prop in (("strokes", "strokes/0"), ("fills", "fills/0")):
+                paint = _first_visible_solid_paint(n.get(kind))
+                if not paint or _paint_already_bound(n, paint, kind):
+                    continue
+                c = paint["color"]
+                rgb = (c.get("r", 0), c.get("g", 0), c.get("b", 0))
+                fp, d = _nearest_fg_token(rgb, palette)
+                if fp and d <= _ICON_COLOR_SNAP_THRESH:
+                    binds[prop] = fp
+                elif fp:
+                    off_palette.append(round(d, 2))
+            if binds and nid:
+                jobs.append({"nodeId": nid, "bindings": binds})
+        if ntype == "INSTANCE":
+            return  # DS 인스턴스 내부는 variant 가 색 제어 — 건드리지 않음
+        for c in (n.get("_children_full") or []):
+            walk(c)
+    walk(tree)
+
+    if not jobs:
+        print("  [icon-color-bind] 바인딩할 아이콘 색 없음")
+        return 0
+
+    ok = 0
+    field_count = 0
+    for i, job in enumerate(jobs):
+        try:
+            call_tool("set_bound_variables",
+                      {"nodeId": job["nodeId"], "bindings": job["bindings"]},
+                      msg_id=i + 1)
+            ok += 1
+            field_count += len(job["bindings"])
+        except Exception as e:
+            if ok < 3:
+                print(f"    [icon-color-bind] FAIL {job['nodeId']}: {e}")
+    print(f"  [icon-color-bind] ✓ 아이콘 색 토큰 바인딩 — {ok}개 노드 / {field_count}개 paint "
+          f"(stroke·fill → Colors/Foreground/fg-*)")
+    if off_palette:
+        ex = ", ".join(str(v) for v in sorted(set(off_palette))[:3])
+        print(f"  [icon-color-bind] ⚠️ fg 팔레트와 거리 먼 색 {len(off_palette)}건 리터럴 유지 "
+              f"(L1 dist 예: {ex} > {_ICON_COLOR_SNAP_THRESH})")
+    return ok
+
+
+def _is_svg_icon_frame(n: dict) -> bool:
+    """svg_icon wrapper FRAME 인지 판정 — 작은 정사각 + 자식이 모두 vector 계열(VECTOR 1개 이상).
+
+    `_bind_icon_color_tokens_live` 의 VECTOR 타겟과 짝. 여기선 그 vector 들을 감싼 FRAME 을 잡아
+    숨은 잔존 fill 을 정리한다. ELLIPSE/RECTANGLE 도 허용(일부 SVG 가 섞어 씀)하되 VECTOR 가
+    하나는 있어야 함(순수 장식 도형 묶음 제외).
+    """
+    if (n.get("type") or "").upper() != "FRAME":
+        return False
+    kids = n.get("_children_full") or n.get("children") or []
+    if not kids:
+        return False
+    allowed = _ICON_VECTOR_TYPES | {"ELLIPSE", "RECTANGLE"}
+    if not all((c.get("type") or "").upper() in allowed for c in kids):
+        return False
+    if not any((c.get("type") or "").upper() in _ICON_VECTOR_TYPES for c in kids):
+        return False
+    bb = n.get("absoluteBoundingBox") or {}
+    w = bb.get("width") or n.get("width") or 0
+    h = bb.get("height") or n.get("height") or 0
+    return bool(w and h and max(w, h) <= 64 and 0.6 <= (w / h) <= 1.67)
+
+
+def _strip_icon_frame_hidden_fills_live(root_id: str) -> int:
+    """svg_icon 프레임에 남은 '보이지 않는 fill'(visibility off 잔존 paint)을 제거.
+
+    🔴 2026-06-09 사용자: 아이콘 프레임 fill 이 토큰에 바인딩됐지만 visibility off 라 무의미
+    (실제 색은 내부 VECTOR stroke 가 담당). 이 숨은 fill 을 비워(set_fill_color clear) 패널을
+    깔끔하게 한다. **보이지 않는(visible=false) fill 만** 지우므로 시각 변화 0. 보이는 fill 은
+    의도된 배경일 수 있어 손대지 않는다. DS INSTANCE·내부(';') 제외.
+    """
+    try:
+        tree = _collect_tree(root_id)
+    except Exception as e:
+        print(f"  [icon-fill-strip] 트리 수집 실패: {e}")
+        return 0
+
+    targets: list = []
+
+    def walk(n: dict):
+        if not isinstance(n, dict):
+            return
+        nid = n.get("id") or ""
+        ntype = (n.get("type") or "").upper()
+        if ntype != "INSTANCE" and ";" not in nid and _is_svg_icon_frame(n):
+            fills = n.get("fills")
+            # 모든 fill paint 가 '보이지 않음'(visible=false) → 잔존 junk
+            if (isinstance(fills, list) and fills
+                    and all(isinstance(p, dict) and p.get("visible") is False for p in fills)):
+                targets.append(nid)
+        if ntype == "INSTANCE":
+            return
+        for c in (n.get("_children_full") or []):
+            walk(c)
+    walk(tree)
+
+    if not targets:
+        print("  [icon-fill-strip] 정리할 숨은 아이콘 fill 없음")
+        return 0
+
+    ok = 0
+    for i, nid in enumerate(targets):
+        try:
+            call_tool("set_fill_color",
+                      {"nodeId": nid, "r": 0, "g": 0, "b": 0, "a": 0, "clear": True},
+                      msg_id=i + 1)
+            ok += 1
+        except Exception as e:
+            if ok < 3:
+                print(f"    [icon-fill-strip] FAIL {nid}: {e}")
+    print(f"  [icon-fill-strip] ✓ 숨은 아이콘 프레임 fill 정리 — {ok}개 프레임 (보이지 않는 fill 제거)")
+    return ok
+
+
 def _collect_bindings(bp_node: Any, built_node: Any, out: list, by_name: bool = False):
     """원본 blueprint + 빌드된 트리를 구조로 병렬 walk하며 변수 바인딩을 수집.
 
@@ -9225,12 +9701,22 @@ def _collect_bindings(bp_node: Any, built_node: Any, out: list, by_name: bool = 
                       or bool(bp_node.get("componentKey"))
                       or bool(bp_node.get("_dsResolvedRole"))
                       or (built_node.get("type") or "").upper() == "INSTANCE")
+    # 🔴 2026-06-09 사용자: svg_icon 의 색은 **내부 VECTOR 의 stroke/fill** 에 있다(프레임 fill 아님).
+    # iconColor 를 아이콘 프레임 fills/0 에 바인딩하면 '보이지 않는 프레임 fill'(visibility off)에
+    # 묶여 무의미하고, 정작 보이는 vector stroke 는 리터럴로 남는다. → icon-like 노드는 iconColor
+    # 의 프레임 fill 바인딩을 건너뛰고, post-fix `_bind_icon_color_tokens_live` 가 내부 VECTOR
+    # stroke/fill 을 fg-* 토큰에 바인딩하게 둔다.
+    _bp_type_l = (bp_node.get("type") or "").lower()
+    is_icon_node = (_bp_type_l in ("icon", "svg_icon")
+                    or bool(bp_node.get("iconName")) or bool(bp_node.get("svgData")))
     if not is_ds_instance:
         # 색상: fill/stroke/strokeColor/fontColor/iconColor → fills/0 · strokes/0
         # ⚠️ strokeColor 도 stroke 와 동일 처리 (blueprint 가 둘 다 사용 — 2026-05-27 사용자 분노 fix)
         for field, prop in (("fill", "fills/0"), ("stroke", "strokes/0"),
                             ("strokeColor", "strokes/0"),
                             ("fontColor", "fills/0"), ("iconColor", "fills/0")):
+            if field == "iconColor" and is_icon_node:
+                continue  # 아이콘 색은 vector stroke 바인더가 처리 (프레임 fill 바인딩 금지)
             val = bp_node.get(field)
             if isinstance(val, str) and val.startswith("$token(") and val.endswith(")"):
                 tname = val[7:-1]

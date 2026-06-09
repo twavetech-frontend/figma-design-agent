@@ -1,12 +1,12 @@
 {
   "source": "https://twavetech-frontend.github.io/design-system-docs",
-  "lastFetched": "2026-06-02T09:41:30.544Z",
+  "lastFetched": "2026-06-09T05:09:56.628Z",
   "foundation": [
     {
       "name": "Colors",
       "category": "foundation",
       "path": "/design-system-docs/foundation/colors",
-      "description": "클릭하면 값을 복사할 수 있습니다.",
+      "description": "Foundation Colors",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -17,7 +17,7 @@
       "name": "Gradients",
       "category": "foundation",
       "path": "/design-system-docs/foundation/gradients",
-      "description": "클릭하면 CSS 값을 복사할 수 있습니다.",
+      "description": "Foundation Gradients",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -28,7 +28,7 @@
       "name": "Typography",
       "category": "foundation",
       "path": "/design-system-docs/foundation/typography",
-      "description": "아임인의 타이포그래피 시스템은 Pretendard 폰트를 기반으로 하며,",
+      "description": "Foundation Typography",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -39,7 +39,7 @@
       "name": "Spacing",
       "category": "foundation",
       "path": "/design-system-docs/foundation/spacing",
-      "description": "아임인의 간격 시스템은 4px 배수 기반의 Primitive와 용도 기반 Semantic 토큰으로 구성됩니다.",
+      "description": "Foundation Spacing",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -50,7 +50,7 @@
       "name": "Radius",
       "category": "foundation",
       "path": "/design-system-docs/foundation/radius",
-      "description": "아임인의 모서리 둥글기(Border Radius) 토큰입니다.",
+      "description": "Foundation Radius",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -61,7 +61,7 @@
       "name": "Grid & Layout",
       "category": "foundation",
       "path": "/design-system-docs/foundation/grid",
-      "description": "아임인의 반응형 그리드 시스템입니다.",
+      "description": "Foundation Grid & Layout",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -72,7 +72,7 @@
       "name": "Effects",
       "category": "foundation",
       "path": "/design-system-docs/foundation/effects",
-      "description": "아임인의 이펙트 시스템은 Shadows, Focus Rings, Backdrop Blurs로 구성됩니다.",
+      "description": "Foundation Effects",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -83,7 +83,7 @@
       "name": "Icons",
       "category": "foundation",
       "path": "/design-system-docs/foundation/icons",
-      "description": "Line 과 Solid 두 가지 스타일을 탭으로 전환하여 볼 수 있습니다.",
+      "description": "Foundation Icons",
       "figmaComponentName": null,
       "variants": [],
       "props": [],
@@ -96,7 +96,7 @@
       "name": "Action Button",
       "category": "components",
       "path": "/design-system-docs/components/buttons/action-button",
-      "description": "가장 일반적으로 사용되는 버튼 컴포넌트입니다.",
+      "description": "컴포넌트 Buttons Action Button",
       "figmaComponentName": "Buttons/Button",
       "variants": [
         {
@@ -205,7 +205,7 @@
       "name": "Destructive Button",
       "category": "components",
       "path": "/design-system-docs/components/buttons/destructive-button",
-      "description": "삭제, 해제, 초기화 등 되돌리기 어려운 위험한 액션 에 사용하는 버튼입니다.",
+      "description": "컴포넌트 Buttons Destructive Button",
       "figmaComponentName": "Buttons/destructive",
       "variants": [
         {
@@ -290,7 +290,7 @@
       "name": "Close Button",
       "category": "components",
       "path": "/design-system-docs/components/buttons/close-button",
-      "description": "모달, 토스트, 배너 등을 닫는 데 사용하는 X 버튼입니다.",
+      "description": "컴포넌트 Buttons Close Button",
       "figmaComponentName": "Buttons/Button close X",
       "variants": [
         {
@@ -347,7 +347,7 @@
       "name": "Utility Button",
       "category": "components",
       "path": "/design-system-docs/components/buttons/utility-button",
-      "description": "테이블 헤더, 툴바, 필터 영역 등에서 보조 기능으로 사용하는 작은 사이즈의 유틸리티 버튼입니다.",
+      "description": "컴포넌트 Buttons Utility Button",
       "figmaComponentName": "Buttons/Button utility",
       "variants": [
         {
@@ -408,7 +408,7 @@
       "name": "Social Button",
       "category": "components",
       "path": "/design-system-docs/components/buttons/social-button",
-      "description": "OAuth 소셜 로그인 플로우에 사용하는 버튼입니다. Google, Facebook, Apple, X(Twitter)를 지원합니다.",
+      "description": "컴포넌트 Buttons Social Button",
       "figmaComponentName": "Social button",
       "variants": [
         {
@@ -492,7 +492,7 @@
       "name": "App Store Button",
       "category": "components",
       "path": "/design-system-docs/components/buttons/app-store-button",
-      "description": "모바일 앱 배포 링크에 사용하는 뱃지형 버튼입니다. Google Play, App Store, Mac App Store, Galaxy Store, AppGallery를 지원합니다.",
+      "description": "컴포넌트 Buttons App Store Button",
       "figmaComponentName": "Mobile app store badge",
       "variants": [
         {
@@ -559,7 +559,7 @@
       "name": "Button Group",
       "category": "components",
       "path": "/design-system-docs/components/buttons/group",
-      "description": "버튼 그룹은 여러 버튼을 하나의 툴바나 탭처럼 결합한 컴포넌트입니다.",
+      "description": "컴포넌트 Buttons Button Group",
       "figmaComponentName": "Base components/Button groups",
       "variants": [
         {
@@ -1990,7 +1990,7 @@
       "name": "Radio Group",
       "category": "components",
       "path": "/design-system-docs/components/radio-group",
-      "description": "라디오 그룹은 여러 선택지 중 하나만 고를 수 있는 입력 컴포넌트입니다. 각 옵션은 카드 형태로 제목, 설명, 가격 등 부가 정보를 표시할 수 있습니다.",
+      "description": "컴포넌트 Radio Group",
       "figmaComponentName": "Radio group",
       "variants": [
         {
@@ -2138,7 +2138,7 @@
       "name": "Segmented Control",
       "category": "components",
       "path": "/design-system-docs/components/segmented-control",
-      "description": "세그먼티드 컨트롤은 서로 배타적인 옵션 중 하나를 선택하는 컴포넌트입니다. 짧은 옵션 그룹에서 현재 선택을 명확히 보여줄 때 적합합니다.",
+      "description": "컴포넌트 Segmented Control",
       "figmaComponentName": "Segmented_control",
       "variants": [
         {
@@ -2479,7 +2479,7 @@
       "name": "Date Pickers",
       "category": "components",
       "path": "/design-system-docs/components/date-pickers",
-      "description": "날짜 또는 기간을 선택하는 컴포넌트입니다. 단일 날짜 선택과 기간(시작/종료) 선택 두 가지 형태를 제공합니다.",
+      "description": "컴포넌트 Date Pickers",
       "figmaComponentName": "Date pickers",
       "variants": [
         {
@@ -3114,7 +3114,7 @@
       "name": "Alerts & Notifications",
       "category": "components",
       "path": "/design-system-docs/components/alerts",
-      "description": "알림은 사용자에게 시스템 상태나 작업 결과를 전달하는 컴포넌트입니다. Alert 는 페이지 안에 인라인으로 배치되어 정보를 알리고, Notification 은 토스트 카드 형태로 일시적으로 떠 있다가 사라집니다.",
+      "description": "컴포넌트 Alerts & Notifications",
       "figmaComponentName": "Alert",
       "variants": [
         {
@@ -3257,7 +3257,7 @@
       "name": "Loading Indicators",
       "category": "components",
       "path": "/design-system-docs/components/loading-indicators",
-      "description": "Loading Indicator는 비동기 작업의 진행 상태를 시각적으로 표현하는 컴포넌트입니다. 3가지 스타일과 4가지 사이즈를 제공합니다.",
+      "description": "컴포넌트 Loading Indicators",
       "figmaComponentName": "Loading indicator",
       "variants": [
         {
@@ -3316,7 +3316,7 @@
       "name": "Progress Indicators",
       "category": "components",
       "path": "/design-system-docs/components/progress-indicators",
-      "description": "진행 상태를 시각적으로 표현하는 컴포넌트입니다. 가로 막대 형태의 Progress bar 와 원형 형태의 Progress circle 을 제공합니다.",
+      "description": "컴포넌트 Progress Indicators",
       "figmaComponentName": "Progress bar",
       "variants": [
         {

@@ -441,10 +441,24 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > 3. 학습 결과로 archetype 별 polish 강화 — 시각 위계 / 컬러 절제 / 카드 패턴 직접 적용
 > 4. **위반 신호**: PNG Read 0건 / extract 가 generic / references[] 가 path 만
 >
+> 🔴 **빠뜨리는 근본 원인 + 방지 (2026-06-08 사용자: "왜 자꾸 레퍼런스 검색을 빼먹지? 새 세션
+> 최초 생성 때도 안 봤다"):**
+> - **원인 ①(행동):** 빌드 명령 출력을 `tail -N` / `grep -E "..."` 로 필터해 보는 습관 때문에,
+>   **빌드 *앞부분*(Step A.0)에 뜨는 `📌 SECTION-REFERENCE-PNG` 프롬프트를 통째로 못 봤다** →
+>   Read 트리거를 놓침. **빌드 로그를 tail/grep 으로 필터하지 말 것**(최소한 `SECTION-REFERENCE-PNG`
+>   포함). 이제 cmd_build **끝에서도** 레퍼런스 경로를 재출력하므로(`📌 SECTION-REFERENCE-PNG (재안내)`),
+>   tail 로 봐도 잡힌다 — 보이면 반드시 Read.
+> - **원인 ②(코드 버그·수정됨):** archetype 인식이 `'imin_home'` **정확 부분문자열**만 봐서
+>   `imin_signup_home`·`imin_active_home`·`imin_*_home_creative` 가 미인식→일반 폴백 됐다(진짜 홈
+>   레퍼런스 못 받음). → bare word(`home`/`stage`/…)가 이름에 있으면 해당 archetype 으로 인식하도록
+>   수정. 테스트 `test_reference_archetype.py`.
+> - **원인 ③(날조):** 생성기 REFS[] 에 실제로 안 본 uibowl 경로를 그럴듯하게 적어 "본 척" 하지 말 것
+>   (0-G 위반). 반드시 Read 후 본 내용을 적는다.
+>
 > **시스템 박힘:** `figma_mcp_client.py _auto_search_uibowl_references()` (Step A.0)
 > — `scripts/ref_search.py --archetype <imin_xxx> --thumbnail --limit 6` 자동 호출
 > → `scripts/ref_thumbnails/` 에 LLM Read 가능 thumbnail (≤1200px) 자동 생성 →
-> stdout 에 SECTION-REFERENCE-PNG 라인 출력 (사용자 화면에도 보임).
+> stdout 에 SECTION-REFERENCE-PNG 라인 출력(빌드 앞부분 + **끝부분 재안내**, 사용자 화면에도 보임).
 > Claude self-verify 의 마지막 방어선.
 
 > 🔴 **절대 규칙 0-F — SELF-VERIFY 강제 (2026-05-28 옵션 B / 사용자 신뢰 파탄 후 박힘)**
@@ -540,6 +554,36 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > **Why**: 새 세션 컨텍스트 부족 → "imin_home은 v12 있으니 base 가져가자" 본능 → 더미 데이터 박힘 → 사용자가 "와이어 무시"라고 분노. 시스템이 와이어 콘텐츠 추출을 강제하지 않으면 매번 새 세션마다 회귀.
 >
 > **참고**: 메모리 [feedback_no_wireframe_clone] 은 **시각 위계** 만 재해석하라는 뜻 — 카드 그림자/타이포/그룹화 같은 디자인 판단. **콘텐츠(텍스트/숫자/카운트)는 와이어 1:1**.
+
+> 🔴 **절대 규칙 0-E-2 — 결정형 생성기는 fallback 일 뿐 / 비주얼은 매 세션 새로 도출 (2026-06-08 사용자 결정)**
+>
+> 사용자 지적: *"홈화면은 새 세션마다 디자인 생성해도 똑같이 나오는데, 내가 자율성을 완전
+> 배제한건가?? 이렇게 되면 매번 레퍼런스 이미지를 읽어서 참조하는게 의미가 사라지잖어."*
+> → 사용자 결정: **"콘텐츠+하드룰만 고정, 비주얼은 자유."**
+>
+> **문제:** `gen_signup_home_v4.py` 등 결정형 생성기가 blueprint 를 통째로 하드코딩 → 새
+> 세션에서 몇 번 돌려도 **동일 출력**. 그 결과 레퍼런스 Read(0-G)·창의적 재해석(0-C/0-N)이
+> **형식적 절차**가 됨(출력이 이미 정해져 변주 여지 0 = 자율성 0).
+>
+> **진짜 불변(고정)인 것 = 2가지뿐:**
+> 1. **콘텐츠** — 와이어 텍스트/숫자/카운트 1:1 (0-E). `_wireframeContent` dict 캡처 + 하드
+>    게이트(S22/S23)가 보장.
+> 2. **하드 품질 룰** — root bg-primary(0), DS 컴포넌트 색 보존(0-K), 중요 섹션 밴드(13),
+>    FILL 사이징(8), Aqua 자제(2-J), 스테퍼 2-row(14-B) 등 **시스템 강제 룰**.
+>
+> **자유(매 세션 새로 도출)인 것 =** 시각 위계 · 카드 그룹핑 · 어느 섹션을 강조할지 · 액센트
+> 리듬 · 미세 레이아웃. **레퍼런스(0-G)를 보고 매번 다르게 판단** → polished 디자인 + 레퍼런스
+> 읽는 의미 회복.
+>
+> **How to apply (새 세션 홈/반복 화면 생성 시):**
+> - 결정형 생성기(`gen_*_home_v*.py`)를 **최종 출력으로 그대로 찍지 말 것**. 이제 이들은
+>   **fallback/참조 구현**(콘텐츠 스펙 + 하드룰 적용법의 예시)일 뿐.
+> - 절차: 와이어 콘텐츠 추출(`_wireframeContent`) → 레퍼런스 Read → **그 레퍼런스 기반으로
+>   blueprint 를 새로 작성**(레이아웃/비주얼은 이번 세션 판단). 하드 게이트가 품질 방어.
+> - 생성기에서 가져와도 되는 건 **콘텐츠 dict·하드룰 헬퍼(band()/stepper() 등)뿐**. 섹션
+>   배치·시각 언어는 복붙하지 말 것.
+> - 코드 자동검출 불가(의미적 판단) — 매 세션 Claude 가 스스로 지킨다. 상세: 메모리
+>   [[generator-is-fallback-visual-free]].
 
 > 🔴 **절대 규칙 0 — 루트 프레임(화면 최상위 프레임) 배경색은 반드시 `bg-primary`**
 >
@@ -1215,6 +1259,19 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **빌드 후 검증**: 스크린샷에서 모든 레이블/버튼 텍스트가 눈에 보이는지 확인
 - 🔴 **`fg-quaternary`(#f9fafb)·`text-quaternary`(#d2d6db)는 거의 흰색** — 흰 배경 위 텍스트/아이콘에 **절대 사용 금지**(안 보임). 비활성 탭·보조 텍스트 등 "흐린 회색"이 필요하면 `fg-secondary`/`text-secondary`(#687079) 또는 `fg-tertiary`/`text-tertiary`(#b1b6be)를 쓸 것.
 
+### 11-B. 🔴 텍스트 색 = 중요도 위계 / CTA 유도 caption은 text-secondary (2026-06-08 사용자 룰)
+- 사용자 명시: *"'함께 모은 목돈, 다시 모아볼까요?' 같은 텍스트는 중요도에서 최상은 아니거든.
+  그러면 컬러를 secondary 를 써야 하지 않겠어?"*
+- **텍스트 색은 중요도 위계를 따른다:** `text-primary`(진한)는 **최상위 중요도**(hero 수치·핵심 타이틀)에만.
+  **CTA 를 유도하는 권유·안내 문구**("다시 모아볼까요?", "지금 시작해 보세요" 등 버튼 위 caption)나
+  부제·설명은 **`text-secondary`**(연한 회색). (참고: 2-C 의 크기 위계 + 본 색 위계를 함께 적용.)
+- **시스템 강제 (코드 박힘):** `_enforce_cta_caption_secondary(blueprint)` (cmd_build pre-process,
+  text-hierarchy 직후) — 컨테이너 자식 중 **CTA(라벨 있는 액션 버튼 instance / button 이름 frame)의
+  바로 앞 형제 TEXT** 가 `fontColor=text-primary` + `fontSize ≤ 16`(hero/title 제외) + weight ≠ Bold
+  (강조 의도 제외) 이면 `text-secondary` 로 교정(로그 `[규칙] CTA 유도 caption N건 → text-secondary`).
+  의도적 primary 유지는 노드에 `"_keepTextColor": true` 로 opt-out. 테스트 `test_cta_caption_secondary.py`.
+- **작성법:** 버튼 위 권유 문구는 처음부터 `text-secondary` 로 쓸 것(enforcer 가 백스톱).
+
 ### 12. 섹션 간 간격 — 배경색 동일 + divider 없으면 gap 0
 - 인접한 섹션의 배경색이 동일(둘 다 투명/white)이고 사이에 divider가 없으면 **gap 0px** — 섹션 내부 padding이 여백 역할
 - 배경색이 다르거나(컬러 → white 등) 사이에 divider가 있으면 gap 유지
@@ -1230,26 +1287,51 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   *"위아래 패딩값 24로 맞추고 토큰 바인딩도 해."* 24 는 post-fix `_bind_spacing_tokens_live` 가
   **spacing-3xl 토큰으로 자동 바인딩**(절대값 아님). 위 enforcer 의 '밴드' 분기가 강제 → 재빌드에도 유지.
 
-### 13. 🔴 중요 섹션 = root 직계 풀폭 배경 밴드 (2026-06-05 사용자 룰 — 새 세션·다른 화면도 적용)
-- 사용자 명시: *"중요한 섹션은 배경 컬러를 두고 content frame에서 벗어나 root 위 별도 프레임으로
-  분리하고, frame에 fill color를 넣는다. 새 세션에서 다시 디자인 생성할 때도 이렇게 생성되도록."*
-- **패턴 (홈 등 모든 화면 기본):**
-  - **중요/강조 섹션**(시작 유도, 추천 스테이지, 핵심 현황 등)은 좌우 padding 있는 `Content`
-    프레임 **안 흰 카드로 두지 말고**, **root.children 직계에 별도 프레임**으로 분리해 **좌우 끝까지
-    풀폭(FILL) + 배경 fill(bg-secondary)** 을 넣는다. ⚠️ **brand tint(bg-brand-primary)는 절대규칙 2-H(큰 면적 brand fill 금지)가 벗겨서 흰색이 되므로 밴드 배경엔 쓰지 말 것 — bg-secondary 사용.**
-  - **보조 섹션**(이용한도, 출석/친구 등)은 `Content`(좌우 padding 20) 안 **흰 카드(bg-primary +
-    border)** 로 유지.
-  - 결과: 흰 배경 위에 중요 섹션만 풀폭 컬러 밴드로 떠서 위계가 분명해진다(2시간 전 '전부 흰 카드'
-    버전 대비 핵심 개선).
-- **작성법:** 중요 섹션 노드를 **root.children 직계**에 배치(Content 밖) + 노드에 **`"_band": true`**
-  마커를 박는다.
-- **시스템 강제 (코드 박힘):** `_enforce_section_band(blueprint)` (cmd_build pre-process,
-  no-large-brand-fill 직후) — `_band:true` 노드를 **fill 없으면 bg-secondary, layoutSizingHorizontal
-  =FILL, autoLayout 상/하 24·좌우 20, 보더 제거** 로 표준화(fill 명시 시 존중). `_band` 노드는 no-large-brand-fill 스트립에서 예외(brand tint 면 보호) — 단 라이브 strip 은 _band 를 못 봐 bg-secondary 권장. 이후 `_bind_spacing_tokens_live`
-  가 24→spacing-3xl 바인딩, `_enforce_section_bg_gap_padding`/`_enforce_indicator_symmetric_gap` 가 경계 여백 정리.
-  ⚠️ 풀폭이 되려면 반드시 **Content 밖 root 직계**에 둬야 함(content 안에 두면 좌우 padding 에 갇혀 인셋됨).
-- **빌드 후 검증:** 빌드 로그 `[규칙] 풀폭 밴드 섹션 표준화 N건` + 스크린샷에서 중요 섹션이 좌우
-  끝까지 컬러 밴드, 보조 섹션은 흰 카드인지 확인.
+### 13. 🔴 중요 섹션 = 풀폭 bg-secondary 밴드 (2026-06-05 / 강화 2026-06-08 — 메인·모든 탭바 홈 화면 필수)
+- 사용자 명시(2026-06-05): *"중요한 섹션은 배경 컬러를 두고 content frame에서 벗어나 root 위 별도
+  프레임으로 분리하고, frame에 fill color를 넣는다. 새 세션에서 다시 디자인 생성할 때도 이렇게."*
+- 🔴 사용자 명시(2026-06-08): *"목돈만들기, 스테이지 현황 및 추천 스테이지 같은 중요한 섹션들은
+  content frame에서 분리하고 bg fill color를 bg-secondary로 교체해서 다른 섹션과 분리되어 보여지게
+  강조 … **메인화면과 각 탭바 홈화면에서 중요한 섹션은 이런식으로 처리해야 된다.**"*
+- 🔴 **밴드로 분리할 '중요 섹션' (메인 + 홈/커뮤니티/스테이지/라운지/나 탭 홈 모두 동일 적용):**
+  **목돈 만들기**(시작 유도) · **스테이지 현황**(진행/완료 현황+금액) · **추천 스테이지**.
+  화면 성격상 그 화면의 핵심 액션·요약에 해당하는 섹션이면 동일 처리.
+- **패턴:**
+  - **중요 섹션** = 좌우 padding 있는 `Content` 안 흰 카드로 두지 말고 **풀폭(FILL) bg-secondary 밴드**
+    로 분리. ⚠️ brand tint(bg-brand-primary)는 2-H(큰 면적 brand fill 금지)가 벗겨 흰색이 되므로 밴드
+    배경엔 금지 — **`bg-secondary`** 사용.
+  - 🔴 **밴드 내부 sub-card(통계 타일·금액 카드·스테퍼 등)는 `bg-primary`(흰색) + border** 로 둬서
+    회색 밴드 위에 도드라지게 한다(밴드와 같은 bg-secondary 면 묻힌다). choice tile 의 brand tint·aqua
+    같은 의도된 틴트는 그대로(흰색화 대상 아님).
+  - **보조 섹션**(총 스테이지 수·이용한도·출석/친구·내 스케줄)은 `Content`(좌우 padding 20) 안 **흰
+    카드(bg-primary + border)** 로 유지.
+  - 결과: 흰 배경 위에 중요 섹션만 풀폭 회색 밴드로 떠 위계가 분명.
+- **작성법:** 중요 섹션 노드에 **`"_band": true`** 마커를 박고, **좌우 padding 없는 프레임**(=가로
+  padding 0 인 `Content`, 또는 `root.children` 직계)에 배치한다. 내부 sub-card 는 흰색이 자동
+  적용되므로(아래 시스템 강제 2) blueprint 에서 bg-secondary 로 남겨둬도 빌드가 흰색화한다.
+- **시스템 강제 (코드 박힘, `_enforce_section_band`, cmd_build pre-process, no-large-brand-fill 직후):**
+  1. `_band:true` 노드 → fill 없으면 bg-secondary, FILL, autoLayout 상/하 24·좌우 20, 보더 제거(fill 명시 존중).
+  2. 🔴 **내부 흰색화** — 밴드(bg-secondary)의 내부 sub-card(자식 있는 frame) fill 이 bg-secondary 면
+     `bg-primary` + `border-secondary` 1px 로 자동 전환(회색 위 흰 카드). brand tint·aqua 등 다른 fill 은 존중.
+  3. 🔴 **lint** — `_is_home_blueprint`(rootName/name 에 home·메인·main) 화면에서 중요 이름 섹션
+     (`_BAND_IMPORTANT_NAME_KW`: 목돈 만들기·스테이지 현황·추천 스테이지·start guide·stage status·
+     recommend section …)이 `_band` 가 아니면 `[규칙13-WARN]` 출력(회귀 차단). ribbon/총합/summary 는 제외.
+  - 이후 `_bind_spacing_tokens_live`(24→spacing-3xl), `_enforce_section_bg_gap_padding`/
+    `_enforce_indicator_symmetric_gap`(경계 여백) 가 정리. `_band` 노드는 no-large-brand-fill 스트립 예외.
+  ⚠️ 풀폭이 되려면 **좌우 padding 있는 프레임 안에 두면 안 됨**(content 가로 padding 0 또는 root 직계).
+- **빌드 후 검증:** 로그 `[규칙] 풀폭 밴드 섹션 표준화 N건 (+ 내부 sub-card 흰색화 M건)` +
+  `[규칙13-WARN]` 없는지 확인. 스크린샷에서 중요 섹션이 풀폭 회색 밴드 + 내부 흰 카드, 보조 섹션은
+  흰 카드인지 확인. 생성기 참고: `gen_signup_home_v4.py`·`gen_active_home_v3.py`·`gen_done_home_v3.py`
+  의 `band()` 헬퍼(목돈만들기/스테이지 현황/추천을 밴드로 emit).
+- 🔴 **13-B. 홈 Content(섹션 스택) gap = `spacing-2xl`(20) (2026-06-08 사용자: "content gap이 32로
+  spacing-4xl 로 설정되있는데, spacing-2xl 이여야 해 … 코드에 박아"):** 메인·모든 탭바 홈 화면의 섹션
+  스택(`Content`/`Content Mid` 등) 프레임 itemSpacing 은 32(spacing-4xl)가 과하므로 **20(spacing-2xl)**
+  로 통일한다(섹션 안 padding·밴드 상하 24 가 여백 담당, 섹션 간 gap 은 20).
+  **시스템 강제 (코드 박힘):** `_enforce_home_content_gap(blueprint)` (cmd_build pre-process, section-band
+  직후) — `_is_home_blueprint` 화면의 VERTICAL `Content`/`Content Mid`/`Content Top`/`Content Bottom`
+  프레임 itemSpacing 을 20 으로 교정(로그 `[규칙13-B]`). post-fix 의 spacing 바인더가 20→spacing-2xl
+  토큰 자동 바인딩. 의도적 다른 간격은 노드에 `"_keepContentGap": true` 로 opt-out. 테스트
+  `test_section_band.py`. blueprint/생성기의 Content gap 은 20 으로 쓸 것.
 
 ### 14. ⚠️ 스테이지 카드 — 아이콘/이미지 삽입 금지
 - Stage Card 안에 아이콘, 이미지를 **절대 넣지 말 것**
@@ -1372,6 +1454,26 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
    소문자 `radius-` 시작 토큰만. 토큰 value==현재 radius 라 시각 변화 0. DS 인스턴스·내부(`I…;…`)
    제외. 스케일 밖(7/13/18 등)은 리터럴 유지. 4코너 각각 `topLeftRadius`…로 바인딩(plugin
    `rectangleCornerRadii`). 테스트 `test_radius_token_binding.py`.
+7-c. 🔴 SVG 아이콘 VECTOR 색 → `fg-*` DS 변수 자동 바인딩 (2026-06-09 사용자 "아이콘 frame 안
+   vector 의 stroke color 바인딩이 안 됨 → svg 삽입 시 가장 가까운 컬러로 바인딩하는 프로세스
+   추가"): `_bind_icon_color_tokens_live`가 radius 바인더 직후 실행 — `code.js` 의 `colorizeVectors`
+   가 아이콘(svg_icon) 색을 **리터럴 RGB 로 박아**(예 #2c3744) 변수에 안 묶이던 회귀를 라이브에서
+   교정. 대상 = VECTOR/LINE/STAR/POLYGON/BOOLEAN_OPERATION 노드의 stroke/fill. **`Colors/Foreground/
+   fg-*` 전경 팔레트(16개)에서 가장 가까운(L1) 색을 찾아** `set_bound_variables`(strokes/0·fills/0)로
+   바인딩. 매칭: #2c3744→`fg-primary`, #7700ff→`fg-brand-primary`, #ffffff→`fg-light`, #b1b6be→
+   `fg-tertiary` 등(토큰 value≈현재 색이라 시각 변화 0). **거리 > 0.30(L1) 인 색은 리터럴 유지**(임의
+   스냅 금지 — aqua #009eaa 등 비-전경색은 안 바뀜). 이미 바인딩된 paint·DS INSTANCE·내부(`;`)는
+   skip(규칙 0-K 컴포넌트 색 보호). `'-alt'`/`'_hover'` fg 변형은 팔레트에서 제외. 멱등(paint 레벨
+   `boundVariables.color` 로 재실행 시 skip). 테스트 `test_icon_color_binding.py`.
+7-d. 🔴 아이콘 프레임의 '보이지 않는 잔존 fill' 정리 (2026-06-09 사용자 "프레임 fill 에 바인딩되고
+   visibility off 되어있어 → 정리 패스 추가"): `_strip_icon_frame_hidden_fills_live`가 7-c 직후 실행 —
+   svg_icon 프레임(작은 정사각 + 자식이 vector 계열, VECTOR ≥1)에 남은 **visibility off fill**(실제
+   색은 내부 VECTOR stroke 가 담당하므로 무의미)을 `set_fill_color(clear:true)`로 제거(plugin 이
+   `node.fills = []`). **보이지 않는(visible=false) fill 만** 지워 시각 변화 0 — 보이는 fill(의도된 배경)
+   은 손대지 않음. DS INSTANCE·내부(`;`) 제외. 빌드 때 `_collect_bindings`가 svg_icon 의 `iconColor`를
+   **프레임 fills/0 에 바인딩하지 않도록**(is_icon_node skip) 막아 새 빌드는 애초에 이 잔존 fill 바인딩이
+   안 생긴다. ⚠️ `clear`는 `code.js setFillColor` 에 추가된 plugin 기능이라 **플러그인 재실행 후 활성**.
+   테스트 `test_icon_color_binding.py`(`_is_svg_icon_frame`).
 8. 2-col FILL 붕괴 자동 복구 (2026-06-04 사용자 "코드에 박아"): `_enforce_multicol_fill_live`가
    모든 sizing 강제 *뒤*에 실행 — HORIZONTAL row 의 FILL 컬럼이 **1px 로 붕괴**하고 형제가
    전폭(FIXED)을 먹는 batch_build_screen 버그([[two-col-fill-card-collapse]])를 라이브에서 교정.
