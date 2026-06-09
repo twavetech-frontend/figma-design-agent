@@ -694,50 +694,50 @@
 
 | Token | Font Family | Font Weight | Font Size | Line Height |
 |-------|-------------|-------------|-----------|-------------|
-| Display 2xl/Regular | Pretendard | Regular | 72 | 90 |
-| Display 2xl/Medium | Pretendard | Medium | 72 | 90 |
-| Display 2xl/Semibold | Pretendard | Semibold | 72 | 90 |
-| Display 2xl/Bold | Pretendard | Bold | 72 | 90 |
-| Display xl/Regular | Pretendard | Regular | 60 | 72 |
-| Display xl/Medium | Pretendard | Medium | 60 | 72 |
-| Display xl/Semibold | Pretendard | Semibold | 60 | 72 |
-| Display xl/Bold | Pretendard | Bold | 60 | 72 |
-| Display lg/Regular | Pretendard | Regular | 48 | 60 |
-| Display lg/Medium | Pretendard | Medium | 48 | 60 |
-| Display lg/Semibold | Pretendard | Semibold | 48 | 60 |
-| Display lg/Bold | Pretendard | Bold | 48 | 60 |
-| Display md/Regular | Pretendard | Regular | 36 | 44 |
-| Display md/Medium | Pretendard | Medium | 36 | 44 |
-| Display md/Semibold | Pretendard | Semibold | 36 | 44 |
-| Display md/Bold | Pretendard | Bold | 36 | 44 |
-| Display sm/Regular | Pretendard | Regular | 30 | 38 |
-| Display sm/Medium | Pretendard | Medium | 30 | 38 |
-| Display sm/Semibold | Pretendard | Semibold | 30 | 38 |
-| Display sm/Bold | Pretendard | Bold | 30 | 38 |
-| Display xs/Regular | Pretendard | Regular | 24 | 32 |
-| Display xs/Medium | Pretendard | Medium | 24 | 32 |
-| Display xs/Semibold | Pretendard | Semibold | 24 | 32 |
-| Display xs/Bold | Pretendard | Bold | 24 | 38 |
-| Text xl/Regular | Pretendard | Regular | 20 | 30 |
-| Text xl/Medium | Pretendard | Medium | 20 | 30 |
-| Text xl/Semibold | Pretendard | Semibold | 20 | 30 |
-| Text xl/Bold | Pretendard | Bold | 20 | 30 |
-| Text lg/Regular | Pretendard | Regular | 18 | 28 |
-| Text lg/Medium | Pretendard | Medium | 18 | 28 |
-| Text lg/Semibold | Pretendard | Semibold | 18 | 28 |
-| Text lg/Bold | Pretendard | Bold | 18 | 28 |
-| Text md/Regular | Pretendard | Regular | 16 | 24 |
-| Text md/Medium | Pretendard | Medium | 16 | 24 |
-| Text md/Semibold | Pretendard | Semibold | 16 | 24 |
-| Text md/Bold | Pretendard | Bold | 16 | 24 |
-| Text sm/Regular | Pretendard | Regular | 14 | 20 |
-| Text sm/Medium | Pretendard | Medium | 14 | 20 |
-| Text sm/Semibold | Pretendard | Semibold | 14 | 20 |
-| Text sm/Bold | Pretendard | Bold | 14 | 20 |
-| Text xs/Regular | Pretendard | Regular | 12 | 18 |
-| Text xs/Medium | Pretendard | Medium | 12 | 18 |
-| Text xs/Semibold | Pretendard | Semibold | 12 | 18 |
-| Text xs/Bold | Pretendard | Bold | 12 | 18 |
+| Display 2xl/Regular | {Font family.font-family-display} | Regular | 72 | {Line height.display-2xl} |
+| Display 2xl/Medium | {Font family.font-family-display} | Medium | 72 | {Line height.display-2xl} |
+| Display 2xl/Semibold | {Font family.font-family-display} | Semibold | 72 | {Line height.display-2xl} |
+| Display 2xl/Bold | {Font family.font-family-display} | Bold | 72 | {Line height.display-2xl} |
+| Display xl/Regular | {Font family.font-family-display} | Regular | 60 | {Line height.display-xl} |
+| Display xl/Medium | {Font family.font-family-display} | Medium | 60 | {Line height.display-xl} |
+| Display xl/Semibold | {Font family.font-family-display} | Semibold | 60 | {Line height.display-xl} |
+| Display xl/Bold | {Font family.font-family-display} | Bold | 60 | {Line height.display-xl} |
+| Display lg/Regular | {Font family.font-family-display} | Regular | 48 | {Line height.display-lg} |
+| Display lg/Medium | {Font family.font-family-display} | Medium | 48 | {Line height.display-lg} |
+| Display lg/Semibold | {Font family.font-family-display} | Semibold | 48 | {Line height.display-lg} |
+| Display lg/Bold | {Font family.font-family-display} | Bold | 48 | {Line height.display-lg} |
+| Display md/Regular | {Font family.font-family-display} | Regular | 36 | {Line height.display-md} |
+| Display md/Medium | {Font family.font-family-display} | Medium | 36 | {Line height.display-md} |
+| Display md/Semibold | {Font family.font-family-display} | Semibold | 36 | {Line height.display-md} |
+| Display md/Bold | {Font family.font-family-display} | Bold | 36 | {Line height.display-md} |
+| Display sm/Regular | {Font family.font-family-display} | Regular | 30 | {Line height.display-sm} |
+| Display sm/Medium | {Font family.font-family-display} | Medium | 30 | {Line height.display-sm} |
+| Display sm/Semibold | {Font family.font-family-display} | Semibold | 30 | {Line height.display-sm} |
+| Display sm/Bold | {Font family.font-family-display} | Bold | 30 | {Line height.display-sm} |
+| Display xs/Regular | {Font family.font-family-display} | Regular | 24 | {Line height.display-xs} |
+| Display xs/Medium | {Font family.font-family-display} | Medium | 24 | {Line height.display-xs} |
+| Display xs/Semibold | {Font family.font-family-display} | Semibold | 24 | {Line height.display-xs} |
+| Display xs/Bold | {Font family.font-family-display} | Bold | 24 | {Line height.display-sm} |
+| Text xl/Regular | {Font family.font-family-display} | Regular | 20 | {Line height.text-xl} |
+| Text xl/Medium | {Font family.font-family-display} | Medium | 20 | {Line height.text-xl} |
+| Text xl/Semibold | {Font family.font-family-display} | Semibold | 20 | {Line height.text-xl} |
+| Text xl/Bold | {Font family.font-family-display} | Bold | 20 | {Line height.text-xl} |
+| Text lg/Regular | {Font family.font-family-display} | Regular | 18 | {Line height.text-lg} |
+| Text lg/Medium | {Font family.font-family-display} | Medium | 18 | {Line height.text-lg} |
+| Text lg/Semibold | {Font family.font-family-display} | Semibold | 18 | {Line height.text-lg} |
+| Text lg/Bold | {Font family.font-family-display} | Bold | 18 | {Line height.text-lg} |
+| Text md/Regular | {Font family.font-family-display} | Regular | 16 | {Line height.text-md} |
+| Text md/Medium | {Font family.font-family-display} | Medium | 16 | {Line height.text-md} |
+| Text md/Semibold | {Font family.font-family-display} | Semibold | 16 | {Line height.text-md} |
+| Text md/Bold | {Font family.font-family-display} | Bold | 16 | {Line height.text-md} |
+| Text sm/Regular | {Font family.font-family-display} | Regular | 14 | {Line height.text-sm} |
+| Text sm/Medium | {Font family.font-family-display} | Medium | 14 | {Line height.text-sm} |
+| Text sm/Semibold | {Font family.font-family-display} | Semibold | 14 | {Line height.text-sm} |
+| Text sm/Bold | {Font family.font-family-display} | Bold | 14 | {Line height.text-sm} |
+| Text xs/Regular | {Font family.font-family-display} | Regular | 12 | {Line height.text-xs} |
+| Text xs/Medium | {Font family.font-family-display} | Medium | 12 | {Line height.text-xs} |
+| Text xs/Semibold | {Font family.font-family-display} | Semibold | 12 | {Line height.text-xs} |
+| Text xs/Bold | {Font family.font-family-display} | Bold | 12 | {Line height.text-xs} |
 
 ## Effects
 
