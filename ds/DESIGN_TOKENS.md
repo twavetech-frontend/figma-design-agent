@@ -690,55 +690,6 @@
 | paragraphSpacing/10 | 72 | `--paragraphSpacing-10` |
 | paragraphIndent/0 | 0px | `--paragraphIndent-0` |
 
-## Text Styles
-
-| Token | Font Family | Font Weight | Font Size | Line Height |
-|-------|-------------|-------------|-----------|-------------|
-| Display 2xl/Regular | Pretendard | Regular | 72 | 90 |
-| Display 2xl/Medium | Pretendard | Medium | 72 | 90 |
-| Display 2xl/Semibold | Pretendard | Semibold | 72 | 90 |
-| Display 2xl/Bold | Pretendard | Bold | 72 | 90 |
-| Display xl/Regular | Pretendard | Regular | 60 | 72 |
-| Display xl/Medium | Pretendard | Medium | 60 | 72 |
-| Display xl/Semibold | Pretendard | Semibold | 60 | 72 |
-| Display xl/Bold | Pretendard | Bold | 60 | 72 |
-| Display lg/Regular | Pretendard | Regular | 48 | 60 |
-| Display lg/Medium | Pretendard | Medium | 48 | 60 |
-| Display lg/Semibold | Pretendard | Semibold | 48 | 60 |
-| Display lg/Bold | Pretendard | Bold | 48 | 60 |
-| Display md/Regular | Pretendard | Regular | 36 | 44 |
-| Display md/Medium | Pretendard | Medium | 36 | 44 |
-| Display md/Semibold | Pretendard | Semibold | 36 | 44 |
-| Display md/Bold | Pretendard | Bold | 36 | 44 |
-| Display sm/Regular | Pretendard | Regular | 30 | 38 |
-| Display sm/Medium | Pretendard | Medium | 30 | 38 |
-| Display sm/Semibold | Pretendard | Semibold | 30 | 38 |
-| Display sm/Bold | Pretendard | Bold | 30 | 38 |
-| Display xs/Regular | Pretendard | Regular | 24 | 32 |
-| Display xs/Medium | Pretendard | Medium | 24 | 32 |
-| Display xs/Semibold | Pretendard | Semibold | 24 | 32 |
-| Display xs/Bold | Pretendard | Bold | 24 | 38 |
-| Text xl/Regular | Pretendard | Regular | 20 | 30 |
-| Text xl/Medium | Pretendard | Medium | 20 | 30 |
-| Text xl/Semibold | Pretendard | Semibold | 20 | 30 |
-| Text xl/Bold | Pretendard | Bold | 20 | 30 |
-| Text lg/Regular | Pretendard | Regular | 18 | 28 |
-| Text lg/Medium | Pretendard | Medium | 18 | 28 |
-| Text lg/Semibold | Pretendard | Semibold | 18 | 28 |
-| Text lg/Bold | Pretendard | Bold | 18 | 28 |
-| Text md/Regular | Pretendard | Regular | 16 | 24 |
-| Text md/Medium | Pretendard | Medium | 16 | 24 |
-| Text md/Semibold | Pretendard | Semibold | 16 | 24 |
-| Text md/Bold | Pretendard | Bold | 16 | 24 |
-| Text sm/Regular | Pretendard | Regular | 14 | 20 |
-| Text sm/Medium | Pretendard | Medium | 14 | 20 |
-| Text sm/Semibold | Pretendard | Semibold | 14 | 20 |
-| Text sm/Bold | Pretendard | Bold | 14 | 20 |
-| Text xs/Regular | Pretendard | Regular | 12 | 18 |
-| Text xs/Medium | Pretendard | Medium | 12 | 18 |
-| Text xs/Semibold | Pretendard | Semibold | 12 | 18 |
-| Text xs/Bold | Pretendard | Bold | 12 | 18 |
-
 ## Effects
 
 | Token | Type | Value |
