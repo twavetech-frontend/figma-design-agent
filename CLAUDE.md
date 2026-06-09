@@ -185,6 +185,27 @@ npm test        # vitest
 - `src/` 코드 변경이 포함된 커밋은 **`npm run build`로 빌드 검증 후** 커밋 (docs/ds/scripts만 변경 시 생략 가능)
 - 순서: (필요 시 `npm run build`) → git add → git commit → git push
 
+> 🔴 **DS 자동 sync 토큰 파일은 수동 커밋 금지 (2026-06-09 사용자 룰)**
+>
+> `ds/TOKEN_MAP.json` · `ds/DESIGN_TOKENS.md` · `ds/DS_COMPONENT_DOCS.json` 은 **별도 레포
+> `twavetech-frontend/design-system` 의 `tokens.json` 에서 자동 동기화**되는 산출물이다
+> (브리지 기동 시 `syncTokensFull()` → `scripts/sync-tokens-from-github.sh` 가 재생성, 디자인
+> 생성 직전 `syncTokensIfNeeded()` 가 design-system 최신 SHA 비교 후 재동기화). **빌드는 이
+> 로컬 재생성본을 읽으므로 토큰 최신성은 git 과 무관하게 항상 보장**된다(수정·신규 토큰 모두 반영).
+>
+> **운영 정책:**
+> 1. **이 3개 파일을 사람이(=Claude 가) 수동 `git add`/커밋하지 않는다.** 자동 sync 봇의
+>    `sync: design tokens updated from design-system` 커밋에만 맡긴다. 기능 커밋에 끼워 넣으면
+>    봇 커밋과 **충돌**난다(2026-06-09 회귀: "전부 함께 커밋" 시 stale `ds/*` 를 끼워 넣어 rebase 충돌).
+> 2. **추적(tracked)은 유지** — gitignore 하지 않는다. 새 클론 직후(첫 sync 전)·sync 실패·오프라인
+>    시 `load_token_map()` 의 fallback 스냅샷으로 필요. (`ds/.last_sync_sha`·`ds/.icon-cache/` 는
+>    이미 gitignore.)
+> 3. 기능 커밋 시 `git add` 는 **변경한 파일을 명시적으로** 지정한다(`git add -A` 로 ds/* 자동
+>    산출물까지 쓸어담지 말 것). working tree 에 ds/* 변경이 떠 있으면 `git checkout -- ds/<file>`
+>    로 되돌리거나 그냥 스테이지에서 제외.
+> 4. 원격 거부(non-fast-forward) 시 — 원격엔 보통 자동 sync 커밋이 쌓여 있다. `git rebase origin/main`
+>    후 ds/* 충돌은 **원격(`--ours`, 권위 있는 최신 sync) 버전 채택**하고 continue.
+
 ## 알려진 이슈
 - DesignPreview 컴포넌트 참조되지만 미구현
 - 테스트 없음 (단위/통합)
