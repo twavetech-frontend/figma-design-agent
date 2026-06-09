@@ -690,15 +690,6 @@
 | paragraphSpacing/10 | 72 | `--paragraphSpacing-10` |
 | paragraphIndent/0 | 0px | `--paragraphIndent-0` |
 
-## Text Styles
-
-| Token | Font Family | Font Weight | Font Size | Line Height |
-|-------|-------------|-------------|-----------|-------------|
-| Text xl/Regular | Pretendard | Regular | 20 | 30 |
-| Text xl/Medium | Pretendard | Medium | 20 | 30 |
-| Text xl/Semibold | Pretendard | Semibold | 20 | 30 |
-| Text xl/Bold | Pretendard | Bold | 20 | 30 |
-
 ## Effects
 
 | Token | Type | Value |
