@@ -81,6 +81,10 @@ def _is_tab_cell(node: dict) -> bool:
 
 def _is_tab_nav_wrapper(node: dict) -> bool:
     if not isinstance(node, dict): return False
+    # 🔴 2026-06-09 사용자 룰: 텍스트가 크게 보여야 하는 탭은 underline tabs(styled)로 둔다.
+    # DS Segmented_control 로 강제 스왑하지 않음 (DS underline 컴포넌트는 import 불가).
+    if node.get("_underlineTabs"):
+        return False
     name = (node.get("name") or "").lower().strip()
     if not any(h in name for h in _TAB_NAV_HINTS):
         return False

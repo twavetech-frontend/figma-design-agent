@@ -482,19 +482,36 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
   }
   if ("strokes" in node) {
     try {
-      info.strokes = node.strokes;
-      info.strokeWeight = node.strokeWeight;
+      var strokes = node.strokes;
+      if (strokes !== figma.mixed && Array.isArray(strokes)) {
+        info.strokes = strokes.map(function(s) {
+          var stroke = { type: s.type, visible: s.visible };
+          if (s.color) stroke.color = { r: s.color.r, g: s.color.g, b: s.color.b };
+          if (s.opacity !== undefined) stroke.opacity = s.opacity;
+          return stroke;
+        });
+      }
+      // 🔴 strokeWeight 는 per-side 가 다르면 figma.mixed(Symbol) — 그대로 담으면
+      // postMessage 직렬화 실패("Cannot unwrap symbol"). 반드시 치환 (2026-06-10).
+      if ("strokeWeight" in node) {
+        info.strokeWeight = (node.strokeWeight === figma.mixed) ? "mixed" : node.strokeWeight;
+      }
     } catch (e) { /* mixed strokes */ }
   }
 
   // Corner radius
+  // 🔴 코너가 섞이면(예: bottom-sheet Modal Sheet top 16/bottom 0) node.cornerRadius 는
+  // figma.mixed(Symbol). 그대로 info 에 담으면 postMessage 가 "Cannot unwrap symbol" 로
+  // 크래시 → get_node_info 가 해당 서브트리 전체를 못 읽음. "mixed" 문자열로 치환 (2026-06-10).
   if ("cornerRadius" in node) {
-    info.cornerRadius = node.cornerRadius;
     if (node.cornerRadius === figma.mixed) {
+      info.cornerRadius = "mixed";
       info.topLeftRadius = node.topLeftRadius;
       info.topRightRadius = node.topRightRadius;
       info.bottomLeftRadius = node.bottomLeftRadius;
       info.bottomRightRadius = node.bottomRightRadius;
+    } else {
+      info.cornerRadius = node.cornerRadius;
     }
   }
 

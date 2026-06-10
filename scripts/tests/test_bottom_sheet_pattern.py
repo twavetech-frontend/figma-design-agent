@@ -120,6 +120,28 @@ def test_modal_sheet_bg_primary():
     assert bp["children"][1]["fill"] == "$token(bg-primary)"
 
 
+def test_modal_sheet_top_padding_8_asym():
+    """🔴 2026-06-10 사용자: 시트 상단 padding = 8(spacing-md, 핸들 타이트), 하단 24(safe area).
+    의도적 비대칭이므로 _asymPad 마커로 symmetric-vpad 우회."""
+    bp = _make_bp([{"name": "X", "type": "frame"}])
+    _enforce_bottom_sheet_pattern(bp)
+    modal = bp["children"][1]
+    mal = modal["autoLayout"]
+    assert mal["paddingTop"] == 8
+    assert mal["paddingBottom"] == 24
+    assert modal.get("_asymPad") is True  # symmetric-vpad 가 pt==pb 로 강제하지 않게
+
+
+def test_modal_sheet_top_padding_survives_symmetric_vpad():
+    """시트 pt=8/pb=24 비대칭이 _enforce_symmetric_vpad 후에도 유지되어야 한다(_asymPad)."""
+    from figma_mcp_client import _enforce_symmetric_vpad
+    bp = _make_bp([{"name": "Header", "type": "frame"}, {"name": "Body", "type": "frame"}])
+    _enforce_bottom_sheet_pattern(bp)
+    _enforce_symmetric_vpad(bp)
+    mal = bp["children"][1]["autoLayout"]
+    assert mal["paddingTop"] == 8 and mal["paddingBottom"] == 24
+
+
 def test_root_height_852_fixed():
     """Root height = 852 FIXED — Modal 이 bottom 에 anchor 되어야 dim 이 위로 펼쳐짐."""
     bp = _make_bp([{"name": "X", "type": "frame"}])

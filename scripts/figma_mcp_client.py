@@ -2831,12 +2831,15 @@ def _enforce_bottom_sheet_pattern(blueprint: dict) -> None:
         "bottomRightRadius": 0,
         # 🔴 절대규칙 (2026-06-04 사용자): radius 있는 frame 은 꼭 clipsContent=true.
         "clipsContent": True,
-        # 🔴 2026-06-04 사용자: 콘텐츠 가로 padding 20 은 시트가 갖는다 (시트는 풀폭, 안쪽 20 인셋).
-        # paddingTop 12(핸들 영역) + paddingBottom 24(safe area). itemSpacing 18 로 섹션 간격.
+        # 🔴 2026-04 사용자: 콘텐츠 가로 padding 20 은 시트가 갖는다 (시트는 풀폭, 안쪽 20 인셋).
+        # 🔴 2026-06-10 사용자: 시트 상단 padding = 8(spacing-md). 핸들이 상단에 타이트하게 붙는다
+        #    (기존 12 → 8). paddingBottom 24(safe area) 와 의도적 비대칭이므로 _asymPad 마커로
+        #    symmetric-vpad enforcer(pt==pb 강제) 를 우회한다. itemSpacing 18 로 섹션 간격.
+        "_asymPad": True,
         "autoLayout": {
             "layoutMode": "VERTICAL",
             "itemSpacing": 18,
-            "paddingTop": 12, "paddingBottom": 24,
+            "paddingTop": 8, "paddingBottom": 24,
             "paddingLeft": 20, "paddingRight": 20,
         },
         "children": modal_kids,
@@ -3442,11 +3445,56 @@ def _is_footer(node: dict) -> bool:
     return "footer" in (node.get("name") or "").lower()
 
 
+def _is_icon_button(node: dict) -> bool:
+    """아이콘만 든 작은 버튼(back/search/nav 등) 판별 — 카드/표면 enforcer 제외용.
+
+    🔴 2026-06-09 사용자 룰: 상단바/헤더 아이콘 버튼에는 fill 박스·radius·stroke 를 기본으로
+    넣지 않는다('별도 요청 없으면 기본으로 넣지마'). 그래서 카드 표면/보더 enforcer 가 이런
+    버튼을 '카드'로 오인해 bg-primary 로 바꾸고 border 를 붙이던 회귀를 차단한다.
+    blueprint(type 'icon'/'svg_icon') 와 라이브(VECTOR / 'ic-' 프레임) 자식 형태를 모두 인식.
+    opt-out: 노드에 `_buttonChrome: True` 면 의도된 스타일 버튼이므로 제외하지 않음.
+    """
+    if not isinstance(node, dict):
+        return False
+    if (node.get("type") or "frame") not in (None, "frame", "FRAME"):
+        return False
+    if node.get("_buttonChrome"):
+        return False
+    kids = node.get("children") or []
+    if not kids:
+        return False
+    bb = node.get("absoluteBoundingBox") or {}
+    w = node.get("width") if isinstance(node.get("width"), (int, float)) else bb.get("width")
+    h = node.get("height") if isinstance(node.get("height"), (int, float)) else bb.get("height")
+    if isinstance(w, (int, float)) and w > 60:
+        return False
+    if isinstance(h, (int, float)) and h > 60:
+        return False
+
+    def _icon_child(c):
+        if not isinstance(c, dict):
+            return False
+        ct = (c.get("type") or "").lower()
+        cn = (c.get("name") or "").lower()
+        if ct in ("icon", "svg_icon", "vector", "line", "star", "polygon", "boolean_operation"):
+            return True
+        if c.get("iconName"):
+            return True
+        # 빌드 후 svg 아이콘은 'ic-...' 프레임(내부 vector) 으로 렌더됨
+        if ct in ("frame", "group") and (cn.startswith("ic-") or cn.startswith("ic ") or "icon" in cn):
+            return True
+        return False
+
+    return all(_icon_child(c) for c in kids)
+
+
 def _is_card_like(node: dict) -> bool:
-    """카드형 프레임 판별 — cornerRadius ≥ 8 + fill + children."""
+    """카드형 프레임 판별 — cornerRadius ≥ 8 + fill + children. (아이콘 버튼은 제외.)"""
     if not isinstance(node, dict):
         return False
     if node.get("type") not in (None, "frame", "FRAME"):
+        return False
+    if _is_icon_button(node):   # 상단바 아이콘 버튼은 카드 아님 (2026-06-09)
         return False
     radius = node.get("cornerRadius") or node.get("topLeftRadius") or 0
     try:
@@ -3546,6 +3594,7 @@ def _enforce_white_card_border(blueprint: dict) -> None:
         if (not is_root) and node.get("type") in (None, "frame", "FRAME") \
                 and node.get("fill") == BG_PRIMARY \
                 and node.get("children") \
+                and not _is_icon_button(node) \
                 and not node.get("stroke") and not node.get("strokeColor"):
             node["strokeColor"] = "$token(border-secondary)"
             node["strokeWeight"] = 1
@@ -4074,6 +4123,8 @@ def _enforce_white_card_border_live(root_node_id: str) -> int:
         """
         if not node.get("children"):
             return False
+        if _is_icon_button(node):   # 아이콘 버튼은 카드 아님 (2026-06-09) — 보더 자동부착 차단
+            return False
         name = (node.get("name") or "").lower()
         cr = node.get("cornerRadius") or 0
         cr_val = cr if isinstance(cr, (int, float)) else 0
@@ -4150,6 +4201,85 @@ def _enforce_white_card_border_live(root_node_id: str) -> int:
     else:
         print(f"  [white-card-border-live] OK — 모든 흰 카드에 이미 올바른 보더 있음")
     return fixed[0]
+
+
+def _strip_icon_button_chrome_live(root_node_id: str) -> int:
+    """상단바/헤더 아이콘 버튼의 자동 chrome(stroke·중립 fill 박스·radius) 제거 (2026-06-09 사용자 룰).
+
+    사용자: "상단바 좌/우 버튼에 radius·stroke 를 왜 넣냐 — 별도 요청 없으면 기본으로 넣지마."
+    아이콘만 든 작은 버튼(back/search/nav 등)은 기본적으로 '아이콘만'이어야 한다. 카드 표면/보더
+    enforcer 가 카드로 오인해 붙인 fill+border 와, 작성 시 무심코 넣은 radius 까지 라이브에서 제거.
+    - 대상: `_is_icon_button` (작은 프레임 + 자식이 전부 아이콘/vector, `_buttonChrome` 마커 없음)
+    - 제거: stroke(strokeWeight 0) + 중립 fill(bg-primary/secondary/tertiary 박스 → 투명) + cornerRadius 0
+    - 보존: 의도된 브랜드/색 fill(중립 아님)은 남김(스타일 버튼일 수 있음). DS INSTANCE·내부(';') 제외.
+    """
+    NEUTRAL = (  # 중립 박스 fill (제거 대상) — bg-primary/secondary/tertiary 근사 RGB
+        (0.988, 0.990, 0.992),  # bg-primary
+        (0.953, 0.957, 0.965),  # bg-secondary
+        (0.910, 0.918, 0.929),  # bg-tertiary
+    )
+    stripped = [0]
+
+    def _is_neutral_fill(node):
+        fills = node.get("fills") or []
+        if not fills:
+            return False
+        f = fills[0]
+        if f.get("type") != "SOLID" or not f.get("visible", True):
+            return False
+        c = f.get("color") or {}
+        for nr, ng, nb in NEUTRAL:
+            if abs(c.get("r", 0) - nr) < 0.025 and abs(c.get("g", 0) - ng) < 0.025 and abs(c.get("b", 0) - nb) < 0.025:
+                return True
+        return False
+
+    # 하단 chrome 바(액션바/탭바/FAB/월렛)는 의도된 스타일 버튼이므로 strip 제외 —
+    # 사용자 룰은 '상단바' 아이콘 버튼 대상(2026-06-09). bottom bar 버튼 박스는 보존.
+    BAR_KW = ("action bar", "actionbar", "cta bar", "tab bar", "tabbar", "bottom", "fab", "wallet", "월렛")
+
+    def walk(node, in_bar=False):
+        if not isinstance(node, dict):
+            return
+        if (node.get("type") or "").upper() == "INSTANCE":
+            return  # DS 컴포넌트 색은 master 가 제어 (규칙 0-K)
+        nm_low = (node.get("name") or "").lower()
+        node_in_bar = in_bar or any(k in nm_low for k in BAR_KW)
+        nid = node.get("id") or ""
+        if (not node_in_bar) and ";" not in nid and _is_icon_button(node):
+            # 1) stroke 제거
+            if node.get("strokes"):
+                try:
+                    call_tool("set_stroke_color", {"nodeId": nid, "r": 0, "g": 0, "b": 0, "a": 1, "strokeWeight": 0})
+                except Exception:
+                    pass
+            # 2) 중립 fill 박스 제거(투명) — 의도된 색 fill 은 보존
+            if _is_neutral_fill(node):
+                try:
+                    call_tool("set_fill_color", {"nodeId": nid, "clear": True})
+                except Exception:
+                    pass
+            # 3) radius 제거
+            cr = node.get("cornerRadius")
+            if isinstance(cr, (int, float)) and cr > 0:
+                try:
+                    call_tool("set_corner_radius", {"nodeId": nid, "radius": 0})
+                except Exception:
+                    pass
+            stripped[0] += 1
+            return  # 버튼 내부(아이콘)는 더 내려가지 않음
+        for ch in node.get("children", []) or []:
+            walk(ch, node_in_bar)
+
+    try:
+        walk(_collect_tree(root_node_id))
+    except Exception as e:
+        print(f"  [icon-button-chrome] 트리 조회 실패: {e}")
+        return 0
+    if stripped[0]:
+        print(f"  [icon-button-chrome] ✓ 아이콘 버튼 {stripped[0]}건 chrome 제거 (stroke·중립fill·radius — 기본 무chrome)")
+    else:
+        print(f"  [icon-button-chrome] OK — chrome 박힌 아이콘 버튼 없음")
+    return stripped[0]
 
 
 # Hero 금액 텍스트 패턴 — 부호(+/−) 또는 천단위 콤마가 있는 명확한 통화 표기
@@ -4997,8 +5127,11 @@ def cmd_build(blueprint_file: str):
             _final_bp = blueprint if isinstance(blueprint, dict) else original_blueprint
             n_fw = _enforce_fixed_widths(root_id, _collect_fixed_widths(_final_bp))
             n_bp = _enforce_blueprint_padding(root_id, _collect_blueprint_padding(_final_bp))
-            if n_fw or n_bp:
-                print(f"[Step E.7.7] blueprint FIXED 폭 {n_fw}건 + padding {n_bp}건 최종 복원")
+            # 🔴 intent 존중 (2026-06-10): `_keepSizing` 노드의 선언 H/V 사이징을 최종 재단언.
+            # FILL/vertical-hug enforcer 가 author HUG/FIXED 를 망쳐도 여기서 되돌린다.
+            n_ks = _enforce_keep_sizing_live(root_id, _collect_keep_sizing(_final_bp))
+            if n_fw or n_bp or n_ks:
+                print(f"[Step E.7.7] blueprint FIXED 폭 {n_fw}건 + padding {n_bp}건 + _keepSizing {n_ks}건 최종 복원")
         except Exception as e:
             print(f"  [bp-final] 실패 (무시): {e}")
 
@@ -5041,6 +5174,15 @@ def cmd_build(blueprint_file: str):
                 _enforce_root_bg_primary_live(root_id, screen_type=_st2)
         except Exception as e:
             print(f"  [root-dim-final] 실패 (무시): {e}")
+
+        # 🔵 레이아웃 스멜 검사 (2026-06-10) — 모든 레이아웃 재단언이 끝난 *최종 상태*에서
+        # 결정적으로 회귀 패턴(SPACE_BETWEEN+FILL 뭉침 / 짧은 텍스트 wrap / 폭 붕괴)을 노출.
+        # 스크린샷 self-verify 전에 '여길 보라'를 가리킨다. 차단 안 함(WARN).
+        try:
+            print("\n🔎 QA — 레이아웃 스멜 검사 중...")
+            _qa_layout_smells(root_id)
+        except Exception as e:
+            print(f"  [smell] 실패 (무시): {e}")
 
     # Step G: NavBar 로고 인스턴스 교체
     if node_map and "Logo Placeholder" in node_map:
@@ -7533,6 +7675,94 @@ def _enforce_fixed_widths(root_id: str, width_map: dict) -> int:
     return fixed[0]
 
 
+def _collect_keep_sizing(blueprint: Optional[dict]) -> dict:
+    """blueprint 에서 `_keepSizing: true` 노드의 {이름경로: 선언 사이징} 수집 (2026-06-10).
+
+    🔴 하네스 원칙(intent 존중): FILL 강제·vertical-hug 등 가드레일이 author 가 *명시한*
+    HUG/FIXED 사이징을 망치는 회귀(선물 카드 'Giver Info' HUG→FILL 로 가격/증정자 붙음,
+    축하 'One Circle' FIXED→가로 FILL 로 타원)를 막는다. 빌드 후 *모든 enforcer 뒤*(E.7.7)
+    에서 이 맵으로 선언 사이징을 최종 재단언 → author 의 의도가 마지막 권한을 갖는다.
+
+    작성법: 사이징을 보호할 노드에 `"_keepSizing": true` + 원하는 layoutSizingHorizontal/
+    Vertical(+ FIXED 면 width/height) 을 명시. 양축 FIXED 면 정확 치수까지 복원된다.
+    """
+    out = {}
+    if not isinstance(blueprint, dict):
+        return out
+    root = blueprint.get("root") or blueprint
+
+    def walk(node, chain):
+        if not isinstance(node, dict):
+            return
+        cur = chain + (node.get("name") or "",)
+        if node.get("_keepSizing") is True:
+            spec = {
+                "h": (node.get("layoutSizingHorizontal") or "").upper() or None,
+                "v": (node.get("layoutSizingVertical") or "").upper() or None,
+            }
+            if isinstance(node.get("width"), (int, float)):
+                spec["w"] = node["width"]
+            if isinstance(node.get("height"), (int, float)):
+                spec["ht"] = node["height"]
+            out[cur] = spec
+        for c in (node.get("children") or node.get("_originalChildren") or []):
+            walk(c, cur)
+    walk(root, ())
+    return out
+
+
+def _enforce_keep_sizing_live(root_id: str, keep_map: dict) -> int:
+    """`_keepSizing` 노드의 선언 사이징(H/V + 양축 FIXED 정확 치수)을 최종 재단언 (2026-06-10).
+
+    어느 enforcer 가 FILL/HUG 로 바꿔놨든 author 선언으로 되돌린다. E.7.7(AUTO_FIX 이후)에서
+    호출해 최종 권한을 갖게 한다. DS INSTANCE 내부(';' 노드)는 색·사이즈 보호(규칙 0-K)로 제외.
+    """
+    if not keep_map:
+        return 0
+    fixed = [0]
+
+    def walk(n, chain):
+        if not isinstance(n, dict):
+            return
+        cur = chain + (n.get("name") or "",)
+        nid = n.get("id")
+        if (cur in keep_map and nid and ";" not in str(nid)
+                and (n.get("type") or "").upper() in ("FRAME", "INSTANCE", "COMPONENT")):
+            spec = keep_map[cur]
+            bb = n.get("absoluteBoundingBox") or {}
+            try:
+                sizing = {}
+                if spec.get("h"):
+                    sizing["horizontal"] = spec["h"]
+                if spec.get("v"):
+                    sizing["vertical"] = spec["v"]
+                if sizing:
+                    sizing["nodeId"] = nid
+                    call_tool("set_layout_sizing", sizing)
+                # 양축 FIXED + 치수 명시면 정확 치수까지 재단언(타원/찌부 차단). 2px 초과 차이만.
+                if spec.get("h") == "FIXED" and spec.get("v") == "FIXED" \
+                        and isinstance(spec.get("w"), (int, float)) and isinstance(spec.get("ht"), (int, float)):
+                    cw, ch = bb.get("width"), bb.get("height")
+                    if (not isinstance(cw, (int, float)) or abs(cw - spec["w"]) > 2
+                            or not isinstance(ch, (int, float)) or abs(ch - spec["ht"]) > 2):
+                        call_tool("resize_node", {"nodeId": nid, "width": spec["w"], "height": spec["ht"]})
+                fixed[0] += 1
+            except Exception as e:
+                print(f"  [keep-sizing] '{nid}' fail: {e}")
+        for c in n.get("children", []) or []:
+            walk(c, cur)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0], ())
+    except Exception as e:
+        print(f"  [keep-sizing] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [keep-sizing] ✓ _keepSizing 노드 {fixed[0]}개 선언 사이징 최종 재단언 (intent 존중)")
+    return fixed[0]
+
+
 def _enforce_text_box_padding_live(root_id: str, min_pad: int = 14, min_gap: int = 6) -> int:
     """라운드 필 박스 안 텍스트(라벨+값)가 상하 모서리에 붙는 것 차단 (2026-06-04 사용자 룰).
 
@@ -8798,6 +9028,14 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_white_card_border_live(root_node_id)
     except Exception as e:
         print(f"  [white-card-border-live] 실패 (무시하고 계속): {e}")
+
+    # 🔴 2026-06-09 사용자 룰: 상단바/헤더 아이콘 버튼(back/search/nav 등)에 fill 박스·radius·
+    # stroke 를 기본으로 넣지 않는다. white-card-border *직후* 실행해 enforcer 가 붙인 chrome 까지 제거.
+    print("\n[규칙] 아이콘 버튼 chrome 제거 (2026-06-09 사용자: 기본 무chrome) 적용 중...")
+    try:
+        _strip_icon_button_chrome_live(root_node_id)
+    except Exception as e:
+        print(f"  [icon-button-chrome] 실패 (무시하고 계속): {e}")
 
     # ⚠️ 시스템 규칙 (2026-05-27 사용자 명시): 섹션 wrapper frame 에 border 박히면 안 됨.
     # _enforce_white_card_border_live 가 'section'/'wrap' 키워드 카드로 false-positive
@@ -10126,11 +10364,17 @@ def _qa_wireframe_content_match(blueprint: dict, root_id: str) -> int:
         print("  [QA-wc] root._wireframeContent 없음 — 와이어 콘텐츠 매치 검증 skip")
         return 0
 
-    # dict 의 모든 string value 를 평탄화 추출
+    # 🔴 whitespace 정규화 — 빌드 TEXT 가 줄바꿈을 넣어도(예: "Plan3님,\n첫 …") 와이어 dict 의
+    # 한 줄 문자열과 매치되게 모든 공백류를 단일 space 로 collapse (2026-06-10 오탐 fix).
+    import re as _re_wc
+    def _norm(s):
+        return _re_wc.sub(r"\s+", " ", s).strip()
+
+    # dict 의 모든 string value 를 평탄화 추출 (정규화)
     expected = []
     def _flatten(v):
         if isinstance(v, str):
-            s = v.strip()
+            s = _norm(v)
             if s:
                 expected.append(s)
         elif isinstance(v, dict):
@@ -10158,11 +10402,31 @@ def _qa_wireframe_content_match(blueprint: dict, root_id: str) -> int:
         if isinstance(n, dict):
             if n.get("type") == "TEXT":
                 c = n.get("characters") or ""
-                if isinstance(c, str) and c.strip():
-                    built_texts.append(c.strip())
+                if isinstance(c, str) and _norm(c):
+                    built_texts.append(_norm(c))
             for ch in n.get("children", []) or []:
                 _walk(ch)
     _walk(built or {})
+
+    # 🔴 DS 인스턴스 라벨(_instanceText/label/_segLabels)은 인스턴스 *내부* TEXT 라
+    # get_nodes_info 트리에 안 잡힌다(예: "닫기" CTA). blueprint 가 결정적으로 적용하므로
+    # 빌드 텍스트에 포함시켜 오탐(누락) 방지 (2026-06-10).
+    def _walk_bp_labels(n):
+        if isinstance(n, dict):
+            for key in ("_instanceText", "label"):
+                val = n.get(key)
+                if isinstance(val, str) and _norm(val):
+                    built_texts.append(_norm(val))
+            props = n.get("properties")
+            if isinstance(props, dict) and isinstance(props.get("label"), str):
+                built_texts.append(_norm(props["label"]))
+            for seg in (n.get("_segLabels") or []):
+                if isinstance(seg, str) and _norm(seg):
+                    built_texts.append(_norm(seg))
+            for ch in n.get("children", []) or []:
+                _walk_bp_labels(ch)
+    _walk_bp_labels(blueprint)
+
     built_blob = " ".join(built_texts)
 
     missing = []
@@ -10190,6 +10454,83 @@ def _qa_wireframe_content_match(blueprint: dict, root_id: str) -> int:
     else:
         print(f"  [QA-wc] ✓ 와이어 콘텐츠 매치 OK — {total}개 중 {total-len(missing)}개 빌드 트리에서 발견 ({int((1-miss_ratio)*100)}%)")
     return len(missing)
+
+
+def _detect_layout_smells(root_node: dict) -> list:
+    """결정적 '레이아웃 스멜' 검출 — 빌드 트리(_collect_tree 출력)의 기하/사이징만으로
+    오늘 수동으로 고친 회귀 패턴을 잡는다 (2026-06-10). 순수 함수(테스트 가능).
+
+    서브에이전트·LLM 없이, *높은 정밀도*(오탐 최소)로 3종만:
+      1. SPACE_BETWEEN 행에 *콘텐츠 있는* FILL 자식 → 분배 깨짐(한쪽 뭉침). (선물 Giver Info 회귀)
+      2. 짧은 텍스트(≤6자, 명시 \\n 없음)가 2줄+로 wrap → 폭 collapse. ("후기 공유"→"후/기", 탭 라벨)
+      3. 프레임 폭 <4px 붕괴 → 2-col FILL collapse.
+    (원형→타원은 size-invariant/_keepSizing 이 이미 막고, 검출 시 버튼 pill 오탐이 커서 제외.)
+    """
+    smells = []
+
+    def _has_content(c):
+        if (c.get("type") or "").upper() == "TEXT":
+            return bool((c.get("characters") or "").strip())
+        return bool(c.get("_children_full"))
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        ntype = (n.get("type") or "").upper()
+        name = n.get("name") or "?"
+        kids = n.get("_children_full") or []
+        w = n.get("width") or 0
+        h = n.get("height") or 0
+
+        if ntype in ("FRAME", "COMPONENT", "INSTANCE"):
+            # 1) SPACE_BETWEEN + 콘텐츠 있는 FILL 자식
+            if ((n.get("layoutMode") or "").upper() == "HORIZONTAL"
+                    and (n.get("primaryAxisAlignItems") or "") == "SPACE_BETWEEN"):
+                real_kids = [c for c in kids if (c.get("type") or "").upper()
+                             in ("FRAME", "COMPONENT", "INSTANCE", "TEXT")]
+                fill_content = [c for c in real_kids
+                                if (c.get("layoutSizingHorizontal") or "") == "FILL" and _has_content(c)]
+                if len(real_kids) >= 2 and fill_content:
+                    nm = ", ".join((c.get("name") or "?") for c in fill_content[:2])
+                    smells.append(f"SPACE_BETWEEN 행 '{name}' 에 콘텐츠 든 FILL 자식({nm}) — 분배 깨짐(한쪽 뭉침). HUG + _keepSizing 권장")
+            # 3) 폭 붕괴
+            if 0 < w < 4 and kids:
+                smells.append(f"프레임 '{name}' 폭 {round(w, 1)}px 로 붕괴 — 2-col FILL collapse 의심")
+
+        # 2) 짧은 텍스트 wrap
+        if ntype == "TEXT":
+            chars = (n.get("characters") or "").strip()
+            fs = n.get("fontSize")
+            if chars and "\n" not in chars and len(chars) <= 6:
+                wrapped = (h >= fs * 1.7) if isinstance(fs, (int, float)) and fs > 0 else (h >= 36)
+                if wrapped:
+                    smells.append(f"짧은 텍스트 '{chars}' 가 2줄+로 wrap (h={round(h)}) — 폭 collapse 의심(부모 HUG 붕괴 / 텍스트 FILL)")
+
+        for c in kids:
+            walk(c)
+
+    walk(root_node)
+    return smells
+
+
+def _qa_layout_smells(root_id: str) -> int:
+    """레이아웃 스멜 검사 (2026-06-10) — 빌드 후 자동, 스크린샷 보기 *전*에 회귀 패턴 노출.
+    차단 안 함(WARN). 사람(Claude)이 스크린샷 확인할 항목을 미리 가리킨다."""
+    try:
+        tree = _collect_tree(root_id)
+    except Exception as e:
+        print(f"  [smell] 트리 수집 실패 — skip: {e}")
+        return 0
+    smells = _detect_layout_smells(tree)
+    if smells:
+        print(f"  [smell] ⚠️ 레이아웃 스멜 {len(smells)}건 — 스크린샷 확인 권장:")
+        for s in smells[:12]:
+            print(f"     - {s}")
+        if len(smells) > 12:
+            print(f"     ... +{len(smells) - 12}건")
+    else:
+        print("  [smell] OK — 레이아웃 스멜 없음")
+    return len(smells)
 
 
 def _qa_blueprint_integrity(original_blueprint: dict, root_id: str) -> int:
@@ -12534,6 +12875,47 @@ def cmd_cleanup_qa():
     return total
 
 
+def cmd_export(node_id: str, out_path: str = None, scale: float = 2, fmt: str = "PNG"):
+    """노드를 이미지로 export 해 파일로 저장 (2026-06-10).
+
+    `call export_node_as_image` 는 이미지를 stdout 에 못 떨궈서 매번 인라인 파이썬으로
+    base64 decode → 파일 쓰기를 반복해야 했다. 이 명령이 그 보일러플레이트를 대체한다.
+
+    Usage: figma_mcp_client.py export <nodeId> [out_path] [--scale N] [--jpg]
+      out_path 미지정 시 scripts/qa_screenshots/<nodeId 안전화>.png 로 저장.
+    """
+    import base64
+    ensure_session()
+    if not out_path:
+        safe = node_id.replace(":", "_").replace("/", "_")
+        out_path = os.path.join(os.path.dirname(__file__), "qa_screenshots", safe + ".png")
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+    content = call_tool("export_node_as_image", {"nodeId": node_id, "format": fmt, "scale": scale})
+    saved = False
+    for item in content:
+        if item.get("type") == "image":
+            data = item.get("data") or (item.get("source") or {}).get("data")
+            if data:
+                if isinstance(data, str) and data.startswith("data:"):
+                    data = data.split(",", 1)[1]
+                with open(out_path, "wb") as f:
+                    f.write(base64.b64decode(data))
+                size = os.path.getsize(out_path)
+                print(f"🖼  [export] {node_id} → {out_path} ({size:,} bytes)")
+                saved = True
+                break
+    if not saved:
+        # 이미지가 없으면 텍스트(에러 등) 출력
+        for item in content:
+            if item.get("type") == "text":
+                print(f"[export] 이미지 없음: {item.get('text','')[:200]}")
+                break
+        else:
+            print("[export] 이미지 없음 (응답에 image/text content 없음)")
+        sys.exit(1)
+    return out_path
+
+
 def cmd_assemble(config_file: str):
     """섹션 템플릿을 조립하여 완전한 Blueprint JSON을 생성.
 
@@ -12798,6 +13180,26 @@ def main():
                 _args = a
                 break
         cmd_call(sys.argv[2], _args, compact=_compact)
+    elif cmd == "export":
+        if len(sys.argv) < 3:
+            print("Usage: figma_mcp_client.py export <nodeId> [out_path] [--scale N] [--jpg]")
+            sys.exit(1)
+        _node = sys.argv[2]
+        _scale = 2
+        _fmt = "PNG"
+        _out = None
+        _rest = sys.argv[3:]
+        i = 0
+        while i < len(_rest):
+            a = _rest[i]
+            if a == "--scale" and i + 1 < len(_rest):
+                _scale = float(_rest[i + 1]); i += 2; continue
+            if a == "--jpg":
+                _fmt = "JPG"; i += 1; continue
+            if not a.startswith("--"):
+                _out = a
+            i += 1
+        cmd_export(_node, _out, scale=_scale, fmt=_fmt)
     elif cmd == "build":
         if len(sys.argv) < 3:
             print("Usage: figma_mcp_client.py build <blueprint.json>")

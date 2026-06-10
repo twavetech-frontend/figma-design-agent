@@ -634,6 +634,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 >    콘텐츠 wrap. 🔴 **시트 가로 = root 풀폭**(2026-06-04 사용자: "가로는
 >    root frame과 동일"). **콘텐츠 가로 padding 20 은 Modal Sheet 가 가짐**(root 가로 padding=0
 >    이라야 dim·시트가 풀폭). 사용자: "가로에 padding값을 20이 있어야하고".
+> 4. 🔴 **Modal Sheet 세로 padding = 상단 8(spacing-md) / 하단 24(safe area) (2026-06-10 사용자 룰)** —
+>    상단은 드래그 핸들이 타이트하게 붙도록 **8**(기존 12에서 축소), 하단은 safe-area 24. 의도적
+>    비대칭이라 시트 dict 에 `_asymPad:True` 마커를 박아 `_enforce_symmetric_vpad`(pt==pb 강제)를
+>    우회한다. `_enforce_bottom_sheet_pattern` 이 자동 적용(테스트 `test_modal_sheet_top_padding_8_asym`).
 >
 > 강제 함수: `_enforce_bottom_sheet_pattern` (cmd_build pre-process — root 852 FIXED +
 > 가로 padding 0, Modal Sheet 가로 padding 20) + 라이브 후처리 `_fix_layout_and_positions`
@@ -794,6 +798,47 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > corners=[T,T,F,F]). radius>0 이라 0-Q 클립 enforcer 가 clipsContent=true 보장, 16 은 radius 바인더가
 > radius-2xl 토큰으로 자동 바인딩. 생성기 6종 wallet_bar 에도 topLeftRadius/topRightRadius=16 박음.
 > ⚠️ 이전엔 이 룰이 **없어서** 월렛 바가 평평했음(위반이 아니라 미구현) — 이제 박혔으니 재빌드에도 유지.
+
+> 🔴 **절대 규칙 0-U — 상단바/헤더 아이콘 버튼은 기본 '무chrome' (2026-06-09 사용자 룰)**
+>
+> 사용자 명시: *"상단바 좌/우 버튼에 왜 radius·stroke 를 넣냐 — 별도로 넣으라는 요청이 없을땐
+> 기본으로 넣지마!"* 상단바/헤더의 **아이콘만 든 작은 버튼**(back/search/nav 등)에는 **fill 박스·
+> radius·stroke(border)를 기본으로 넣지 않는다 — 아이콘만.** 별도 스타일 버튼이 필요할 때만 노드에
+> `"_buttonChrome": true` 마커로 허용.
+>
+> **회귀 뿌리:** `_is_card_like`(cornerRadius≥8+fill+children)가 40×40 아이콘 버튼을 '카드'로 오인
+> → `_enforce_card_surface`가 fill 을 bg-primary 로 바꾸고, `_enforce_white_card_border(_live)`가
+> border-secondary 를 붙였다.
+>
+> **시스템 강제 (코드 박힘, 자동):**
+> 1. `_is_icon_button(node)` — 작은 프레임(≤60px) + 자식이 전부 아이콘/vector('ic-' 프레임 포함) +
+>    `_buttonChrome` 없음. blueprint·라이브 양쪽 자식 형태 인식.
+> 2. `_is_card_like`(blueprint/라이브) + `_enforce_white_card_border(_live)` 가 아이콘 버튼을 **제외**
+>    → fill 변환·border 자동부착 안 함.
+> 3. `_strip_icon_button_chrome_live(root_id)` (cmd_post_fix, white-card-border **직후**) — 아이콘 버튼의
+>    stroke 제거 + 중립 fill 박스(bg-primary/secondary/tertiary) 투명화 + cornerRadius 0. 의도된 색
+>    fill 은 보존. DS INSTANCE·내부(';') 제외. 로그 `[icon-button-chrome] ✓ … chrome 제거`.
+>    ⚠️ **하단 chrome 바(action bar/tab bar/fab/wallet) 안 버튼은 strip 제외** — 이 룰은 '상단바'
+>    아이콘 버튼 대상. 하단 액션바 북마크/채팅 버튼 등은 의도된 스타일 박스라 보존(ancestor 이름으로
+>    감지). (`_buttonChrome` blueprint 마커는 라이브 노드에 안 남으므로 라이브 strip 은 ancestor 로 판정.)
+> 4. **작성 규칙:** 아이콘 버튼은 처음부터 fill/radius/stroke 없이 아이콘만(`fr(name, width, height,
+>    children=[icon(...)])`). 스타일 버튼은 `_buttonChrome:true`.
+
+> 🔴 **절대 규칙 0-V — 큰 텍스트 탭은 underline tabs (Segmented_control 아님) (2026-06-09 사용자 룰)**
+>
+> 사용자 명시: *"NavBar 추천/전체는 segmented control 말고 tabs component underline 스타일로.
+> 텍스트가 크게 잘 보여야 할땐 tabs 를 쓰는게 좋아!"* **큰 텍스트로 보여야 하는 상단 페이지 탭**
+> (추천/전체 등)은 Segmented_control(컴팩트 토글) 대신 **underline tabs** — 큰 Bold 라벨(≈22px) +
+> active 탭 아래 underline bar, 비활성은 회색. 컴팩트 on/off 토글만 Segmented_control.
+> → 절대 규칙 0-J(2탭 텍스트=Segmented)를 **'큰 텍스트 탭'에 한해 override**.
+>
+> ⚠️ **DS underline tabs 컴포넌트(143ee3e3…/f11bda3c…)는 import 불가**(deprecated set key, "Component
+> not found"). 그래서 **styled raw frame 으로 작성**: View Tabs(HORIZONTAL) 안에 탭별 VERTICAL
+> [라벨 22 Bold + underline bar(FILL h3, active=dark/brand·inactive=투명)].
+>
+> **시스템 강제 (코드 박힘):** `scripts/design_rules/R60_tabs_ds_instance.py` `_is_tab_nav_wrapper` 가
+> `"_underlineTabs": true` 마커 노드를 **swap 대상에서 제외**(Segmented_control 강제 안 함). 작성 시
+> underline tabs frame 에 `_underlineTabs:true` + tab-hint 없는 이름(예 'View Tabs')으로 둔다.
 
 > 🔴 **절대 규칙 0-S — 텍스트 스타일 바인딩을 절대 깨지 말 것 (2026-06-05 사용자 룰)**
 >
@@ -1215,6 +1260,20 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **빌드 후 검증**: `get_node_info`로 모든 섹션/카드의 `layoutSizingHorizontal` 확인, HUG인 것 발견 시 즉시 FILL로 수정
 - **Blueprint JSON 규칙**: root 직계 자식과 그 자식들은 모두 `layoutSizingHorizontal: "FILL"` 필수 (아이콘 등 고정 크기 요소 제외)
 
+> 🔵 **8-B. `_keepSizing` 마커 — author 가 의도한 HUG/FIXED 를 FILL enforcer 로부터 보호 (2026-06-10, intent 존중)**
+>
+> FILL 강제·vertical-hug 등 post-fix enforcer 가 author 가 *명시한* HUG/FIXED 를 망치는 회귀가 있다
+> (예: SPACE_BETWEEN 행의 우측 칩이 HUG→FILL 로 늘어나 좌우가 붙음 / FIXED 정사각 원이 가로 FILL 로
+> 타원). **그 사이징이 의도적이면 노드에 `"_keepSizing": true`** 를 박는다 — 빌드 후 **E.7.7(모든
+> enforcer 뒤)** 에서 `_enforce_keep_sizing_live` 가 선언한 `layoutSizingHorizontal/Vertical`(+ 양축
+> FIXED 면 width/height 정확 치수)을 **최종 재단언**해 author 의도가 마지막 권한을 갖는다.
+> - 사용 예: `fr("Giver Info", layoutSizingHorizontal="HUG", _keepSizing=True, …)` (SPACE_BETWEEN 우측 칩),
+>   `fr("One Circle", width=220, height=220, layoutSizingHorizontal="FIXED", layoutSizingVertical="FIXED", _keepSizing=True, …)` (정원 보호).
+> - ⚠️ 남용 금지 — 섹션/카드/리스트는 여전히 FILL(규칙 8)이 기본. `_keepSizing` 은 **HUG/FIXED 가 정답인
+>   소수 노드**(우측 정렬 칩·고정 정사각·아이콘 박스 등)에만.
+> - 강제: `_collect_keep_sizing(bp)` + `_enforce_keep_sizing_live(root, map)` (Step E.7.7). DS INSTANCE
+>   내부(`;`)는 제외(규칙 0-K). 테스트 `scripts/tests/test_keep_sizing.py`.
+
 ### 9. ⚠️ Tab Bar와 FAB — 루트 프레임 하단에 배치 (콘텐츠 아래)
 - **이 규칙도 매번 누락된다. 빌드 후 반드시 적용해야 한다.**
 - **batch_build_screen은 `layoutPositioning: "ABSOLUTE"`를 적용하지 않는다** → 빌드 후 반드시 별도 `set_layout_positioning` 호출
@@ -1429,6 +1488,20 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
     Tab Bar 뒤로 가려짐, Tab Bar 잘림/루트 하단 빈 공간을 감지.
 - 빌드 로그의 `[QA] ⚠️ 시각 검사` 라인을 반드시 확인하고, 잡힌 항목을 수정할 것.
 - ※ 측정 가능한 항목만 자동화된다 — "디자인이 PRD 의도에 맞나"는 여전히 사람이 확인.
+
+> 🔵 **22-B. 레이아웃 스멜 검사 (2026-06-10) — 스크린샷 보기 *전*에 회귀 패턴 자동 노출**
+>
+> `cmd_build` 의 **E.7.7 끝**(모든 레이아웃 재단언 후 = 최종 상태)에서 `_qa_layout_smells()` 가
+> 결정적으로(서브에이전트·LLM 없이) 자주 손으로 고치던 회귀 3종을 감지:
+> 1. **SPACE_BETWEEN 행에 콘텐츠 든 FILL 자식** → 분배 깨짐(한쪽 뭉침). (선물 Giver Info 회귀)
+> 2. **짧은 텍스트(≤6자, 명시 \n 없음)가 2줄+ wrap** → 폭 collapse. ("후기 공유"→"후/기", 탭 라벨)
+> 3. **프레임 폭 <4px 붕괴** → 2-col FILL collapse.
+> (원형→타원은 size-invariant/`_keepSizing` 이 이미 막고, 검출 시 버튼 pill 오탐이 커서 제외 — 고정밀 유지.)
+>
+> **빌드 로그 `[smell] ⚠️ 레이아웃 스멜 N건` 라인이 보이면 그 노드를 스크린샷에서 우선 확인**하고
+> 수정한다(메시지에 수정법까지 안내 — 예 "HUG + _keepSizing 권장"). `[smell] OK` 면 그 3종은 없음.
+> 코드: `_detect_layout_smells`(순수, 테스트 `test_layout_smells.py` 10건) + `_qa_layout_smells`(라이브).
+> 정상 화면 5종에서 오탐 0 확인. ※ 이건 self-verify(0-F) 대체가 아니라 *보조* — 스크린샷 확인은 여전히 필수.
 
 ---
 
