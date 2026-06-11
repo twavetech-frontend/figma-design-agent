@@ -57,19 +57,25 @@ def _lint(bp: dict, ctx: dict) -> Iterable[Violation]:
 # named frame so the plugin's findOne can adopt an existing instance.
 _STATUS_BAR_KEY = COMPONENT_KEYS.get("Status Bar")
 
+# DS 'Status Bar' 마스터 스펙 (393×62) — 사용자 명시 2026-06-12
+STATUS_BAR_HEIGHT = 62
+
 
 def _inject(bp: dict) -> dict:
     if not _is_mobile_root(bp):
         return bp
     if _has_status_bar(bp):
         return bp
+    # 🔴 2026-06-12 사용자 회귀: vertical "HUG" + height 50 이 DS 마스터(393×62 FIXED)를
+    # 내부 콘텐츠 자연 높이(63.5)로 재측정시켜 모든 생성 화면의 Status Bar 가 62→63.5 로
+    # 변형됐다. 인스턴스는 마스터 높이를 유지해야 하므로 FIXED 62 로 강제한다.
     sb_node: dict = {
         "name": "Status Bar",
         "type": "instance" if _STATUS_BAR_KEY else "frame",
         "width": bp.get("width", 393),
-        "height": 50,
+        "height": STATUS_BAR_HEIGHT,
         "layoutSizingHorizontal": "FILL",
-        "layoutSizingVertical": "HUG",
+        "layoutSizingVertical": "FIXED",
     }
     if _STATUS_BAR_KEY:
         sb_node["componentKey"] = _STATUS_BAR_KEY
@@ -95,6 +101,18 @@ def _verify(tree: dict, ctx: dict) -> Iterable[Violation]:
         yield Violation(
             "R24-status-bar", Severity.ERROR, "root",
             f"first child is '{children[0].get('name')}' — Status Bar must be first",
+            Phase.VERIFY,
+        )
+        return
+    # 🔴 높이 = 마스터 62 검증 (2026-06-12 회귀: HUG 강제로 63.5 변형)
+    sb = children[0]
+    bb = sb.get("absoluteBoundingBox") or {}
+    h = bb.get("height") or sb.get("height")
+    if h is not None and abs(float(h) - STATUS_BAR_HEIGHT) > 1:
+        yield Violation(
+            "R24-status-bar", Severity.WARN, "root",
+            f"Status Bar height {h}px ≠ {STATUS_BAR_HEIGHT}px — vertical HUG 변형 의심 "
+            f"(post-fix _enforce_status_bar_size_live 가 복구해야 함)",
             Phase.VERIFY,
         )
 

@@ -6366,7 +6366,11 @@ async function batchBuildScreen(params) {
 
   if (isMobileRoot && isFullBuild && !alreadyHasStatusBar) {
     try {
-      // Find Status Bar component by name across ALL pages (load each page first)
+      // Find Status Bar source by name across ALL pages.
+      // 🔴 2026-06-12 회귀 fix: 첫 매치를 그대로 쓰면 작업 페이지의 (이미 변형된 63.5
+      // HUG) 인스턴스가 마스터보다 먼저 잡혀 변형이 clone 으로 전파됐다.
+      // → COMPONENT 를 최우선으로 전 페이지를 끝까지 탐색하고, INSTANCE 면 아래에서
+      //   mainComponent 로부터 fresh instance 를 만든다.
       var statusBarSource = null;
       for (var pi = 0; pi < figma.root.children.length; pi++) {
         var page = figma.root.children[pi];
@@ -6377,19 +6381,29 @@ async function batchBuildScreen(params) {
             (n.type === "COMPONENT" || n.type === "INSTANCE" || n.type === "FRAME");
         });
         if (found) {
-          statusBarSource = found;
-          console.log("[batch_build] Found Status Bar source on page '" + page.name + "': id=" + found.id + " type=" + found.type + " name=" + found.name);
-          break;
+          console.log("[batch_build] Status Bar candidate on page '" + page.name + "': id=" + found.id + " type=" + found.type);
+          if (!statusBarSource) statusBarSource = found;
+          else if (found.type === "COMPONENT" && statusBarSource.type !== "COMPONENT") statusBarSource = found;
+          else if (found.type === "INSTANCE" && statusBarSource.type === "FRAME") statusBarSource = found;
+          if (statusBarSource.type === "COMPONENT") break; // 마스터 확보 — 종료
         }
       }
       if (statusBarSource) {
-        var sbNode;
+        var sbNode = null;
         if (statusBarSource.type === "COMPONENT") {
           sbNode = statusBarSource.createInstance();
+        } else if (statusBarSource.type === "INSTANCE") {
+          // 변형(override) 전파 차단 — 마스터에서 pristine instance 생성
+          var sbMain = null;
+          try { sbMain = await statusBarSource.getMainComponentAsync(); }
+          catch (e) { try { sbMain = statusBarSource.mainComponent; } catch (e2) { /* ignore */ } }
+          sbNode = sbMain ? sbMain.createInstance() : statusBarSource.clone();
         } else {
           sbNode = statusBarSource.clone();
         }
         sbNode.name = "Status Bar";
+        // 마스터 자연 높이 캡처 (DS 스펙 393×62) — 삽입/FILL 후 재단언용
+        var sbExpectedH = sbNode.height;
 
         // Force position to origin BEFORE insertion
         try { sbNode.x = 0; sbNode.y = 0; } catch (e) { /* ignore */ }
@@ -6402,9 +6416,16 @@ async function batchBuildScreen(params) {
         }
 
         // Force auto-layout participation
+        // 🔴 2026-06-12 회귀 fix: vertical "HUG" 가 마스터 고정 높이(62)를 내부 콘텐츠
+        // 자연 높이(63.5)로 재측정시켰다 — Status Bar 는 무조건 FIXED + 마스터 높이.
         try { sbNode.layoutPositioning = "AUTO"; } catch (e) { console.warn("[batch_build] SB layoutPositioning failed:", e.message); }
+        try { sbNode.layoutSizingVertical = "FIXED"; } catch (e) { /* ignore */ }
+        try {
+          if (sbExpectedH && Math.abs(sbNode.height - sbExpectedH) > 0.5) {
+            sbNode.resize(sbNode.width, sbExpectedH);
+          }
+        } catch (e) { /* ignore */ }
         try { sbNode.layoutSizingHorizontal = "FILL"; } catch (e) { console.warn("[batch_build] SB layoutSizingH failed:", e.message); }
-        try { sbNode.layoutSizingVertical = "HUG"; } catch (e) { /* ignore */ }
 
         // Force position after insertion
         try { sbNode.x = 0; sbNode.y = 0; } catch (e) { /* ignore */ }

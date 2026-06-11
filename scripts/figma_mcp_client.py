@@ -3898,6 +3898,69 @@ def _enforce_indicator_symmetric_gap(root_node_id: str) -> int:
     return fixed[0]
 
 
+# DS 'Status Bar' 마스터 스펙 높이 (393×62) — 2026-06-12 사용자 명시
+_STATUS_BAR_H = 62.0
+
+
+def _status_bar_fix_needed(node: dict, expected_h: float = _STATUS_BAR_H) -> bool:
+    """순수 판정: Status Bar 노드가 사이징 변형으로 복구가 필요한가.
+
+    2026-06-12 회귀: R24 inject·code.js 강제 삽입이 vertical 'HUG' 를 박아 마스터
+    고정 높이 62 가 내부 콘텐츠 자연 높이 63.5 로 재측정됐다. HUG 이거나 높이가
+    62±1 을 벗어나면 복구 대상."""
+    if not isinstance(node, dict):
+        return False
+    name = (node.get("name") or "").lower()
+    if "status" not in name or "bar" not in name:
+        return False
+    if node.get("layoutSizingVertical") == "HUG":
+        return True
+    h = _node_wh(node)[1]
+    if isinstance(h, (int, float)) and h > 0 and abs(float(h) - expected_h) > 1.0:
+        return True
+    return False
+
+
+def _enforce_status_bar_size_live(root_node_id: str) -> int:
+    """🔴 Status Bar = 가로 FILL × 세로 FIXED 62 강제 (2026-06-12 사용자 회귀 보고).
+
+    원인 2곳(R24 inject 의 HUG, code.js FORCED 삽입의 HUG)은 소스에서 고쳤고, 이
+    enforcer 는 ① 이미 변형(63.5 HUG)된 기존 화면 복구 ② 향후 어떤 경로로든 다시
+    HUG/오차가 생겨도 post-fix 가 잡는 백스톱. INSTANCE 본체의 resize/sizing 은
+    내부 색 변경이 아니므로 절대 규칙 0-K 와 무관.
+    ⚠️ resize_node 는 가로까지 FIXED 로 고정하므로 직후 horizontal FILL 재단언 필수."""
+    try:
+        info = call_tool("get_node_info", {"nodeId": root_node_id})
+    except Exception:
+        return 0
+    fixed = 0
+    # Status Bar 는 루트 첫 자식이 정상 — 보수적으로 직계 앞 3개만 검사
+    for c in (info.get("children") or [])[:3]:
+        if not _status_bar_fix_needed(c):
+            continue
+        nid = c.get("id")
+        if not nid:
+            continue
+        try:
+            call_tool("set_layout_sizing", {"nodeId": nid, "layoutSizingVertical": "FIXED"})
+        except Exception:
+            pass
+        try:
+            w = _node_wh(c)[0] or 393
+            call_tool("resize_node", {"nodeId": nid, "width": w, "height": _STATUS_BAR_H})
+        except Exception:
+            pass
+        try:
+            call_tool("set_layout_sizing", {"nodeId": nid, "layoutSizingHorizontal": "FILL"})
+        except Exception:
+            pass
+        print(f"  [status-bar-size] ✓ '{c.get('name')}' → FILL × FIXED {int(_STATUS_BAR_H)}px (HUG 변형 복구)")
+        fixed += 1
+    if not fixed:
+        print(f"  [status-bar-size] OK — Status Bar {int(_STATUS_BAR_H)}px 정상")
+    return fixed
+
+
 def _enforce_wallet_bar_radius(root_node_id: str) -> int:
     """월렛 바(마이 월렛)의 top-left/top-right 코너 radius = 16 강제 (2026-06-05 사용자 룰).
 
@@ -9171,6 +9234,12 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_wallet_bar_radius(root_node_id)
     except Exception as e:
         print(f"  [wallet-radius] 실패 (무시하고 계속): {e}")
+
+    print("\n[규칙] Status Bar 393×62 FIXED 강제 (2026-06-12 HUG 변형 복구) 적용 중...")
+    try:
+        _enforce_status_bar_size_live(root_node_id)
+    except Exception as e:
+        print(f"  [status-bar-size] 실패 (무시하고 계속): {e}")
 
     print("\n[규칙] 인디케이터 프레임 위 gap = 아래 padding 대칭 (2026-06-05) 적용 중...")
     try:
