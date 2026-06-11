@@ -2,168 +2,168 @@
   {
     "name": "Heading md/Regular",
     "key": "4c77a0ebfdf37285f409855f19433da21dac8934",
-    "fontSize": 36,
+    "fontSize": 48,
     "family": "Pretendard",
     "style": "Regular"
   },
   {
     "name": "Heading md/Medium",
     "key": "e25ce974ea625deef606ae582955f52c069a7f27",
-    "fontSize": 36,
+    "fontSize": 48,
     "family": "Pretendard",
     "style": "Medium"
   },
   {
     "name": "Heading md/Semibold",
     "key": "01ca3686542f4ad43260611ab674990a54bb05f8",
-    "fontSize": 36,
+    "fontSize": 48,
     "family": "Pretendard",
     "style": "SemiBold"
   },
   {
     "name": "Heading md/Bold",
     "key": "81fdbc67d40fabde7444d74c263baa3f8694936d",
-    "fontSize": 36,
+    "fontSize": 48,
     "family": "Pretendard",
     "style": "Bold"
   },
   {
     "name": "Heading sm/Regular",
     "key": "fe63d2c35c964a97275c56ee108c7755e87f4598",
-    "fontSize": 30,
+    "fontSize": 40,
     "family": "Pretendard",
     "style": "Regular"
   },
   {
     "name": "Heading sm/Medium",
     "key": "a32a5613ece514f40203f52b215819e9ffd3bf5e",
-    "fontSize": 30,
+    "fontSize": 40,
     "family": "Pretendard",
     "style": "Medium"
   },
   {
     "name": "Heading sm/Semibold",
     "key": "a780757e8b82f65679fb1ebf7356b9312c93ecfc",
-    "fontSize": 30,
+    "fontSize": 40,
     "family": "Pretendard",
     "style": "SemiBold"
   },
   {
     "name": "Heading sm/Bold",
     "key": "8eb397ce4a1b370f2c6b40ad2eb6f1ee2b13345b",
-    "fontSize": 30,
+    "fontSize": 40,
     "family": "Pretendard",
     "style": "Bold"
   },
   {
     "name": "Heading xs/Regular",
     "key": "1d62c9b45cd293ad5ee31090cf632d620f2a1794",
-    "fontSize": 24,
+    "fontSize": 32,
     "family": "Pretendard",
     "style": "Regular"
   },
   {
     "name": "Heading xs/Medium",
     "key": "dd3a9c292dfd791ee35f05981325a7df4f03da76",
-    "fontSize": 24,
+    "fontSize": 32,
     "family": "Pretendard",
     "style": "Medium"
   },
   {
     "name": "Heading xs/Semibold",
     "key": "29ec008472f4a59c5179a9350317a581045f8e18",
-    "fontSize": 24,
+    "fontSize": 32,
     "family": "Pretendard",
     "style": "SemiBold"
   },
   {
     "name": "Heading xs/Bold",
     "key": "6c81548af82cd0b044305864a42b6a09e83f8542",
-    "fontSize": 24,
+    "fontSize": 32,
     "family": "Pretendard",
     "style": "Bold"
   },
   {
     "name": "Body lg/Regular",
     "key": "f816b5d92fd8c8ca5c9c1dbaa52ba3ea1267a26f",
-    "fontSize": 18,
+    "fontSize": 24,
     "family": "Pretendard",
     "style": "Regular"
   },
   {
     "name": "Body lg/Medium",
     "key": "fb77de65d7e3087995470473b9f94358a34c8d7e",
-    "fontSize": 18,
+    "fontSize": 24,
     "family": "Pretendard",
     "style": "Medium"
   },
   {
     "name": "Body lg/Semibold",
     "key": "7e9ee0fa774acf1b4869d2a0787df75258d2a532",
-    "fontSize": 18,
+    "fontSize": 24,
     "family": "Pretendard",
     "style": "SemiBold"
   },
   {
     "name": "Body lg/Bold",
     "key": "2557390b1d5f2c04c81f617f78f8e5526a7ff735",
-    "fontSize": 18,
+    "fontSize": 24,
     "family": "Pretendard",
     "style": "Bold"
   },
   {
     "name": "Body md/Regular",
     "key": "81c47bd23cc77d917dc7724a34f41e234d559e54",
-    "fontSize": 16,
+    "fontSize": 20,
     "family": "Pretendard",
     "style": "Regular"
   },
   {
     "name": "Body md/Medium",
     "key": "8aacbab3582f93060081e02f1757c9b127a0be40",
-    "fontSize": 16,
+    "fontSize": 20,
     "family": "Pretendard",
     "style": "Medium"
   },
   {
     "name": "Body md/Semibold",
     "key": "8b09aa1bb785b987f259fecaefed7fa39b99194d",
-    "fontSize": 16,
+    "fontSize": 20,
     "family": "Pretendard",
     "style": "SemiBold"
   },
   {
     "name": "Body md/Bold",
     "key": "0868e2434dd94c70016d1ce52216230de461b1d5",
-    "fontSize": 16,
+    "fontSize": 20,
     "family": "Pretendard",
     "style": "Bold"
   },
   {
     "name": "Body sm/Regular",
     "key": "aa4783034b9f6d1855d840018d986358aa76d0ad",
-    "fontSize": 14,
+    "fontSize": 16,
     "family": "Pretendard",
     "style": "Regular"
   },
   {
     "name": "Body sm/Medium",
     "key": "5f84038a501fe2ae7d85649892ef19de818ff6fb",
-    "fontSize": 14,
+    "fontSize": 16,
     "family": "Pretendard",
     "style": "Medium"
   },
   {
     "name": "Body sm/Semibold",
     "key": "7ea4b98c4e7d5cb7e12df524738e47ab93c97cbc",
-    "fontSize": 14,
+    "fontSize": 16,
     "family": "Pretendard",
     "style": "SemiBold"
   },
   {
     "name": "Body sm/Bold",
     "key": "3ef42fc77cb08e839fa0663c242e1ce40e72cf92",
-    "fontSize": 14,
+    "fontSize": 16,
     "family": "Pretendard",
     "style": "Bold"
   },
