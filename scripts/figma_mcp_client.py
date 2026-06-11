@@ -3930,7 +3930,7 @@ def _enforce_status_bar_size_live(root_node_id: str) -> int:
     내부 색 변경이 아니므로 절대 규칙 0-K 와 무관.
     ⚠️ resize_node 는 가로까지 FIXED 로 고정하므로 직후 horizontal FILL 재단언 필수."""
     try:
-        info = call_tool("get_node_info", {"nodeId": root_node_id})
+        info = parse_content(call_tool("get_node_info", {"nodeId": root_node_id})).get("json") or {}
     except Exception:
         return 0
     fixed = 0
