@@ -35,7 +35,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Read",
+        "matcher": "Read|mcp__figma-tools__export_node_as_image",
         "hooks": [
           {
             "type": "command",

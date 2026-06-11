@@ -1007,6 +1007,133 @@ def _enforce_planning_read_gate() -> None:
     sys.exit(2)
 
 
+# ── 레퍼런스 Read 게이트 / self-verify 게이트 (2026-06-11 사용자: fable 이 레퍼런스 Read·
+#    self-verify 를 조용히 건너뛰는 것 방지 — 통독과 동일하게 코드 게이트화). 통독 hook
+#    (planning_read_hook.py)이 PostToolUse 에서 ref 썸네일 Read 와 export_node_as_image 호출을
+#    세션별로 누적(.planning_gate/ref_<sid>.json · qa_<sid>.json). 여기서 빌드/정리 시 검증한다.
+#    hook 비활성 환경(cron/CLI)이면 게이트는 통과(경고만) — 통독 게이트와 동일 폴백.
+def _gate_session_set(prefix: str, key: str):
+    """현재 세션의 .planning_gate/<prefix>_<sid>.json 의 set 필드. hook 비활성이면 None."""
+    sid = _current_claude_session()
+    if not sid:
+        return None
+    p = os.path.join(_planning_gate_dir(), "%s_%s.json" % (prefix, sid))
+    try:
+        with open(p, encoding="utf-8") as fh:
+            return set(json.load(fh).get(key) or [])
+    except Exception:
+        return set()  # 세션은 있으나 아직 기록 없음
+
+
+def _enforce_reference_read_gate() -> None:
+    """🔴 레퍼런스 Read 하드 게이트 (절대 규칙 0-G) — Step A.0 가 검색한 썸네일을 이 세션에서
+    Read 안 했으면 빌드 차단. 모델(fable 등)이 레퍼런스 시각학습을 조용히 건너뛰는 것 방지.
+    bypass: IMIN_SKIP_REFERENCE_GATE=1."""
+    if os.environ.get("IMIN_SKIP_REFERENCE_GATE") == "1":
+        print("⚠️ [레퍼런스] Read 게이트 우회됨 (IMIN_SKIP_REFERENCE_GATE=1)")
+        return
+    if not _LAST_REFERENCE_THUMBS:
+        return  # 검색 결과 없음(레퍼런스 미매칭) — 강제 불가
+    read = _gate_session_set("ref", "read")
+    if read is None:
+        print("  [레퍼런스-게이트] Read 커버리지 훅 비활성 — 게이트 skip (0-G 수동 준수)")
+        return
+    want = {os.path.basename(p) for p in _LAST_REFERENCE_THUMBS}
+    missing = sorted(want - read)
+    if not missing:
+        print(f"  [레퍼런스-게이트] ✓ 이 세션이 레퍼런스 {len(want)}장 모두 Read 함")
+        return
+    print("\n" + "=" * 64)
+    print("❌ 빌드 차단 — 레퍼런스 썸네일을 이 세션에서 Read 해야 합니다 (절대 규칙 0-G)")
+    print(f"   위 Step A.0 가 출력한 레퍼런스 {len(want)}장 중 {len(missing)}장 미Read:")
+    for p in _LAST_REFERENCE_THUMBS:
+        if os.path.basename(p) in missing:
+            print(f"     - {p}")
+    print("   → 위 PNG 들을 Read 도구로 열어 시각 학습한 뒤 references[] 에 반영하고 다시 build.")
+    print("   (긴급 우회: IMIN_SKIP_REFERENCE_GATE=1)")
+    print("=" * 64)
+    sys.exit(2)
+
+
+def _pending_selfverify_path() -> str:
+    sid = _current_claude_session() or "_nohook"
+    return os.path.join(_planning_gate_dir(), "pending_qa_%s.json" % sid)
+
+
+def _record_pending_selfverify(root_id: str, exported: list, checklist_path: str) -> None:
+    """빌드의 self-verify export 직후 — '미완료 self-verify' 마커 기록. 다음 build/cleanup-qa
+    시작 시 _enforce_selfverify_gate 가 검증한다."""
+    try:
+        os.makedirs(_planning_gate_dir(), exist_ok=True)
+        with open(_pending_selfverify_path(), "w", encoding="utf-8") as fh:
+            json.dump({
+                "root_id": root_id,
+                "nodeIds": [e.get("nodeId") for e in (exported or []) if e.get("nodeId")],
+                "checklist_path": checklist_path,
+                "ts": int(time.time()),
+            }, fh, ensure_ascii=False)
+    except Exception:
+        pass
+
+
+def _checklist_unfilled_count(checklist_path: str) -> int:
+    """checklist 의 status 가 아직 FILL_IN/빈값 인 항목 수 (못 읽으면 -1)."""
+    try:
+        with open(checklist_path, encoding="utf-8") as fh:
+            cl = json.load(fh)
+    except Exception:
+        return -1
+    return sum(1 for c in (cl.get("checklist") or [])
+               if (c.get("status") or "").upper() in ("", "FILL_IN"))
+
+
+def _enforce_selfverify_gate(context: str = "build") -> None:
+    """🔴 self-verify 하드 게이트 (절대 규칙 0-F) — 직전 빌드의 섹션 PNG 를 이 세션에서
+    재export(=Read) 안 했으면 다음 build/cleanup-qa 차단. 모델이 self-verify 를 조용히
+    건너뛰고 '완료' 보고하는 것 방지. bypass: IMIN_SKIP_SELFVERIFY_GATE=1."""
+    if os.environ.get("IMIN_SKIP_SELFVERIFY_GATE") == "1":
+        return
+    sid = _current_claude_session()
+    if not sid:
+        return  # hook 비활성 — 폴백 통과
+    pend_path = _pending_selfverify_path()
+    if not os.path.exists(pend_path):
+        return  # 미완료 self-verify 없음
+    try:
+        with open(pend_path, encoding="utf-8") as fh:
+            pend = json.load(fh)
+    except Exception:
+        try:
+            os.remove(pend_path)
+        except Exception:
+            pass
+        return
+    want = set(pend.get("nodeIds") or [])
+    exported = _gate_session_set("qa", "exported") or set()
+    missing = sorted(want - exported)
+    unfilled = _checklist_unfilled_count(pend.get("checklist_path") or "")
+    if not missing:
+        # 섹션 PNG 재export 됨 → 통과. checklist 미작성은 강한 경고(차단 X — 핵심은 '이미지를 봤나').
+        if unfilled > 0:
+            print(f"  ⚠️ [self-verify] 섹션 PNG 는 재export 했으나 checklist {unfilled}개 항목이 "
+                  f"FILL_IN — {pend.get('checklist_path')} 를 PASS/FAIL/NA 로 채울 것 (0-F).")
+        try:
+            os.remove(pend_path)
+        except Exception:
+            pass
+        return
+    print("\n" + "=" * 64)
+    print(f"❌ {context} 차단 — 직전 빌드의 self-verify 가 미완료입니다 (절대 규칙 0-F)")
+    print(f"   root {pend.get('root_id')} 의 섹션 PNG {len(want)}장 중 {len(missing)}장 미재export:")
+    for nid in missing:
+        print(f"     - {nid}")
+    print("   → 위 nodeId 들을 export_node_as_image(scale=2) 로 재export + Read 하고,")
+    print(f"     checklist({pend.get('checklist_path')}) 12개 항목을 PASS/FAIL/NA 로 채울 것.")
+    print("   (긴급 우회: IMIN_SKIP_SELFVERIFY_GATE=1)")
+    print("=" * 64)
+    sys.exit(2)
+
+
 def cmd_learn_planning(out_rel: str = "scripts/_planning_digest.txt", force: bool = False):
     """🔴 디자인 생성 준비 마지막 단계 — src/기획/ 기획 문서 학습 + 플러그인 progress 표시.
 
@@ -4660,6 +4787,10 @@ def cmd_build(blueprint_file: str):
     # 생성 시 서비스 맥락을 충분히 이해한 상태 시스템 보장). references S20~S23 와 동일 철학.
     _enforce_planning_read_gate()
 
+    # 🔴 직전 빌드 self-verify 미완료면 새 빌드 차단 (2026-06-11 — 절대 규칙 0-F 코드 게이트화).
+    # 모델(fable 등)이 self-verify 를 조용히 건너뛰고 다음 화면으로 넘어가는 것 방지.
+    _enforce_selfverify_gate("build")
+
     with open(blueprint_file) as f:
         blueprint = json.load(f)
 
@@ -4680,6 +4811,11 @@ def cmd_build(blueprint_file: str):
     # references/uibowl 의 1500+ PNG 를 archetype 별 검색 + thumbnail 자동 생성.
     # 빌드 진행 전 Claude 가 PNG Read 강제 (CLAUDE.md 절대 규칙 0-G).
     _auto_search_uibowl_references(blueprint)
+
+    # 🔴 레퍼런스 Read 하드 게이트 (2026-06-11 — 절대 규칙 0-G 코드 게이트화): Step A.0 가
+    # 검색해 출력한 썸네일을 이 세션에서 Read 안 했으면 빌드 차단. 모델(fable 등)이 레퍼런스
+    # 시각학습을 조용히 건너뛰는 것 방지. (검색은 코드 강제였으나 Read 는 모델 자율이었음.)
+    _enforce_reference_read_gate()
 
     # ⚠️ Step A (2026-05-28 박힘): imin_home archetype → 사용자 결정형 polished
     # 디자인 (16941:51284) 자동 export + 로그. Claude 가 매번 새 세션에서 시각
@@ -5437,6 +5573,12 @@ def _self_verify_section_qa_export(root_id: str, blueprint: dict) -> None:
     print("    4. 절대 미완료 상태로 '검증 ✅' / '완료' 보고 금지")
     print("    → [feedback_self_verify_required_after_build] 메모리 룰")
     print("=" * 60)
+
+    # 🔴 self-verify 게이트 마커 기록 (2026-06-11 — 0-F 코드 게이트화): 이 섹션 PNG 들을
+    # 이 세션에서 재export(=Read) 하기 전엔 다음 build/cleanup-qa 가 차단된다. 모델이
+    # self-verify 를 조용히 건너뛰는 것 방지. (exported 가 비면 마커 안 남김 = 강제 불가.)
+    if exported:
+        _record_pending_selfverify(root_id, exported, checklist_path)
 
 
 def _collect_tree(node_id: str, depth: int = 0, max_depth: int = 6) -> dict:
@@ -12871,6 +13013,9 @@ def cmd_cleanup_qa():
       - `scripts/qa_screenshots/<root>/` — self-verify(절대 규칙 0-F)용 PNG + self_verify_checklist.json
       - `scripts/ref_thumbnails/`        — 레퍼런스 학습(절대 규칙 0-G)용 ≤1200px 썸네일
     각 폴더 자체는 유지(다음 빌드가 재생성). self-verify/레퍼런스 Read 가 모두 끝난 뒤 호출한다."""
+    # 🔴 self-verify 게이트 (2026-06-11 — 0-F): self-verify 를 안 했는데 정리(=작업 종료)
+    # 하려는 것을 차단. checklist/PNG 를 지우기 전에 모델이 실제로 검증했는지 확인.
+    _enforce_selfverify_gate("cleanup-qa")
     import shutil
     here = os.path.dirname(__file__)
     total = 0

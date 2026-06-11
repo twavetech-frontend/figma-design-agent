@@ -371,6 +371,53 @@ def _handle_post_read(data):
                        currentUc=cur_uc, totalUc=total_uc, name=name[:40])
 
 
+# ── 레퍼런스 Read / self-verify export 커버리지 (2026-06-11 사용자: fable 이 조용히
+#    건너뛰는 것 방지 — 통독과 동일하게 코드 게이트화). 통독과 같은 .planning_gate 디렉토리에
+#    세션별로 누적하고, figma_mcp_client 의 게이트가 검증한다. 설계 원칙 동일: 절대 흐름을
+#    막지 않는다(항상 exit 0). 차단은 빌드 게이트에서만.
+def _gate_json_update(fname, key, value):
+    """`.planning_gate/<fname>` 의 set 필드(key)에 value 를 합집합으로 누적."""
+    _ensure_gate_dir()
+    p = os.path.join(_GATE_DIR, fname)
+    cur = {}
+    try:
+        with open(p, encoding="utf-8") as fh:
+            cur = json.load(fh)
+    except Exception:
+        cur = {}
+    s = set(cur.get(key) or [])
+    s.add(value)
+    cur[key] = sorted(s)
+    cur["ts"] = int(time.time())
+    try:
+        with open(p, "w", encoding="utf-8") as fh:
+            json.dump(cur, fh, ensure_ascii=False)
+    except Exception:
+        pass
+
+
+def _handle_ref_thumb_read(data):
+    """Read 대상이 레퍼런스 썸네일(scripts/ref_thumbnails/*.png)이면 세션별로 basename 누적.
+    → ref_<sid>.json. figma_mcp_client 의 레퍼런스 Read 게이트가 검증(절대 규칙 0-G)."""
+    sid = data.get("session_id")
+    fp = (data.get("tool_input") or {}).get("file_path") or ""
+    norm = fp.replace("\\", "/")
+    if not sid or "/ref_thumbnails/" not in norm or not norm.lower().endswith(".png"):
+        return
+    _gate_json_update("ref_%s.json" % sid, "read", os.path.basename(norm))
+
+
+def _handle_post_export(data):
+    """export_node_as_image 호출의 nodeId 를 세션별로 누적 → qa_<sid>.json.
+    figma_mcp_client 의 self-verify 게이트가 '빌드가 export 한 섹션을 모델이 재export(=Read)
+    했는가' 를 검증(절대 규칙 0-F)."""
+    sid = data.get("session_id")
+    nid = (data.get("tool_input") or {}).get("nodeId")
+    if not sid or not nid:
+        return
+    _gate_json_update("qa_%s.json" % sid, "exported", str(nid))
+
+
 def main():
     try:
         raw = sys.stdin.read()
@@ -382,7 +429,12 @@ def main():
         if event == "UserPromptSubmit":
             _handle_user_prompt(data)
         elif event == "PostToolUse":
-            _handle_post_read(data)
+            tn = data.get("tool_name") or ""
+            if "export_node_as_image" in tn:
+                _handle_post_export(data)
+            else:  # Read
+                _handle_post_read(data)          # 기획 digest 통독 커버리지
+                _handle_ref_thumb_read(data)     # 레퍼런스 썸네일 Read 커버리지
     except Exception:
         pass
     sys.exit(0)
