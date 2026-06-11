@@ -2665,11 +2665,18 @@ _NAVBAR_NAME_HINTS = ("navbar", "nav bar", "app bar", "appbar", "top bar",
                       "topbar", "header bar", "nav header")
 
 
+# 🔴 NavBar 좌측 back 버튼 노출 시 Nav Back frame 오른쪽 padding 표준 (2026-06-10 사용자 룰).
+# back↔타이틀 간격을 spacing-xl(16) 토큰으로 통일·바인딩.
+_NAV_BACK_PAD_RIGHT = 16
+_NAV_BACK_PAD_TOKEN = "spacing-xl"
+
+
 def _enforce_navbar_style_live(root_node_id: str) -> int:
     """절대 규칙 (2026-06-04 사용자): 상단 NavBar 스타일 강제.
       1. NavBar frame fill = bg-primary (리터럴 + 변수 바인딩)
       1-b. NavBar frame 자체 stroke 없어야 함 (제거)
       2. NavBar 안 좌측 back btn frame 은 stroke 없어야 함 (제거)
+      3. back btn frame 오른쪽 padding = spacing-xl(16) 바인딩 (2026-06-10) — back↔타이틀 간격 표준
     """
     nav_bg = resolve_token_ref("$token(bg-primary)") or {"r": 0.988, "g": 0.988, "b": 0.992, "a": 1.0}
     nav_fp = _token_to_figma_path("bg-primary")
@@ -2722,6 +2729,18 @@ def _enforce_navbar_style_live(root_node_id: str) -> int:
                             fixed[0] += 1
                         except Exception as e:
                             print(f"  [navbar] back btn stroke 제거 실패(무시): {e}")
+                        # 🔴 2026-06-10 사용자 룰: NavBar 좌측 back 버튼 노출 시 Nav Back frame
+                        # 오른쪽 padding = spacing-xl(16) 로 설정 + 토큰 바인딩 (back↔타이틀 간격 표준).
+                        try:
+                            call_tool("set_auto_layout", {
+                                "nodeId": ch["id"],
+                                "layoutMode": (ch.get("layoutMode") or "HORIZONTAL"),
+                                "paddingRight": _NAV_BACK_PAD_RIGHT})
+                            call_tool("set_bound_variables", {
+                                "nodeId": ch["id"], "bindings": {"paddingRight": _NAV_BACK_PAD_TOKEN}})
+                            fixed[0] += 1
+                        except Exception as e:
+                            print(f"  [navbar] back btn paddingRight 실패(무시): {e}")
                     else:
                         _strip_back(ch)
             _strip_back(n)

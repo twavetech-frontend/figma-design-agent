@@ -724,13 +724,18 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > 1-b. **NavBar frame 자체에 stroke(보더) 가 없어야 한다.** (상단 바에 테두리 금지.)
 > 2. **NavBar 안 좌측 back 버튼 frame 에도 stroke(보더) 가 없어야 한다.** (흰 배경 위 back
 >    아이콘 버튼에 테두리 금지 — fill 만 또는 fill 도 없이 아이콘만.)
+> 3. 🔴 **back 버튼이 노출되면 Nav Back frame 의 오른쪽 padding = `spacing-xl`(16) 바인딩 (2026-06-10
+>    사용자 룰).** back 아이콘↔타이틀 간격을 spacing 토큰으로 통일한다. paddingRight=16 + `spacing-xl`
+>    변수 바인딩(절대값 아님). (40×40 FIXED back frame 이면 아이콘이 약간 좌측으로, 우측 16 여백 생김.)
 >
 > **시스템 강제 (코드 박힘, 자동):** `figma_mcp_client.py _enforce_navbar_style_live`
 > (cmd_post_fix 맨 끝 + build Step E.7.7 — AUTO_FIX·white-card-border *이후* 라야 stroke 가
 > 재부착 안 됨) — NavBar(이름에 navbar/nav bar/app bar/top bar/header bar 포함 HORIZONTAL frame)의
 > fill 을 bg-primary 로 강제(리터럴+변수 바인딩) + NavBar frame 자체 stroke 제거 + NavBar 서브트리의
 > back 버튼(이름에 back/뒤로, 또는 chevron-left/arrow-left 아이콘 든 frame) stroke 를 `strokeWeight 0`
-> 으로 제거. 빌드 후 검증: NavBar 배경 흰색 + NavBar·back 버튼 테두리 없음.
+> 으로 제거 + **back 버튼 frame paddingRight=16(spacing-xl) 설정·바인딩**(`_NAV_BACK_PAD_RIGHT`/
+> `_NAV_BACK_PAD_TOKEN`). 빌드 후 검증: NavBar 배경 흰색 + NavBar·back 버튼 테두리 없음 +
+> back 버튼 오른쪽 padding 16 이 spacing-xl 에 바인딩(get_nodes_info boundVariables.paddingRight).
 
 > 🔴 **절대 규칙 0-P — Segmented_control 은 기본 Size=md (2026-06-04 사용자 룰)**
 >
