@@ -3661,6 +3661,8 @@ def _enforce_card_surface(blueprint: dict) -> None:
     그레이(bg-secondary/tertiary)로 채운 카드 대신 흰 카드 + 보더로 표면을 정의한다.
     중첩 카드(카드 안의 인셋)·브랜드 컬러 카드는 건드리지 않는다.
     예외 — 맨 아래 Footer: 배경색 없음(bg-primary 블렌딩) + 보더 없음 (2026-06-05 사용자 룰).
+    예외 — `_keepSurface: true` 마커 (2026-06-12 사용자 피드백 "보더 흰카드 나열 = 고리타분,
+    카카오페이처럼": author 가 의도한 보더리스 그레이 표면은 존중 — _keepSizing 과 동일 철학).
     """
     flipped = [0]
     footer_fixed = [0]
@@ -3685,7 +3687,7 @@ def _enforce_card_surface(blueprint: dict) -> None:
         nm_low = (node.get("name") or "").lower()
         polish_keep = any(kw in nm_low for kw in POLISH_KEEP_GREY_RE)
         is_card = (not in_footer and not is_footer) and _is_card_like(node)
-        if is_card and not inside_card and not polish_keep:
+        if is_card and not inside_card and not polish_keep and not node.get("_keepSurface"):
             fill_name = _token_name_of(node.get("fill"))
             if fill_name and fill_name.lower() in _GREY_CARD_FILLS:
                 node["fill"] = "$token(bg-primary)"

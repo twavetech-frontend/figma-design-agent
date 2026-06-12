@@ -1034,6 +1034,13 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   배경 fill 을 추적** — bg-primary 위면 border-primary, 그 외면 border-secondary 로 stroke 강제 +
   DS 변수 바인딩. 기존에 border-secondary 가 박힌 흰-배경 카드도 border-primary 로 업그레이드(idempotent).
   blueprint 에서 어떻게 쓰든 빌드가 바로잡는다.
+- 🔵 **`_keepSurface` 마커 — 의도된 보더리스 그레이 표면 opt-out (2026-06-12 사용자 피드백):**
+  사용자가 v2 홈을 *"고리타분 / 와이어와 똑같음 — 카카오페이를 최대한 참고"* 라고 피드백 →
+  카카오페이/토스 톤(보더 제로, bg-secondary 보더리스 면으로 영역 구분)이 필요한 화면에서는
+  카드 노드에 **`"_keepSurface": true`** 를 박으면 `_enforce_card_surface` 의 그레이→흰카드+보더
+  교정을 건너뛴다 (`_keepSizing` 과 동일한 intent-존중 철학). 기본값은 여전히 2-B(흰 카드+보더) —
+  마커는 author 가 보더리스 면을 *의도*했을 때만. 적용 예: `imin_signup_home_v5` 의 현황 스트립·
+  한도 콜아웃·출석/초대 그룹.
 
 ### 2-B-2. ⚠️ 브랜드 틴트 '면'(블록/카드 표면)은 `bg-brand-primary` (2026-06-05 사용자 룰)
 - 사용자 명시: *"이런건 컬러를 `bg-brand-primary` 를 사용게 시각적으로 맞아."* (강조된 '오늘'
