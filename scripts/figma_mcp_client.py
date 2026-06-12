@@ -13459,6 +13459,26 @@ def cmd_export(node_id: str, out_path: str = None, scale: float = 2, fmt: str = 
         out_path = os.path.join(os.path.dirname(__file__), "qa_screenshots", safe + ".png")
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     content = call_tool("export_node_as_image", {"nodeId": node_id, "format": fmt, "scale": scale})
+    # self-verify 게이트(0-F) 추적 — hook 은 MCP 직접 호출(tool_input.nodeId)만 보므로,
+    # 블레스드 CLI 경로인 cmd_export 가 직접 qa_<sid>.json 에 기록한다 (2026-06-12 갭 픽스:
+    # CLI 로 export+Read 를 다 해도 게이트가 '미재export' 로 오차단하던 문제).
+    sid = _current_claude_session()
+    if sid:
+        try:
+            qp = os.path.join(_planning_gate_dir(), "qa_%s.json" % sid)
+            try:
+                with open(qp, encoding="utf-8") as fh:
+                    cur = json.load(fh)
+            except Exception:
+                cur = {}
+            s = set(cur.get("exported") or [])
+            s.add(str(node_id))
+            cur["exported"] = sorted(s)
+            cur["ts"] = int(time.time())
+            with open(qp, "w", encoding="utf-8") as fh:
+                json.dump(cur, fh, ensure_ascii=False)
+        except Exception:
+            pass
     saved = False
     for item in content:
         if item.get("type") == "image":
