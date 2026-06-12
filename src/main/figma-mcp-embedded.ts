@@ -1729,17 +1729,23 @@ export function enhanceBlueprint(root: Record<string, unknown>): Record<string, 
     }
 
     // ── 5f. 규칙 H — 단일 text 자식 중앙 정렬 ──
+    // 🔴 2026-06-12: 이 휴리스틱은 버튼/배지(HUG 폭) 전용 — 섹션 타이틀 row(이름에
+    // title/header, 또는 FILL 전폭 frame)를 CENTER 로 만들면 절대 규칙 0-I(섹션 타이틀
+    // 좌측 정렬) 위반 회귀가 됨. title/header 이름 + FILL 폭 frame 은 제외.
     if (n.type === 'frame' && Array.isArray(n.children)) {
       const children = n.children as Record<string, unknown>[];
       const al = n.autoLayout as Record<string, unknown> | undefined;
       if (al?.layoutMode === 'HORIZONTAL' && children.length === 1 && children[0].type === 'text') {
+        const nameLower = ((n.name as string) || '').toLowerCase();
+        const isTitleRow = /title|header|heading|타이틀|헤더/.test(nameLower);
+        const isFullWidth = n.layoutSizingHorizontal === 'FILL';
         // 버튼/배지 패턴: 부모에 CENTER 정렬 추가
         if (!al.counterAxisAlignItems) {
           al.counterAxisAlignItems = 'CENTER';
           console.log(`[enforce] Single-text frame "${n.name}" counterAxis forced: CENTER`);
           stats.alignment++;
         }
-        if (!al.primaryAxisAlignItems) {
+        if (!al.primaryAxisAlignItems && !isTitleRow && !isFullWidth) {
           al.primaryAxisAlignItems = 'CENTER';
           console.log(`[enforce] Single-text frame "${n.name}" primaryAxis forced: CENTER`);
           stats.alignment++;

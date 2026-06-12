@@ -9159,6 +9159,47 @@ def _apply_individual_strokes(node: dict):
         _apply_individual_strokes(child)
 
 
+def _fix_text_fill_in_hug_parent_live(root_id: str) -> int:
+    """🔴 가로 HUG 부모 안 TEXT 의 layoutSizingHorizontal=FILL 붕괴 복구 (2026-06-12).
+
+    batch_build(code.js)가 VERTICAL 부모의 TEXT 에 자동 FILL 을 주는데, 부모가 가로
+    HUG 면 FILL-in-HUG 순환 참조로 텍스트가 최소폭으로 붕괴해 짧은 라벨('후기 공유')이
+    세로로 wrap 된다. 그런 TEXT 를 HUG 로 복구. DS 인스턴스 내부(';') 제외."""
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        root = items[0].get("document") if items else None
+    except Exception as e:
+        print(f"  [text-fill-hug] 트리 조회 실패: {e}")
+        return 0
+    if not isinstance(root, dict):
+        return 0
+    fixed = [0]
+
+    def walk(n, parent=None):
+        if not isinstance(n, dict):
+            return
+        nid = n.get("id") or ""
+        if (n.get("type") or "").upper() == "TEXT" and ";" not in nid and parent is not None:
+            p_hug = (parent.get("layoutSizingHorizontal") or "").upper() == "HUG"
+            t_fill = (n.get("layoutSizingHorizontal") or "").upper() == "FILL"
+            if p_hug and t_fill and (parent.get("type") or "").upper() == "FRAME":
+                try:
+                    call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": "HUG"})
+                    fixed[0] += 1
+                    print(f"  [text-fill-hug] ✓ '{n.get('name')}' FILL→HUG (부모 '{parent.get('name')}' 가로 HUG)")
+                except Exception as e:
+                    print(f"  [text-fill-hug] 실패(무시) {n.get('name')}: {e}")
+        if (n.get("type") or "").upper() == "INSTANCE":
+            return  # DS 인스턴스 내부 제외 (0-K)
+        for c in n.get("_children_full") or n.get("children") or []:
+            walk(c, n)
+
+    walk(root)
+    if fixed[0]:
+        print(f"  [text-fill-hug] ✓ {fixed[0]}건 복구")
+    return fixed[0]
+
+
 def _fix_zero_width_text(tree: dict) -> int:
     """width=0인 TEXT 노드를 수정: textAutoResize → WIDTH_AND_HEIGHT, 그 후 FILL.
 
@@ -9719,6 +9760,15 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_action_bar_equal_height(root_node_id)
     except Exception as e:
         print(f"  [action-bar-eq-h] 실패 (무시): {e}")
+
+    # 🔴 FILL-in-HUG 텍스트 붕괴 복구 (2026-06-12): batch_build 의 'VERTICAL 부모 TEXT
+    # 자동 FILL' 이 가로 HUG 부모 안에서는 순환 참조로 최소폭 붕괴('후기 공유' 세로
+    # wrap)를 만든다. code.js 소스도 고쳤지만(플러그인 재실행 후 활성) 라이브 백스톱.
+    print("\n[규칙] HUG 부모 안 TEXT FILL 붕괴 복구 적용 중...")
+    try:
+        _fix_text_fill_in_hug_parent_live(root_node_id)
+    except Exception as e:
+        print(f"  [text-fill-hug] 실패 (무시): {e}")
 
     # ⚠️ 시스템 규칙 (2026-06-04 사용자): 2-col FILL 붕괴 자동 복구 — HORIZONTAL row 의
     # FILL 컬럼이 1px 로 무너지고 형제가 전폭을 먹는 batch_build 버그 차단. 모든 sizing

@@ -6358,8 +6358,15 @@ async function batchBuildScreen(params) {
       // VERTICAL parents: text fills parent width (standard cross-axis stretch)
       // HORIZONTAL parents: MUST NOT use FILL — multiple FILL texts compete for width
       //   causing each text to shrink to 1-character width → vertical line-break bug
+      // 🔴 2026-06-12: 부모가 가로 HUG 인 VERTICAL frame 이면 FILL 금지 —
+      //   FILL-in-HUG 는 순환 참조라 최소폭으로 붕괴해 짧은 라벨('후기 공유')이
+      //   세로로 wrap 되는 회귀를 만든다. 그 경우 텍스트는 HUG 유지.
       if (nodeType === "text" && !hSizing && parentNode && parentNode.layoutMode === "VERTICAL") {
-        hSizing = "FILL";
+        var parentHugsH = false;
+        try { parentHugsH = parentNode.layoutSizingHorizontal === "HUG"; } catch (e) {}
+        if (!parentHugsH) {
+          hSizing = "FILL";
+        }
       }
 
       // For text nodes with FILL: must set textAutoResize AFTER layoutSizing

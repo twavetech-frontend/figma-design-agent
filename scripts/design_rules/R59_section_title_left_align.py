@@ -177,12 +177,17 @@ def _inject(bp: dict) -> dict:
         if _is_title_row(n, ancestors):
             al = n.get("autoLayout")
             kids = n.get("children") or []
+            # 🔴 2026-06-12: 단일 자식 title row 는 SPACE_BETWEEN/CENTER 뿐 아니라
+            # **미지정도 MIN 으로 명시** — enhanceBlueprint(figma-mcp-embedded)의
+            # '단일 TEXT frame = 버튼/배지 → CENTER' 휴리스틱이 미지정 슬롯을 CENTER 로
+            # 채워 섹션 타이틀이 가운데 정렬되던 회귀 차단 (명시값은 enhance 가 존중).
+            _BAD = (None, "", "SPACE_BETWEEN", "CENTER")
             if isinstance(al, dict):
-                if al.get("primaryAxisAlignItems") == "SPACE_BETWEEN" and len(kids) <= 1:
+                if len(kids) <= 1 and al.get("primaryAxisAlignItems") in _BAD:
                     al["primaryAxisAlignItems"] = "MIN"
                     fixed_row += 1
-            elif (n.get("primaryAxisAlignItems") == "SPACE_BETWEEN"
-                  and len(kids) <= 1):
+            elif (len(kids) <= 1
+                  and n.get("primaryAxisAlignItems") in ("SPACE_BETWEEN", "CENTER")):
                 n["primaryAxisAlignItems"] = "MIN"
                 fixed_row += 1
         new_ancestors = ancestors + [n]
@@ -231,15 +236,17 @@ def _autofix(tree: dict, ctx: dict) -> int:
                     print(f"  ⚠️ R59 set_text_align 실패 ({n.get('name')}): {e}")
         if _is_title_row(n, ancestors) and node_id:
             kids = n.get("_children_full") or n.get("children") or []
-            if (n.get("primaryAxisAlignItems") == "SPACE_BETWEEN"
-                    and len(kids) <= 1):
+            # 🔴 2026-06-12: CENTER 도 교정 — enhanceBlueprint 의 단일 TEXT frame
+            # CENTER 휴리스틱이 title row 를 가운데 정렬시키던 회귀의 라이브 백스톱.
+            cur_align = n.get("primaryAxisAlignItems")
+            if cur_align in ("SPACE_BETWEEN", "CENTER") and len(kids) <= 1:
                 try:
                     fmc.call_tool("set_auto_layout", {
                         "nodeId": node_id,
                         "layoutMode": "HORIZONTAL",
                         "primaryAxisAlignItems": "MIN",
                     })
-                    print(f"  R59 title-row: '{n.get('name')}' SPACE_BETWEEN→MIN")
+                    print(f"  R59 title-row: '{n.get('name')}' {cur_align}→MIN")
                     fixes += 1
                 except Exception as e:
                     print(f"  ⚠️ R59 set_auto_layout 실패 ({n.get('name')}): {e}")
