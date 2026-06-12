@@ -4227,7 +4227,7 @@ def _enforce_min_text_size_live(root_node_id: str) -> int:
     def _resolve_key(floor, bucket, sample_nid):
         if (floor, bucket) in resolved:
             return resolved[(floor, bucket)]
-        for t in [s for s in _DS_TEXT_SIZE_SCALE if s >= floor]:
+        for t in [s for s in _ds_text_size_scale(style_map) if s >= floor]:
             key = style_map.get((t, bucket)) or style_map.get((t, "medium"))
             if not key:
                 continue
@@ -12271,7 +12271,11 @@ def _fix_small_text_center(root_id: str) -> int:
 
 # ── DS Text Style 자동 적용 (2026-05-12 사용자 "시스템에 박아" 지시 → 2026-05-22 머지로 소실 → 2026-05-24 복원) ──
 # 빌드된 트리의 TEXT 노드 (fontSize, weight bucket) → DS textStyle key 자동 바인딩.
-_DS_TEXT_SIZE_SCALE = (12, 14, 16, 18, 20, 24, 30, 36, 48, 60, 72)
+# ⚠️ 2026-06-12 회귀 수정: 이 스케일이 옛 DS(18/30/36 포함, 32/40 누락)로 하드코딩돼 있어
+# 18px snap→18, 28px snap→30 이 됐는데 실제 맵(12/14/16/20/24/32/40/48)에 없어 타이틀이
+# 조용히 미바인딩됐다. → 스케일은 TEXT_STYLE_MAP 의 실제 사이즈 집합에서 derive 한다.
+# 아래 상수는 맵 로드 실패 시 폴백일 뿐이다 (실스케일과 동일하게 유지).
+_DS_TEXT_SIZE_SCALE_FALLBACK = (12, 14, 16, 20, 24, 32, 40, 48)
 _DS_TEXT_SIZE_TOLERANCE = 3
 _TEXT_STYLE_MAP_CACHE: Optional[dict] = None
 
@@ -12515,10 +12519,21 @@ def _load_text_style_map() -> dict:
     return idx
 
 
-def _snap_to_ds_size(size: int) -> Optional[int]:
-    """off-scale 사이즈를 ±3px 안 가장 가까운 DS 스케일로 snap. 범위 밖이면 None."""
+def _ds_text_size_scale(style_map: Optional[dict] = None) -> tuple:
+    """실제 DS text style 맵에 존재하는 사이즈 집합. 맵이 비면 폴백 상수.
+    하드코딩 스케일이 맵과 어긋나 잘못된 사이즈로 snap → 미바인딩되는 회귀 방지 (2026-06-12)."""
+    if style_map:
+        sizes = sorted({s for (s, _w) in style_map.keys() if isinstance(s, int)})
+        if sizes:
+            return tuple(sizes)
+    return _DS_TEXT_SIZE_SCALE_FALLBACK
+
+
+def _snap_to_ds_size(size: int, style_map: Optional[dict] = None) -> Optional[int]:
+    """off-scale 사이즈를 ±3px 안 가장 가까운 DS 스케일로 snap. 범위 밖이면 None.
+    스케일은 실제 style_map 의 사이즈 집합 기준 (stale 하드코딩 금지)."""
     best, best_d = None, _DS_TEXT_SIZE_TOLERANCE + 1
-    for s in _DS_TEXT_SIZE_SCALE:
+    for s in _ds_text_size_scale(style_map):
         d = abs(size - s)
         if d < best_d:
             best, best_d = s, d
@@ -12546,6 +12561,7 @@ def _apply_ds_text_styles(root_id: str) -> None:
 
     entries = []
     stats = {"applied": 0, "instance_skip": 0, "no_size": 0, "no_match": 0}
+    no_match_detail = []  # (name, size, bucket) — 조용한 미바인딩 금지 (2026-06-12)
 
     def walk(node):
         if not isinstance(node, dict):
@@ -12565,7 +12581,7 @@ def _apply_ds_text_styles(root_id: str) -> None:
                     si = int(round(size))
                     key = style_map.get((si, bucket))
                     if not key:
-                        snapped = _snap_to_ds_size(si)
+                        snapped = _snap_to_ds_size(si, style_map)
                         if snapped is not None:
                             key = style_map.get((snapped, bucket))
                     if key:
@@ -12573,10 +12589,17 @@ def _apply_ds_text_styles(root_id: str) -> None:
                         stats["applied"] += 1
                     else:
                         stats["no_match"] += 1
+                        no_match_detail.append((node.get("name") or nid, si, bucket))
         for c in node.get("children", []) or []:
             walk(c)
 
     walk(built)
+    if no_match_detail:
+        scale = _ds_text_size_scale(style_map)
+        print(f"  [text-style] ⚠️ DS 스타일 미매칭 {len(no_match_detail)}건 — "
+              f"blueprint fontSize 를 DS 스케일 {scale} 로 맞출 것:")
+        for nm, si, bucket in no_match_detail[:10]:
+            print(f"    - '{nm}' {si}px {bucket} (±{_DS_TEXT_SIZE_TOLERANCE}px 안 DS 스타일 없음)")
     if not entries:
         print(f"  [text-style] 적용 0건 (스킵: instance {stats['instance_skip']} / no-size {stats['no_size']} / no-match {stats['no_match']})")
         return

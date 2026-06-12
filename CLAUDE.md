@@ -482,6 +482,29 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > stdout 에 SECTION-REFERENCE-PNG 라인 출력(빌드 앞부분 + **끝부분 재안내**, 사용자 화면에도 보임).
 > Claude self-verify 의 마지막 방어선.
 
+> 🔴 **절대 규칙 0-G-2 — 같은 화면의 기존(특히 사용자 수정) 버전을 빌드 전에 반드시 학습 (2026-06-12 사용자 룰)**
+>
+> 회귀 사례: 어제 생성본을 사용자가 직접 수정해 둔 화면(`imin_stage_done_20260610`)이 같은
+> 페이지 바로 옆에 있는데, 오늘 같은 화면을 다시 빌드하면서 그것을 보지 않고 와이어+일반
+> 레퍼런스만으로 새로 도출 → 사용자가 교정한 컬러 시맨틱(완료=success)·타이포 스케일·레이아웃
+> 재해석이 전부 누락됐다.
+>
+> **강제 절차 (빌드 전):**
+> 1. `get_document_info` / `get_pages` 로 현재 페이지 children 이름을 훑어 **같은 화면**
+>    (같은 archetype/유스케이스 — 이름에 같은 화면 키워드: home/stage_done/detail 등)의
+>    기존 프레임을 찾는다.
+> 2. 있으면 **export_node_as_image 로 Read 해 시각 학습** — 특히 **사용자가 수정한 버전이
+>    최우선 레퍼런스**다 (uibowl 외부 레퍼런스(0-G)보다 강함: 사용자의 직접 교정 = 확정 피드백).
+> 3. 거기서 본 **컬러 시맨틱·타이포 스케일·레이아웃 판단을 새 blueprint 에 반영**한다.
+>    단순 복제가 아니라(0-C) 사용자가 *고친 의도*를 읽어 적용한다.
+> 4. 코드 자동검출 불가(의미 판단) — 매 빌드 시 Claude 가 스스로 지킨다.
+>
+> 🔴 **컬러 시맨틱 (2026-06-12 사용자 확정 — 스테이지 완료 화면 수정에서):**
+> - **완료된 행위/상태 (납입 완료 체크, 완료 확인 아이콘) = `success` 계열** —
+>   `bg-success-solid`(#319f26) 솔리드 + 흰 체크, 타이틀 옆 `ic-check-circle`(success).
+> - **brand 퍼플 = '나의 것'에 한정** (내 수령 셀·내 금액·CTA — [[stage-detail-color-semantics-2026-06-09]] 와 동일).
+> - 완료 상태까지 퍼플로 칠하는 brand 남발 금지 — 의미가 다른 상태는 색으로 구분한다.
+
 > 🔴 **절대 규칙 0-F — SELF-VERIFY 강제 (2026-05-28 옵션 B / 사용자 신뢰 파탄 후 박힘)**
 >
 > `cmd_build` 빌드 로그에 **"📸 SECTION-QA-PNG"** 라인이 보이면, **사용자에게 어떤
@@ -1031,14 +1054,22 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   `[brand-tint-surface-live] ✓` 라인 확인. 틴트 블록/카드가 진한 보라(secondary)가 아니라 연한
   라벤더(primary)인지 스크린샷 확인.
 
-### 2-C. ⚠️ 타이포 위계 — 크기·굵기로 시각 리듬 (2026-05-23 룰 / 2026-06-05 크기 정책 갱신)
+### 2-C. ⚠️ 타이포 위계 — 크기·굵기로 시각 리듬 (2026-05-23 룰 / 2026-06-12 DS 스케일 정합)
+- 🔴 **fontSize 는 반드시 DS 텍스트 스타일 스케일 값만 쓴다: `12 / 14 / 16 / 20 / 24 / 32 / 40 / 48`**
+  (2026-06-12 회귀 교정 — 이전 가이드의 17~19/22~26/28~36 같은 off-scale 값은 DS 에 스타일이
+  없어 **텍스트 스타일 바인딩이 불가능**했다. 타이틀 3개가 전부 미바인딩된 뿌리.)
 - **컬러가 절제될수록 시각 위계는 폰트 크기·굵기로 강화한다.** 표준 type scale:
-  - **HERO** (카드 안 핵심 금액·수치) — `28~36px Bold`
-  - **TITLE** — `22~26px Bold`
-  - **SECTION** (섹션 헤더) — `17~19px Bold`
+  - **HERO** (카드 안 핵심 금액·수치) — `24px Bold` (DS `Heading xs`) 또는 `32px Bold` (DS `Heading sm`)
+  - **TITLE** (화면 타이틀) — `24px Bold` (DS `Heading xs`)
+  - **SECTION** (섹션 헤더) — `16px Bold` (DS `Body md/Bold`) ~ `20px Bold` (DS `Body xl/Bold`)
+    — 사용자 수정 사례(2026-06-12)는 섹션 타이틀 16 Bold 선호
   - **BODY (기본)** — `16px Medium/SemiBold` (DS `Body md`) ← 🔴 **기본 텍스트는 16**
   - **보조 (라벨·캡션·부제)** — `14px` (DS **`Body sm`**) ← 🔴 **간혹 쓰는 보조 크기**
   - **미세 (푸터·법적 고지·정말 작아야 하는 fine print)** — `12px` (DS `Body xs`) ← 🔴 **정말 작게 표현해야 할 때만**
+- **시스템 강제 (2026-06-12):** `_apply_ds_text_styles` 의 snap 스케일은 하드코딩이 아니라
+  `ds/TEXT_STYLE_MAP.json` 의 **실제 사이즈 집합에서 derive** (`_ds_text_size_scale`). ±3px 안
+  스타일이 없으면 **`[text-style] ⚠️ DS 스타일 미매칭` WARN** 으로 노드 이름·크기를 출력한다 —
+  빌드 로그에 이 라인이 보이면 blueprint fontSize 를 위 스케일로 수정할 것.
 - 🔴 **보조 텍스트는 DS `Body sm`(14) 스타일 (2026-06-05 사용자 룰):** 현황 라벨("총 스테이지 수
   86,696개"), 안내/재참여 문구("함께 모은 목돈, 다시 모아볼까요?"), 한도 디테일("한도 … 이용 중
   잔여 …"), 리스트 부제("출석 체크하고 포인트 받아요") 같은 보조 텍스트는 **`Body sm`(14px)** 이
