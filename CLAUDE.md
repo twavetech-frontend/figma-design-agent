@@ -292,6 +292,12 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 >   취향은 룰로 박지 않고 *선택*으로 반영하며, 선택안의 방향이 다음 기본값이 된다.
 > - **레퍼런스**: 레포 내장 uibowl(0-G 자동검색)이 표준 소스 — 모든 사용자 환경에서 동일하게 동작.
 >   (사용자 개인 MCP 등 외부 레퍼런스 소스는 시스템 의존성으로 삼지 말 것 — 다른 사용자 컴에는 없다.)
+>   🔵 **`references/external/<source>/` (2026-06-12 사용자 지시):** Mobbin MCP 등으로 검색해 좋았던
+>   스크린은 **이미지+index.json 으로 깃에 보관**한다 — MCP 가 없는 다른 사용자도 디자인 생성 시
+>   같은 레퍼런스를 받도록. `ref_search.py` 가 `references/external/*/index.json` 을 자동 로드해
+>   uibowl 과 **번갈아 섞어** archetype 검색 결과에 포함시킨다(소스 표기 `mobbin:Chime` 식).
+>   index.json 포맷은 uibowl 과 동일(patternCodeName 분류 공유: 메인/온보딩/생성하기 등,
+>   localPath 는 references/ 상대). 새 스크린 수집 시: jpg 저장 + index.json records[] 에 추가 + 커밋.
 
 > 🔴 **절대 규칙 0-K — DS 컴포넌트의 fill·stroke·label 색은 절대 변경 금지 (2026-06-01 사용자 명시)**
 >

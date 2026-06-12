@@ -1,0 +1,227 @@
+{
+  "_description": "Mobbin MCP 로 검색·수집한 외부 레퍼런스 스크린 (2026-06-12 사용자 지시 — Mobbin MCP 가 없는 다른 사용자도 디자인 생성 시 레퍼런싱할 수 있도록 깃에 보관). patternCodeName 은 uibowl 과 동일 분류 → ref_search.py archetype 검색에 함께 잡힘.",
+  "source": "mobbin",
+  "count": 22,
+  "records": [
+    {
+      "imgId": "acorns_home_earned_zero",
+      "patternName": "You've earned $0 신규 홈",
+      "patternCodeName": "메인",
+      "description": "신규 유저 $0 을 hero 로 노출 + 브랜드 로고 수익률 캐로셀 + Learn 섹션",
+      "appName": "Acorns",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/acorns_home_earned_zero.jpg"
+    },
+    {
+      "imgId": "octopus_home_balance_hero",
+      "patternName": "다크 퍼플 잔액 히어로 홈",
+      "patternCodeName": "메인",
+      "description": "딥 퍼플 배경 + 중앙 잔액 카드 + 4분할 퀵액션 + 프로모 배너",
+      "appName": "Octopus Energy",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/octopus_home_balance_hero.jpg"
+    },
+    {
+      "imgId": "chime_home_green_hero_inset",
+      "patternName": "딥 그린 히어로 + 흰 인셋 카드",
+      "patternCodeName": "메인",
+      "description": "컬러 히어로 헤더에 큰 잔액 + 흰 Savings 카드 오버랩 + 민트 프로모 배너(dots)",
+      "appName": "Chime",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/chime_home_green_hero_inset.jpg"
+    },
+    {
+      "imgId": "chime_home_zero_state",
+      "patternName": "제로 상태($5) 홈",
+      "patternCodeName": "메인",
+      "description": "잔액 적어도 hero 타이포 유지, 크레딧 빌딩 유도 배너",
+      "appName": "Chime",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/chime_home_zero_state.jpg"
+    },
+    {
+      "imgId": "kakaobank_home_card_stack",
+      "patternName": "다크모드 컬러 카드 스택",
+      "patternCodeName": "메인",
+      "description": "계좌별 파스텔 컬러 카드 스택 + 상단 유도 배너 — 카드가 곧 내비게이션",
+      "appName": "KakaoBank",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/kakaobank_home_card_stack.jpg"
+    },
+    {
+      "imgId": "neo_home_first_product",
+      "patternName": "Get your first product 신규 홈",
+      "patternCodeName": "메인",
+      "description": "신규 유저 에디토리얼 헤드라인 + 일러스트 제품 카드 캐로셀",
+      "appName": "Neo Financial",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/neo_home_first_product.jpg"
+    },
+    {
+      "imgId": "n26_home_investments",
+      "patternName": "홈 + 투자 섹션 세그먼트",
+      "patternCodeName": "메인",
+      "description": "계좌 행 2개 + 틴트 프로모 + Stocks/ETFs/Crypto 세그먼트 + 3-col 종목 타일",
+      "appName": "N26",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/n26_home_investments.jpg"
+    },
+    {
+      "imgId": "n26_home_new_account",
+      "patternName": "신규 계정 0원 홈 + 온보딩 타일",
+      "patternCodeName": "메인",
+      "description": "Current balance 0 + 원형 퀵액션 + 'Get ready to bank' 2-col 안내 타일 + 0/6 progress",
+      "appName": "N26",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/n26_home_new_account.jpg"
+    },
+    {
+      "imgId": "koho_home_getstarted_checklist",
+      "patternName": "블루 히어로 $0 + Get started 체크리스트",
+      "patternCodeName": "메인",
+      "description": "컬러 히어로 + 흰 시트 원형 퀵액션 + progress bar 체크리스트 4단계",
+      "appName": "KOHO",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/koho_home_getstarted_checklist.jpg"
+    },
+    {
+      "imgId": "monarch_dashboard_getting_started",
+      "patternName": "Getting started 완료 위젯",
+      "patternCodeName": "온보딩",
+      "description": "Congratulations 헤드라인 + 그라데이션 progress + 취소선 완료 항목 리스트",
+      "appName": "Monarch",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/monarch_dashboard_getting_started.jpg"
+    },
+    {
+      "imgId": "chime_home_setup_success",
+      "patternName": "Set yourself up 신규 홈",
+      "patternCodeName": "메인",
+      "description": "상단 안내 배너 + Checking/Credit/Savings $0 섹션 리스트 — 제로 상태 다계좌 홈",
+      "appName": "Chime",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/chime_home_setup_success.jpg"
+    },
+    {
+      "imgId": "starling_home_zero_welcome",
+      "patternName": "틸 그라데이션 £0.00 웰컴 홈",
+      "patternCodeName": "메인",
+      "description": "그라데이션 히어로에 £0.00 hero + Spent today 분할 통계 + Welcome 카드 + No transactions empty",
+      "appName": "Starling Bank",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/starling_home_zero_welcome.jpg"
+    },
+    {
+      "imgId": "deel_home_next_steps",
+      "patternName": "Next steps 체크리스트 홈",
+      "patternCodeName": "온보딩",
+      "description": "아이콘 행 + DONE/NOT STARTED 상태 뱃지 체크리스트",
+      "appName": "Deel",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/deel_home_next_steps.jpg"
+    },
+    {
+      "imgId": "plum_getsetup_progress",
+      "patternName": "4 of 5 원형 진행 + 타임라인 체크",
+      "patternCodeName": "온보딩",
+      "description": "원형 progress + 세로 타임라인 단계 리스트(완료 체크/번호)",
+      "appName": "Plum",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/plum_getsetup_progress.jpg"
+    },
+    {
+      "imgId": "rocketmoney_monthly_amount_selector",
+      "patternName": "$50/month 금액 셀렉터",
+      "patternCodeName": "생성하기",
+      "description": "카드 중앙 hero 금액 + 틱 슬라이더 + 'is 0% of income' 틴트 pill + 목표 도달 예정일",
+      "appName": "Rocket Money",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/rocketmoney_monthly_amount_selector.jpg"
+    },
+    {
+      "imgId": "plum_saving_goal_contrast_cards",
+      "patternName": "저축 목표 대비 톤 카드",
+      "patternCodeName": "온보딩",
+      "description": "블루 그라데이션 히어로 카드 vs 다크 카드 vs 퍼플 카드 — 선택지 성격을 색으로 대비",
+      "appName": "Plum",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/plum_saving_goal_contrast_cards.jpg"
+    },
+    {
+      "imgId": "rocketmoney_goal_amount_options",
+      "patternName": "목표 금액 라디오 카드 3개",
+      "patternCodeName": "생성하기",
+      "description": "Recommended 틴트 헤더 + 금액 옵션 카드 + 라디오, 선택 카드는 진한 보더",
+      "appName": "Rocket Money",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/rocketmoney_goal_amount_options.jpg"
+    },
+    {
+      "imgId": "rocketmoney_save_speed_slider",
+      "patternName": "Slower-Faster 속도 슬라이더",
+      "patternCodeName": "생성하기",
+      "description": "일러스트 + Moderate 라벨 pill + 양끝 캡션 슬라이더",
+      "appName": "Rocket Money",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/rocketmoney_save_speed_slider.jpg"
+    },
+    {
+      "imgId": "gusto_savings_goals_dark_hero",
+      "patternName": "다크 틸 히어로 + 목표 카드 스택",
+      "patternCodeName": "메인",
+      "description": "딥 컬러 배경 + 기울어진 흰 목표 카드 3장(progress bar) + 풀폭 CTA",
+      "appName": "Gusto Mobile",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/gusto_savings_goals_dark_hero.jpg"
+    },
+    {
+      "imgId": "anzplus_goal_tiles_2col",
+      "patternName": "What are you saving for 2-col 타일",
+      "patternCodeName": "온보딩",
+      "description": "일러스트 + 파스텔 틴트 배경 + 하단 라벨 2-col 선택 타일 6개",
+      "appName": "ANZ Plus",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/anzplus_goal_tiles_2col.jpg"
+    },
+    {
+      "imgId": "monarch_goals_image_grid",
+      "patternName": "목표 선택 실사진 2-col 그리드",
+      "patternCodeName": "온보딩",
+      "description": "실사진 카드 + 하단 라벨 그리드 — 목표를 이미지로 선택",
+      "appName": "Monarch",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/monarch_goals_image_grid.jpg"
+    },
+    {
+      "imgId": "rocketmoney_goal_list_select",
+      "patternName": "목표 리스트 선택 (아이콘+pill 행)",
+      "patternCodeName": "생성하기",
+      "description": "아이콘 + 라벨 pill 행 5개, 선택 행은 진한 보더 — 단일 선택 리스트",
+      "appName": "Rocket Money",
+      "source": "mobbin",
+      "collectedAt": "2026-06-12",
+      "localPath": "external/mobbin/rocketmoney_goal_list_select.jpg"
+    }
+  ]
+}

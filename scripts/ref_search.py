@@ -104,7 +104,13 @@ def _project_root() -> Path:
 
 
 def _load_indexes(apps):
-    """각 앱 index.json 로드 → records 합침."""
+    """각 앱 index.json 로드 → records 합침.
+
+    2026-06-12 — references/external/<source>/index.json 도 함께 로드 (사용자 지시):
+    Mobbin MCP 등으로 수집해 깃에 보관한 외부 레퍼런스를, MCP 가 없는 다른 사용자도
+    archetype 검색에서 함께 받도록 통합. 포맷은 uibowl index.json 과 동일
+    (patternCodeName 분류 공유, localPath 는 references/ 상대 경로).
+    """
     root = _project_root()
     all_records = []
     for app in apps:
@@ -118,6 +124,20 @@ def _load_indexes(apps):
                 all_records.append(r)
         except Exception as e:
             print(f"  ⚠️ {app}/index.json 로드 실패: {e}", file=sys.stderr)
+    # 외부 수집 레퍼런스 (references/external/<source>/index.json) — 항상 포함
+    ext_root = root / "references" / "external"
+    if ext_root.exists():
+        for idx_path in sorted(ext_root.glob("*/index.json")):
+            try:
+                data = json.loads(idx_path.read_text())
+                src = data.get("source") or idx_path.parent.name
+                for r in data.get("records", []):
+                    # _app 표기: 'mobbin:Chime' — 출력에서 외부 수집본임이 드러나게
+                    r["_app"] = f"{src}:{r.get('appName') or '?'}"
+                    all_records.append(r)
+            except Exception as e:
+                print(f"  ⚠️ external/{idx_path.parent.name}/index.json 로드 실패: {e}",
+                      file=sys.stderr)
     return all_records
 
 
@@ -213,7 +233,18 @@ def main():
     records = _load_indexes(apps)
     filtered = _filter(records, patterns=patterns, keyword=args.keyword)
     filtered = _dedupe_by_pattern(filtered, limit_per_pattern=args.per_pattern)
-    filtered = filtered[: args.limit]
+    # uibowl ↔ external 소스 균형 섞기 — external(':' 포함 _app)이 limit 에 밀려
+    # 통째로 빠지지 않도록 번갈아 채움 (2026-06-12)
+    _ub = [r for r in filtered if ":" not in str(r.get("_app", ""))]
+    _ex = [r for r in filtered if ":" in str(r.get("_app", ""))]
+    mixed, i = [], 0
+    while len(mixed) < args.limit and (i < len(_ub) or i < len(_ex)):
+        if i < len(_ub):
+            mixed.append(_ub[i])
+        if len(mixed) < args.limit and i < len(_ex):
+            mixed.append(_ex[i])
+        i += 1
+    filtered = mixed
 
     # thumbnail 자동 생성 (LLM Read 가능 크기)
     if args.thumbnail:
