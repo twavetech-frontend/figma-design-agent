@@ -871,13 +871,21 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > ```
 > - 서브 화면 중앙 타이틀은 **`_navTitle` 마커** — 빌드 후 `_configure_tool_bar`(cmd_post_fix)가
 >   인스턴스 내부 타이틀 TEXT 를 scan_text_nodes 로 찾아 자동 적용.
-> - 🔴 **우측 버튼 아이콘 = `_navIcons` 마커 (PRD/와이어 기능 반영, 2026-06-12)** — 우측 버튼의
->   중첩 아이콘 인스턴스를 `swap_instance_component`(plugin, nested instance swap override)로
->   교체한다. 아이콘 개수(1~3)에 맞춰 Right Buttons 의 `Type=N Symbol` variant 도 자동 flip.
->   이름→키 해석은 `ds_catalog.NAV_ICON_KEYS`(bell/chat/search/share/settings/dots-vertical/
->   wallet/calendar 등) — **맵에 없는 아이콘은 swap skip + WARN(마스터 기본 유지)**, 필요 시
->   Imin DS 에서 키 찾아 맵에 추가. 이 swap 은 variant/prop 과 같은 공식 override 라 0-K(인스턴스
->   색 변경 금지)와 충돌하지 않는다 — **색이 아니라 컴포넌트 교체만** 한다.
+> - 🔴 **우측 버튼 = `_navIcons` 마커 + Right Buttons `Type` variant (2026-06-12 사용자 룰)** —
+>   사용자 명시: *"오른쪽 버튼이 없어야 할때는 속성에서 empty를 선택하면 된다. 버튼이 하나면
+>   1 button으로 두개면 2 button으로."*
+>   | `_navIcons` | Right Buttons Type | 동작 |
+>   |---|---|---|
+>   | `[]` (빈 배열) | **`empty`** | 우측 버튼 없음 — 와이어에 아이콘 없으면 이것 (기본 버튼 방치 금지) |
+>   | `["share-07"]` | **`1 button`** | 버튼 1개 + 아이콘 swap |
+>   | `["bell-01","share-07"]` | **`2 button`** | 버튼 2개 + 아이콘 swap (최대 2개) |
+>   | 마커 없음 (None) | (유지) | 마스터 기본 그대로 |
+>   variant flip 후 각 버튼의 중첩 아이콘 인스턴스를 `swap_instance_component`(plugin, nested
+>   instance swap override)로 교체. 구버전 variant 이름("N Symbol")은 자동 폴백. 이름→키 해석은
+>   `ds_catalog.NAV_ICON_KEYS`(bell/chat/search/share/settings/dots-vertical/wallet/calendar 등) —
+>   **맵에 없는 아이콘은 swap skip + WARN(마스터 기본 유지)**, 필요 시 Imin DS 에서 키 찾아 맵에
+>   추가. 이 swap 은 variant/prop 과 같은 공식 override 라 0-K(인스턴스 색 변경 금지)와 충돌하지
+>   않는다 — **색이 아니라 컴포넌트 교체만** 한다.
 > - 검색바 등 Tool Bar 로 표현 불가한 특수 navbar 만 raw frame + **`_customNavBar: true`** 마커.
 > - **modal/bottom-sheet 의 X-only 헤더는 별도 패턴(2-D) — Tool Bar 강제 대상 아님.**
 >
@@ -885,10 +893,11 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > - **L2 lint**: raw NavBar frame 발견 시 WARN.
 > - **L3 inject**: 빌드 직전 자동 swap — 로고 자식 있으면 Type=Home, back 버튼 있으면
 >   Type=Detail view + 타이틀 텍스트를 `_navTitle` 로, **우측 아이콘들을 `_navIcons` 로 캡처**
->   (back/x-close 제외, 최대 3개). x-close 헤더(모달)·로고/back 둘 다
+>   (back/x-close 제외, 최대 2개 — **와이어에 우측 아이콘이 없으면 `[]` 명시 = Type=empty**).
+>   x-close 헤더(모달)·로고/back 둘 다
 >   없는 navbar(의도 불명)·`_customNavBar`·modal/bottom-sheet 화면은 swap 안 함.
 > - **L4 (cmd_post_fix)**: `_collect_tool_bar_configs` + `_configure_tool_bar` 가 `_navTitle` 적용
->   + `_swap_tool_bar_icons` 가 `_navIcons` 아이콘 swap (Right Buttons variant flip 포함).
+>   + `_swap_tool_bar_icons` 가 Right Buttons `Type`(empty/1 button/2 button) flip + 아이콘 swap.
 > - **L5 verify**: 빌드 후 NavBar 가 FRAME 으로 남으면 WARN.
 > - 생성기/템플릿도 인스턴스 emit: `unified_blueprint._gen_nav_bar`(data.title 있으면 Detail),
 >   `blueprint_templates.json` NavBar(assemble `variables.NavBar.title` 로 Detail 전환).

@@ -8181,9 +8181,10 @@ def _collect_tool_bar_configs(blueprint: dict) -> List[dict]:
         key = str(n.get("componentKey") or "")
         if (n.get("type") or "").lower() == "instance" and (
                 key.startswith("SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230")
-                or n.get("_navTitle") or n.get("_navIcons")):
+                or n.get("_navTitle") or n.get("_navIcons") is not None):
+            # icons: None = 마커 없음(마스터 기본 유지) / [] = 명시적 empty / [..] = swap 대상
             out.append({"name": n.get("name"), "title": n.get("_navTitle"),
-                        "icons": n.get("_navIcons") or []})
+                        "icons": n.get("_navIcons")})
             return
         for c in n.get("children") or []:
             walk(c)
@@ -8192,23 +8193,31 @@ def _collect_tool_bar_configs(blueprint: dict) -> List[dict]:
     return out
 
 
-def _swap_tool_bar_icons(toolbar_id: str, icons: List[str]) -> int:
-    """DS Tool Bar 인스턴스 우측 버튼의 중첩 아이콘 인스턴스를 swap (절대 규칙 0-W).
+# Right Buttons variant 값 (2026-06-12 사용자: "없으면 empty, 하나면 1 button, 둘이면 2 button")
+_TOOLBAR_RIGHT_TYPE = {0: "empty", 1: "1 button", 2: "2 button"}
+# 구버전 DS variant 이름 폴백 (DS 업데이트 전 게시본 캐시 대응)
+_TOOLBAR_RIGHT_TYPE_LEGACY = {1: "1 Symbol", 2: "2 Symbol"}
 
-    구조: Tool Bar → 'Right Buttons'(_button top sets, Type=1/2/3 Symbol) →
-    'button N' FRAME → '_button N_type' INSTANCE → 아이콘 INSTANCE.
-    아이콘 개수에 맞춰 Right Buttons 의 Type variant 를 flip 한 뒤, 각 버튼의 중첩
-    아이콘 인스턴스를 `swap_instance_component`(plugin) 로 NAV_ICON_KEYS 키로 교체.
-    맵에 없는 아이콘은 skip + WARN (마스터 기본 유지)."""
+
+def _swap_tool_bar_icons(toolbar_id: str, icons: List[str]) -> int:
+    """DS Tool Bar 인스턴스 우측 버튼 설정 + 중첩 아이콘 swap (절대 규칙 0-W).
+
+    구조: Tool Bar → 'Right Buttons'(_button top sets) → 'button N' FRAME →
+    '_button N_type' INSTANCE → 아이콘 INSTANCE.
+    🔴 우측 버튼 개수 = Right Buttons 의 `Type` variant (2026-06-12 사용자 룰):
+      0개(icons=[]) → "empty" / 1개 → "1 button" / 2개 → "2 button" (최대 2).
+    flip 후 각 버튼의 중첩 아이콘 인스턴스를 `swap_instance_component`(plugin) 로
+    NAV_ICON_KEYS 키로 교체. 맵에 없는 아이콘은 skip + WARN (마스터 기본 유지)."""
     import sys as _sys
     _scripts_dir = os.path.dirname(os.path.abspath(__file__))
     if _scripts_dir not in _sys.path:
         _sys.path.insert(0, _scripts_dir)
     from design_rules.ds_catalog import resolve_nav_icon_key  # noqa: E402
 
-    icons = [str(i) for i in icons if i][:3]
-    if not icons:
-        return 0
+    icons = [str(i) for i in icons if i]
+    if len(icons) > 2:
+        print(f"  ⚠️ [tool-bar] 우측 버튼은 최대 2개 — {len(icons)}개 중 앞 2개만 사용")
+        icons = icons[:2]
 
     def _subtree():
         try:
@@ -8239,22 +8248,46 @@ def _swap_tool_bar_icons(toolbar_id: str, icons: List[str]) -> int:
         return 0
     rb = _find_right_buttons(tree)
     if not rb:
+        if not icons:
+            print("  [tool-bar] Right Buttons 이미 empty (버튼 없음) — OK")
+            return 1
         print("  [tool-bar] Right Buttons 인스턴스 없음 — 아이콘 swap skip")
         return 0
 
-    # 1) 아이콘 개수에 맞춰 Type variant flip (1~3 Symbol) — flip 후 내부 id 가 바뀌므로 재수집
+    def _flip_right_type(rb_id: str, count: int) -> bool:
+        """Type variant flip — 새 이름(empty/N button) 우선, 구 이름(N Symbol) 폴백.
+        set_instance_properties 응답의 적용된 Type 값으로 성공 여부 검증."""
+        candidates = [_TOOLBAR_RIGHT_TYPE[count]]
+        if count in _TOOLBAR_RIGHT_TYPE_LEGACY:
+            candidates.append(_TOOLBAR_RIGHT_TYPE_LEGACY[count])
+        for val in candidates:
+            try:
+                res = parse_content(call_tool("set_instance_properties", {
+                    "nodeId": rb_id, "properties": {"Type": val}})).get("json") or {}
+                applied = ((res.get("properties") or {}).get("Type") or {}).get("value")
+                if applied == val:
+                    print(f"  [tool-bar] Right Buttons → Type={val}")
+                    return True
+            except Exception as e:
+                print(f"  [tool-bar] Type={val} flip 실패: {e}")
+        print(f"  ⚠️ [tool-bar] Right Buttons Type flip 실패 (count={count}) — variant 이름 확인 필요")
+        return False
+
+    # 1) 아이콘 개수에 맞춰 Type variant flip (empty / 1 button / 2 button) — flip 후
+    #    내부 id 가 바뀌므로 재수집
     cur_btns = [k for k in rb.get("children") or [] if (k.get("name") or "").lower().startswith("button")]
     if len(icons) != len(cur_btns):
-        try:
-            call_tool("set_instance_properties", {
-                "nodeId": rb["id"], "properties": {"Type": f"{len(icons)} Symbol"}})
-            print(f"  [tool-bar] Right Buttons → Type={len(icons)} Symbol")
+        if _flip_right_type(rb["id"], len(icons)):
+            if not icons:
+                return 1  # empty — swap 할 아이콘 없음, 완료
             tree = _subtree()
             rb = _find_right_buttons(tree) if tree else None
             if not rb:
                 return 0
-        except Exception as e:
-            print(f"  [tool-bar] Right Buttons variant flip 실패(무시): {e}")
+        elif not icons:
+            return 0
+    elif not icons:
+        return 1  # 이미 0개
 
     # 2) 버튼 순서대로 중첩 아이콘 인스턴스 찾기 → swap
     def _btn_no(n):
@@ -8302,8 +8335,9 @@ def _configure_tool_bar(root_id: str, configs: List[dict]) -> int:
     Detail view variant 의 타이틀 TEXT 는 인스턴스 내부 노드(`I{id};{sub}`)라
     scan_text_nodes 로 찾아 set_text_content 한다 (seg-tabs 와 동일 패턴).
     Tool Bar 내부 TEXT 는 타이틀 1개뿐이라 첫 TEXT 에 적용.
-    `_navIcons` 마커가 있으면 우측 버튼 중첩 아이콘 인스턴스도 swap (`_swap_tool_bar_icons`)."""
-    todo = [c for c in configs if c.get("title") or c.get("icons")]
+    `_navIcons` 마커가 있으면 우측 버튼 개수(Type=empty/1 button/2 button) 설정 +
+    중첩 아이콘 인스턴스 swap (`_swap_tool_bar_icons`). `_navIcons: []` = 명시적 empty."""
+    todo = [c for c in configs if c.get("title") or c.get("icons") is not None]
     if not todo:
         return 0
     try:
@@ -8354,7 +8388,7 @@ def _configure_tool_bar(root_id: str, configs: List[dict]) -> int:
                     done += 1
             except Exception as e:
                 print(f"  [tool-bar] 타이틀 적용 실패(무시): {e}")
-        if cfg.get("icons"):
+        if cfg.get("icons") is not None:
             try:
                 done += _swap_tool_bar_icons(iid, cfg["icons"])
             except Exception as e:

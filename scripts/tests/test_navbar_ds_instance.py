@@ -184,13 +184,14 @@ def test_extract_right_icons_excludes_back_and_xclose():
     assert icons == ["bell-01", "share-07"]  # back(chevron-left)·x-close 제외
 
 
-def test_extract_right_icons_max_3():
+def test_extract_right_icons_max_2():
+    # 2026-06-12 사용자 룰: Right Buttons Type = empty/1 button/2 button — 최대 2개
     nav = _home_navbar()
     nav["children"][1]["children"] = [
         {"name": f"ic-{i}", "type": "icon", "iconName": n}
         for i, n in enumerate(["bell-01", "search-lg", "share-07", "settings-01"])
     ]
-    assert len(_extract_right_icons(nav)) == 3
+    assert _extract_right_icons(nav) == ["bell-01", "search-lg"]
 
 
 def test_inject_captures_nav_icons():
@@ -205,12 +206,20 @@ def test_inject_captures_nav_icons():
     assert out["_navIcons"] == ["bell-01"]
 
 
-def test_inject_home_no_icons_no_marker():
+def test_inject_no_icons_sets_explicit_empty():
+    # 와이어에 우측 아이콘 없음 → _navIcons: [] 명시 (빌드 후 Type=empty)
     nav = _home_navbar()
     nav["children"][1]["children"] = []  # 우측 아이콘 없음
     bp = _bp(nav)
     _inject(bp)
-    assert "_navIcons" not in bp["children"][0]
+    assert bp["children"][0]["_navIcons"] == []
+
+
+def test_inject_detail_no_right_icons_empty():
+    # back 아이콘만 있는 서브 navbar — back 은 우측 아이콘이 아님 → empty
+    bp = _bp(_detail_navbar())
+    _inject(bp)
+    assert bp["children"][0]["_navIcons"] == []
 
 
 def test_resolve_nav_icon_key_exact_and_prefix():
