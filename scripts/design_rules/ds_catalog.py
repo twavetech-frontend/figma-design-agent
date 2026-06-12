@@ -192,6 +192,54 @@ COMPONENT_KEYS = {
 _VERIFIED_AUTOSWAP_ROLES = {"Toggle", "Progress bar", "Checkbox", "Radio", "Input field", "Slider", "Tooltip", "Dropdown", "Avatar"}
 
 
+# ── NavBar(Tool Bar) 우측 버튼 아이콘 swap 키 (절대 규칙 0-W, 2026-06-12) ──
+# DS Tool Bar 인스턴스 우측 버튼의 중첩 아이콘 인스턴스를 swap_instance_component 로
+# 교체할 때 쓰는 iconName → 컴포넌트 키 맵 (Imin DS 24px line 아이콘).
+# blueprint 의 `_navIcons: ["bell-01", "search-lg"]` 마커가 이 맵으로 해석된다.
+# 맵에 없는 아이콘은 swap skip + WARN (마스터 기본 아이콘 유지) — 새 아이콘이 필요하면
+# Imin DS 에서 키를 찾아 여기 추가할 것 (search_design_system 또는 sync-components).
+NAV_ICON_KEYS = {
+    "bell-01":             "f80e23373a1afc1b460be44da32915f390b5af2a",
+    "bell":                "f80e23373a1afc1b460be44da32915f390b5af2a",
+    "message-circle-01":   "3071d1cea18e103f7187986d83ecc64972cccb21",
+    "message-chat-circle": "3071d1cea18e103f7187986d83ecc64972cccb21",
+    "chat":                "3071d1cea18e103f7187986d83ecc64972cccb21",
+    "search-lg":           "7c9a1100b148110910806002a8a85b6eb9920582",  # search-md
+    "search-md":           "7c9a1100b148110910806002a8a85b6eb9920582",
+    "search":              "7c9a1100b148110910806002a8a85b6eb9920582",
+    "x-close":             "4ba052703931aeecf495c7698e5002b6c89d1ad4",
+    "home-01":             "3b9e167503a7a91c597375d8c11c4f1a39fe5705",
+    "shopping-bag-01":     "152430df50a07e03ae0c23e66095ca1e01cad66a",
+    "users-01":            "79e81ec517b9231b88e83c3b2320152ae38fd683",
+    "menu-01":             "773e8ac3572b64c2031233074661490b45c43584",
+    "stars-01":            "781d56540e849275dbc6f0cbf93b0bdb1a1392f4",
+    "wallet-01":           "aa266194d742496709395561be5836b1445ee6ab",
+    "wallet-02":           "aa266194d742496709395561be5836b1445ee6ab",
+    "calendar":            "f698e668f4259ac533a78c5f3be2cef705f3e9c7",
+    "calendar-check-01":   "9fd39ab78add0eb0bb1c14dec21f94436602d89c",
+    "check-verified-01":   "3573927df03a08371e487d78803095fe0fd47423",
+    "help-circle":         "8cf3b907326b40b752388a53b50320e3d7700a5e",
+    # 2026-06-12 search_design_system 으로 확보 (정확 이름 일치 항목만)
+    "share-07":            "f3279037645fb703bf67be50991e319c62d00625",
+    "share":               "f3279037645fb703bf67be50991e319c62d00625",
+    "settings-01":         "110d888816e9bb5ce620761786951ce6ad2cf459",
+    "settings":            "110d888816e9bb5ce620761786951ce6ad2cf459",
+    "dots-vertical":       "4701c3d1add2af0b2cacd0362c19a23c08a04773",
+}
+
+
+def resolve_nav_icon_key(icon_name: str):
+    """iconName → Tool Bar 우측 버튼 swap 용 컴포넌트 키 (없으면 None)."""
+    if not icon_name:
+        return None
+    nm = str(icon_name).strip().lower()
+    if nm in NAV_ICON_KEYS:
+        return NAV_ICON_KEYS[nm]
+    # 사이즈/번호 suffix 무시한 prefix 매칭 (e.g. 'bell-02' → 'bell')
+    base = nm.split("-")[0]
+    return NAV_ICON_KEYS.get(base)
+
+
 # ── Pattern → category (for R23 lint detection) ─────────────────
 
 DS_PATTERNS = [

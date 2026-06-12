@@ -8176,8 +8176,9 @@ def _collect_tool_bar_configs(blueprint: dict) -> List[dict]:
         key = str(n.get("componentKey") or "")
         if (n.get("type") or "").lower() == "instance" and (
                 key.startswith("SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230")
-                or n.get("_navTitle")):
-            out.append({"name": n.get("name"), "title": n.get("_navTitle")})
+                or n.get("_navTitle") or n.get("_navIcons")):
+            out.append({"name": n.get("name"), "title": n.get("_navTitle"),
+                        "icons": n.get("_navIcons") or []})
             return
         for c in n.get("children") or []:
             walk(c)
@@ -8186,13 +8187,118 @@ def _collect_tool_bar_configs(blueprint: dict) -> List[dict]:
     return out
 
 
+def _swap_tool_bar_icons(toolbar_id: str, icons: List[str]) -> int:
+    """DS Tool Bar 인스턴스 우측 버튼의 중첩 아이콘 인스턴스를 swap (절대 규칙 0-W).
+
+    구조: Tool Bar → 'Right Buttons'(_button top sets, Type=1/2/3 Symbol) →
+    'button N' FRAME → '_button N_type' INSTANCE → 아이콘 INSTANCE.
+    아이콘 개수에 맞춰 Right Buttons 의 Type variant 를 flip 한 뒤, 각 버튼의 중첩
+    아이콘 인스턴스를 `swap_instance_component`(plugin) 로 NAV_ICON_KEYS 키로 교체.
+    맵에 없는 아이콘은 skip + WARN (마스터 기본 유지)."""
+    import sys as _sys
+    _scripts_dir = os.path.dirname(os.path.abspath(__file__))
+    if _scripts_dir not in _sys.path:
+        _sys.path.insert(0, _scripts_dir)
+    from design_rules.ds_catalog import resolve_nav_icon_key  # noqa: E402
+
+    icons = [str(i) for i in icons if i][:3]
+    if not icons:
+        return 0
+
+    def _subtree():
+        try:
+            c = call_tool("get_nodes_info", {"nodeIds": [toolbar_id]})
+            items = parse_content(c).get("json")
+            return items[0].get("document") if isinstance(items, list) and items else None
+        except Exception as e:
+            print(f"  [tool-bar] 서브트리 수집 실패: {e}")
+            return None
+
+    def _find_right_buttons(node):
+        """Right Buttons (_button top sets) 인스턴스 — 'button N' 자식 frame 을 가진 INSTANCE."""
+        if not isinstance(node, dict):
+            return None
+        if (node.get("type") or "").upper() == "INSTANCE":
+            kids = node.get("children") or []
+            btns = [k for k in kids if (k.get("name") or "").lower().startswith("button")]
+            if btns:
+                return node
+        for ch in node.get("children") or []:
+            r = _find_right_buttons(ch)
+            if r is not None:
+                return r
+        return None
+
+    tree = _subtree()
+    if not tree:
+        return 0
+    rb = _find_right_buttons(tree)
+    if not rb:
+        print("  [tool-bar] Right Buttons 인스턴스 없음 — 아이콘 swap skip")
+        return 0
+
+    # 1) 아이콘 개수에 맞춰 Type variant flip (1~3 Symbol) — flip 후 내부 id 가 바뀌므로 재수집
+    cur_btns = [k for k in rb.get("children") or [] if (k.get("name") or "").lower().startswith("button")]
+    if len(icons) != len(cur_btns):
+        try:
+            call_tool("set_instance_properties", {
+                "nodeId": rb["id"], "properties": {"Type": f"{len(icons)} Symbol"}})
+            print(f"  [tool-bar] Right Buttons → Type={len(icons)} Symbol")
+            tree = _subtree()
+            rb = _find_right_buttons(tree) if tree else None
+            if not rb:
+                return 0
+        except Exception as e:
+            print(f"  [tool-bar] Right Buttons variant flip 실패(무시): {e}")
+
+    # 2) 버튼 순서대로 중첩 아이콘 인스턴스 찾기 → swap
+    def _btn_no(n):
+        nm = (n.get("name") or "")
+        digits = "".join(ch for ch in nm if ch.isdigit())
+        return int(digits) if digits else 0
+
+    def _find_icon_instance(btn):
+        """button frame → _button type INSTANCE → 첫 INSTANCE 자식 (아이콘)."""
+        for ch in btn.get("children") or []:
+            if (ch.get("type") or "").upper() == "INSTANCE":
+                for g in ch.get("children") or []:
+                    if (g.get("type") or "").upper() == "INSTANCE":
+                        return g
+                return ch  # 아이콘이 바로 박힌 변형 폴백
+        return None
+
+    btns = sorted([k for k in rb.get("children") or []
+                   if (k.get("name") or "").lower().startswith("button")], key=_btn_no)
+    done = 0
+    for i, icon_name in enumerate(icons):
+        if i >= len(btns):
+            break
+        key = resolve_nav_icon_key(icon_name)
+        if not key:
+            print(f"  ⚠️ [tool-bar] 아이콘 '{icon_name}' NAV_ICON_KEYS 에 없음 — swap skip "
+                  f"(ds_catalog.NAV_ICON_KEYS 에 키 추가 필요)")
+            continue
+        target = _find_icon_instance(btns[i])
+        if not target:
+            print(f"  ⚠️ [tool-bar] button {i+1} 내부 아이콘 인스턴스 못 찾음 — skip")
+            continue
+        try:
+            call_tool("swap_instance_component", {"nodeId": target["id"], "componentKey": key})
+            print(f"  [tool-bar] ✓ 우측 버튼 {i+1} 아이콘 → {icon_name}")
+            done += 1
+        except Exception as e:
+            print(f"  ⚠️ [tool-bar] 아이콘 swap 실패 ({icon_name}): {e}")
+    return done
+
+
 def _configure_tool_bar(root_id: str, configs: List[dict]) -> int:
     """빌드된 DS 'Tool Bar' 인스턴스의 중앙 타이틀 적용 (절대 규칙 0-W, 2026-06-12).
 
     Detail view variant 의 타이틀 TEXT 는 인스턴스 내부 노드(`I{id};{sub}`)라
     scan_text_nodes 로 찾아 set_text_content 한다 (seg-tabs 와 동일 패턴).
-    Tool Bar 내부 TEXT 는 타이틀 1개뿐이라 첫 TEXT 에 적용."""
-    todo = [c for c in configs if c.get("title")]
+    Tool Bar 내부 TEXT 는 타이틀 1개뿐이라 첫 TEXT 에 적용.
+    `_navIcons` 마커가 있으면 우측 버튼 중첩 아이콘 인스턴스도 swap (`_swap_tool_bar_icons`)."""
+    todo = [c for c in configs if c.get("title") or c.get("icons")]
     if not todo:
         return 0
     try:
@@ -8224,24 +8330,30 @@ def _configure_tool_bar(root_id: str, configs: List[dict]) -> int:
             print(f"  [tool-bar] '{cfg.get('name')}' 인스턴스 없음 — skip")
             continue
         iid = inst.get("id")
-        try:
-            title_tid = None
-            for x in call_tool("scan_text_nodes", {"nodeId": iid}):
-                if x.get("type") == "text":
-                    d = json.loads(x["text"])
-                    for tn in d.get("textNodes", []):
-                        title_tid = tn.get("id")
+        if cfg.get("title"):
+            try:
+                title_tid = None
+                for x in call_tool("scan_text_nodes", {"nodeId": iid}):
+                    if x.get("type") == "text":
+                        d = json.loads(x["text"])
+                        for tn in d.get("textNodes", []):
+                            title_tid = tn.get("id")
+                            break
+                    if title_tid:
                         break
-                if title_tid:
-                    break
-            if not title_tid:
-                print(f"  [tool-bar] '{cfg.get('name')}' 내부 타이틀 TEXT 없음 — skip")
-                continue
-            call_tool("set_text_content", {"nodeId": title_tid, "text": str(cfg["title"])})
-            print(f"  [tool-bar] ✓ '{cfg.get('name')}' 타이틀 → '{cfg['title']}'")
-            done += 1
-        except Exception as e:
-            print(f"  [tool-bar] 타이틀 적용 실패(무시): {e}")
+                if not title_tid:
+                    print(f"  [tool-bar] '{cfg.get('name')}' 내부 타이틀 TEXT 없음 — skip")
+                else:
+                    call_tool("set_text_content", {"nodeId": title_tid, "text": str(cfg["title"])})
+                    print(f"  [tool-bar] ✓ '{cfg.get('name')}' 타이틀 → '{cfg['title']}'")
+                    done += 1
+            except Exception as e:
+                print(f"  [tool-bar] 타이틀 적용 실패(무시): {e}")
+        if cfg.get("icons"):
+            try:
+                done += _swap_tool_bar_icons(iid, cfg["icons"])
+            except Exception as e:
+                print(f"  [tool-bar] 아이콘 swap 실패(무시): {e}")
     return done
 
 

@@ -276,6 +276,8 @@ async function handleCommand(command, params) {
       return await getInstanceProperties(params);
     case "set_instance_properties":
       return await setInstanceProperties(params);
+    case "swap_instance_component":
+      return await swapInstanceComponent(params);
     case "export_node_as_image":
       return await exportNodeAsImage(params);
     case "set_corner_radius":
@@ -1822,6 +1824,37 @@ async function setInstanceProperties(params) {
     nodeId: node.id,
     name: node.name,
     properties: result
+  };
+}
+
+// Swap an instance (including a nested instance inside another instance —
+// a supported Figma override) to a different component, imported by key.
+// Used for e.g. Tool Bar right-button icon swap (절대 규칙 0-W).
+async function swapInstanceComponent(params) {
+  const { nodeId, componentKey } = params || {};
+  if (!nodeId) {
+    throw new Error("Missing nodeId parameter");
+  }
+  if (!componentKey) {
+    throw new Error("Missing componentKey parameter");
+  }
+  const node = await figma.getNodeByIdAsync(nodeId);
+  if (!node) {
+    throw new Error(`Node not found with ID: ${nodeId}`);
+  }
+  if (node.type !== "INSTANCE") {
+    throw new Error(`Node is not an instance. Type: ${node.type}`);
+  }
+  const comp = await getCachedComponent(componentKey);
+  if (!comp) {
+    throw new Error(`Component not found: ${componentKey}`);
+  }
+  node.swapComponent(comp);
+  return {
+    id: node.id,
+    name: node.name,
+    swappedTo: comp.name,
+    componentKey: componentKey
   };
 }
 

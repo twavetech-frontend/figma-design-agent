@@ -567,6 +567,12 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['nodeId']
   }, async (params) => cmd('scan_instances_for_swap', params));
 
+  reg('swap_instance_component', 'Swap an instance (incl. nested instance inside another instance) to a different component by key', {
+    type: 'object',
+    properties: { nodeId: { type: 'string' }, componentKey: { type: 'string' } },
+    required: ['nodeId', 'componentKey']
+  }, async (params) => cmd('swap_instance_component', params));
+
   // ============================================================
   // Variable & Binding Tools
   // ============================================================

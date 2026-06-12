@@ -90,6 +90,26 @@ def _extract_title(navbar: dict):
     return None
 
 
+def _extract_right_icons(navbar: dict) -> list:
+    """navbar 안 우측 액션 아이콘 이름 수집 (back/x-close 제외, 좌→우 순서).
+
+    Tool Bar 우측 버튼은 최대 3개(_button top sets Type=1~3 Symbol) — 이 리스트가
+    `_navIcons` 마커가 되어 빌드 후 `_swap_tool_bar_icons` 가 중첩 아이콘을 swap 한다."""
+    icons = []
+    for d in _iter_descendants(navbar):
+        if (d.get("type") or "").lower() not in ("icon", "svg_icon"):
+            continue
+        ic = (d.get("iconName") or "").lower()
+        if not ic:
+            continue
+        if any(a in ic for a in _BACK_ICON_HINTS):
+            continue
+        if any(x in ic for x in _XCLOSE_HINTS):
+            continue
+        icons.append(d.get("iconName"))
+    return icons[:3]
+
+
 def _is_navbar_frame(node: dict) -> bool:
     if not isinstance(node, dict):
         return False
@@ -169,11 +189,14 @@ def _inject(bp: dict) -> dict:
         if _is_navbar_frame(n):
             kind, title = _classify(n)
             if kind:
+                right_icons = _extract_right_icons(n)
                 n["type"] = "instance"
                 n["componentKey"] = _TOOLBAR_HOME_KEY if kind == "home" else _TOOLBAR_DETAIL_KEY
                 n["_dsResolvedRole"] = f"Tool Bar Type={'Home' if kind == 'home' else 'Detail view'}"
                 if title:
                     n["_navTitle"] = title
+                if right_icons:
+                    n["_navIcons"] = right_icons
                 n["_originalChildren"] = n.get("children") or []
                 n.pop("children", None)
                 # master 가 layout/fill/stroke 를 가지므로 wrapper 속성 제거
