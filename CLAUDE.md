@@ -256,6 +256,43 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 ## 디자인 생성 필수 규칙
 
+> 🎨 **룰 2계층 (2026-06-12 전면 개편 — 사용자: "규칙과 코드 강제로 수천 번 생성해도 거의 똑같아.
+> 창의적으로 나오길 원해")**
+>
+> 이 문서의 룰은 두 계층으로 나뉜다. **회귀 방지(=같음 보장)는 정합성에만 적용하고, 스타일에는
+> 적용하지 않는다** — 스타일까지 하드 강제하면 모든 화면이 한 디자인으로 수렴한다(실제로 그랬다).
+>
+> **① 정합성 룰 (하드 — enforcer 가 강제, 변경 없음):** 콘텐츠 1:1(0-E)·DS 컴포넌트 사용/색
+> 보존(0-K, 0-J, 0-M, 0-W, 2-G, 2-I)·토큰/텍스트스타일/spacing/radius 바인딩(0-S, post-fix 바인더)·
+> 접근성(대비 QA, 최소 텍스트 크기)·레이아웃 무결성(FILL 붕괴, 셀 정렬, clip 0-Q, 스멜 검사)·
+> 디바이스 규격(루트 bg 0, 852, Status Bar, Tab Bar 위치)·프로세스 게이트(통독, 레퍼런스 Read 0-G,
+> self-verify 0-F, blueprint 정리 0-R).
+>
+> **② 스타일 룰 (기본값 — author 명시값이 항상 이긴다):** 아래 룰들은 2026-06-12 부로
+> **fill-in-only**(명시 안 했을 때만 기본값 채움) 또는 **advisory WARN**(변경 없이 경고만)으로
+> 강등됐다. 빌드 로그에 `[스타일-기본값]` 프리픽스로 표시된다:
+> - **2-B** 흰 카드+보더 → 그레이 면 강제 flip 폐지(WARN만). 보더 자동부착은 **흰-on-흰(경계가
+>   안 보이는 배치)만** 시인성 보더 추가 — 대비 있는 카드(흰 on 회색밴드, 회색 on 흰)는 미추가.
+>   `_keepSurface` 마커는 이제 불필요(하위호환 유지).
+> - **2-B-2** 브랜드 틴트 면 = bg-brand-primary → advisory WARN (live 교정 no-op).
+> - **2-H** 큰 면적 brand fill 금지 → advisory WARN — **의도된 컬러 히어로 카드/밴드 허용**.
+>   가독성은 대비 QA(_auto_fix_invisible_text + _qa_visual_checks)가 방어.
+> - **규칙 13** 중요 섹션 밴드 → `_band` 는 강조의 *한 수단*(기본값). lint 는 INFO — 다른 방식
+>   (컬러 히어로 카드·타이포 위계 등)으로 강조했으면 OK. 밴드 패딩도 fill-in-only.
+> - **13-B** Content gap 20 → 명시 gap 존중(WARN), 미지정만 20.
+>
+> **③ 창의 프로세스 (신규 하드 게이트):**
+> - 🔴 **S24 컨셉 선언 게이트**: imin_* archetype 빌드는 root 에
+>   `"_concept": {"idea": "<핵심 차별 아이디어>", "diffs": ["직전 버전과 달라지는 점 ≥3"]}` 필수 —
+>   없으면 빌드 차단(ERROR). 단순 재빌드는 `_conceptSkipped: "<reason>"`. 형식 통과용 공허한 값 금지.
+> - **novelty 체크**: 빌드 성공 시 비주얼 시그니처(섹션 순서/fill·radius·fontSize 분포)를
+>   `scripts/.novelty/<화면>.json` 에 저장, 다음 빌드에서 직전과 ≥85% 유사하면 `[novelty-WARN]`
+>   (콘텐츠는 같아야 하고(S22~23), 비주얼은 달라야 한다 — S22 의 반대 방향 장치).
+> - **3안 워크플로 (권장)**: 새 화면/리디자인은 **컨셉이 서로 다른 3안**을 생성해 사용자가 고른다.
+>   취향은 룰로 박지 않고 *선택*으로 반영하며, 선택안의 방향이 다음 기본값이 된다.
+> - **레퍼런스**: **Mobbin MCP 가 연결된 세션에서는 Mobbin 을 우선 사용**(uibowl 5개 앱보다 풍부) —
+>   uibowl(0-G 자동검색)은 보조/폴백. 어느 쪽이든 실제 Read 학습 의무(0-G)는 동일.
+
 > 🔴 **절대 규칙 0-K — DS 컴포넌트의 fill·stroke·label 색은 절대 변경 금지 (2026-06-01 사용자 명시)**
 >
 > 사용자 명시: *"1. badge fill, stroke color 절대 변경 금지 2. badge label text fill
@@ -966,7 +1003,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **빌드 후 검증**: 루트 첫 자식이 INSTANCE `"Status Bar"`인지 확인.
 - 참고: "Styles" 페이지(`276:1882`)에 마스터 인스턴스가 있다 — Status Bar `279:4758`, 로고 `279:4757`. 자동 삽입이 안 되는 특수 상황에서만 `clone_node`(인스턴스는 clone해도 인스턴스 유지) 후 `insert_child`로 수동 삽입.
 
-### 2-H. ⚠️ 큰 면적 frame에 brand color 채우기 금지 (2026-05-27 사용자 명시)
+### 2-H. ⚠️ 큰 면적 brand fill — 🔻 2026-06-12 advisory 강등 (룰 2계층 ② 참조: 의도된 컬러 히어로 허용, WARN만)
 - **"추천 스테이지 섹션같이 버튼이 아니면서 면적이 큰 frame에 brand color를 채우지마!"**
 - 이전 룰 폐기 — "Recommend Brand Card = brand-solid hero" 패턴 (`bg-brand-solid` 보라색 큰 카드) 사용자 분노.
 - **새 표준**: 큰 카드 = `bg-primary` + `border-secondary` 1px. brand 는 **작은 액센트**(텍스트, 버튼 label, 작은 dot)만.
@@ -1021,7 +1058,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > **빌드 후 검증:** 빌드 로그 `[색상]` 에 Aqua 가 **0곳이거나 최소**인지 + 스크린샷에 청록색이
 > 거의 없는지(브랜드 퍼플 + 상태색 + 중립 위주) 확인.
 
-### 2-B. ⚠️ 카드 표면 — bg-primary + 보더 (root 위 카드, 2026-05-23 룰 / 2026-06-02 보더색 갱신)
+### 2-B. ⚠️ 카드 표면 — 🔻 2026-06-12 기본값으로 강등 (룰 2계층 ② 참조: 그레이 면 flip 폐지, 보더는 흰-on-흰 시인성만 자동)
 - **루트 위 최상위 카드의 표면 = `$token(bg-primary)` fill + 보더 1px** — `bg-secondary`(회색)로 채우지 말 것. 흰 카드를 보더로 정의한다.
 - 🔴 **보더 색 = 뒤(배경) fill 에 따라 결정 (2026-06-02 사용자 룰):**
   - **뒤 배경이 `bg-primary`(흰색)면 보더는 `$token(border-primary)`** — 흰 배경 위 흰 카드는
@@ -1042,7 +1079,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   마커는 author 가 보더리스 면을 *의도*했을 때만. 적용 예: `imin_signup_home_v5` 의 현황 스트립·
   한도 콜아웃·출석/초대 그룹.
 
-### 2-B-2. ⚠️ 브랜드 틴트 '면'(블록/카드 표면)은 `bg-brand-primary` (2026-06-05 사용자 룰)
+### 2-B-2. ⚠️ 브랜드 틴트 '면' = bg-brand-primary — 🔻 2026-06-12 advisory 강등 (명시 fill 존중, live 교정 no-op)
 - 사용자 명시: *"이런건 컬러를 `bg-brand-primary` 를 사용게 시각적으로 맞아."* (강조된 '오늘'
   스케줄 블록 등 브랜드 틴트 면을 가리키며)
 - **브랜드 틴트를 '면'(자식을 담는 블록/카드 표면)으로 쓸 때는 `$token(bg-brand-primary)`(#f4ecff,
@@ -1473,7 +1510,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   *"위아래 패딩값 24로 맞추고 토큰 바인딩도 해."* 24 는 post-fix `_bind_spacing_tokens_live` 가
   **spacing-3xl 토큰으로 자동 바인딩**(절대값 아님). 위 enforcer 의 '밴드' 분기가 강제 → 재빌드에도 유지.
 
-### 13. 🔴 중요 섹션 = 풀폭 bg-secondary 밴드 (2026-06-05 / 강화 2026-06-08 — 메인·모든 탭바 홈 화면 필수)
+### 13. 중요 섹션 강조 — 🔻 2026-06-12 기본값으로 강등 (밴드는 *한 수단*; lint=INFO, 패딩 fill-in-only, 다른 강조 방식 허용)
 - 사용자 명시(2026-06-05): *"중요한 섹션은 배경 컬러를 두고 content frame에서 벗어나 root 위 별도
   프레임으로 분리하고, frame에 fill color를 넣는다. 새 세션에서 다시 디자인 생성할 때도 이렇게."*
 - 🔴 사용자 명시(2026-06-08): *"목돈만들기, 스테이지 현황 및 추천 스테이지 같은 중요한 섹션들은
@@ -1509,7 +1546,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   `[규칙13-WARN]` 없는지 확인. 스크린샷에서 중요 섹션이 풀폭 회색 밴드 + 내부 흰 카드, 보조 섹션은
   흰 카드인지 확인. 생성기 참고: `gen_signup_home_v4.py`·`gen_active_home_v3.py`·`gen_done_home_v3.py`
   의 `band()` 헬퍼(목돈만들기/스테이지 현황/추천을 밴드로 emit).
-- 🔴 **13-B. 홈 Content(섹션 스택) gap = `spacing-2xl`(20) (2026-06-08 사용자: "content gap이 32로
+- **13-B (🔻 2026-06-12 기본값 강등 — 명시 gap 존중·WARN, 미지정만 20 채움). 홈 Content(섹션 스택) gap = `spacing-2xl`(20) (2026-06-08 사용자: "content gap이 32로
   spacing-4xl 로 설정되있는데, spacing-2xl 이여야 해 … 코드에 박아"):** 메인·모든 탭바 홈 화면의 섹션
   스택(`Content`/`Content Mid` 등) 프레임 itemSpacing 은 32(spacing-4xl)가 과하므로 **20(spacing-2xl)**
   로 통일한다(섹션 안 padding·밴드 상하 24 가 여백 담당, 섹션 간 gap 은 20).

@@ -3443,16 +3443,16 @@ def _enforce_section_band(blueprint: dict) -> None:
                 al = {"layoutMode": "VERTICAL", "itemSpacing": 0}
                 n["autoLayout"] = al
             al.setdefault("layoutMode", "VERTICAL")
-            al["paddingTop"] = 24
-            al["paddingBottom"] = 24
-            # ⚠️ setdefault 금지 — AL() 이 paddingLeft=0 을 명시로 넣어 setdefault 가 무력화됨.
-            # 콘텐츠가 좌우 끝에 붙지 않게 0/None 이면 20 으로(다른 섹션과 정렬). 양수 명시는 존중.
+            # 🔻 2026-06-12 fill-in-only 로 강등 (전면 개편): 패딩은 author 양수 명시를 존중하고
+            # 0/None(미지정)일 때만 기본값(상하 24 / 좌우 20)을 채운다. 보더도 명시 시 존중.
+            if not al.get("paddingTop"):
+                al["paddingTop"] = 24
+            if not al.get("paddingBottom"):
+                al["paddingBottom"] = 24
             if not al.get("paddingLeft"):
                 al["paddingLeft"] = 20
             if not al.get("paddingRight"):
                 al["paddingRight"] = 20
-            for k in _STROKE_KEYS:
-                n.pop(k, None)
             # 밴드 fill 이 bg-secondary 계열일 때만 내부 흰색화(brand tint 밴드는 그대로 둠)
             nf = n.get("fill")
             if isinstance(nf, str) and "bg-secondary" in nf:
@@ -3486,8 +3486,9 @@ def _enforce_section_band(blueprint: dict) -> None:
                 lint(c, in_band or is_band)
         lint(blueprint)
         if missing:
-            print(f"[규칙13-WARN] 홈 화면 중요 섹션이 풀폭 밴드(_band)가 아님 — "
-                  f"bg-secondary 밴드로 분리 권장: {', '.join(missing[:6])}")
+            print(f"[규칙13-INFO] 홈 화면 중요 섹션이 풀폭 밴드(_band)가 아님: {', '.join(missing[:6])} "
+                  f"— 밴드는 강조의 *한 수단*(기본값). 다른 방식(컬러 히어로 카드·타이포 위계 등)으로 "
+                  f"강조했다면 OK (2026-06-12 룰 2계층).")
 
 
 # 🔴 규칙 13-B — 홈 화면 Content(섹션 스택) 프레임 gap = spacing-2xl(20) (2026-06-08 사용자 룰)
@@ -3518,16 +3519,20 @@ def _enforce_home_content_gap(blueprint: dict) -> None:
                 and (n.get("type") or "frame") in ("frame", "FRAME")):
             al = n.get("autoLayout")
             if isinstance(al, dict) and (al.get("layoutMode") or "").upper() == "VERTICAL":
+                # 🔻 2026-06-12 fill-in-only 로 강등 (전면 개편): author 명시 gap 존중(WARN 만),
+                # 미지정(None)일 때만 기본값 20(spacing-2xl)을 채운다.
                 cur = al.get("itemSpacing")
-                if isinstance(cur, (int, float)) and not isinstance(cur, bool) and cur != _HOME_CONTENT_GAP:
+                if cur is None:
                     al["itemSpacing"] = _HOME_CONTENT_GAP
                     cnt[0] += 1
+                elif isinstance(cur, (int, float)) and not isinstance(cur, bool) and cur != _HOME_CONTENT_GAP:
+                    print(f"[스타일-기본값] '{n.get('name')}' Content gap={cur} — author 명시 존중"
+                          f"(기본 권장 20=spacing-2xl, 스케일 값이면 토큰 바인딩됨)")
         for c in (n.get("children") or []):
             walk(c)
     walk(blueprint)
     if cnt[0]:
-        print(f"[규칙13-B] 홈 Content 섹션 gap → spacing-2xl(20) 교정 {cnt[0]}건 "
-              f"(과한 spacing-4xl 등 차단; opt-out: _keepContentGap)")
+        print(f"[규칙13-B] 홈 Content 섹션 gap 기본값 채움 {cnt[0]}건 → spacing-2xl(20) (fill-in-only)")
 
 
 # 🔴 규칙 — CTA 유도 caption 텍스트 = text-secondary (2026-06-08 사용자 룰)
@@ -3656,13 +3661,12 @@ def _is_card_like(node: dict) -> bool:
 
 
 def _enforce_card_surface(blueprint: dict) -> None:
-    """루트 위 최상위 카드 표면 = bg-primary fill + border-secondary 보더 (2026-05-23 룰).
+    """🔻 2026-06-12 스타일 기본값으로 강등 (전면 개편) — 더 이상 fill 을 변경하지 않는다.
 
-    그레이(bg-secondary/tertiary)로 채운 카드 대신 흰 카드 + 보더로 표면을 정의한다.
-    중첩 카드(카드 안의 인셋)·브랜드 컬러 카드는 건드리지 않는다.
-    예외 — 맨 아래 Footer: 배경색 없음(bg-primary 블렌딩) + 보더 없음 (2026-06-05 사용자 룰).
-    예외 — `_keepSurface: true` 마커 (2026-06-12 사용자 피드백 "보더 흰카드 나열 = 고리타분,
-    카카오페이처럼": author 가 의도한 보더리스 그레이 표면은 존중 — _keepSizing 과 동일 철학).
+    구 동작(2026-05-23 룰): 최상위 그레이 카드를 흰 카드+보더로 강제 flip. 이게 모든 화면을
+    같은 모양으로 수렴시키는 뿌리 중 하나였다(사용자 2026-06-12: "수천 번 생성해도 거의 똑같아").
+    → 이제 **author 명시 fill 을 존중**하고 advisory WARN 만 출력한다 (룰 2계층: 스타일=기본값).
+    Footer 분기만 fill-in-only 로 유지: fill 이 *없을 때만* bg-primary 기본값을 채운다.
     """
     flipped = [0]
     footer_fixed = [0]
@@ -3674,35 +3678,33 @@ def _enforce_card_surface(blueprint: dict) -> None:
                             "sub-card", "sub_card", "attendance", "dot-row", "dot_row",
                             "points", "reward")
 
+    grey_cards = []
+
     def walk(node, inside_card, in_footer):
         if not isinstance(node, dict):
             return
         is_footer = (not in_footer) and _is_footer(node)
         if is_footer:
-            # Footer 예외 — 배경색 없음(루트 bg-primary 와 블렌딩) + 보더 제거 (2026-06-05 사용자 룰)
-            node["fill"] = "$token(bg-primary)"
-            for k in _STROKE_KEYS:
-                node.pop(k, None)
-            footer_fixed[0] += 1
+            # Footer 기본값 — fill-in-only: fill 이 없을 때만 bg-primary (명시 fill 존중)
+            if not node.get("fill"):
+                node["fill"] = "$token(bg-primary)"
+                footer_fixed[0] += 1
         nm_low = (node.get("name") or "").lower()
         polish_keep = any(kw in nm_low for kw in POLISH_KEEP_GREY_RE)
         is_card = (not in_footer and not is_footer) and _is_card_like(node)
         if is_card and not inside_card and not polish_keep and not node.get("_keepSurface"):
             fill_name = _token_name_of(node.get("fill"))
             if fill_name and fill_name.lower() in _GREY_CARD_FILLS:
-                node["fill"] = "$token(bg-primary)"
-                if not node.get("stroke"):
-                    node["stroke"] = "$token(border-secondary)"
-                    node["strokeWeight"] = 1
-                flipped[0] += 1
+                grey_cards.append(node.get("name") or "?")  # advisory — 변경하지 않음
         for child in node.get("children", []) or []:
             walk(child, inside_card or is_card, in_footer or is_footer)
 
     walk(blueprint, False, False)
-    if flipped[0]:
-        print(f"[규칙] 카드 표면 교정 — 최상위 카드 {flipped[0]}건: bg-secondary → bg-primary + border-secondary")
+    if grey_cards:
+        print(f"[스타일-기본값] 최상위 그레이 카드 {len(grey_cards)}건 — author 명시 존중(변경 안 함). "
+              f"기본 권장은 흰 카드+보더(2-B), 보더리스 면이 의도면 OK: {', '.join(grey_cards[:5])}")
     if footer_fixed[0]:
-        print(f"[규칙] Footer 표면 교정 — 배경 없음(bg-primary) + 보더 제거 ({footer_fixed[0]}건)")
+        print(f"[규칙] Footer fill 기본값 채움 — bg-primary ({footer_fixed[0]}건, fill-in-only)")
 
 
 def _enforce_card_elevation(blueprint: dict) -> None:
@@ -3738,26 +3740,32 @@ def _enforce_white_card_border(blueprint: dict) -> None:
     - 제외: 루트 자체, 이미 stroke 있는 frame
     - strokeWeight 1: 사용자 명시 (2026-05-27 갱신)
     """
+    # 🔻 2026-06-12 시인성-한정으로 강등 (전면 개편): 모든 흰 카드에 보더를 박던 구 동작이
+    # '1px 보더 카드 나열' 룩을 강제해 화면들이 수렴 → 이제 **뒤 배경과 같은 색이라 경계가
+    # 안 보이는 카드(흰-on-흰)에만** 보더를 채운다(시인성 = 정합성). 대비가 있는 배치
+    # (흰 카드 on 회색 밴드, 회색 카드 on 흰 배경)는 author 의도 존중 — 보더 추가 안 함.
     BG_PRIMARY = "$token(bg-primary)"
     added = [0]
 
-    def walk(node, is_root):
+    def walk(node, is_root, backing):
         if not isinstance(node, dict):
             return
         if (not is_root) and node.get("type") in (None, "frame", "FRAME") \
                 and node.get("fill") == BG_PRIMARY \
+                and backing == BG_PRIMARY \
                 and node.get("children") \
                 and not _is_icon_button(node) \
                 and not node.get("stroke") and not node.get("strokeColor"):
             node["strokeColor"] = "$token(border-secondary)"
             node["strokeWeight"] = 1
             added[0] += 1
+        child_backing = node.get("fill") if isinstance(node.get("fill"), str) and node.get("fill") else backing
         for child in node.get("children", []) or []:
-            walk(child, False)
+            walk(child, False, child_backing)
 
-    walk(blueprint, True)
+    walk(blueprint, True, BG_PRIMARY)  # 루트 배경 = bg-primary (절대 규칙 0)
     if added[0]:
-        print(f"[규칙] 흰 카드 보더 자동 — fill=bg-primary frame {added[0]}건에 border-secondary 1px 추가")
+        print(f"[규칙] 흰-on-흰 카드 시인성 보더 — {added[0]}건에 border-secondary 1px (대비 있는 카드는 미추가)")
 
 
 # 브랜드 틴트 '면'(블록/카드 표면) 토큰 — 면 표면에 쓰면 무거운 secondary 계열
@@ -3786,18 +3794,22 @@ def _enforce_brand_tint_surface_primary(blueprint: dict) -> None:
             return s[7:-1].strip()
         return None
 
+    # 🔻 2026-06-12 advisory 로 강등 (전면 개편) — author 명시 fill 존중, WARN 만.
+    names = []
+
     def walk(n):
         if not isinstance(n, dict):
             return
         if n.get("type") in ("frame", "FRAME") and n.get("children"):
             if _tok(n.get("fill")) in _BRAND_TINT_SURFACE_TOKENS:
-                n["fill"] = "$token(bg-brand-primary)"
+                names.append(n.get("name") or "?")
                 cnt[0] += 1
         for c in (n.get("children") or []):
             walk(c)
     walk(blueprint)
     if cnt[0]:
-        print(f"[규칙] 브랜드 틴트 면 {cnt[0]}건 → bg-brand-primary (secondary 는 면 표면 금지)")
+        print(f"[스타일-기본값] 진한 브랜드 틴트 면 {cnt[0]}건 — author 명시 존중(변경 안 함). "
+              f"기본 권장은 bg-brand-primary(연한 면): {', '.join(names[:5])}")
 
 
 _BAND_VPAD = 24   # 채워진 풀폭 밴드 섹션의 상/하 padding (= spacing-3xl, spacing 바인더가 토큰 바인딩)
@@ -4108,9 +4120,15 @@ def _enforce_stepper_two_row_live(root_node_id: str) -> int:
 
 
 def _enforce_brand_tint_surface_primary_live(root_node_id: str) -> int:
-    """라이브: 브랜드 틴트 면(children 가진 FRAME)이 bg-brand-secondary(#e6d4ff /
-    hover #cfaeff) fill 이면 bg-brand-primary(#f4ecff)로 교정 + 토큰 바인딩.
-    DS 인스턴스 / 내부 노드(';') 제외. blueprint 단계가 놓친 회귀 차단."""
+    """🔻 2026-06-12 no-op 으로 강등 (전면 개편) — author 명시 fill 존중 (룰 2계층: 스타일=기본값).
+
+    구 동작: 진한 브랜드 틴트 면(#e6d4ff/#cfaeff)을 라이브에서 연한 bg-brand-primary 로 강제 교정.
+    blueprint 단계의 advisory WARN(_enforce_brand_tint_surface_primary)만 남긴다."""
+    return 0
+
+
+def _enforce_brand_tint_surface_primary_live_LEGACY(root_node_id: str) -> int:
+    """(보존) 구 동작 — 필요 시 수동 호출용."""
     SEC = (0.902, 0.831, 1.0)    # #e6d4ff bg-brand-secondary
     SECH = (0.812, 0.682, 1.0)   # #cfaeff bg-brand-secondary-hover
     PRIM = (0.957, 0.925, 1.0)   # #f4ecff bg-brand-primary
@@ -4373,12 +4391,11 @@ def _enforce_white_card_border_live(root_node_id: str) -> int:
             for ch in node.get("children", []) or []:
                 walk(ch, False, child_bg_primary)
             return
-        # 🔴 뒤 배경이 bg-primary → border-primary, 그 외 → border-secondary (사용자 룰)
-        if bg_behind_primary:
-            tr, tg, tb, tok = BORDER1_R, BORDER1_G, BORDER1_B, "border-primary"
-        else:
-            tr, tg, tb, tok = BORDER2_R, BORDER2_G, BORDER2_B, "border-secondary"
-        if (not is_root) and _is_bg_primary(node) and _is_card_like(node) \
+        # 🔻 2026-06-12 시인성-한정으로 강등 (전면 개편): 뒤 배경과 대비가 있는 카드(흰 카드 on
+        # 회색 밴드 등)에는 보더를 추가하지 않는다 — author 의도 존중. **흰-on-흰(경계가 안
+        # 보이는 배치)만** border-primary 로 카드를 정의한다(시인성 = 정합성이라 유지).
+        tr, tg, tb, tok = BORDER1_R, BORDER1_G, BORDER1_B, "border-primary"
+        if (not is_root) and bg_behind_primary and _is_bg_primary(node) and _is_card_like(node) \
                 and not _stroke_matches(node, tr, tg, tb):
             try:
                 call_tool("set_stroke_color", {
@@ -4412,10 +4429,10 @@ def _enforce_white_card_border_live(root_node_id: str) -> int:
         print(f"  [white-card-border-live] root fetch fail: {e}")
 
     if fixed[0]:
-        print(f"  [white-card-border-live] ✓ bg-primary frame {fixed[0]}건 보더 강제 "
-              f"(뒤 배경 bg-primary→border-primary / 그 외→border-secondary)")
+        print(f"  [white-card-border-live] ✓ 흰-on-흰 카드 {fixed[0]}건 시인성 보더(border-primary) "
+              f"(대비 있는 카드는 author 의도 존중 — 미추가)")
     else:
-        print(f"  [white-card-border-live] OK — 모든 흰 카드에 이미 올바른 보더 있음")
+        print(f"  [white-card-border-live] OK — 흰-on-흰 시인성 보더 필요 카드 없음")
     return fixed[0]
 
 
@@ -4945,9 +4962,12 @@ def cmd_build(blueprint_file: str):
     original_blueprint = json.loads(json.dumps(blueprint))
 
     # Step E.0: ⚠️ archetype config reuse 검출 + _wireframeContent 의무 (2026-05-27 절대 룰 0-E)
+    #          + S24 컨셉 선언 게이트 + novelty 시그니처 비교 (2026-06-12 전면 개편)
     archetype_issues = _check_no_archetype_reuse(blueprint, blueprint_file)
     wc_required_issues = _check_wireframe_content_required(blueprint)
-    archetype_issues = archetype_issues + wc_required_issues
+    concept_issues = _check_concept_required(blueprint)
+    archetype_issues = archetype_issues + wc_required_issues + concept_issues
+    _novelty_check_and_warn(original_blueprint)
     if archetype_issues:
         print(f"\n[archetype-check] {len(archetype_issues)}건 발견:")
         for ai in archetype_issues:
@@ -5480,6 +5500,9 @@ def cmd_build(blueprint_file: str):
     #    블루프린트 json 파일은 자동 삭제 되도록 할 것! 코드로도 강제해"):
     #    빌드 성공(root_id 존재) 시 그 빌드에 쓴 blueprint/spec json 을 즉시 자동 삭제.
     if root_id:
+        # novelty 시그니처 저장 (2026-06-12 전면 개편) — 다음 생성의 '같음' 비교 기준.
+        # original_blueprint = $token 참조가 살아있는 사본 (resolve 전) — 시그니처에 적합.
+        _novelty_save(original_blueprint)
         _cleanup_build_input(blueprint_file)
 
 
@@ -10817,6 +10840,134 @@ def _check_wireframe_content_required(blueprint: dict) -> list:
     return issues
 
 
+# ── S24 컨셉 선언 게이트 + novelty 시그니처 (2026-06-12 전면 개편 — 사용자: "규칙과 코드
+#    강제로 수천 번 생성해도 거의 똑같아. 창의적으로 나오길 원해").
+#    S22(콘텐츠 재사용 차단)의 반대 방향 장치: 콘텐츠는 같아야 하고(0-E), 비주얼은 달라야 한다.
+_NOVELTY_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".novelty")
+
+
+def _check_concept_required(blueprint: dict) -> list:
+    """S24: imin_* archetype 빌드 시 root._concept {idea, diffs[≥3]} 선언 의무.
+
+    매 시안이 '이번 시안의 핵심 차별 아이디어'와 '직전 버전과 달라지는 점 3가지 이상'을
+    명시적으로 선언해야 빌드 통과 — 레퍼런스 Read 게이트(0-G)와 동일 철학으로, 모델이
+    이전 구조를 무의식적으로 복제하는 것을 차단한다. bypass: root._conceptSkipped: "<reason>"
+    (예: 사용자가 '그대로 다시' 요청한 재빌드 / 단순 수정 재빌드)."""
+    issues = []
+    root_name = (blueprint.get("name") or "").lower().replace(" ", "_")
+    archetype_prefixes = ("imin_home", "imin_account", "imin_lounge", "imin_stage",
+                          "imin_my", "imin_community", "imin_calc", "imin_invite",
+                          "imin_signup", "imin_active", "imin_done", "imin_schedule")
+    if not any(p in root_name for p in archetype_prefixes):
+        return issues
+    if blueprint.get("_conceptSkipped"):
+        return issues
+    c = blueprint.get("_concept")
+    if isinstance(c, dict):
+        idea = (c.get("idea") or "").strip()
+        diffs = [d for d in (c.get("diffs") or []) if str(d).strip()]
+        if idea and len(diffs) >= 3:
+            print(f"[S24-concept] ✓ 컨셉 선언: {idea[:60]} / 차별점 {len(diffs)}개")
+            return issues
+    issues.append(
+        "ERROR (S24): archetype 빌드인데 root._concept 누락. 이번 시안의 컨셉을 선언할 것 — "
+        '{"idea": "<핵심 차별 아이디어 1줄>", "diffs": ["직전 버전과 달라지는 점 3가지 이상"]}. '
+        "레퍼런스(0-G)를 보고 매 시안 새로 도출한 비주얼 가설을 적는다(형식 통과용 공허한 값 금지). "
+        "단순 재빌드/수정이면 root._conceptSkipped: \"<reason>\". (2026-06-12 룰 2계층)"
+    )
+    return issues
+
+
+def _novelty_key(blueprint: dict) -> str:
+    """root 이름에서 버전/날짜 접미사를 떼 화면(archetype) 단위 키 생성."""
+    name = (blueprint.get("name") or "screen").lower().strip()
+    name = re.sub(r"[_\-\s]*v\d+[a-z]?$", "", name)
+    name = re.sub(r"[_\-\s]*\d{6,8}[a-z]?(_.*)?$", "", name)
+    name = re.sub(r"[^a-z0-9]+", "_", name).strip("_")
+    return name or "screen"
+
+
+def _visual_signature(blueprint: dict) -> dict:
+    """비주얼 시그니처 — 콘텐츠(텍스트)는 빼고 시각 구조만: 루트 직계 섹션 순서 /
+    fill 토큰 분포 / radius 분포 / fontSize 분포."""
+    sig = {"sections": [], "fills": {}, "radii": {}, "sizes": {}}
+    for c in blueprint.get("children") or []:
+        if isinstance(c, dict):
+            sig["sections"].append((c.get("name") or "?").strip().lower())
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        f = n.get("fill")
+        if isinstance(f, str) and f.startswith("$token("):
+            sig["fills"][f] = sig["fills"].get(f, 0) + 1
+        r = n.get("cornerRadius")
+        if not isinstance(r, (int, float)):
+            r = n.get("topLeftRadius")
+        if isinstance(r, (int, float)) and r > 0:
+            k = str(int(min(r, 100)))
+            sig["radii"][k] = sig["radii"].get(k, 0) + 1
+        if (n.get("type") or "").lower() == "text":
+            fs = n.get("fontSize")
+            if isinstance(fs, (int, float)):
+                sig["sizes"][str(int(fs))] = sig["sizes"].get(str(int(fs)), 0) + 1
+        for ch in n.get("children") or []:
+            walk(ch)
+    walk(blueprint)
+    return sig
+
+
+def _signature_similarity(a: dict, b: dict) -> float:
+    """두 시그니처의 유사도 0..1 — 섹션 순서 35% + fill 분포 25% + radius 20% + fontSize 20%."""
+    def multiset_sim(x, y):
+        keys = set(x) | set(y)
+        if not keys:
+            return 1.0
+        inter = sum(min(x.get(k, 0), y.get(k, 0)) for k in keys)
+        union = sum(max(x.get(k, 0), y.get(k, 0)) for k in keys)
+        return (inter / union) if union else 1.0
+    sa, sb = a.get("sections") or [], b.get("sections") or []
+    same = sum(1 for p, q in zip(sa, sb) if p == q)
+    sec_sim = same / max(len(sa), len(sb), 1)
+    return (0.35 * sec_sim
+            + 0.25 * multiset_sim(a.get("fills") or {}, b.get("fills") or {})
+            + 0.20 * multiset_sim(a.get("radii") or {}, b.get("radii") or {})
+            + 0.20 * multiset_sim(a.get("sizes") or {}, b.get("sizes") or {}))
+
+
+def _novelty_check_and_warn(blueprint: dict) -> None:
+    """직전 빌드 시그니처와 비교 — 너무 같으면 WARN (차단 X, 사용자가 '그대로' 원할 수도)."""
+    try:
+        key = _novelty_key(blueprint)
+        p = os.path.join(_NOVELTY_DIR, key + ".json")
+        if not os.path.exists(p):
+            return
+        with open(p, encoding="utf-8") as fh:
+            prev = json.load(fh)
+        sim = _signature_similarity(prev.get("signature") or {}, _visual_signature(blueprint))
+        pct = round(sim * 100)
+        if sim >= 0.85:
+            print(f"[novelty-WARN] '{key}' 직전 빌드와 비주얼 시그니처 {pct}% 유사 — 레이아웃/표면/타이포가 "
+                  f"거의 같다. _concept 의 차별점이 실제 구조에 반영됐는지 재고 (의도된 동일 재빌드면 무시).")
+        else:
+            print(f"[novelty] ✓ '{key}' 직전 빌드 대비 시그니처 유사도 {pct}% — 새로움 확보")
+    except Exception:
+        pass
+
+
+def _novelty_save(blueprint: dict) -> None:
+    """빌드 성공 후 시그니처 저장 — 다음 생성의 novelty 비교 기준."""
+    try:
+        os.makedirs(_NOVELTY_DIR, exist_ok=True)
+        key = _novelty_key(blueprint)
+        with open(os.path.join(_NOVELTY_DIR, key + ".json"), "w", encoding="utf-8") as fh:
+            json.dump({"name": blueprint.get("name"), "signature": _visual_signature(blueprint),
+                       "concept": blueprint.get("_concept"), "ts": int(time.time())},
+                      fh, ensure_ascii=False)
+    except Exception:
+        pass
+
+
 def _check_no_archetype_reuse(blueprint: dict, blueprint_path: str) -> list:
     """⚠️ 와이어 콘텐츠 1:1 추출 의무 (2026-05-27 절대 룰 0-E).
 
@@ -12854,26 +13005,27 @@ def _enforce_no_large_brand_fill(blueprint: dict) -> None:
         # cornerRadius >= 12 인 카드형 + 자식 2개 이상  또는  자식 3개 이상
         return (radius >= 12 and children_count >= 2) or children_count >= 3
 
+    # 🔻 2026-06-12 advisory 로 강등 (전면 개편): 큰 brand 면을 강제로 흰카드+보더로 flip 하던
+    # 구 동작이 히어로 컬러 모먼트를 원천 차단 → 화면 수렴의 뿌리 중 하나. 이제 author 명시
+    # fill 을 존중하고 WARN 만 — 대비/가독성은 _qa_visual_checks(대비 QA)가 별도로 방어한다.
+    warned = []
+
     def walk(node):
         if not isinstance(node, dict):
             return
         ntype = node.get("type")
-        # _band:true (중요 섹션 풀폭 밴드, 규칙 13) 는 의도된 brand tint 면 — 스트립 예외
         if ntype in (None, "frame", "FRAME") and node.get("_band") is not True:
             fill = node.get("fill") or ""
             if isinstance(fill, str) and any(p in fill for p in BRAND_FILL_PARTS):
                 if is_large_container(node):
-                    node["fill"] = "$token(bg-primary)"
-                    if not node.get("stroke") and not node.get("strokeColor"):
-                        node["strokeColor"] = "$token(border-secondary)"
-                        node["strokeWeight"] = 1
-                    flipped[0] += 1
+                    warned.append(node.get("name") or "?")
         for c in node.get("children") or []:
             walk(c)
 
     walk(blueprint)
-    if flipped[0]:
-        print(f"[규칙] 큰 brand 카드 fill 교정 — {flipped[0]}건 bg-brand-* → bg-primary + border (2026-05-27 사용자 명시)")
+    if warned:
+        print(f"[스타일-기본값] 큰 brand 면 {len(warned)}건 — author 명시 존중(변경 안 함). "
+              f"의도된 히어로/강조 면이면 OK, 무의식적 brand 남발이면 재고: {', '.join(warned[:5])}")
 
 
 def _strip_large_brand_fills(root_id: str) -> int:
@@ -12949,17 +13101,12 @@ def _strip_large_brand_fills(root_id: str) -> int:
 
     fixed = 0
     WHITE = (0.988, 0.99, 0.992)
-    BORDER = (0.894, 0.906, 0.925)
+    # 🔻 2026-06-12 advisory 로 강등 (전면 개편): 라이브에서 brand 면을 흰카드로 벗기던 동작
+    # 중지 — author 의 히어로/강조 컬러 면을 존중한다. 가독성은 _auto_fix_invisible_text(대비
+    # 자동교정)와 _qa_visual_checks 가 별도 방어. WHITE/BORDER 상수는 구 동작 흔적(미사용).
+    _ = (WHITE, BORDER)
     for nid, name in targets:
-        try:
-            call_tool("set_fill_color", {"nodeId": nid, "r": WHITE[0], "g": WHITE[1], "b": WHITE[2], "a": 1})
-            call_tool("set_stroke_color", {
-                "nodeId": nid, "r": BORDER[0], "g": BORDER[1], "b": BORDER[2], "a": 1, "strokeWeight": 1
-            })
-            fixed += 1
-            print(f"    [no-large-brand] '{name}' → bg-primary + border (brand fill 제거)")
-        except Exception:
-            pass
+        print(f"    [스타일-기본값] 큰 brand 면 '{name}' — author 의도 존중(변경 안 함, 의도 확인만)")
     return fixed
 
 

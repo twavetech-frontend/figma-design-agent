@@ -1,16 +1,12 @@
-"""Regression tests for Step F frontend spec export wiring.
+"""Step F frontend spec export — 폐기 확인 테스트 (정책 반전 회귀 방지).
 
 Background:
-    2026-05-27 회귀: 2026-05-21 이후 모든 빌드에서 frontend spec JSON 추출이 안 됨.
-    원인: 메모리 `feedback_frontend_json_export` 는 "cmd_build Step F 가 자동 호출"
-    이라 박혀있었지만 실제 `cmd_build` 함수에는 호출 코드가 없었음. 메모리/코드
-    sync 깨짐.
-
-    Fix: `figma_mcp_client.py:_export_frontend_spec` 함수 추가 + `cmd_build` 끝부분에
-    호출 박음.
-
-    이 테스트는 코드에서 그 호출이 빠지면 즉시 검출 — 누군가 refactor 중 또
-    빼버리면 pytest 단계에서 빨간 줄.
+    (구) 2026-05-27: cmd_build Step F 가 _export_frontend_spec 을 호출해 json/ 에
+    frontend spec 을 추출해야 한다는 회귀 테스트였다.
+    (현) 2026-06-05 사용자: "디자인 생성되면 json 폴더에 json 생성되게 하는것도 삭제해.
+    생성할 필요없어졌어" → Step F·_export_frontend_spec **폐기**. CLAUDE.md '오래된 산출물
+    자동 정리' 블록에 문서화. 이 테스트는 방향을 뒤집어 **부활 회귀**(누가 다시 json/ spec
+    export 를 붙이는 것)를 검출한다.
 
 Run:
     python3 -m pytest scripts/tests/test_frontend_spec_export.py -v
@@ -28,70 +24,18 @@ if _SCRIPTS not in sys.path:
 import figma_mcp_client  # noqa: E402
 
 
-def test_export_frontend_spec_function_exists():
-    """_export_frontend_spec 함수가 모듈에 존재해야 한다."""
-    assert hasattr(figma_mcp_client, "_export_frontend_spec"), \
-        "figma_mcp_client._export_frontend_spec 누락 — Step F 회귀"
-    assert callable(figma_mcp_client._export_frontend_spec)
+def test_export_frontend_spec_removed():
+    """_export_frontend_spec 은 2026-06-05 폐기 — 모듈에 없어야 한다."""
+    assert not hasattr(figma_mcp_client, "_export_frontend_spec"), \
+        "_export_frontend_spec 부활 — 2026-06-05 사용자 폐기 지시 위반 (json/ spec 생성 금지)"
 
 
-def test_cmd_build_calls_export_frontend_spec():
-    """🔴 회귀 방지 — cmd_build 가 _export_frontend_spec 을 호출해야 한다.
+def test_cmd_build_does_not_call_export_frontend_spec():
+    """cmd_build 가 _export_frontend_spec 을 호출하지 않아야 한다 (Step F 폐기).
 
-    누가 cmd_build 에서 Step F 호출을 빼면 5/21~5/27 회귀가 재발.
-    """
+    주석에 함수명이 남는 건 허용 — 주석/문자열 아닌 '호출' 라인만 검출."""
     src = inspect.getsource(figma_mcp_client.cmd_build)
-    assert "_export_frontend_spec" in src, \
-        "cmd_build 에 _export_frontend_spec 호출 없음 — Step F 회귀 (메모리는 박혀있어도 코드에 없음)"
-
-
-def test_cmd_build_step_f_log_line():
-    """빌드 로그에 '[Step F]' 출력 라인 존재 — 사용자가 빌드 직후 시각 확인 가능."""
-    src = inspect.getsource(figma_mcp_client.cmd_build)
-    assert "Step F" in src, "Step F 로그 라인 누락 — 빌드 시 자동 추출 확인 불가"
-
-
-def test_gen_frontend_spec_script_exists():
-    """scripts/gen_frontend_spec.py 가 존재해야 _export_frontend_spec 이 작동."""
-    project_root = os.path.dirname(_SCRIPTS) if os.path.basename(_SCRIPTS) == "scripts" \
-        else _SCRIPTS
-    gen_script = os.path.join(_SCRIPTS, "gen_frontend_spec.py")
-    assert os.path.exists(gen_script), \
-        f"gen_frontend_spec.py 누락: {gen_script} — Step F 가 호출할 스크립트 없음"
-
-
-def test_export_function_uses_subprocess():
-    """_export_frontend_spec 은 subprocess 로 gen_frontend_spec.py 호출.
-
-    Inline import 가 아닌 subprocess 호출 보장 (스크립트 자체가 sys.argv 기반).
-    """
-    src = inspect.getsource(figma_mcp_client._export_frontend_spec)
-    assert "subprocess" in src, "_export_frontend_spec 이 subprocess 안 씀 — wiring 회귀"
-    assert "gen_frontend_spec" in src, "_export_frontend_spec 이 gen_frontend_spec 안 부름"
-
-
-def test_export_function_creates_json_dir():
-    """json/ 디렉토리 자동 생성 보장 (없으면 makedirs)."""
-    src = inspect.getsource(figma_mcp_client._export_frontend_spec)
-    assert "makedirs" in src or "mkdir" in src, \
-        "_export_frontend_spec 이 json/ 디렉토리 보장 안 함 — 첫 빌드 실패 가능"
-
-
-def test_export_function_handles_failure_gracefully():
-    """추출 실패해도 빌드 자체는 계속돼야 함 (except 또는 try)."""
-    src = inspect.getsource(figma_mcp_client.cmd_build)
-    # cmd_build 가 _export_frontend_spec 호출 시 try/except 로 감싸는지
-    assert "_export_frontend_spec" in src
-    # Step F 호출이 try 블록 안에 있어야 빌드 영향 없음
-    lines = src.split("\n")
-    in_try = False
-    found_call_in_try = False
-    for ln in lines:
-        if "try:" in ln:
-            in_try = True
-        if "_export_frontend_spec" in ln and "def " not in ln:
-            if in_try:
-                found_call_in_try = True
-        if ln.strip().startswith("except"):
-            in_try = False
-    assert found_call_in_try, "_export_frontend_spec 호출이 try 블록 밖 — 실패 시 빌드 abort 가능"
+    calls = [ln for ln in src.split("\n")
+             if "_export_frontend_spec" in ln.split("#", 1)[0]]
+    assert not calls, \
+        f"cmd_build 에 _export_frontend_spec 호출 부활 — 2026-06-05 폐기 정책 위반: {calls}"

@@ -86,7 +86,8 @@ def test_lint_warns_non_band_important(capsys):
     ]}
     fc._enforce_section_band(bp)
     out = capsys.readouterr().out
-    assert "규칙13-WARN" in out
+    # 🔻 2026-06-12 룰 2계층: lint 는 WARN → INFO 강등 (밴드는 강조의 한 수단)
+    assert "규칙13-INFO" in out
     assert "Stage Status Section" in out
     assert "Total Summary Ribbon" not in out  # ribbon/summary 제외
 
@@ -95,7 +96,7 @@ def test_lint_silent_when_banded(capsys):
     bp = _home_bp()
     fc._enforce_section_band(bp)
     out = capsys.readouterr().out
-    assert "규칙13-WARN" not in out  # 전부 _band 라 경고 없음
+    assert "규칙13-INFO" not in out  # 전부 _band 라 안내 없음
 
 
 def test_non_home_no_lint(capsys):
@@ -104,7 +105,7 @@ def test_non_home_no_lint(capsys):
                         "children": [{"name": "x", "type": "text"}]}]}
     fc._enforce_section_band(bp)
     out = capsys.readouterr().out
-    assert "규칙13-WARN" not in out  # 홈 화면 아님 → lint 비대상
+    assert "규칙13-INFO" not in out  # 홈 화면 아님 → lint 비대상
 
 
 # ── 규칙 13-B: 홈 Content 섹션 gap = spacing-2xl(20) ────────────
@@ -116,8 +117,17 @@ def _home_content_bp(gap):
                  "children": [{"name": "A", "type": "frame", "children": []}]}]}
 
 
-def test_home_content_gap_corrected_to_20():
-    bp = _home_content_bp(32)  # spacing-4xl → spacing-2xl
+def test_home_content_gap_explicit_respected():
+    # 🔻 2026-06-12 fill-in-only 강등: author 명시 gap(32)은 존중 — 변경하지 않는다(WARN만)
+    bp = _home_content_bp(32)
+    fc._enforce_home_content_gap(bp)
+    assert bp["children"][0]["autoLayout"]["itemSpacing"] == 32
+
+
+def test_home_content_gap_filled_when_missing():
+    # 미지정(None)일 때만 기본값 20(spacing-2xl)을 채운다
+    bp = _home_content_bp(None)
+    del bp["children"][0]["autoLayout"]["itemSpacing"]
     fc._enforce_home_content_gap(bp)
     assert bp["children"][0]["autoLayout"]["itemSpacing"] == 20
 
