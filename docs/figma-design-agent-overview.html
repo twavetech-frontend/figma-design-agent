@@ -248,8 +248,16 @@ code,.mono{font-family:var(--font-mono)}
 <!-- 03 · 런타임 아키텍처 -->
 <section class="slide">
   <div class="rv eyebrow"><span class="rule"></span>01 · 런타임 아키텍처</div>
-  <h2 class="rv">Electron 이 아니라 <span class="accent">CLI 파이프라인</span></h2>
-  <p class="rv lede" style="margin-bottom:30px">네 개의 프로세스가 WebSocket / HTTP 로 이어집니다. 유일한 수동 단계는 Figma 데스크톱에서 플러그인을 켜는 것뿐.</p>
+  <h2 class="rv">데스크톱 앱이 아니라 <span class="accent">CLI 위의 Claude Code</span></h2>
+  <p class="rv lede" style="margin-bottom:18px">이 도구의 본체는 화면이 아니라 <b>판단</b>입니다 — 기획을 읽고, 레퍼런스를 보고, 규칙을 지켜 그리는 일.
+  판단은 프런티어 에이전트에게 맡기고, 우리는 <b>규칙과 파이프라인만</b> 코드로 쌓습니다. GUI 가 필요한 곳은 결과물이 사는 Figma 뿐 — 그 사이에 앱을 하나 더 끼울 이유가 없습니다.</p>
+  <div class="rv grid cols4" style="margin-bottom:22px">
+    <div class="card" style="padding:16px 18px"><span class="k">WHY 01</span><h4 style="font-size:14.5px;margin-top:6px">에이전트 런타임을 공짜로</h4><p style="font-size:12.5px">기획 통독, 와이어·레퍼런스·QA 스크린샷의 <b>이미지 이해</b>, 멀티스텝 자가검증 — 전부 에이전트 하네스가 필요한 일. 직접 앱을 만들면 이걸 통째로 재구현해야 하지만, Claude Code 가 이미 그 자체입니다.</p></div>
+    <div class="card" style="padding:16px 18px"><span class="k">WHY 02</span><h4 style="font-size:14.5px;margin-top:6px">앱 만들 시간에 룰을 만든다</h4><p style="font-size:12.5px">UI·패키징·코드사이닝·업데이트 서버 비용이 <b>0</b>. 같은 시간이 40+ 디자인 룰과 하드 게이트에 들어갔습니다. 결과물 품질을 만드는 건 앱 화면이 아니라 <b>규칙의 밀도</b>입니다.</p></div>
+    <div class="card" style="padding:16px 18px"><span class="k">WHY 03</span><h4 style="font-size:14.5px;margin-top:6px">모델이 좋아지면 도구도 좋아진다</h4><p style="font-size:12.5px">추론·이미지 이해 성능이 모델 업그레이드로 계속 오릅니다. 재배포·재설치 없이 <b>다음날 더 똑똑해지는</b> 도구 — 자체 앱이면 모델 연동부터 다시 짜야 할 변화입니다.</p></div>
+    <div class="card" style="padding:16px 18px"><span class="k">WHY 04</span><h4 style="font-size:14.5px;margin-top:6px">규칙이 곧 저장소</h4><p style="font-size:12.5px">CLAUDE.md·룰 코드·메모리가 git 으로 버전 관리됩니다. 디자이너 피드백 한 건 = 커밋 한 번 = <b>모든 세션·모든 PC 에 즉시 적용</b>. GUI 설정창으로는 담을 수 없는 방식입니다.</p></div>
+  </div>
+  <p class="rv" style="margin-bottom:10px;font:700 12px/1 var(--font-mono);color:var(--text-tertiary);letter-spacing:.06em">PIPELINE — 네 개의 프로세스, 유일한 수동 단계는 Figma 에서 플러그인을 켜는 것뿐</p>
   <div class="rv flow">
     <div class="fnode hot"><span class="tag">진입점</span><b>Claude Code CLI</b><span>요구사항 해석 · AI 오케스트레이션 · 규칙 준수 판단</span></div>
     <div class="farrow">→</div>
@@ -261,7 +269,7 @@ code,.mono{font-family:var(--font-mono)}
     <div class="farrow">→</div>
     <div class="fnode" style="background:var(--bg-brand-primary);border-color:var(--bg-brand-solid)"><span class="tag">결과</span><b>Figma 파일</b><span>DS 변수·텍스트 스타일이 바인딩된 화면</span></div>
   </div>
-  <p class="rv" style="margin-top:26px;font:500 12.5px/1.6 var(--font-mono);color:var(--text-tertiary)">DS 토큰은 브리지 기동 시 design-system 레포에서 자동 sync — 토큰 최신성은 git 과 무관하게 보장</p>
+  <p class="rv" style="margin-top:16px;font:500 12.5px/1.6 var(--font-mono);color:var(--text-tertiary)">DS 토큰은 브리지 기동 시 design-system 레포에서 자동 sync — 토큰 최신성은 git 과 무관하게 보장</p>
 </section>
 
 <!-- 04 · 레포 구조 -->
