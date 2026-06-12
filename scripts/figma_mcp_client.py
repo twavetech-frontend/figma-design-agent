@@ -8228,15 +8228,31 @@ def _swap_tool_bar_icons(toolbar_id: str, icons: List[str]) -> int:
             print(f"  [tool-bar] 서브트리 수집 실패: {e}")
             return None
 
+    def _button_children(kids):
+        """Right Buttons 직계의 버튼 노드 — 구버전: 'button N' FRAME / 신버전(2026-06-12
+        DS 업데이트): '_button_type' INSTANCE (frame 래퍼 없이 바로)."""
+        out = []
+        for k in kids or []:
+            nm = (k.get("name") or "").lower()
+            t = (k.get("type") or "").upper()
+            if t == "FRAME" and nm.startswith("button"):
+                out.append(k)
+            elif t == "INSTANCE" and "_button" in nm and "type" in nm:
+                out.append(k)
+        return out
+
     def _find_right_buttons(node):
-        """Right Buttons (_button top sets) 인스턴스 — 'button N' 자식 frame 을 가진 INSTANCE."""
+        """Right Buttons (_button top sets) 인스턴스 — 이름 매칭 우선(empty 상태 포함),
+        폴백으로 버튼 자식 구조 매칭."""
         if not isinstance(node, dict):
             return None
         if (node.get("type") or "").upper() == "INSTANCE":
-            kids = node.get("children") or []
-            btns = [k for k in kids if (k.get("name") or "").lower().startswith("button")]
-            if btns:
-                return node
+            nm = (node.get("name") or "").lower()
+            if "back" not in nm and "logo" not in nm:
+                if "right buttons" in nm or "button top sets" in nm:
+                    return node
+                if _button_children(node.get("children")):
+                    return node
         for ch in node.get("children") or []:
             r = _find_right_buttons(ch)
             if r is not None:
@@ -8275,7 +8291,7 @@ def _swap_tool_bar_icons(toolbar_id: str, icons: List[str]) -> int:
 
     # 1) 아이콘 개수에 맞춰 Type variant flip (empty / 1 button / 2 button) — flip 후
     #    내부 id 가 바뀌므로 재수집
-    cur_btns = [k for k in rb.get("children") or [] if (k.get("name") or "").lower().startswith("button")]
+    cur_btns = _button_children(rb.get("children"))
     if len(icons) != len(cur_btns):
         if _flip_right_type(rb["id"], len(icons)):
             if not icons:
@@ -8296,17 +8312,23 @@ def _swap_tool_bar_icons(toolbar_id: str, icons: List[str]) -> int:
         return int(digits) if digits else 0
 
     def _find_icon_instance(btn):
-        """button frame → _button type INSTANCE → 첫 INSTANCE 자식 (아이콘)."""
+        """버튼 노드 → 아이콘 INSTANCE. 신버전: btn 자체가 '_button_type' INSTANCE →
+        첫 INSTANCE 자식이 아이콘. 구버전: 'button N' FRAME → '_button type' INSTANCE →
+        첫 INSTANCE 자식."""
+        if (btn.get("type") or "").upper() == "INSTANCE":
+            for g in btn.get("children") or []:
+                if (g.get("type") or "").upper() == "INSTANCE":
+                    return g
+            return btn  # 아이콘이 바로 박힌 변형 폴백
         for ch in btn.get("children") or []:
             if (ch.get("type") or "").upper() == "INSTANCE":
                 for g in ch.get("children") or []:
                     if (g.get("type") or "").upper() == "INSTANCE":
                         return g
-                return ch  # 아이콘이 바로 박힌 변형 폴백
+                return ch
         return None
 
-    btns = sorted([k for k in rb.get("children") or []
-                   if (k.get("name") or "").lower().startswith("button")], key=_btn_no)
+    btns = sorted(_button_children(rb.get("children")), key=_btn_no)
     done = 0
     for i, icon_name in enumerate(icons):
         if i >= len(btns):
