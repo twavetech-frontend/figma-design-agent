@@ -1378,7 +1378,12 @@ def _auto_search_uibowl_references(blueprint: dict) -> None:
         # (2026-06-08 근본 원인: 빌드 출력을 tail/grep 으로 필터해 Step A.0 의 reference 프롬프트를
         #  통째로 못 봐 0-G 를 매번 빠뜨렸다 → 끝에서 다시 띄운다.)
         global _LAST_REFERENCE_THUMBS, _LAST_REFERENCE_LABEL
-        _LAST_REFERENCE_THUMBS = [r["thumbPath"] for r in refs]
+        # 🔴 영상(mp4 등)은 Read 도구로 열 수 없어 게이트 필수 대상에서 제외 (2026-06-12 게이트 버그
+        # 수정: ref_search 가 video 레퍼런스의 thumbPath 로 원본 mp4 경로를 그대로 줘 빌드가
+        # 영구 차단되던 회귀). 이미지 썸네일만 Read 강제.
+        _IMG_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+        _LAST_REFERENCE_THUMBS = [r["thumbPath"] for r in refs
+                                  if str(r.get("thumbPath", "")).lower().endswith(_IMG_EXTS)]
         _LAST_REFERENCE_LABEL = label
         print(f"\n📚 [Step A.0] references/uibowl 자동 검색 — {label}")
         if fallback_note:
