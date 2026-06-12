@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Figma Design Agent — 구조 · 프로세스 · 디자인 생성</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ───────────────────────────────────────────────────────────
+   Imin Design System tokens (ds/DESIGN_TOKENS.md 실측값)
+   ─────────────────────────────────────────────────────────── */
+:root{
+  --bg-primary:#fcfcfd;
+  --bg-secondary:#f3f4f6;
+  --bg-tertiary:#e6e8ea;
+  --bg-brand-primary:#f4ecff;
+  --bg-brand-solid:#7700ff;
+  --bg-brand-solid-hover:#6a00e0;
+  --bg-primary-solid:#2c3744;
+  --text-primary:#2c3744;
+  --text-secondary:#687079;
+  --text-tertiary:#b1b6be;
+  --text-brand-primary:#7700ff;
+  --text-brand-secondary:#9b55ff;
+  --text-on-brand:#ffffff;
+  --border-primary:#d2d6db;
+  --border-secondary:#e6e8ea;
+  --utility-yellow:#f2a000;
+  --aqua-600:#009eaa;
+  /* status-ribbon dot-grid 브랜드 마크 실측 RGB */
+  --dot-pink:#fb7185; --dot-teal:#2dd4bf; --dot-indigo:#818cf8; --dot-gray:#9ca3af;
+  --radius-lg:12px; --radius-2xl:16px; --radius-3xl:20px;
+  --font-sans:"Pretendard Variable",Pretendard,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:var(--font-sans);
+  background:var(--bg-primary);
+  color:var(--text-primary);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── deck chrome ─────────────────────────────────────────── */
+.deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+.slide{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(32px,6vw,96px) clamp(28px,8vw,120px);
+  opacity:0;visibility:hidden;
+  transform:translateX(48px);
+  transition:opacity .45s cubic-bezier(.22,1,.36,1),transform .45s cubic-bezier(.22,1,.36,1),visibility 0s .45s;
+}
+.slide.active{opacity:1;visibility:visible;transform:translateX(0);transition-delay:0s}
+.slide.prev{transform:translateX(-48px)}
+.slide.band{background:var(--bg-secondary)}
+.slide.ink{background:var(--bg-primary-solid);color:#fff}
+
+/* staggered reveal */
+.rv{opacity:0;transform:translateY(18px)}
+.slide.active .rv{animation:rise .6s cubic-bezier(.22,1,.36,1) forwards}
+.slide.active .rv:nth-child(1){animation-delay:.05s}
+.slide.active .rv:nth-child(2){animation-delay:.13s}
+.slide.active .rv:nth-child(3){animation-delay:.21s}
+.slide.active .rv:nth-child(4){animation-delay:.29s}
+.slide.active .rv:nth-child(5){animation-delay:.37s}
+.slide.active .rv:nth-child(6){animation-delay:.45s}
+.slide.active .rv:nth-child(7){animation-delay:.53s}
+@keyframes rise{to{opacity:1;transform:translateY(0)}}
+
+/* ── typography ──────────────────────────────────────────── */
+.eyebrow{
+  display:flex;align-items:center;gap:12px;
+  font:600 13px/1 var(--font-mono);
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text-brand-primary);margin-bottom:28px;
+}
+.ink .eyebrow{color:var(--text-brand-secondary)}
+.eyebrow .rule{flex:0 0 36px;height:1px;background:currentColor;opacity:.5}
+h1{font-weight:900;font-size:clamp(40px,6.4vw,92px);line-height:1.06;letter-spacing:-.03em}
+h2{font-weight:800;font-size:clamp(30px,4.2vw,56px);line-height:1.12;letter-spacing:-.025em;margin-bottom:20px}
+.lede{font-size:clamp(15px,1.5vw,19px);line-height:1.65;color:var(--text-secondary);max-width:62ch}
+.ink .lede{color:#b6bec9}
+.accent{color:var(--text-brand-primary)}
+.ink .accent{color:var(--text-brand-secondary)}
+mark{background:var(--bg-brand-primary);color:var(--text-brand-primary);padding:0 .25em;border-radius:4px}
+
+/* ── dot-grid brand mark (status ribbon 마크) ────────────── */
+.dots{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;width:26px;height:26px}
+.dots i{border-radius:50%}
+.dots i:nth-child(1){background:var(--dot-pink)}
+.dots i:nth-child(2){background:var(--dot-teal)}
+.dots i:nth-child(3){background:var(--dot-indigo)}
+.dots i:nth-child(4){background:var(--dot-gray)}
+
+/* ── cards / chips / mono ────────────────────────────────── */
+.grid{display:grid;gap:14px}
+.cols2{grid-template-columns:repeat(2,1fr)}
+.cols3{grid-template-columns:repeat(3,1fr)}
+.cols4{grid-template-columns:repeat(4,1fr)}
+.card{
+  background:var(--bg-primary);
+  border:1px solid var(--border-primary);
+  border-radius:var(--radius-2xl);
+  padding:20px 22px;
+}
+.band .card{border-color:var(--border-secondary)}
+.card h4{font-size:16px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.card p{font-size:13.5px;line-height:1.6;color:var(--text-secondary)}
+.card .k{font:600 11px/1 var(--font-mono);color:var(--text-brand-primary);letter-spacing:.06em}
+.chip{
+  display:inline-block;font:600 12px/1 var(--font-mono);
+  background:var(--bg-brand-primary);color:var(--text-brand-primary);
+  border-radius:999px;padding:6px 12px;margin:0 6px 6px 0;
+}
+.chip.gray{background:var(--bg-tertiary);color:var(--text-secondary)}
+code,.mono{font-family:var(--font-mono)}
+.codeblock{
+  background:var(--bg-primary-solid);color:#dde3ea;
+  border-radius:var(--radius-2xl);padding:22px 26px;
+  font:400 12.5px/1.75 var(--font-mono);
+  overflow:auto;box-shadow:0 12px 40px rgba(44,55,68,.18);
+}
+.codeblock .c{color:#7a8694}.codeblock .g{color:#2dd4bf}.codeblock .p{color:#b685ff}.codeblock .y{color:#f2a000}
+
+/* ── pipeline diagram ────────────────────────────────────── */
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+.fnode{
+  background:var(--bg-primary);border:1.5px solid var(--border-primary);
+  border-radius:var(--radius-2xl);padding:16px 18px;min-width:130px;flex:1;
+  position:relative;
+}
+.fnode b{display:block;font-size:14.5px;font-weight:800;margin-bottom:4px}
+.fnode span{font-size:11.5px;color:var(--text-secondary);line-height:1.5;display:block}
+.fnode .tag{font:600 10px/1 var(--font-mono);color:var(--text-brand-primary);letter-spacing:.08em;display:block;margin-bottom:7px}
+.fnode.hot{border-color:var(--bg-brand-solid);box-shadow:0 6px 24px rgba(119,0,255,.12)}
+.farrow{
+  flex:0 0 34px;display:flex;align-items:center;justify-content:center;
+  color:var(--text-tertiary);font-size:18px;
+}
+/* vertical step list */
+.steps{display:flex;flex-direction:column;gap:0;counter-reset:st}
+.step{
+  display:grid;grid-template-columns:54px 1fr;gap:18px;align-items:start;
+  padding:13px 0;border-bottom:1px solid var(--border-secondary);
+}
+.step:last-child{border-bottom:none}
+.step .no{
+  font:800 13px/30px var(--font-mono);text-align:center;
+  width:42px;height:30px;border-radius:8px;
+  background:var(--bg-brand-primary);color:var(--text-brand-primary);
+}
+.step.dim .no{background:var(--bg-tertiary);color:var(--text-secondary)}
+.step b{font-size:15px;font-weight:800}
+.step p{font-size:13px;color:var(--text-secondary);line-height:1.55;margin-top:2px}
+
+/* repo tree */
+.tree{font:400 13px/1.9 var(--font-mono);color:var(--text-secondary)}
+.tree b{color:var(--text-primary);font-weight:600}
+.tree .hl{color:var(--text-brand-primary);font-weight:600}
+
+/* token swatch row */
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.sw{border-radius:var(--radius-lg);border:1px solid var(--border-secondary);overflow:hidden;background:var(--bg-primary)}
+.sw .c{height:54px}
+.sw .l{padding:9px 11px;font:600 10.5px/1.5 var(--font-mono);color:var(--text-secondary)}
+.sw .l b{display:block;color:var(--text-primary);font-size:11px}
+
+/* gate slide */
+.gate{
+  border-left:4px solid var(--bg-brand-solid);
+  background:var(--bg-primary);border-radius:0 var(--radius-2xl) var(--radius-2xl) 0;
+  padding:20px 24px;border-top:1px solid var(--border-secondary);
+  border-right:1px solid var(--border-secondary);border-bottom:1px solid var(--border-secondary);
+}
+.gate h4{font-size:16.5px;font-weight:800;margin-bottom:6px}
+.gate p{font-size:13.5px;color:var(--text-secondary);line-height:1.6}
+.gate .mono-sm{font:600 11px/1 var(--font-mono);color:var(--text-brand-primary);display:block;margin-top:10px}
+
+/* ── chrome: nav ─────────────────────────────────────────── */
+.hud{
+  position:fixed;left:0;right:0;bottom:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px clamp(28px,8vw,120px);pointer-events:none;
+}
+.hud .brand{display:flex;align-items:center;gap:10px;font:600 12px/1 var(--font-mono);color:var(--text-tertiary);letter-spacing:.08em}
+.hud .brand .dots{width:18px;height:18px;gap:3px}
+.navdots{display:flex;gap:8px;pointer-events:auto}
+.navdots button{
+  width:8px;height:8px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--bg-tertiary);transition:all .25s;padding:0;
+}
+.navdots button.on{background:var(--bg-brand-solid);transform:scale(1.35)}
+.counter{font:600 12px/1 var(--font-mono);color:var(--text-tertiary);letter-spacing:.1em}
+.counter b{color:var(--text-primary)}
+.arrows{position:fixed;right:clamp(28px,8vw,120px);top:24px;z-index:10;display:flex;gap:8px}
+.arrows button{
+  width:40px;height:40px;border-radius:12px;cursor:pointer;
+  border:1px solid var(--border-primary);background:var(--bg-primary);
+  color:var(--text-primary);font-size:15px;transition:all .2s;
+}
+.arrows button:hover{background:var(--bg-brand-solid);border-color:var(--bg-brand-solid);color:#fff}
+.progress{position:fixed;top:0;left:0;height:3px;background:var(--bg-brand-solid);z-index:11;transition:width .45s cubic-bezier(.22,1,.36,1)}
+.keyhint{position:fixed;top:34px;left:clamp(28px,8vw,120px);z-index:10;font:500 11px/1 var(--font-mono);color:var(--text-tertiary);letter-spacing:.06em}
+
+@media(max-width:860px){
+  .cols2,.cols3,.cols4{grid-template-columns:1fr}
+  .swatches{grid-template-columns:repeat(3,1fr)}
+  .flow{flex-direction:column}
+  .farrow{transform:rotate(90deg);flex-basis:22px}
+  .slide{overflow-y:auto;justify-content:flex-start;padding-top:72px}
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="keyhint">← → · space · 클릭으로 넘기기</div>
+<div class="arrows"><button id="prevBtn" aria-label="이전">←</button><button id="nextBtn" aria-label="다음">→</button></div>
+
+<main class="deck" id="deck">
+
+<!-- 01 · 타이틀 -->
+<section class="slide active">
+  <div class="rv eyebrow"><span class="dots"><i></i><i></i><i></i><i></i></span><span class="rule"></span>FIGMA DESIGN AGENT</div>
+  <h1 class="rv">피그마 디자인 <span class="accent">오토 빌더</span>를<br>소개합니다</h1>
+  <p class="rv lede" style="margin-top:26px">AI 기반 Figma 디자인 생성 도구의 구조 · 프로세스 · 생성 원리.<br>
+  Claude Code CLI 가 기획을 읽고, 레퍼런스를 학습하고, Imin 디자인 시스템 토큰으로 화면을 빌드합니다.</p>
+  <div class="rv" style="margin-top:36px">
+    <span class="chip">Claude Code CLI</span><span class="chip gray">Python 파이프라인</span><span class="chip gray">Node 브리지</span><span class="chip gray">Figma 플러그인</span><span class="chip">Imin Design System</span>
+  </div>
+</section>
+
+<!-- 02 · 한 문장 요약 -->
+<section class="slide band">
+  <div class="rv eyebrow"><span class="rule"></span>00 · 한눈에</div>
+  <h2 class="rv">디자이너처럼 일하는 <span class="accent">규칙 엔진</span></h2>
+  <p class="rv lede">단순 생성기가 아닙니다. <b>기획 문서 통독 → 와이어 콘텐츠 1:1 추출 → 레퍼런스 시각 학습 → 창의적 재해석 → 빌드 → 자가 검증</b>의 전 과정을 시스템이 하드 게이트로 강제합니다. 모델이 단계를 건너뛰면 빌드가 차단됩니다.</p>
+  <div class="rv grid cols3" style="margin-top:34px">
+    <div class="card"><span class="k">FIXED</span><h4>콘텐츠</h4><p>와이어프레임의 텍스트·숫자·카운트는 1:1 로 고정. 더미 데이터 금지.</p></div>
+    <div class="card"><span class="k">FIXED</span><h4>하드 품질 룰</h4><p>40+ 절대 규칙(루트 배경·밴드·타이포 위계·DS 컴포넌트 색 보존)을 코드가 강제.</p></div>
+    <div class="card" style="border-color:var(--bg-brand-solid)"><span class="k">FREE</span><h4>비주얼</h4><p>레이아웃·시각 위계·액센트 리듬은 매 세션 레퍼런스를 보고 새로 판단.</p></div>
+  </div>
+</section>
+
+<!-- 03 · 런타임 아키텍처 -->
+<section class="slide">
+  <div class="rv eyebrow"><span class="rule"></span>01 · 런타임 아키텍처</div>
+  <h2 class="rv">Electron 이 아니라 <span class="accent">CLI 파이프라인</span></h2>
+  <p class="rv lede" style="margin-bottom:30px">네 개의 프로세스가 WebSocket / HTTP 로 이어집니다. 유일한 수동 단계는 Figma 데스크톱에서 플러그인을 켜는 것뿐.</p>
+  <div class="rv flow">
+    <div class="fnode hot"><span class="tag">진입점</span><b>Claude Code CLI</b><span>요구사항 해석 · AI 오케스트레이션 · 규칙 준수 판단</span></div>
+    <div class="farrow">→</div>
+    <div class="fnode"><span class="tag">scripts/figma_mcp_client.py</span><b>Python 클라이언트</b><span>빌드 파이프라인 · 검증 · 조립 · post-fix · 자가검증</span></div>
+    <div class="farrow">→</div>
+    <div class="fnode"><span class="tag">out/bridge/index.js</span><b>Node 브리지</b><span>WS :8767 (플러그인) + HTTP MCP :8769 (클라이언트) · 58+ MCP 도구</span></div>
+    <div class="farrow">→</div>
+    <div class="fnode"><span class="tag">src/figma-plugin/code.js</span><b>Figma 플러그인</b><span>Figma 데스크톱 안에서 실행 · 노드 생성/수정 실행자</span></div>
+    <div class="farrow">→</div>
+    <div class="fnode" style="background:var(--bg-brand-primary);border-color:var(--bg-brand-solid)"><span class="tag">결과</span><b>Figma 파일</b><span>DS 변수·텍스트 스타일이 바인딩된 화면</span></div>
+  </div>
+  <p class="rv" style="margin-top:26px;font:500 12.5px/1.6 var(--font-mono);color:var(--text-tertiary)">DS 토큰은 브리지 기동 시 design-system 레포에서 자동 sync — 토큰 최신성은 git 과 무관하게 보장</p>
+</section>
+
+<!-- 04 · 레포 구조 -->
+<section class="slide band">
+  <div class="rv eyebrow"><span class="rule"></span>02 · 레포 구조</div>
+  <h2 class="rv">어디에 무엇이 있나</h2>
+  <div class="rv grid cols2" style="margin-top:10px;align-items:start">
+    <div class="card"><div class="tree">
+<b>figma-design-agent/</b><br>
+├─ <span class="hl">scripts/figma_mcp_client.py</span> &nbsp;빌드 파이프라인 (13k+ 줄)<br>
+├─ scripts/design_rules/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;룰 엔진 R-시리즈<br>
+├─ scripts/hooks/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;통독·레퍼런스 커버리지 훅<br>
+├─ scripts/tests/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;회귀 테스트<br>
+├─ <b>src/bridge/</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;브리지 진입점 (Node)<br>
+├─ <b>src/main/</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WS 서버 · MCP 도구 · Yoga 시뮬레이터<br>
+├─ <b>src/figma-plugin/</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;플러그인 code.js<br>
+├─ <b>src/기획/</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;36개 유스케이스 기획 HTML<br>
+└─ <b>ds/</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;토큰·컴포넌트 맵 (자동 sync)
+    </div></div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card"><h4><span class="dots" style="width:16px;height:16px;gap:3px"><i></i><i></i><i></i><i></i></span> ds/ 는 산출물</h4><p><code>TOKEN_MAP.json</code> · <code>DESIGN_TOKENS.md</code> · <code>TEXT_STYLE_MAP.json</code> 은 design-system 레포에서 자동 동기화. 사람이 커밋하지 않습니다.</p></div>
+      <div class="card"><h4>⚙️ design_rules/</h4><p>R23(컴포넌트 스왑) · R59(타이틀 정렬) · R60(탭 인스턴스) · R63(섹션 차별화) 등 — 각 룰이 lint→inject→post-fix→verify 4단을 가짐.</p></div>
+      <div class="card"><h4>🧹 산출물 수명주기</h4><p>blueprint json 은 빌드 직후 자동 삭제, QA 스크린샷·레퍼런스 썸네일은 작업 종료 시 정리, 나머지는 7일 TTL.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 · 디자인 생성 프로세스 -->
+<section class="slide">
+  <div class="rv eyebrow"><span class="rule"></span>03 · 디자인 생성 프로세스</div>
+  <h2 class="rv">"메인화면 그려" 한마디가 <span class="accent">화면이 되기까지</span></h2>
+  <div class="rv steps" style="margin-top:18px;max-width:880px">
+    <div class="step"><span class="no">01</span><div><b>기획 전체 학습 + 통독</b><p>src/기획/ 36개 UC → digest 생성 → 모델이 끝까지 Read → 맨 끝 토큰으로 ack. 안 하면 빌드 차단.</p></div></div>
+    <div class="step"><span class="no">02</span><div><b>와이어 콘텐츠 1:1 추출</b><p>피그마에서 와이어 export + 텍스트 스캔 → 모든 텍스트·숫자·카운트를 <code class="mono">_wireframeContent</code> dict 로 캡처.</p></div></div>
+    <div class="step"><span class="no">03</span><div><b>레퍼런스 시각 학습</b><p>archetype 기반 uibowl 검색(토스·카카오페이…) → 썸네일 6장을 실제로 Read → 이번 세션의 비주얼 방향 결정.</p></div></div>
+    <div class="step"><span class="no">04</span><div><b>Blueprint 작성</b><p>레퍼런스에서 본 패턴으로 JSON 명세를 새로 작성. 콘텐츠는 고정, 레이아웃·액센트는 자유.</p></div></div>
+    <div class="step"><span class="no">05</span><div><b>build — 40+ 룰 파이프라인</b><p>lint → inject → batch_build → post-fix → 토큰 바인딩 → verify. 다음 슬라이드에서 상세.</p></div></div>
+    <div class="step"><span class="no">06</span><div><b>Self-verify + 정리</b><p>섹션별 스크린샷 재export·Read → 체크리스트 12항목 → 결함 live-fix → cleanup-qa.</p></div></div>
+  </div>
+</section>
+
+<!-- 06 · 하드 게이트 -->
+<section class="slide band">
+  <div class="rv eyebrow"><span class="rule"></span>04 · 하드 게이트</div>
+  <h2 class="rv">모델을 믿지 않는다,<br><span class="accent">코드가 강제한다</span></h2>
+  <p class="rv lede" style="margin-bottom:28px">프로세스는 2층입니다 — 코드가 실행하는 단계와 모델이 자율로 하는 단계. 자율 단계는 조용히 건너뛰어질 수 있어, 훅이 커버리지를 추적하고 게이트가 빌드를 차단합니다.</p>
+  <div class="rv grid cols3">
+    <div class="gate"><h4>📚 기획 통독 게이트</h4><p>digest 맨 끝에만 있는 토큰으로 ack — 끝까지 읽어야만 통과. 문서 변경 시 fingerprint 가 ack 를 무효화.</p><span class="mono-sm">_enforce_planning_read_gate · exit 2</span></div>
+    <div class="gate"><h4>🖼 레퍼런스 Read 게이트</h4><p>Step A.0 이 검색한 썸네일을 이 세션에서 Read 했는지 PostToolUse 훅 기록으로 검증. 미Read 시 빌드 차단.</p><span class="mono-sm">_enforce_reference_read_gate · 0-G</span></div>
+    <div class="gate"><h4>📸 Self-verify 게이트</h4><p>빌드가 export 한 QA 섹션을 재export+Read 하고 체크리스트를 채웠는지 검증 — 미완료 상태로 다음 빌드 불가.</p><span class="mono-sm">_enforce_selfverify_gate · 0-F</span></div>
+  </div>
+  <p class="rv" style="margin-top:24px;font:500 12.5px/1.6 var(--font-mono);color:var(--text-tertiary)">+ S22 archetype 재사용 차단 · S23 와이어 콘텐츠 dict 필수 · cheat 방지(토큰은 끝에만)</p>
+</section>
+
+<!-- 07 · Blueprint -->
+<section class="slide">
+  <div class="rv eyebrow"><span class="rule"></span>05 · BLUEPRINT</div>
+  <h2 class="rv">화면의 단일 명세, <span class="accent">JSON 한 장</span></h2>
+  <div class="rv grid cols2" style="align-items:start;margin-top:8px">
+    <div class="codeblock">{<br>
+&nbsp;&nbsp;<span class="g">"name"</span>: <span class="y">"imin_signup_home"</span>,<br>
+&nbsp;&nbsp;<span class="g">"fill"</span>: <span class="y">"$token(bg-primary)"</span>, <span class="c">// 절대 규칙 0</span><br>
+&nbsp;&nbsp;<span class="g">"_wireframeContent"</span>: { ... }, <span class="c">// 콘텐츠 1:1 게이트</span><br>
+&nbsp;&nbsp;<span class="g">"references"</span>: [ ... ], <span class="c">// 실제 본 레퍼런스 기록</span><br>
+&nbsp;&nbsp;<span class="g">"children"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="g">"name"</span>: <span class="y">"추천 스테이지"</span>, <span class="p">"_band"</span>: true },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="g">"type"</span>: <span class="y">"instance"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="g">"componentKey"</span>: <span class="y">"19c3ba…"</span>, <span class="c">// DS 버튼</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="p">"instanceProperties"</span>: { <span class="g">"Size"</span>: <span class="y">"lg"</span> } },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="g">"name"</span>: <span class="y">"ic-circle"</span>, <span class="p">"_keepSizing"</span>: true }<br>
+&nbsp;&nbsp;]<br>}</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card"><h4><code class="mono accent">$token(...)</code> 참조</h4><p>색·spacing·radius 를 리터럴이 아닌 DS 토큰으로 선언 — 빌드가 Figma 변수에 바인딩.</p></div>
+      <div class="card"><h4>의도 마커</h4><p><code class="mono">_band</code>(중요 섹션 풀폭 밴드) · <code class="mono">_keepSizing</code>(작성자 사이징 보호) · <code class="mono">_segLabels</code>(탭 라벨) · <code class="mono">_ctaKeepPrimary</code>(CTA 위계) — 마커 하나로 enforcer 체인이 자동 처리.</p></div>
+      <div class="card"><h4>DS 컴포넌트는 인스턴스로</h4><p>버튼·탭바·체크박스·페이지네이션은 raw frame 금지 — componentKey 로 직접 import, 색은 variant 가 제어.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 · 빌드 파이프라인 -->
+<section class="slide band">
+  <div class="rv eyebrow"><span class="rule"></span>06 · 빌드 파이프라인</div>
+  <h2 class="rv"><code class="mono" style="font-size:.8em">cmd_build</code> 의 <span class="accent">방어 계단</span></h2>
+  <div class="rv steps" style="margin-top:14px;max-width:920px">
+    <div class="step"><span class="no">A.0</span><div><b>레퍼런스 자동 검색 + 게이트</b><p>archetype 인식 → 썸네일 생성 → Read 게이트 검증.</p></div></div>
+    <div class="step"><span class="no">E.0</span><div><b>Pre-process — blueprint 교정</b><p>루트 bg-primary 강제 · 밴드 표준화 · 텍스트 크기 하한 · 세로 패딩 대칭 · radius→clip · 대형 brand fill 제거.</p></div></div>
+    <div class="step"><span class="no">LINT</span><div><b>design_rules L2/L3</b><p>룰 위반 lint(ERROR 시 빌드 거부) → 자동 주입(raw 버튼→DS 인스턴스 스왑, Status Bar 삽입, 탭 컴포넌트 강제).</p></div></div>
+    <div class="step"><span class="no">BUILD</span><div><b>batch_build_screen</b><p>플러그인이 노드 생성. timeout 나도 root 를 폴링 복구해 후속 단계를 잇는다.</p></div></div>
+    <div class="step"><span class="no">POST</span><div><b>post-fix + 토큰 바인딩</b><p>FILL 사이징 · 탭바/FAB 배치 · 색/spacing/radius/text-style/아이콘색 DS 변수 바인딩 · CTA 위계 차등 · 30+ enforcer 체인.</p></div></div>
+    <div class="step"><span class="no">E.7.7</span><div><b>최종 재단언 + 검증</b><p>작성자 FIXED 폭/padding/_keepSizing 복원(모든 enforcer 뒤 최종 권한) → QA 대비·레이아웃·스멜 검사 → self-verify export.</p></div></div>
+  </div>
+</section>
+
+<!-- 09 · 룰 엔진 -->
+<section class="slide ink">
+  <div class="rv eyebrow"><span class="rule"></span>07 · 룰 엔진</div>
+  <h2 class="rv" style="color:#fff">한 번 분노한 회귀는<br><span class="accent">다시 일어나지 않는다</span></h2>
+  <p class="rv lede" style="margin-bottom:30px">사용자 피드백 하나하나가 절대 규칙(0-A~0-V)과 R-시리즈 룰로 박제됩니다. 각 룰은 최대 5층 방어를 갖습니다 — blueprint 단계에서 막고, 빌드 직전에 고치고, 빌드 후에 또 고치고, 마지막에 검증.</p>
+  <div class="rv flow" style="max-width:880px">
+    <div class="fnode" style="background:transparent;border-color:#46535f"><b style="color:#fff">L2 · lint</b><span style="color:#93a0ad">blueprint 사전 검증<br>ERROR 면 빌드 거부</span></div>
+    <div class="farrow" style="color:#5b6873">→</div>
+    <div class="fnode" style="background:transparent;border-color:#46535f"><b style="color:#fff">L3 · inject</b><span style="color:#93a0ad">빌드 직전<br>blueprint 자동 교정</span></div>
+    <div class="farrow" style="color:#5b6873">→</div>
+    <div class="fnode" style="background:transparent;border-color:#46535f"><b style="color:#fff">L4 · post-fix</b><span style="color:#93a0ad">빌드된 라이브 노드<br>런타임 교정</span></div>
+    <div class="farrow" style="color:#5b6873">→</div>
+    <div class="fnode" style="background:transparent;border-color:var(--text-brand-secondary)"><b style="color:#fff">L5 · verify</b><span style="color:#93a0ad">빌드 후 검증<br>위반 시 WARN/ERROR</span></div>
+  </div>
+  <div class="rv" style="margin-top:30px">
+    <span class="chip" style="background:rgba(155,85,255,.16);color:#cfaeff">0-K 컴포넌트 색 절대 보존</span>
+    <span class="chip" style="background:rgba(255,255,255,.07);color:#93a0ad">0-E 와이어 콘텐츠 1:1</span>
+    <span class="chip" style="background:rgba(255,255,255,.07);color:#93a0ad">규칙 13 중요 섹션 밴드</span>
+    <span class="chip" style="background:rgba(255,255,255,.07);color:#93a0ad">14-B 스테퍼 2-row</span>
+    <span class="chip" style="background:rgba(255,255,255,.07);color:#93a0ad">2-J Aqua 자제</span>
+    <span class="chip" style="background:rgba(255,255,255,.07);color:#93a0ad">+ 40여 개</span>
+  </div>
+</section>
+
+<!-- 10 · DS 토큰 바인딩 -->
+<section class="slide">
+  <div class="rv eyebrow"><span class="rule"></span>08 · 디자인 시스템 바인딩</div>
+  <h2 class="rv">픽셀이 아니라 <span class="accent">토큰으로 칠한다</span></h2>
+  <p class="rv lede" style="margin-bottom:26px">빌드 후 색 · spacing · radius · 텍스트 스타일 · 아이콘 색이 전부 Imin DS 변수에 자동 바인딩됩니다. 이 덱의 모든 색이 바로 그 토큰입니다.</p>
+  <div class="rv swatches">
+    <div class="sw"><div class="c" style="background:#7700ff"></div><div class="l"><b>#7700ff</b>bg-brand-solid</div></div>
+    <div class="sw"><div class="c" style="background:#f4ecff"></div><div class="l"><b>#f4ecff</b>bg-brand-primary</div></div>
+    <div class="sw"><div class="c" style="background:#2c3744"></div><div class="l"><b>#2c3744</b>text-primary</div></div>
+    <div class="sw"><div class="c" style="background:#687079"></div><div class="l"><b>#687079</b>text-secondary</div></div>
+    <div class="sw"><div class="c" style="background:#f3f4f6;border-bottom:1px solid #e6e8ea"></div><div class="l"><b>#f3f4f6</b>bg-secondary</div></div>
+    <div class="sw"><div class="c" style="background:#d2d6db"></div><div class="l"><b>#d2d6db</b>border-primary</div></div>
+  </div>
+  <div class="rv grid cols3" style="margin-top:18px">
+    <div class="card"><h4>Spacing → <code class="mono accent">spacing-*</code></h4><p>0/4/8/12/16/20/24/32… 스케일 값만 시맨틱 토큰에 바인딩. primitive 금지.</p></div>
+    <div class="card"><h4>Radius → <code class="mono accent">radius-*</code></h4><p>4코너 개별 바인딩, 999는 radius-full. radius>0 이면 clipsContent 강제.</p></div>
+    <div class="card"><h4>Type → <b>Pretendard</b></h4><p>DS 텍스트 스타일을 import 해 바인딩 — 크기 변경도 스타일 교체로(바인딩 절대 보존).</p></div>
+  </div>
+</section>
+
+<!-- 11 · 자율 vs 고정 -->
+<section class="slide band">
+  <div class="rv eyebrow"><span class="rule"></span>09 · 철학</div>
+  <h2 class="rv">같은 와이어, <span class="accent">매번 다른 디자인</span></h2>
+  <p class="rv lede" style="margin-bottom:28px">와이어프레임은 콘텐츠 소스일 뿐 레이아웃 명세가 아닙니다(절대 규칙 0-C). 결정형 생성기는 fallback 으로 강등 — 비주얼은 매 세션 레퍼런스를 읽고 새로 도출합니다.</p>
+  <div class="rv grid cols2" style="align-items:stretch">
+    <div class="card" style="border-left:4px solid var(--text-tertiary)">
+      <h4>금지 — 와이어 1:1 복제</h4>
+      <p>회색 박스 배치 그대로 옮기기 · 같은 폰트 크기 위계 · 와이어의 포인트 컬러 복사 · 인접 섹션을 같은 카드 패턴으로(0-N). "디자인이 아니라 와이어 강화"가 된다.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--bg-brand-solid)">
+      <h4>의무 — 창의적 재해석</h4>
+      <p>핵심 수치는 hero 타이포 · 카드 그룹핑으로 위계 차등 · 브랜드 퍼플은 의미 있는 단일 액센트("나의 것"·주 CTA·키워드) · 레퍼런스에서 본 실제 패턴 차용을 references[] 에 기록.</p>
+    </div>
+  </div>
+  <p class="rv" style="margin-top:24px;font-size:14px;color:var(--text-secondary)">예: 같은 신규가입 홈도 세션마다 — 한도 조회를 <mark>회색 pill 버튼</mark>으로, 출석/초대를 <mark>단일 카드 2행</mark>으로, "3,523명"만 <mark>퍼플 키워드 강조</mark>로 다르게 그려진다.</p>
+</section>
+
+<!-- 12 · QA & 마무리 -->
+<section class="slide">
+  <div class="rv eyebrow"><span class="rule"></span>10 · 검증과 마무리</div>
+  <h2 class="rv">완료 보고 전, <span class="accent">스스로 의심한다</span></h2>
+  <div class="rv grid cols2" style="margin-top:10px;align-items:start">
+    <div class="steps">
+      <div class="step"><span class="no">QA1</span><div><b>결정적 검사 (코드)</b><p>WCAG 대비 · 데드밴드 · 텍스트 무결성 · 와이어 콘텐츠 매치율 · 레이아웃 스멜 3종(분배 깨짐/wrap/폭 붕괴).</p></div></div>
+      <div class="step"><span class="no">QA2</span><div><b>시각 검증 (모델)</b><p>섹션별 PNG 재export → Read → 체크리스트 12항목 PASS/FAIL/NA + 증거 인용. FAIL 은 즉시 live-fix.</p></div></div>
+      <div class="step"><span class="no">QA3</span><div><b>정리</b><p>blueprint 자동 삭제(0-R) · QA 스크린샷/썸네일 cleanup(0-F-2) — 레포엔 소스만 남는다.</p></div></div>
+    </div>
+    <div class="card" style="background:var(--bg-brand-primary);border-color:transparent">
+      <h4 style="color:var(--text-brand-primary)">요약 — 이 에이전트가 특별한 이유</h4>
+      <p style="color:var(--text-primary)">
+      ① 기획 맥락을 <b>통독 게이트</b>로 보장하고<br>
+      ② 콘텐츠를 <b>와이어 1:1</b> 로 고정하고<br>
+      ③ 비주얼은 <b>레퍼런스 학습 후 자유</b>롭게 풀고<br>
+      ④ 품질은 <b>5층 룰 엔진</b>이 방어하고<br>
+      ⑤ 결과는 <b>DS 토큰</b>으로 칠하고<br>
+      ⑥ 보고 전 <b>자가 검증</b>을 코드로 강제한다.</p>
+      <div style="margin-top:18px;display:flex;align-items:center;gap:10px">
+        <span class="dots" style="width:20px;height:20px;gap:4px"><i></i><i></i><i></i><i></i></span>
+        <span style="font:600 12px/1 var(--font-mono);color:var(--text-brand-primary);letter-spacing:.1em">FIGMA DESIGN AGENT · IMIN</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 · 마무리 -->
+<section class="slide band">
+  <div class="rv eyebrow"><span class="dots"><i></i><i></i><i></i><i></i></span><span class="rule"></span>THANK YOU</div>
+  <h1 class="rv">감사합니다.</h1>
+  <p class="rv lede" style="margin-top:24px;font-size:clamp(18px,2.2vw,26px);color:var(--text-primary);font-weight:600">궁금하신 점 있으실까요?</p>
+  <div class="rv" style="margin-top:40px;display:flex;align-items:center;gap:12px">
+    <span class="dots" style="width:20px;height:20px;gap:4px"><i></i><i></i><i></i><i></i></span>
+    <span style="font:600 12px/1 var(--font-mono);color:var(--text-tertiary);letter-spacing:.1em">FIGMA DESIGN AGENT · IMIN</span>
+  </div>
+</section>
+
+<!-- 14 · imin 리빌드 프로세스 -->
+<style>
+/* slide 14 전용 — 프로세스 박스 확대 / 타이틀 축소 */
+.rebuild h2{font-size:clamp(22px,2.6vw,34px);margin-bottom:14px}
+.rebuild .lede{font-size:clamp(14px,1.3vw,16px);margin-bottom:22px}
+.rebuild .flow{gap:0}
+.rebuild .fnode{padding:30px 26px;min-width:170px;border-radius:var(--radius-3xl)}
+.rebuild .fnode .tag{font-size:12px;margin-bottom:12px}
+.rebuild .fnode b{font-size:20px;margin-bottom:10px}
+.rebuild .fnode span{font-size:14.5px;line-height:1.7}
+.rebuild .farrow{flex-basis:42px;font-size:24px}
+@media(max-width:860px){.rebuild .farrow{flex-basis:26px}}
+</style>
+<section class="slide rebuild">
+  <div class="rv eyebrow"><span class="rule"></span>NEXT · IMIN APP 리빌드</div>
+  <h2 class="rv">리빌드 디자인 프로세스 — 전체 GUI 를 <span class="accent">에이전트가 그린다</span></h2>
+  <p class="rv lede">imin 앱 리빌드 프로젝트의 모든 GUI 화면을 Figma Design Agent 로 생성합니다.
+  에이전트가 만들고, 디자이너가 다듬고, 기획자·PM 이 확정하는 3단계 프로세스.</p>
+  <div class="rv" style="margin-bottom:18px">
+    <span class="chip">PROCESS 1 · 자동 생성</span>
+    <span class="chip gray">PROCESS 2 · 수정 by 디자이너</span>
+    <span class="chip gray">PROCESS 3 · 최종 확인 by 기획자·PM</span>
+  </div>
+  <div class="rv flow">
+    <div class="fnode"><span class="tag">P1 · INPUT</span><b>입력 3종</b><span>① 기존 화면 캡처본<br>② PRD 문서<br>③ 와이어프레임 이미지</span></div>
+    <div class="farrow">→</div>
+    <div class="fnode hot"><span class="tag">P1 · FIGMA DESIGN AGENT</span><b>터미널 · Claude Code</b><span>기획 맥락 + 레퍼런스 학습 후 DS 토큰으로 화면 빌드</span></div>
+    <div class="farrow">→</div>
+    <div class="fnode" style="background:var(--bg-brand-primary);border-color:var(--bg-brand-solid)"><span class="tag">P1 · 생성 완료</span><b>피그마에 디자인 생성</b><span>자가 검증(self-verify)까지 마친 화면</span></div>
+    <div class="farrow">→</div>
+    <div class="fnode"><span class="tag">P2 · 디자이너</span><b>미세 수정</b><span>디자이너가 직접 디테일 다듬기</span></div>
+    <div class="farrow">→</div>
+    <div class="fnode"><span class="tag">P3 · 기획자 · PM</span><b>최종 확인</b><span>관련 PM·기획자 검수 후 확정</span></div>
+  </div>
+  <p class="rv" style="margin-top:24px;font:500 12.5px/1.6 var(--font-mono);color:var(--text-tertiary)">사람은 판단과 마무리에 집중 — 반복 제작은 에이전트가, 품질 하한은 룰 엔진이 담당</p>
+</section>
+
+</main>
+
+<div class="hud">
+  <div class="brand"><span class="dots"><i></i><i></i><i></i><i></i></span>FIGMA DESIGN AGENT</div>
+  <div class="navdots" id="navdots"></div>
+  <div class="counter" id="counter"><b>01</b> / 12</div>
+</div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+const dotsWrap=document.getElementById('navdots');
+const counter=document.getElementById('counter');
+const progress=document.getElementById('progress');
+let cur=0;
+slides.forEach((_,i)=>{
+  const b=document.createElement('button');
+  b.addEventListener('click',()=>go(i));
+  dotsWrap.appendChild(b);
+});
+const dots=[...dotsWrap.children];
+function go(n){
+  n=Math.max(0,Math.min(slides.length-1,n));
+  if(n===cur&&slides[cur].classList.contains('active'))return refresh();
+  slides[cur].classList.remove('active');
+  slides[cur].classList.toggle('prev',n>cur);
+  cur=n;
+  slides.forEach((s,i)=>{s.classList.toggle('prev',i<cur);if(i!==cur)s.classList.remove('active')});
+  slides[cur].classList.add('active');
+  refresh();
+}
+function refresh(){
+  dots.forEach((d,i)=>d.classList.toggle('on',i===cur));
+  counter.innerHTML=`<b>${String(cur+1).padStart(2,'0')}</b> / ${String(slides.length).padStart(2,'0')}`;
+  progress.style.width=((cur+1)/slides.length*100)+'%';
+}
+addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();go(cur+1)}
+  if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(cur-1)}
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(slides.length-1);
+});
+/* 클릭으로 넘기기 (버튼/링크 제외, 화면 좌측 1/5 는 뒤로) */
+document.getElementById('deck').addEventListener('click',e=>{
+  if(e.target.closest('button,a,code,.codeblock'))return;
+  (e.clientX<innerWidth/5)?go(cur-1):go(cur+1);
+});
+/* 터치 스와이프 */
+let tx=null;
+addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+addEventListener('touchend',e=>{
+  if(tx===null)return;
+  const dx=e.changedTouches[0].clientX-tx;
+  if(Math.abs(dx)>48)go(cur+(dx<0?1:-1));
+  tx=null;
+},{passive:true});
+document.getElementById('prevBtn').onclick=()=>go(cur-1);
+document.getElementById('nextBtn').onclick=()=>go(cur+1);
+refresh();
+</script>
+</body>
+</html>
