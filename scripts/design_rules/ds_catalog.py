@@ -133,6 +133,16 @@ COMPONENT_KEYS = {
     # ── NavBar variants ────────────────────────────────────────
     "Modal Header":         "689757096008812f6a99c76efb51e914feb4fd2c",
     "Type Header":          "ed6ef9d403a570d5176d69bc314a54390409bbac",
+    # 🔴 2026-06-12 사용자 룰 (절대 규칙 0-W): 상단 툴바(NavBar)는 raw frame 으로 그리지
+    # 말고 Imin DS 'Tool Bar' 컴포넌트 인스턴스 사용. variant 개별 키가 비공개라
+    # "SET:<setKey>:<Variant>" 형식 (code.js importComponentFlexible 가
+    # importComponentSetByKeyAsync 로 import 후 variant 매칭). set key = c9299ef0… .
+    #   Type=Home        — 메인(탭바 홈): 로고 + 우측 아이콘 2개
+    #   Type=Detail view — 서브 화면: back + 중앙 타이틀 + 우측 아이콘
+    "Tool Bar Home":        "SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Home",
+    "Tool Bar Detail":      "SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view",
+    "NavBar Home":          "SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Home",
+    "NavBar Detail":        "SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view",
 
     # ── Header / utility icons (24px, line) ────────────────────
     "Icon bell":            "f80e23373a1afc1b460be44da32915f390b5af2a",  # bell-01

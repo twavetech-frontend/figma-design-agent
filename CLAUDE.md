@@ -845,6 +845,51 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > `"_underlineTabs": true` 마커 노드를 **swap 대상에서 제외**(Segmented_control 강제 안 함). 작성 시
 > underline tabs frame 에 `_underlineTabs:true` + tab-hint 없는 이름(예 'View Tabs')으로 둔다.
 
+> 🔴 **절대 규칙 0-W — 상단 툴바(NavBar) = DS 'Tool Bar' 컴포넌트 인스턴스 (2026-06-12 사용자 룰)**
+>
+> 사용자 명시: *"상단 tool bar(네비게이션바)를 매번 새로 그리는게 아니라, 컴포넌트 인스턴스를
+> 쓸 것! 메인과 서브 화면은 컴포넌트 props 옵션을 선택해서 사용하는걸로"*
+>
+> 상단 네비게이션바를 raw frame(로고 placeholder + 아이콘 직접 그리기)으로 그리지 말고
+> **Imin DS 'Tool Bar' 컴포넌트 인스턴스**를 쓴다. 메인/서브는 **`Type` variant** 로 선택:
+> | 화면 | variant | componentKey |
+> |------|---------|--------------|
+> | 메인·탭바 홈 (로고+우측 아이콘) | Type=Home | `SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Home` |
+> | 서브 (back+중앙 타이틀+우측 아이콘) | Type=Detail view | `SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view` |
+>
+> ⚠️ **`SET:` 키 형식**: Tool Bar 는 variant 개별 키가 비공개(컴포넌트 셋만 게시)라
+> `"SET:<setKey>:<Variant>"` 형식을 쓴다 — `code.js importComponentFlexible` 가
+> `importComponentSetByKeyAsync` 로 셋을 import 후 variant 이름을 prop 단위로 매칭
+> (플러그인 재실행 후 활성). catalog: `ds_catalog.COMPONENT_KEYS["Tool Bar Home"/"Tool Bar Detail"]`.
+>
+> **blueprint 작성:**
+> ```json
+> {"name": "NavBar", "type": "instance",
+>  "componentKey": "SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view",
+>  "_navTitle": "내 스케줄", "layoutSizingHorizontal": "FILL"}
+> ```
+> - 서브 화면 중앙 타이틀은 **`_navTitle` 마커** — 빌드 후 `_configure_tool_bar`(cmd_post_fix)가
+>   인스턴스 내부 타이틀 TEXT 를 scan_text_nodes 로 찾아 자동 적용.
+> - 우측 아이콘 구성은 **컴포넌트 마스터가 제어** — override 하지 않는다(절대 규칙 0-K).
+> - 검색바 등 Tool Bar 로 표현 불가한 특수 navbar 만 raw frame + **`_customNavBar: true`** 마커.
+> - **modal/bottom-sheet 의 X-only 헤더는 별도 패턴(2-D) — Tool Bar 강제 대상 아님.**
+>
+> **시스템 강제 (코드 박힘, 자동):** `scripts/design_rules/R64_navbar_ds_instance.py`
+> - **L2 lint**: raw NavBar frame 발견 시 WARN.
+> - **L3 inject**: 빌드 직전 자동 swap — 로고 자식 있으면 Type=Home, back 버튼 있으면
+>   Type=Detail view + 타이틀 텍스트를 `_navTitle` 로 캡처. x-close 헤더(모달)·로고/back 둘 다
+>   없는 navbar(의도 불명)·`_customNavBar`·modal/bottom-sheet 화면은 swap 안 함.
+> - **L4 (cmd_post_fix)**: `_collect_tool_bar_configs` + `_configure_tool_bar` 가 `_navTitle` 적용.
+> - **L5 verify**: 빌드 후 NavBar 가 FRAME 으로 남으면 WARN.
+> - 생성기/템플릿도 인스턴스 emit: `unified_blueprint._gen_nav_bar`(data.title 있으면 Detail),
+>   `blueprint_templates.json` NavBar(assemble `variables.NavBar.title` 로 Detail 전환).
+> - 절대 규칙 0-O(NavBar fill/stroke 강제)는 FRAME 만 대상이라 Tool Bar **인스턴스는 자동 제외**
+>   (인스턴스 색/스타일은 0-K 에 따라 마스터가 제어). raw `_customNavBar` frame 에는 0-O 가 계속 적용.
+>
+> **빌드 후 검증:** 빌드 로그에 `[inject R64] NavBar raw frame → DS Tool Bar instance: N건` +
+> (서브 화면) `[tool-bar] ✓ 'NavBar' 타이틀 → '<타이틀>'` 라인 확인. 스크린샷에서 NavBar 가
+> DS Tool Bar(메인=로고, 서브=back+타이틀)인지 확인. 테스트: `scripts/tests/test_navbar_ds_instance.py`.
+
 > 🔴 **절대 규칙 0-S — 텍스트 스타일 바인딩을 절대 깨지 말 것 (2026-06-05 사용자 룰)**
 >
 > 사용자 명시: *"텍스트 크기만 조절하려고 텍스트 스타일 바인딩이 깨졌는데 좀더 큰 사이즈를
@@ -876,7 +921,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **Status Bar를 텍스트/프레임으로 직접 그리거나 blueprint 노드로 넣지 말 것.**
 - `batch_build_screen`은 blueprint root.children에 status bar 노드가 **없으면 DS "Status Bar" 인스턴스를 루트 첫 자식으로 자동 삽입**한다. blueprint에 "Status Bar" 같은 노드를 넣으면 빌드가 그걸 그대로 써서 직접 그린 status bar가 박힌다(= 버그).
 - **규칙: blueprint root.children에 status bar를 절대 포함하지 않는다.** 빌드가 알아서 DS 인스턴스를 넣는다.
-- **로고**: NavBar에 `"Logo Placeholder"` 프레임(80×32)을 넣으면 `cmd_build`가 DS 로고 인스턴스로 자동 교체한다(Step G). 텍스트로 로고를 그리지 말 것.
+- **로고**: 🔴 NavBar 는 이제 DS 'Tool Bar' 인스턴스(절대 규칙 0-W) — **Type=Home variant 에 로고가 내장**되어 있어 Logo Placeholder 가 필요 없다. (`_customNavBar` raw frame 인 경우에만 기존 방식: `"Logo Placeholder"` 프레임(80×32)을 넣으면 `cmd_build`가 DS 로고 인스턴스로 자동 교체(Step G). 텍스트로 로고를 그리지 말 것.)
 - **빌드 후 검증**: 루트 첫 자식이 INSTANCE `"Status Bar"`인지 확인.
 - 참고: "Styles" 페이지(`276:1882`)에 마스터 인스턴스가 있다 — Status Bar `279:4758`, 로고 `279:4757`. 자동 삽입이 안 되는 특수 상황에서만 `clone_node`(인스턴스는 clone해도 인스턴스 유지) 후 `insert_child`로 수동 삽입.
 

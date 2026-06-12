@@ -8,6 +8,56 @@ const state = {
 
 // ★ Component Cache — persists across builds for instant lookups
 const componentCache = new Map(); // componentKey → ComponentNode
+const componentSetCache = new Map(); // setKey → ComponentSetNode
+
+// Parse a variant name like "Type=Home, Size=md" into a prop map
+function parseVariantProps(name) {
+  const out = {};
+  String(name || "").split(",").forEach(function (part) {
+    const eq = part.indexOf("=");
+    if (eq === -1) return;
+    const k = part.slice(0, eq).trim().toLowerCase();
+    const v = part.slice(eq + 1).trim().toLowerCase();
+    if (k) out[k] = v;
+  });
+  return out;
+}
+
+// Import by component key, or by SET key + variant — "SET:<setKey>:<Prop=Value, ...>"
+// (일부 라이브러리 컴포넌트는 variant 개별 키가 비공개라 set 키로만 import 가능 — Tool Bar 등)
+async function importComponentFlexible(componentKey) {
+  if (typeof componentKey === "string" && componentKey.indexOf("SET:") === 0) {
+    const rest = componentKey.slice(4);
+    const sep = rest.indexOf(":");
+    const setKey = sep === -1 ? rest : rest.slice(0, sep);
+    const variantName = sep === -1 ? "" : rest.slice(sep + 1);
+    let set = componentSetCache.get(setKey);
+    if (!set) {
+      set = await figma.importComponentSetByKeyAsync(setKey);
+      componentSetCache.set(setKey, set);
+    }
+    let comp = null;
+    if (variantName) {
+      const want = parseVariantProps(variantName);
+      const wantKeys = Object.keys(want);
+      for (let i = 0; i < set.children.length; i++) {
+        const child = set.children[i];
+        if (child.type !== "COMPONENT") continue;
+        const have = parseVariantProps(child.name);
+        let ok = true;
+        for (let j = 0; j < wantKeys.length; j++) {
+          if (have[wantKeys[j]] !== want[wantKeys[j]]) { ok = false; break; }
+        }
+        if (ok && wantKeys.length > 0) { comp = child; break; }
+      }
+      if (!comp) console.warn(`[cache] Variant "${variantName}" not found in set ${set.name} — falling back to default`);
+    }
+    if (!comp) comp = set.defaultVariant || set.children[0];
+    if (!comp) throw new Error(`Component set ${setKey} has no variants`);
+    return comp;
+  }
+  return figma.importComponentByKeyAsync(componentKey);
+}
 
 // Get component from cache (O(1)) or import as fallback
 async function getCachedComponent(componentKey) {
@@ -16,7 +66,7 @@ async function getCachedComponent(componentKey) {
   }
   // Fallback: single import
   try {
-    const comp = await figma.importComponentByKeyAsync(componentKey);
+    const comp = await importComponentFlexible(componentKey);
     componentCache.set(componentKey, comp);
     return comp;
   } catch (e) {
@@ -5714,7 +5764,7 @@ async function preCacheComponents(keys) {
   const results = await Promise.allSettled(
     uncachedKeys.map(async (key) => {
       try {
-        const comp = await figma.importComponentByKeyAsync(key);
+        const comp = await importComponentFlexible(key);
         componentCache.set(key, comp);
         return { key, success: true };
       } catch (e) {
@@ -5733,6 +5783,7 @@ async function preCacheComponents(keys) {
 function clearComponentCache() {
   const count = componentCache.size;
   componentCache.clear();
+  componentSetCache.clear();
   console.log(`[cache] Cleared ${count} cached components`);
   return { success: true, cleared: count };
 }
@@ -5757,7 +5808,7 @@ async function preCacheAllComponents(params) {
   // Sequential import — Figma API doesn't handle massive parallel well
   for (let i = 0; i < uncachedKeys.length; i++) {
     try {
-      const comp = await figma.importComponentByKeyAsync(uncachedKeys[i]);
+      const comp = await importComponentFlexible(uncachedKeys[i]);
       componentCache.set(uncachedKeys[i], comp);
       succeeded++;
     } catch (e) {

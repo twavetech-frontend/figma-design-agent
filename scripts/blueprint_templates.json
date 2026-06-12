@@ -2,65 +2,26 @@
   "_description": "디자인 빌드 섹션 템플릿. Claude가 Blueprint 작성 시 이 템플릿의 섹션을 그대로 사용하고, _variables로 표시된 부분만 교체한다. 기존 blueprint_*.json 파일들의 공통 패턴을 추출하여 정규화한 것.",
   "_usage": "Blueprint JSON 작성 시 해당 섹션 템플릿을 복사 → _variables 항목만 PRD에 맞게 교체 → children[]에 삽입",
   "sections": {
-
     "NavBar": {
-      "_description": "상단 네비게이션 바. 로고 플레이스홀더 + 우측 아이콘 그룹. 빌드 후 create_component_instance로 로고 교체.",
+      "_description": "상단 네비게이션 바 = DS 'Tool Bar' 인스턴스 (절대 규칙 0-W, 2026-06-12). raw frame 으로 그리지 말 것. 메인=Type=Home(로고+우측 아이콘), 서브=Type=Detail view(back+중앙 타이틀) — variant 는 componentKey 의 SET: 접미사로 선택. 우측 아이콘은 컴포넌트 마스터가 제어.",
       "_variables": [
-        "navRightIcons: 우측 아이콘 배열 (기본: bell-01, message-chat-circle)",
-        "logoType: 로고 플레이스홀더 크기 (기본: 80×32)"
+        "_navTitle: 서브(Detail view) 화면 중앙 타이틀 — 빌드 후 _configure_tool_bar 가 자동 적용. 메인(Home)은 생략",
+        "componentKey: Home='SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Home' / Detail='SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view'"
       ],
       "template": {
         "name": "NavBar",
-        "type": "frame",
-        "width": 393,
-        "height": 56,
-        "layoutSizingHorizontal": "FILL",
-        "autoLayout": {
-          "layoutMode": "HORIZONTAL",
-          "primaryAxisAlignItems": "SPACE_BETWEEN",
-          "counterAxisAlignItems": "CENTER",
-          "paddingLeft": 20,
-          "paddingRight": 20,
-          "paddingTop": 12,
-          "paddingBottom": 12
-        },
-        "children": [
-          {
-            "name": "Logo Placeholder",
-            "type": "frame",
-            "width": 80,
-            "height": 32,
-            "_comment": "빌드 후 create_component_instance(componentKey='81efeddd245e95f31a2724aa370ee54d3caf93d0' Imin DS Logo) → insert_child로 교체"
-          },
-          {
-            "name": "Nav Right",
-            "type": "frame",
-            "autoLayout": {
-              "layoutMode": "HORIZONTAL",
-              "itemSpacing": 16,
-              "counterAxisAlignItems": "CENTER"
-            },
-            "children": [
-              {
-                "name": "icon-bell",
-                "type": "icon",
-                "iconName": "bell-01",
-                "size": 24,
-                "iconColor": "$token(fg-primary)"
-              },
-              {
-                "name": "icon-chat",
-                "type": "icon",
-                "iconName": "message-chat-circle",
-                "size": 24,
-                "iconColor": "$token(fg-primary)"
-              }
-            ]
-          }
-        ]
+        "type": "instance",
+        "componentKey": "SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Home",
+        "layoutSizingHorizontal": "FILL"
+      },
+      "template_detail": {
+        "name": "NavBar",
+        "type": "instance",
+        "componentKey": "SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view",
+        "_navTitle": "화면 타이틀",
+        "layoutSizingHorizontal": "FILL"
       }
     },
-
     "TabBar": {
       "_description": "하단 탭 바. 5개 탭(홈/커뮤니티/스테이지/라운지/나). post-fix에서 ABSOLUTE 배치 + individual stroke 자동 적용.",
       "_variables": [
@@ -114,7 +75,10 @@
                 "type": "text",
                 "text": "홈",
                 "fontSize": 11,
-                "fontName": { "family": "Pretendard", "style": "SemiBold" },
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "SemiBold"
+                },
                 "fontColor": "$token(fg-brand-primary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
@@ -145,7 +109,10 @@
                 "type": "text",
                 "text": "커뮤니티",
                 "fontSize": 11,
-                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
                 "fontColor": "$token(fg-secondary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
@@ -176,7 +143,10 @@
                 "type": "text",
                 "text": "스테이지",
                 "fontSize": 11,
-                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
                 "fontColor": "$token(fg-secondary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
@@ -207,7 +177,10 @@
                 "type": "text",
                 "text": "라운지",
                 "fontSize": 11,
-                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
                 "fontColor": "$token(fg-secondary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
@@ -238,7 +211,10 @@
                 "type": "text",
                 "text": "나",
                 "fontSize": 11,
-                "fontName": { "family": "Pretendard", "style": "Medium" },
+                "fontName": {
+                  "family": "Pretendard",
+                  "style": "Medium"
+                },
                 "fontColor": "$token(fg-secondary)",
                 "textAlignHorizontal": "CENTER",
                 "layoutSizingHorizontal": "FILL"
@@ -248,7 +224,6 @@
         ]
       }
     },
-
     "FAB": {
       "_description": "플로팅 액션 버튼. icon-only 원형 (56x56, cornerRadius 28). post-fix에서 ABSOLUTE 배치 자동 적용 (2026-05-27 사용자 룰).",
       "_variables": [
@@ -289,7 +264,6 @@
         ]
       }
     },
-
     "HeroSection": {
       "_description": "히어로 배너 캐로셀. VERTICAL 래퍼 안에 HORIZONTAL Banner Carousel + Indicator Row. 캐로셀은 clipsContent: true 필수.",
       "_variables": [
@@ -370,7 +344,12 @@
                       "paddingBottom": 4
                     },
                     "cornerRadius": 4,
-                    "fill": { "r": 1, "g": 1, "b": 1, "a": 0.2 },
+                    "fill": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.2
+                    },
                     "layoutSizingHorizontal": "HUG",
                     "children": [
                       {
@@ -378,7 +357,10 @@
                         "type": "text",
                         "text": "EVENT",
                         "fontSize": 11,
-                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
                         "fontColor": "$token(fg-white)"
                       }
                     ]
@@ -388,8 +370,16 @@
                     "type": "text",
                     "text": "{{VARIABLE: 서브 텍스트}}",
                     "fontSize": 14,
-                    "fontName": { "family": "Pretendard", "style": "Medium" },
-                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 0.8 },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    },
+                    "fontColor": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.8
+                    },
                     "width": 160
                   },
                   {
@@ -397,7 +387,10 @@
                     "type": "text",
                     "text": "{{VARIABLE: 메인 제목}}",
                     "fontSize": 22,
-                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    },
                     "fontColor": "$token(fg-white)",
                     "width": 160
                   }
@@ -432,7 +425,12 @@
                       "paddingBottom": 4
                     },
                     "cornerRadius": 4,
-                    "fill": { "r": 1, "g": 1, "b": 1, "a": 0.2 },
+                    "fill": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.2
+                    },
                     "layoutSizingHorizontal": "HUG",
                     "children": [
                       {
@@ -440,7 +438,10 @@
                         "type": "text",
                         "text": "HOT",
                         "fontSize": 11,
-                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
                         "fontColor": "$token(fg-white)"
                       }
                     ]
@@ -450,8 +451,16 @@
                     "type": "text",
                     "text": "{{VARIABLE: 서브 텍스트}}",
                     "fontSize": 14,
-                    "fontName": { "family": "Pretendard", "style": "Medium" },
-                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 0.8 },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    },
+                    "fontColor": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.8
+                    },
                     "width": 160
                   },
                   {
@@ -459,7 +468,10 @@
                     "type": "text",
                     "text": "{{VARIABLE: 메인 제목}}",
                     "fontSize": 22,
-                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    },
                     "fontColor": "$token(fg-white)",
                     "width": 160
                   }
@@ -494,7 +506,12 @@
                       "paddingBottom": 4
                     },
                     "cornerRadius": 4,
-                    "fill": { "r": 1, "g": 1, "b": 1, "a": 0.2 },
+                    "fill": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.2
+                    },
                     "layoutSizingHorizontal": "HUG",
                     "children": [
                       {
@@ -502,7 +519,10 @@
                         "type": "text",
                         "text": "NEW",
                         "fontSize": 11,
-                        "fontName": { "family": "Pretendard", "style": "Bold" },
+                        "fontName": {
+                          "family": "Pretendard",
+                          "style": "Bold"
+                        },
                         "fontColor": "$token(fg-white)"
                       }
                     ]
@@ -512,8 +532,16 @@
                     "type": "text",
                     "text": "{{VARIABLE: 서브 텍스트}}",
                     "fontSize": 14,
-                    "fontName": { "family": "Pretendard", "style": "Medium" },
-                    "fontColor": { "r": 1, "g": 1, "b": 1, "a": 0.8 },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Medium"
+                    },
+                    "fontColor": {
+                      "r": 1,
+                      "g": 1,
+                      "b": 1,
+                      "a": 0.8
+                    },
                     "width": 160
                   },
                   {
@@ -521,7 +549,10 @@
                     "type": "text",
                     "text": "{{VARIABLE: 메인 제목}}",
                     "fontSize": 22,
-                    "fontName": { "family": "Pretendard", "style": "Bold" },
+                    "fontName": {
+                      "family": "Pretendard",
+                      "style": "Bold"
+                    },
                     "fontColor": "$token(fg-white)",
                     "width": 160
                   }
@@ -540,15 +571,35 @@
             },
             "layoutSizingHorizontal": "HUG",
             "children": [
-              { "name": "dot-active", "type": "frame", "width": 8, "height": 8, "cornerRadius": 4, "fill": "$token(fg-brand-primary)" },
-              { "name": "dot-2", "type": "frame", "width": 6, "height": 6, "cornerRadius": 3, "fill": "$token(border-secondary)" },
-              { "name": "dot-3", "type": "frame", "width": 6, "height": 6, "cornerRadius": 3, "fill": "$token(border-secondary)" }
+              {
+                "name": "dot-active",
+                "type": "frame",
+                "width": 8,
+                "height": 8,
+                "cornerRadius": 4,
+                "fill": "$token(fg-brand-primary)"
+              },
+              {
+                "name": "dot-2",
+                "type": "frame",
+                "width": 6,
+                "height": 6,
+                "cornerRadius": 3,
+                "fill": "$token(border-secondary)"
+              },
+              {
+                "name": "dot-3",
+                "type": "frame",
+                "width": 6,
+                "height": 6,
+                "cornerRadius": 3,
+                "fill": "$token(border-secondary)"
+              }
             ]
           }
         ]
       }
     },
-
     "TransactionRibbon": {
       "_description": "거래 실적 리본. 화면 상단 NavBar 아래에 위치. 브랜드 컬러 배경의 한 줄 정보 띠.",
       "_variables": [
@@ -588,12 +639,14 @@
             "type": "text",
             "text": "{{VARIABLE: 리본 텍스트}}",
             "fontSize": 13,
-            "fontName": { "family": "Pretendard", "style": "Medium" },
+            "fontName": {
+              "family": "Pretendard",
+              "style": "Medium"
+            },
             "fontColor": "$token(fg-brand-primary)"
           }
         ]
       }
     }
-
   }
 }

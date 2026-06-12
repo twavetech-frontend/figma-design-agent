@@ -8162,6 +8162,89 @@ def _collect_mode_tabs_config(blueprint: Optional[dict]) -> Optional[dict]:
     return found[0]
 
 
+def _collect_tool_bar_configs(blueprint: dict) -> List[dict]:
+    """blueprint 에서 DS Tool Bar 인스턴스 설정 수집 (절대 규칙 0-W, 2026-06-12).
+
+    R64 inject(또는 hand-author)가 만든 Tool Bar 인스턴스 노드의 `_navTitle`(서브 화면
+    중앙 타이틀) 마커를 모은다. componentKey 가 Tool Bar 셋("SET:c9299ef0…")이거나
+    `_navTitle` 이 있는 instance 노드가 대상."""
+    out: List[dict] = []
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        key = str(n.get("componentKey") or "")
+        if (n.get("type") or "").lower() == "instance" and (
+                key.startswith("SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230")
+                or n.get("_navTitle")):
+            out.append({"name": n.get("name"), "title": n.get("_navTitle")})
+            return
+        for c in n.get("children") or []:
+            walk(c)
+
+    walk(blueprint)
+    return out
+
+
+def _configure_tool_bar(root_id: str, configs: List[dict]) -> int:
+    """빌드된 DS 'Tool Bar' 인스턴스의 중앙 타이틀 적용 (절대 규칙 0-W, 2026-06-12).
+
+    Detail view variant 의 타이틀 TEXT 는 인스턴스 내부 노드(`I{id};{sub}`)라
+    scan_text_nodes 로 찾아 set_text_content 한다 (seg-tabs 와 동일 패턴).
+    Tool Bar 내부 TEXT 는 타이틀 1개뿐이라 첫 TEXT 에 적용."""
+    todo = [c for c in configs if c.get("title")]
+    if not todo:
+        return 0
+    try:
+        tree = _collect_tree(root_id)
+    except Exception as e:
+        print(f"  [tool-bar] tree 수집 실패: {e}")
+        return 0
+
+    # name → built instance id 매핑 (이름 일치 우선, 폴백 'Tool Bar')
+    instances: List[dict] = []
+
+    def find(n):
+        if not isinstance(n, dict):
+            return
+        nm = (n.get("name") or "").lower()
+        if (n.get("type") or "").upper() == "INSTANCE" and (
+                any(h in nm for h in _NAVBAR_NAME_HINTS) or "tool bar" in nm):
+            instances.append(n)
+            return
+        for c in n.get("_children_full") or []:
+            find(c)
+
+    find(tree)
+    done = 0
+    for cfg in todo:
+        inst = next((i for i in instances if i.get("name") == cfg.get("name")), None) \
+            or (instances[0] if instances else None)
+        if not inst:
+            print(f"  [tool-bar] '{cfg.get('name')}' 인스턴스 없음 — skip")
+            continue
+        iid = inst.get("id")
+        try:
+            title_tid = None
+            for x in call_tool("scan_text_nodes", {"nodeId": iid}):
+                if x.get("type") == "text":
+                    d = json.loads(x["text"])
+                    for tn in d.get("textNodes", []):
+                        title_tid = tn.get("id")
+                        break
+                if title_tid:
+                    break
+            if not title_tid:
+                print(f"  [tool-bar] '{cfg.get('name')}' 내부 타이틀 TEXT 없음 — skip")
+                continue
+            call_tool("set_text_content", {"nodeId": title_tid, "text": str(cfg["title"])})
+            print(f"  [tool-bar] ✓ '{cfg.get('name')}' 타이틀 → '{cfg['title']}'")
+            done += 1
+        except Exception as e:
+            print(f"  [tool-bar] 타이틀 적용 실패(무시): {e}")
+    return done
+
+
 def _collect_seg_tabs_config(blueprint: dict) -> Optional[dict]:
     """blueprint 에서 _segLabels 마커 {name, labels, active} 수집 (Segmented_control)."""
     found = [None]
@@ -9429,6 +9512,10 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _seg_cfg = _collect_seg_tabs_config(_mt_bp) if _mt_bp else None
         if _seg_cfg:
             _configure_segmented_control(root_node_id, _seg_cfg)
+        # 절대 규칙 0-W (2026-06-12): DS Tool Bar 인스턴스 타이틀(_navTitle) 적용
+        _tb_cfgs = _collect_tool_bar_configs(_mt_bp) if _mt_bp else []
+        if _tb_cfgs:
+            _configure_tool_bar(root_node_id, _tb_cfgs)
     except Exception as e:
         print(f"  [mode-tabs] 실패 (무시하고 계속): {e}")
 
@@ -13269,13 +13356,20 @@ def _apply_template_vars(node: dict, vars_dict: dict, section_name: str) -> dict
     - FAB: label, icon, fill, textColor
     - Ribbon/TransactionRibbon: text, fill, textColor
     - Hero: banners[{fill, tag, title, subText, desc}]
-    - NavBar: (현재 변수 없음 — 로고는 빌드 후 교체)
+    - NavBar: title — 있으면 DS Tool Bar Type=Detail view(back+중앙 타이틀)로 전환
+      (절대 규칙 0-W). 없으면 Type=Home(로고). 타이틀 적용은 _navTitle 마커 자동.
     - TabBar: activeTab
     """
     if not vars_dict:
         return node
 
-    if section_name == "FAB":
+    if section_name == "NavBar":
+        title = vars_dict.get("title") or vars_dict.get("_navTitle")
+        if title and (node.get("type") or "").lower() == "instance":
+            node["componentKey"] = "SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view"
+            node["_navTitle"] = str(title)
+
+    elif section_name == "FAB":
         label = vars_dict.get("label")
         # R-fix 2026-05-28: iconName/icon, iconColor/textColor alias 둘 다 인정
         icon = vars_dict.get("icon") or vars_dict.get("iconName")

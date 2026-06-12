@@ -121,36 +121,29 @@ def detect_scenario(wire_content: dict) -> str:
 
 
 def _gen_nav_bar(data: dict, scenario: str) -> dict:
-    """NavBar — 로고 placeholder + 우측 아이콘 그룹."""
-    icons = data.get("icons") or ["bell-01", "message-chat-circle"]
-    icon_children = [
-        {"name": f"icon-{i}", "type": "icon", "iconName": ic, "size": 24,
-         "iconColor": "$token(fg-primary)"}
-        for i, ic in enumerate(icons)
-    ]
+    """NavBar = DS 'Tool Bar' 인스턴스 (절대 규칙 0-W, 2026-06-12 사용자 룰).
+
+    raw frame(로고 placeholder + 아이콘 직접 그리기) 폐기 — Imin DS 'Tool Bar'
+    컴포넌트 인스턴스를 emit 한다. 메인/서브는 variant(Type prop)로:
+      • Type=Home        — 메인/탭바 홈 (로고 + 우측 아이콘). data.title 없으면 기본.
+      • Type=Detail view — 서브 화면 (back + 중앙 타이틀). data.title 있으면 선택,
+        타이틀은 `_navTitle` 마커 → 빌드 후 `_configure_tool_bar` 가 자동 적용.
+    우측 아이콘 구성은 컴포넌트 마스터가 제어 (커스텀 필요 시 _customNavBar raw frame).
+    """
+    title = data.get("title")
+    if title:
+        return {
+            "name": "NavBar",
+            "type": "instance",
+            "componentKey": "SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view",
+            "_navTitle": str(title),
+            "layoutSizingHorizontal": "FILL",
+        }
     return {
         "name": "NavBar",
-        "type": "frame",
-        "width": 393,
-        "height": 56,
+        "type": "instance",
+        "componentKey": "SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Home",
         "layoutSizingHorizontal": "FILL",
-        "autoLayout": {
-            "layoutMode": "HORIZONTAL",
-            "primaryAxisAlignItems": "SPACE_BETWEEN",
-            "counterAxisAlignItems": "CENTER",
-            "paddingLeft": 20, "paddingRight": 20,
-            "paddingTop": 12, "paddingBottom": 12,
-        },
-        "children": [
-            {"name": "Logo Placeholder", "type": "frame", "width": 80, "height": 32},
-            {
-                "name": "Nav Right",
-                "type": "frame",
-                "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 16,
-                              "counterAxisAlignItems": "CENTER"},
-                "children": icon_children,
-            },
-        ],
     }
 
 
