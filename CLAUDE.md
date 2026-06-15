@@ -280,15 +280,38 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > - **규칙 13** 중요 섹션 밴드 → `_band` 는 강조의 *한 수단*(기본값). lint 는 INFO — 다른 방식
 >   (컬러 히어로 카드·타이포 위계 등)으로 강조했으면 OK. 밴드 패딩도 fill-in-only.
 > - **13-B** Content gap 20 → 명시 gap 존중(WARN), 미지정만 20.
+> - **19-B** 세로 패딩 대칭(pt==pb) → 미세 차이(≤4px)만 fill-in 교정, **큰 비대칭은 디자인
+>   도구로 존중**(advisory WARN). 의도면 `_asymPad` 로 침묵.
 >
-> **③ 창의 프로세스 (신규 하드 게이트):**
-> - 🔴 **S24 컨셉 선언 게이트**: imin_* archetype 빌드는 root 에
+> 🔴 **③ 창의 프로세스 — "콘텐츠는 1:1, 비주얼은 매 시안 다르게" (2026-06-15 사용자 핵심 룰):**
+>
+> 사용자 명시: *"생성되는 디자인들이 와이어프레임과 똑같다는 게 가장 큰 문제. 100번을 생성하면
+> 100번 다 와이어와 똑같이 나오면 디자인이 의미가 없다. 콘텐츠 영역 안에서 레이아웃·컬러·간격·
+> 배치·정렬·타이포 위계는 훨씬 창의적으로 나왔으면 한다."*
+>
+> 콘텐츠(텍스트/숫자/카운트)는 와이어 1:1(0-E)이되, **콘텐츠 영역 안의 디자인**(레이아웃·컬러·
+> 간격·배치·정렬·타이포 위계)은 **매 시안 다르게** 도출한다. 와이어 레이아웃 미러링 = 디자인 안 한
+> 것(0-C/0-N). 스타일 enforcer 는 ② 처럼 fill-in-only/advisory 로 강등돼 **내 명시 선택이 항상
+> 이기므로**, 창의는 *내가* 매 시안 만들어야 한다. 이를 강제하는 게이트 2개:
+>
+> - 🔴 **S24 컨셉 선언 게이트**: imin_* 빌드는 root 에
 >   `"_concept": {"idea": "<핵심 차별 아이디어>", "diffs": ["직전 버전과 달라지는 점 ≥3"]}` 필수 —
 >   없으면 빌드 차단(ERROR). 단순 재빌드는 `_conceptSkipped: "<reason>"`. 형식 통과용 공허한 값 금지.
-> - **novelty 체크**: 빌드 성공 시 비주얼 시그니처(섹션 순서/fill·radius·fontSize 분포)를
->   `scripts/.novelty/<화면>.json` 에 저장, 다음 빌드에서 직전과 ≥85% 유사하면 `[novelty-WARN]`
->   (콘텐츠는 같아야 하고(S22~23), 비주얼은 달라야 한다 — S22 의 반대 방향 장치).
-> - **3안 워크플로 (권장)**: 새 화면/리디자인은 **컨셉이 서로 다른 3안**을 생성해 사용자가 고른다.
+> - 🔴 **S25 디자인 방향 선언 게이트 (신규)**: imin_* 빌드는 root 에 **이번 시안의 *시각 방향*** 을
+>   선언해야 통과 — `"_designDirection": {"id":"<짧은 고유 id>", "typography":"...", "color":"...",
+>   "layout":"...", "spacing":"..."}` (4축 중 ≥3축 구체 전략). 예: `typography:"oversized-hero-32"`,
+>   `color:"mono-brand+1pop"`, `layout:"asymmetric-cards"`, `spacing:"airy-loose"`. 없거나 불충분하면
+>   빌드 차단(ERROR). bypass: `_designDirectionSkipped`. **id 는 직전 빌드와 달라야 한다**(아래 게이트).
+> - 🔴 **novelty 소프트 게이트 (WARN→차단 승격, 신규)**: 빌드 성공 시 비주얼 시그니처(섹션 순서/
+>   fill·radius·fontSize·**간격·layoutMode·정렬·weight** 분포)를 `scripts/.novelty/<화면>.json` 에
+>   저장. 다음 빌드가 직전과 **시그니처 ≥80% 유사하거나 `_designDirection.id` 가 같으면 빌드 차단**
+>   (ERROR `novelty-gate`) → 다른 방향으로 재구성 유도. 레이아웃·간격·정렬·타이포만 바꿔도 시그니처가
+>   충분히 떨어진다(시그니처가 그 차원들을 측정). bypass: `_noveltySkipped` 또는 env
+>   `IMIN_SKIP_NOVELTY_GATE=1`(사용자가 '그대로 다시' 원할 때). 테스트 `test_creative_divergence_gates.py`.
+> - **워크플로**: 빌드 전 레퍼런스(0-G)를 보고 → `_designDirection` 을 직전과 다르게 정하고 →
+>   그 방향으로 콘텐츠 영역의 레이아웃/컬러/간격/정렬/타이포를 **새로 설계**(와이어 미러링 금지) →
+>   `_concept`·`_designDirection` 박아 빌드. novelty 게이트가 발산을 보증.
+> - **3안 워크플로 (권장)**: 새 화면/리디자인은 **방향이 서로 다른 3안**을 생성해 사용자가 고른다.
 >   취향은 룰로 박지 않고 *선택*으로 반영하며, 선택안의 방향이 다음 기본값이 된다.
 > - **레퍼런스**: 레포 내장 uibowl(0-G 자동검색)이 표준 소스 — 모든 사용자 환경에서 동일하게 동작.
 >   (사용자 개인 MCP 등 외부 레퍼런스 소스는 시스템 의존성으로 삼지 말 것 — 다른 사용자 컴에는 없다.)
@@ -1631,18 +1654,17 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - 하나라도 안 보이면 **완료 선언 금지** — 원인 파악 후 수정
 - 체크 순서: PRD 섹션 목록 나열 → 스크린샷에서 각 섹션 존재 확인 → 누락 시 수정
 
-### 19-B. 🔴 세로 패딩은 기본 대칭 (pt==pb) — 무의식적 비대칭 금지 (2026-06-05 사용자 룰)
-- 사용자 명시: *"특별한 이유 없는 비대칭을 하지 못하도록 규칙을 만들어라."* — 컨테이너 frame 의
-  **상/하 padding 은 기본적으로 같아야 한다(paddingTop == paddingBottom).** 무의식적으로
-  pt=12/pb=24, pt=16/pb=12 처럼 다르게 박지 말 것.
-- **비대칭이 정말 필요한 경우만** 노드에 **`"_asymPad": true`** 마커를 박아 허용한다.
-- **시스템 강제 (코드 박힘):** `_enforce_symmetric_vpad(blueprint)` (cmd_build pre-process,
-  no-large-brand-fill 직후) — autoLayout VERTICAL + 자식 2개 이상 컨테이너에서 pt != pb 이고
-  `_asymPad` 없고 이름이 chrome/특수(`navbar/status/ribbon/hero/tab bar/fab/wallet/footer/
-  button/cta/banner/carousel/stepper`)가 아니면 → **둘 다 max(pt,pb) 로 통일**(콘텐츠 안 눌리게).
-  가로 pl/pr 은 캐로셀 peek 등 정당한 비대칭이 있어 건드리지 않음(세로만 자동 교정).
-- **빌드 후 검증:** 빌드 로그 `[규칙] 세로 패딩 대칭 교정 N건` 확인. 섹션/카드/콘텐츠 frame 의
-  상단·하단 여백이 같은지 스크린샷 확인.
+### 19-B. 세로 패딩 대칭 — 🔻 2026-06-15 advisory 강등 (큰 비대칭은 디자인 도구로 존중)
+- 원래(2026-06-05): *"특별한 이유 없는 비대칭을 하지 못하도록"* → pt==pb 강제.
+- 🔴 **2026-06-15 강등 (사용자 룰: 콘텐츠 영역 간격을 창의적으로):** 비대칭 세로 패딩은 **리듬·
+  강조의 디자인 도구**일 수 있어 더는 일괄 강제하지 않는다. 룰 2계층 ② 의 fill-in-only 철학.
+  - **미세 차이(≤4px)** = 무의식적 오타로 보고 max 로 fill-in 교정(가독성 보존).
+  - **큰 비대칭(>4px)** = 의도로 보고 **존중**(`[스타일-기본값]` advisory WARN 만, 변경 없음).
+    의도가 명확하면 `"_asymPad": true` 로 WARN 도 침묵.
+- **시스템:** `_enforce_symmetric_vpad(blueprint)` (cmd_build pre-process) — VERTICAL + 자식 2개
+  이상 컨테이너. 이름이 chrome/특수면 제외, DS 인스턴스 제외. 가로 pl/pr 은 미관여.
+- **빌드 후 검증:** 의도된 비대칭은 유지되는지 확인. 빌드 로그 `[규칙] 세로 패딩 미세 비대칭(≤4px)
+  교정 N건` / 큰 비대칭은 `[스타일-기본값] … author 의도 존중`.
 
 ### 20. ⚠️ CTA/Button 프레임 — autoLayout에 paddingTop/Bottom 필수
 - CTA Button, Submit Button 등 **텍스트를 포함한 버튼 프레임**에 `autoLayout` padding 필수

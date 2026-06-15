@@ -3344,9 +3344,11 @@ def _enforce_symmetric_vpad(blueprint: dict) -> None:
     padding 을 다르게 박던 회귀(Content pt=12/pb=24, Hero pt=16/pb=12 등) 차단. **세로 패딩은
     기본 대칭(pt==pb)**, 비대칭이 정말 필요하면 노드에 `"_asymPad": true` 마커를 박아야 한다.
 
-    대상: autoLayout layoutMode==VERTICAL + 자식 2개 이상인 컨테이너 frame.
-    교정: pt != pb 이고 `_asymPad` 없고 이름이 chrome/특수(_ASYM_PAD_EXEMPT_NAME_KW)가 아니면
-          → 둘 다 max(pt, pb) 로(콘텐츠가 안 눌리게). DS 인스턴스 제외.
+    🔻 2026-06-15 fill-in-only/advisory 로 강등 (사용자 룰: 콘텐츠 영역 간격을 창의적으로):
+    비대칭 세로 패딩은 **디자인 도구**(리듬·강조)일 수 있으므로 더는 강제 교정하지 않는다.
+    - 작은 비대칭(차이 ≤ 4px)은 무의식적 오타일 가능성이 커서 max 로 fill-in 교정(가독성 보존).
+    - 큰 비대칭(차이 > 4px)은 의도로 보고 **존중**(advisory WARN 만 — 의도면 _asymPad 로 침묵).
+    대상: autoLayout VERTICAL + 자식 2개 이상 컨테이너. DS 인스턴스·chrome/특수 이름 제외.
     (가로 pl/pr 은 캐로셀 peek 등 정당한 비대칭이 많아 건드리지 않음 — 세로만.)"""
     fixed = [0]
 
@@ -3362,15 +3364,22 @@ def _enforce_symmetric_vpad(blueprint: dict) -> None:
                 pt = al.get("paddingTop", 0) or 0
                 pb = al.get("paddingBottom", 0) or 0
                 if isinstance(pt, (int, float)) and isinstance(pb, (int, float)) and pt != pb:
-                    m = max(pt, pb)
-                    al["paddingTop"] = m
-                    al["paddingBottom"] = m
-                    fixed[0] += 1
+                    if abs(pt - pb) <= 4:
+                        # 작은 차이 = 무의식적 오타 → fill-in 교정
+                        m = max(pt, pb)
+                        al["paddingTop"] = m
+                        al["paddingBottom"] = m
+                        fixed[0] += 1
+                    else:
+                        # 큰 비대칭 = 의도된 디자인 → 존중(advisory). 의도면 _asymPad 로 침묵.
+                        print(f"[스타일-기본값] '{n.get('name')}' 세로 패딩 비대칭 "
+                              f"(pt={pt}/pb={pb}) — author 의도 존중(교정 안 함). "
+                              f"무의식적이면 대칭 권장, 의도면 _asymPad 마커로 침묵.")
         for c in (n.get("children") or []):
             walk(c)
     walk(blueprint)
     if fixed[0]:
-        print(f"[규칙] 세로 패딩 대칭 교정 {fixed[0]}건 (pt≠pb → max 로 통일; 비대칭은 _asymPad 마커 필요)")
+        print(f"[규칙] 세로 패딩 미세 비대칭(≤4px) 교정 {fixed[0]}건 (큰 비대칭은 존중)")
 
 
 # 🔴 규칙 13 — 메인/탭바 홈 화면의 '중요 섹션' 이름 패턴 (목돈 만들기·스테이지 현황·추천 스테이지).
@@ -4966,8 +4975,12 @@ def cmd_build(blueprint_file: str):
     archetype_issues = _check_no_archetype_reuse(blueprint, blueprint_file)
     wc_required_issues = _check_wireframe_content_required(blueprint)
     concept_issues = _check_concept_required(blueprint)
-    archetype_issues = archetype_issues + wc_required_issues + concept_issues
-    _novelty_check_and_warn(original_blueprint)
+    # S25 디자인 방향 선언 + novelty 소프트 게이트 (2026-06-15 — 발산 강제: "100번 생성해도
+    # 다 똑같다" 차단). 콘텐츠는 1:1, 비주얼은 매 시안 다른 방향.
+    direction_issues = _check_design_direction_required(blueprint)
+    novelty_issues = _check_novelty_gate(original_blueprint)
+    archetype_issues = (archetype_issues + wc_required_issues + concept_issues
+                        + direction_issues + novelty_issues)
     if archetype_issues:
         print(f"\n[archetype-check] {len(archetype_issues)}건 발견:")
         for ai in archetype_issues:
@@ -10846,6 +10859,17 @@ def _check_wireframe_content_required(blueprint: dict) -> list:
 _NOVELTY_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".novelty")
 
 
+# imin archetype 빌드 식별 접두사 (concept/design-direction/novelty 게이트 공용)
+_ARCHETYPE_PREFIXES = ("imin_home", "imin_account", "imin_lounge", "imin_stage",
+                       "imin_my", "imin_community", "imin_calc", "imin_invite",
+                       "imin_signup", "imin_active", "imin_done", "imin_schedule")
+
+
+def _is_archetype_build(blueprint: dict) -> bool:
+    root_name = (blueprint.get("name") or "").lower().replace(" ", "_")
+    return any(p in root_name for p in _ARCHETYPE_PREFIXES)
+
+
 def _check_concept_required(blueprint: dict) -> list:
     """S24: imin_* archetype 빌드 시 root._concept {idea, diffs[≥3]} 선언 의무.
 
@@ -10854,11 +10878,7 @@ def _check_concept_required(blueprint: dict) -> list:
     이전 구조를 무의식적으로 복제하는 것을 차단한다. bypass: root._conceptSkipped: "<reason>"
     (예: 사용자가 '그대로 다시' 요청한 재빌드 / 단순 수정 재빌드)."""
     issues = []
-    root_name = (blueprint.get("name") or "").lower().replace(" ", "_")
-    archetype_prefixes = ("imin_home", "imin_account", "imin_lounge", "imin_stage",
-                          "imin_my", "imin_community", "imin_calc", "imin_invite",
-                          "imin_signup", "imin_active", "imin_done", "imin_schedule")
-    if not any(p in root_name for p in archetype_prefixes):
+    if not _is_archetype_build(blueprint):
         return issues
     if blueprint.get("_conceptSkipped"):
         return issues
@@ -10878,6 +10898,45 @@ def _check_concept_required(blueprint: dict) -> list:
     return issues
 
 
+# S25 — 디자인 방향 선언 (2026-06-15 사용자 룰: "콘텐츠는 1:1 이되 콘텐츠 영역 안 레이아웃·컬러·
+# 간격·배치·정렬·타이포 위계는 훨씬 창의적으로. 100번 생성해도 다 똑같이 나오면 디자인이 의미 없다").
+# 매 시안이 '시각 방향' 4축을 서로 다른 전략으로 선언해야 통과 → 발산 강제(천장은 enforcer
+# fill-in-only 화로 제거됨). novelty 게이트와 짝.
+_DESIGN_DIRECTION_AXES = ("typography", "color", "layout", "spacing")
+
+
+def _check_design_direction_required(blueprint: dict) -> list:
+    """S25: imin_* 빌드는 root._designDirection 선언 의무 — 이번 시안의 *시각 방향*.
+
+    `{"id": "<짧은 고유 id>", "typography": "...", "color": "...", "layout": "...",
+      "spacing": "..."}` — 4축 중 최소 3축을 *구체 전략* 으로 채운다(예 typography=
+    'oversized-hero-32', color='mono-brand+1pop', layout='asymmetric-cards',
+    spacing='airy-loose'). 콘텐츠(0-E)는 와이어 1:1 이되, 이 방향에 따라 콘텐츠 영역의
+    디자인을 매 시안 다르게 도출한다. bypass: root._designDirectionSkipped: "<reason>"."""
+    issues = []
+    if not _is_archetype_build(blueprint):
+        return issues
+    if blueprint.get("_designDirectionSkipped"):
+        return issues
+    d = blueprint.get("_designDirection")
+    if isinstance(d, dict):
+        did = (d.get("id") or "").strip()
+        axes = {a: str(d.get(a) or "").strip() for a in _DESIGN_DIRECTION_AXES}
+        filled = [a for a in _DESIGN_DIRECTION_AXES if axes[a]]
+        if did and len(filled) >= 3:
+            print("[S25-direction] ✓ 디자인 방향 '" + did + "': "
+                  + ", ".join(f"{a}={axes[a]}" for a in filled))
+            return issues
+    issues.append(
+        "ERROR (S25): archetype 빌드인데 root._designDirection 누락/불충분. 이번 시안의 시각 "
+        '방향을 선언할 것 — {"id":"<짧은 고유 id>", "typography":"...", "color":"...", '
+        '"layout":"...", "spacing":"..."} (최소 3축 구체 전략). 콘텐츠는 1:1(0-E) 이되 레이아웃·'
+        "컬러·간격·정렬·타이포 위계를 이 방향으로 매 시안 다르게 만든다(레퍼런스 0-G 재참조, "
+        "직전 빌드와 다른 방향). 단순 재빌드면 root._designDirectionSkipped: \"<reason>\"."
+    )
+    return issues
+
+
 def _novelty_key(blueprint: dict) -> str:
     """root 이름에서 버전/날짜 접미사를 떼 화면(archetype) 단위 키 생성."""
     name = (blueprint.get("name") or "screen").lower().strip()
@@ -10888,29 +10947,50 @@ def _novelty_key(blueprint: dict) -> str:
 
 
 def _visual_signature(blueprint: dict) -> dict:
-    """비주얼 시그니처 — 콘텐츠(텍스트)는 빼고 시각 구조만: 루트 직계 섹션 순서 /
-    fill 토큰 분포 / radius 분포 / fontSize 분포."""
-    sig = {"sections": [], "fills": {}, "radii": {}, "sizes": {}}
+    """비주얼 시그니처 — 콘텐츠(텍스트)는 빼고 *시각 구조*만. 발산을 측정하는 차원:
+    섹션 순서 / fill 토큰 분포 / radius 분포 / fontSize 분포 / itemSpacing(간격) 분포 /
+    layoutMode 분포 / textAlign(정렬) 분포 / fontWeight 분포.
+    (2026-06-15 확장: 간격·레이아웃·정렬·weight 추가 — 레이아웃/간격/타이포만 바꿔도
+    시그니처가 달라져 novelty 게이트가 실제 디자인 발산을 측정하게.)"""
+    sig = {"sections": [], "fills": {}, "radii": {}, "sizes": {},
+           "gaps": {}, "modes": {}, "aligns": {}, "weights": {}}
     for c in blueprint.get("children") or []:
         if isinstance(c, dict):
             sig["sections"].append((c.get("name") or "?").strip().lower())
+
+    def _bump(d, k):
+        d[k] = d.get(k, 0) + 1
 
     def walk(n):
         if not isinstance(n, dict):
             return
         f = n.get("fill")
         if isinstance(f, str) and f.startswith("$token("):
-            sig["fills"][f] = sig["fills"].get(f, 0) + 1
+            _bump(sig["fills"], f)
         r = n.get("cornerRadius")
         if not isinstance(r, (int, float)):
             r = n.get("topLeftRadius")
         if isinstance(r, (int, float)) and r > 0:
-            k = str(int(min(r, 100)))
-            sig["radii"][k] = sig["radii"].get(k, 0) + 1
+            _bump(sig["radii"], str(int(min(r, 100))))
+        al = n.get("autoLayout")
+        if isinstance(al, dict):
+            g = al.get("itemSpacing")
+            if isinstance(g, (int, float)) and not isinstance(g, bool):
+                _bump(sig["gaps"], str(int(g)))
+            lm = al.get("layoutMode")
+            if lm:
+                _bump(sig["modes"], str(lm).upper())
         if (n.get("type") or "").lower() == "text":
             fs = n.get("fontSize")
             if isinstance(fs, (int, float)):
-                sig["sizes"][str(int(fs))] = sig["sizes"].get(str(int(fs)), 0) + 1
+                _bump(sig["sizes"], str(int(fs)))
+            ta = n.get("textAlignHorizontal")
+            if ta:
+                _bump(sig["aligns"], str(ta).upper())
+            st = (n.get("fontName") or {}).get("style") if isinstance(n.get("fontName"), dict) else None
+            st = st or n.get("fontWeight")
+            if st:
+                _bump(sig["weights"], str(st))
         for ch in n.get("children") or []:
             walk(ch)
     walk(blueprint)
@@ -10918,7 +10998,9 @@ def _visual_signature(blueprint: dict) -> dict:
 
 
 def _signature_similarity(a: dict, b: dict) -> float:
-    """두 시그니처의 유사도 0..1 — 섹션 순서 35% + fill 분포 25% + radius 20% + fontSize 20%."""
+    """두 시그니처의 유사도 0..1 — 섹션순서 22% + fill 18% + radius 12% + fontSize 16%
+    + 간격 14% + layoutMode 8% + 정렬 6% + weight 4% (2026-06-15 확장: 간격/레이아웃/정렬/weight
+    가 합쳐 32% — 레이아웃/간격/타이포만 바꿔도 유사도가 충분히 떨어지게)."""
     def multiset_sim(x, y):
         keys = set(x) | set(y)
         if not keys:
@@ -10929,40 +11011,76 @@ def _signature_similarity(a: dict, b: dict) -> float:
     sa, sb = a.get("sections") or [], b.get("sections") or []
     same = sum(1 for p, q in zip(sa, sb) if p == q)
     sec_sim = same / max(len(sa), len(sb), 1)
-    return (0.35 * sec_sim
-            + 0.25 * multiset_sim(a.get("fills") or {}, b.get("fills") or {})
-            + 0.20 * multiset_sim(a.get("radii") or {}, b.get("radii") or {})
-            + 0.20 * multiset_sim(a.get("sizes") or {}, b.get("sizes") or {}))
+    return (0.22 * sec_sim
+            + 0.18 * multiset_sim(a.get("fills") or {}, b.get("fills") or {})
+            + 0.12 * multiset_sim(a.get("radii") or {}, b.get("radii") or {})
+            + 0.16 * multiset_sim(a.get("sizes") or {}, b.get("sizes") or {})
+            + 0.14 * multiset_sim(a.get("gaps") or {}, b.get("gaps") or {})
+            + 0.08 * multiset_sim(a.get("modes") or {}, b.get("modes") or {})
+            + 0.06 * multiset_sim(a.get("aligns") or {}, b.get("aligns") or {})
+            + 0.04 * multiset_sim(a.get("weights") or {}, b.get("weights") or {}))
 
 
-def _novelty_check_and_warn(blueprint: dict) -> None:
-    """직전 빌드 시그니처와 비교 — 너무 같으면 WARN (차단 X, 사용자가 '그대로' 원할 수도)."""
+# novelty 소프트 게이트 차단선 — 직전 빌드와 이 이상 유사하면 차단(재구성 유도).
+_NOVELTY_SIM_BLOCK = 0.80
+
+
+def _check_novelty_gate(blueprint: dict) -> list:
+    """소프트 게이트(2026-06-15 사용자 룰): 직전 빌드와 비주얼 시그니처가 너무 유사하거나
+    디자인 방향 id 가 직전과 같으면 **빌드 차단**(재구성 유도). WARN-only 였던 novelty 를
+    실제 게이트로 승격 — "100번 생성해도 다 똑같다"는 문제의 forcing function.
+
+    콘텐츠(0-E)는 그대로 두되 레이아웃·컬러·간격·정렬·타이포 위계를 다른 방향으로 재구성하면
+    시그니처가 떨어져 통과한다. bypass: env IMIN_SKIP_NOVELTY_GATE=1 또는 root._noveltySkipped
+    (사용자가 '그대로 다시' 원하는 의도된 동일 재빌드)."""
+    issues = []
+    if os.environ.get("IMIN_SKIP_NOVELTY_GATE") == "1" or blueprint.get("_noveltySkipped"):
+        return issues
+    if not _is_archetype_build(blueprint):
+        return issues
     try:
         key = _novelty_key(blueprint)
         p = os.path.join(_NOVELTY_DIR, key + ".json")
         if not os.path.exists(p):
-            return
+            print(f"[novelty] '{key}' 직전 빌드 없음 — 첫 생성(게이트 통과)")
+            return issues
         with open(p, encoding="utf-8") as fh:
             prev = json.load(fh)
         sim = _signature_similarity(prev.get("signature") or {}, _visual_signature(blueprint))
         pct = round(sim * 100)
-        if sim >= 0.85:
-            print(f"[novelty-WARN] '{key}' 직전 빌드와 비주얼 시그니처 {pct}% 유사 — 레이아웃/표면/타이포가 "
-                  f"거의 같다. _concept 의 차별점이 실제 구조에 반영됐는지 재고 (의도된 동일 재빌드면 무시).")
+        prev_did = str((prev.get("direction") or {}).get("id") or "").strip().lower()
+        cur_did = str((blueprint.get("_designDirection") or {}).get("id") or "").strip().lower()
+        same_dir = bool(prev_did) and prev_did == cur_did
+        if sim >= _NOVELTY_SIM_BLOCK or same_dir:
+            reasons = []
+            if sim >= _NOVELTY_SIM_BLOCK:
+                reasons.append(f"비주얼 시그니처 {pct}% 유사(차단선 {round(_NOVELTY_SIM_BLOCK*100)}%)")
+            if same_dir:
+                reasons.append(f"디자인 방향 id '{cur_did}' 가 직전과 동일")
+            issues.append(
+                "ERROR (novelty-gate): 직전 빌드와 너무 유사 — " + " / ".join(reasons) + ". "
+                "콘텐츠(0-E)는 그대로 두되 콘텐츠 영역의 레이아웃·컬러·간격·정렬·타이포 위계를 "
+                "**다른 디자인 방향**(_designDirection)으로 재구성하라(레퍼런스 0-G 재참조). "
+                "정말 '그대로 다시'면 root._noveltySkipped:\"<reason>\" 또는 env IMIN_SKIP_NOVELTY_GATE=1."
+            )
         else:
-            print(f"[novelty] ✓ '{key}' 직전 빌드 대비 시그니처 유사도 {pct}% — 새로움 확보")
-    except Exception:
-        pass
+            print(f"[novelty] ✓ '{key}' 직전 대비 시그니처 {pct}% 유사 — 새로움 확보"
+                  f"(차단선 {round(_NOVELTY_SIM_BLOCK*100)}%)")
+    except Exception as e:
+        print(f"[novelty-gate] 비교 실패(무시하고 통과): {e}")
+    return issues
 
 
 def _novelty_save(blueprint: dict) -> None:
-    """빌드 성공 후 시그니처 저장 — 다음 생성의 novelty 비교 기준."""
+    """빌드 성공 후 시그니처 + 디자인 방향 저장 — 다음 생성의 novelty 비교 기준."""
     try:
         os.makedirs(_NOVELTY_DIR, exist_ok=True)
         key = _novelty_key(blueprint)
         with open(os.path.join(_NOVELTY_DIR, key + ".json"), "w", encoding="utf-8") as fh:
             json.dump({"name": blueprint.get("name"), "signature": _visual_signature(blueprint),
-                       "concept": blueprint.get("_concept"), "ts": int(time.time())},
+                       "concept": blueprint.get("_concept"),
+                       "direction": blueprint.get("_designDirection"),
+                       "ts": int(time.time())},
                       fh, ensure_ascii=False)
     except Exception:
         pass
