@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>설치 가이드 — Figma Design Agent (신규 사용자용)</title>
+<style>
+  :root{
+    --ink:#1f2937; --ink2:#475569; --mut:#64748b; --line:#e2e8f0;
+    --bg:#f8fafc; --card:#fff; --brand:#6d28d9; --brand2:#7c3aed;
+    --mac:#0ea5a4; --win:#2563eb; --warn:#b45309; --ok:#15803d; --code:#0f172a;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Malgun Gothic",sans-serif;
+    line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px 80px}
+  header.cover{background:linear-gradient(135deg,#5b21b6,#7c3aed 55%,#0ea5a4);color:#fff;padding:50px 24px 40px}
+  header.cover .inner{max-width:960px;margin:0 auto}
+  header.cover .eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;font-weight:600}
+  header.cover h1{font-size:32px;line-height:1.25;margin:10px 0 6px;font-weight:800}
+  header.cover p.sub{font-size:16px;opacity:.92;margin:0;max-width:680px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:28px 32px;margin:22px 0;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  h2.sec{font-size:21px;font-weight:800;margin:0 0 4px;display:flex;align-items:center;gap:12px}
+  h2.sec .num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;
+    border-radius:9px;background:var(--brand);color:#fff;font-size:14px;font-weight:800;flex:0 0 auto}
+  .sec-lead{color:var(--mut);margin:2px 0 16px;font-size:14.5px}
+  h3{font-size:16px;font-weight:700;margin:22px 0 8px}
+  h4{font-size:13.5px;font-weight:700;margin:14px 0 6px;color:var(--brand2)}
+  p{margin:8px 0} ul,ol{margin:8px 0;padding-left:22px} li{margin:5px 0}
+  code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px;
+    font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:#0f172a;word-break:break-all}
+  .mut{color:var(--mut)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f8fafc;font-weight:700;color:var(--ink2);font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  tr:last-child td{border-bottom:none}
+  pre{background:var(--code);color:#e2e8f0;border-radius:12px;padding:15px 18px;overflow:auto;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.6;margin:12px 0}
+  pre .c{color:#94a3b8} pre .k{color:#c4b5fd} pre .s{color:#7dd3fc} pre .ok{color:#86efac}
+  .callout{border-left:4px solid var(--mac);background:#f0fdfa;border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0;font-size:14px}
+  .callout.warn{border-color:var(--warn);background:#fffbeb}
+  .callout.win{border-color:var(--win);background:#eff6ff}
+  .callout b{color:var(--ink)}
+  ol.steps{counter-reset:s;list-style:none;padding-left:0}
+  ol.steps>li{counter-increment:s;position:relative;padding:4px 0 16px 46px;margin:0}
+  ol.steps>li::before{content:counter(s);position:absolute;left:0;top:2px;width:30px;height:30px;
+    background:var(--brand);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:14px}
+  ol.steps>li b{font-size:15.5px}
+  .tabs{display:flex;gap:10px;margin:0 0 4px}
+  .tab-btn{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px 14px 0 0;padding:16px;
+    font-size:17px;font-weight:800;cursor:pointer;color:var(--mut);display:flex;align-items:center;justify-content:center;
+    gap:10px;transition:.15s}
+  .tab-btn .ico{font-size:22px}
+  .tab-btn[data-os="mac"].active{color:var(--mac);border-color:var(--mac);background:#f0fdfa}
+  .tab-btn[data-os="win"].active{color:var(--win);border-color:var(--win);background:#eff6ff}
+  .tab-panel{display:none;border:2px solid var(--line);border-radius:0 0 16px 16px;border-top:none;padding:28px 30px;background:#fff}
+  .tab-panel.active{display:block}
+  .tab-panel.mac.active{border-color:var(--mac)} .tab-panel.win.active{border-color:var(--win)}
+  .osband{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:3px 12px;margin-bottom:6px}
+  .osband.mac{background:#ccfbf1;color:#0f766e} .osband.win{background:#dbeafe;color:#1d4ed8}
+  .pill{display:inline-block;background:#ede9fe;color:#6d28d9;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;margin:2px 4px 2px 0}
+  .chk{list-style:none;padding-left:0} .chk li{padding-left:26px;position:relative}
+  .chk li::before{content:"✓";position:absolute;left:0;color:var(--ok);font-weight:800}
+  footer{color:var(--mut);font-size:12.5px;text-align:center;margin-top:30px;padding-top:18px;border-top:1px solid var(--line)}
+  @media(max-width:720px){.wrap{padding:0 14px 60px}section,.tab-panel{padding:20px 16px}header.cover h1{font-size:25px}.tab-btn{font-size:15px;padding:13px}}
+  @media print{.tab-panel{display:block!important;break-inside:avoid}.tab-btn{display:none}body{background:#fff}section{box-shadow:none}}
+</style>
+</head>
+<body>
+<header class="cover">
+  <div class="inner">
+    <div class="eyebrow">설치 가이드 · Setup Guide</div>
+    <h1>Figma Design Agent 설치 및 실행</h1>
+    <p class="sub">새 컴퓨터에서 이 저장소를 설치해 디자인 생성을 시작하기까지의 전 과정입니다.
+      먼저 <b>공통 준비</b>를 마친 뒤, 본인 OS 탭(macOS / Windows)을 따라 진행하세요.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ===== 공통 0단계 ===== -->
+  <section id="common">
+    <h2 class="sec"><span class="num">0</span>공통 사전 준비 (Mac · Windows 모두)</h2>
+    <p class="sec-lead">OS별 자동 설치 스크립트를 돌리기 <b>전에</b>, 아래 3가지를 먼저 갖춰야 합니다.
+      (이 항목들은 자동 스크립트가 설치해 주지 않습니다.)</p>
+    <table>
+      <thead><tr><th style="width:26%">준비물</th><th>용도 / 설치</th></tr></thead>
+      <tbody>
+        <tr><td>Git</td><td>저장소 클론용. <code>git --version</code> 으로 확인. 없으면
+          <a href="https://git-scm.com">git-scm.com</a> (Windows) / Mac은 자동 스크립트가 Xcode CLT로 함께 설치.</td></tr>
+        <tr><td>Figma 데스크톱 앱</td><td><b>브라우저 버전 아님.</b> 플러그인 개발 모드 실행에 데스크톱 앱이 필요.
+          <a href="https://www.figma.com/downloads/">figma.com/downloads</a></td></tr>
+        <tr><td>Claude Code CLI</td><td>터미널에서 AI가 요구사항을 해석·생성하는 진입점.
+          설치: <code>npm install -g @anthropic-ai/claude-code</code> (또는 사내 배포 방식). 로그인 필요.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>저장소 클론</h3>
+    <pre><span class="c"># 작업할 폴더에서</span>
+git clone &lt;저장소 URL&gt; figma-design-agent
+cd figma-design-agent</pre>
+    <div class="callout">
+      <b>전체 흐름 미리보기.</b> ① 공통 준비 → ② OS별 자동 설치 스크립트 → ③ 브리지 기동 →
+      ④ Figma에 플러그인 등록·실행 → ⑤ 연결 확인 → ⑥ 디자인 생성 준비(기획 학습) → ⑦ 생성 시작.
+      ③~⑦은 두 OS 공통이며 각 탭 하단에 정리돼 있습니다.
+    </div>
+  </section>
+
+  <!-- ===== OS 탭 ===== -->
+  <h2 class="sec" style="margin:30px 0 14px"><span class="num" style="background:#0ea5a4">1</span>OS별 설치 — 본인 OS를 선택하세요</h2>
+  <div class="tabs">
+    <button class="tab-btn active" data-os="mac" onclick="showOS('mac')"><span class="ico">🍎</span> macOS</button>
+    <button class="tab-btn" data-os="win" onclick="showOS('win')"><span class="ico">🪟</span> Windows</button>
+  </div>
+
+  <!-- ===================== macOS ===================== -->
+  <div class="tab-panel mac active" id="panel-mac">
+    <div class="osband mac">macOS 사용자 페이지</div>
+    <h3 style="margin-top:6px">1단계 · 패키지 매니저(Homebrew) 확인</h3>
+    <p>자동 스크립트가 Homebrew를 비대화식으로 설치 시도합니다. <b>설치 중 sudo(관리자) 암호 입력을
+      요청할 수 있습니다.</b> 만약 자동 설치가 실패하면 아래로 수동 설치 후 다시 진행하세요.</p>
+    <pre><span class="c"># (자동 실패 시에만) Homebrew 수동 설치</span>
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</pre>
+
+    <h3>2단계 · 자동 설치 스크립트 실행</h3>
+    <p>저장소 폴더에서 아래 한 줄을 실행합니다. 멱등(이미 설치된 건 건너뜀)·비대화식이라
+      <b>중간에 묻지 않고 끝까지 진행</b>됩니다. 출력의 <code>[OK]</code> 라인들을 확인하세요.</p>
+    <pre>bash scripts/setup-mac.sh</pre>
+
+    <h4>스크립트가 자동 처리하는 항목</h4>
+    <table>
+      <thead><tr><th style="width:34%">항목</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr><td>1. Homebrew</td><td>Mac 패키지 매니저 (없으면 비대화식 설치)</td></tr>
+        <tr><td>2. Python 3</td><td>시스템 <code>python3</code>(3.9+) 우선, 없으면 <code>brew install python@3.12</code></td></tr>
+        <tr><td>3. Python 패키지</td><td><code>requests</code>, <code>Pillow</code> (PEP 668 환경은 <code>--break-system-packages</code>→<code>--user</code> 폴백)</td></tr>
+        <tr><td>4. Node.js LTS</td><td>Homebrew로 설치 (18+ 필수)</td></tr>
+        <tr><td>5. npm 의존성</td><td><code>npm install --legacy-peer-deps</code></td></tr>
+        <tr><td>6. sharp 네이티브 모듈</td><td>Apple Silicon=<code>darwin-arm64</code> / Intel=<code>darwin-x64</code> (<code>uname -m</code>로 자동 판단)</td></tr>
+        <tr><td>7. 프로젝트 빌드</td><td><code>npm run build</code> → <code>out/</code></td></tr>
+        <tr><td>8. 산출물 정리</td><td>생성 7일 경과 임시 산출물 자동 삭제</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <b>macOS 참고.</b> Apple Silicon은 Homebrew 경로가 <code>/opt/homebrew</code>, Intel은
+      <code>/usr/local</code> 입니다(스크립트가 자동 판단). macOS는 기본 UTF-8이라 별도 한글 설정 불필요.
+      스크립트 종료 시 출력되는 <b>Python 경로</b>를 기억해 두세요(보통 <code>python3</code> 로 충분).
+    </div>
+
+    <h3>3단계 · 브리지 서버 기동</h3>
+    <p><b>이 터미널은 켜둔 채로 유지</b>하세요(브리지가 계속 떠 있어야 함). 새 터미널 탭에서 이후 단계를 진행합니다.</p>
+    <pre>npm run bridge</pre>
+    <p class="mut">아래 두 로그가 보이면 정상입니다.</p>
+    <pre><span class="ok">[FigmaWS] Server listening on port 8767</span>
+<span class="ok">[MCP] HTTP server listening</span> ...</pre>
+
+    <h3>4단계 · Figma 데스크톱에 플러그인 등록·실행</h3>
+    <ol class="steps">
+      <li><b>Figma 데스크톱 앱</b>을 엽니다(아무 디자인 파일 또는 새 파일).</li>
+      <li>상단 메뉴 <b>Plugins → Development → Import plugin from manifest…</b>
+        <div class="mut">(또는 캔버스 우클릭 → Plugins → Development → Import plugin from manifest…)</div></li>
+      <li>파일 선택창에서 <code>figma-design-agent/src/figma-plugin/manifest.json</code> 을 선택합니다.</li>
+      <li>등록 후 <b>Plugins → Development → "Figma Design Agent"</b> 를 실행합니다.</li>
+      <li>플러그인이 <code>ws://localhost:8767</code> 로 브리지에 자동 연결됩니다.
+        브리지 터미널에 <code>Figma: connected</code> 가 뜨면 성공.</li>
+    </ol>
+    <div class="callout"><b>플러그인 이름은 정확히 "Figma Design Agent"</b> 입니다.</div>
+
+    <h3>5단계 · 연결 확인</h3>
+    <pre>python3 scripts/figma_mcp_client.py init</pre>
+    <p class="mut"><code>Ready.</code> 와 실제 세션 ID가 나오면 성공입니다.
+      (<code>Session initialized: None</code> 이면 브리지 미기동 또는 플러그인 미연결.)</p>
+
+    <h3>6~7단계 · 디자인 생성 준비 및 시작</h3>
+    <p>이제 <b>터미널의 Claude Code CLI</b>에서 진행합니다. 자세한 순서는 아래
+      <a href="#generate">"공통 — 디자인 생성 시작"</a> 섹션을 참고하세요.</p>
+  </div>
+
+  <!-- ===================== Windows ===================== -->
+  <div class="tab-panel win" id="panel-win">
+    <div class="osband win">Windows 사용자 페이지</div>
+    <h3 style="margin-top:6px">1단계 · 패키지 매니저(winget) 확인</h3>
+    <p>자동 스크립트는 <b>winget</b>으로 Python·Node를 설치합니다. PowerShell에서
+      <code>winget --version</code> 으로 확인하세요. 없으면 Microsoft Store에서
+      <b>"앱 설치 관리자"(App Installer)</b> 를 설치하면 winget이 활성화됩니다.</p>
+
+    <h3>2단계 · 자동 설치 스크립트 실행</h3>
+    <p><b>PowerShell</b>을 열고 저장소 폴더에서 아래를 실행합니다. 멱등·비대화식이라 끝까지 자동 진행됩니다.</p>
+    <pre>powershell -ExecutionPolicy Bypass -File scripts\setup-windows.ps1</pre>
+
+    <h4>스크립트가 자동 처리하는 항목 (7단계 + 정리)</h4>
+    <table>
+      <thead><tr><th style="width:34%">항목</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr><td>1. Python 3.12</td><td>winget으로 설치 (<code>figma_mcp_client.py</code> 실행용, 3.9+ 필요)</td></tr>
+        <tr><td>2. Python 패키지</td><td><code>requests</code>, <code>Pillow</code></td></tr>
+        <tr><td>3. PYTHONUTF8=1</td><td>사용자 환경변수 등록 — 없으면 한글 출력이 cp949 오류</td></tr>
+        <tr><td>4. Node.js LTS</td><td>winget으로 설치 (18+ 필수, 구버전이면 자동 업그레이드)</td></tr>
+        <tr><td>5. npm 의존성</td><td><code>npm install --legacy-peer-deps</code></td></tr>
+        <tr><td>6. sharp 네이티브 모듈</td><td><code>@img/sharp-win32-x64</code> 플랫폼 패키지</td></tr>
+        <tr><td>7. 프로젝트 빌드</td><td><code>npm run build</code> → <code>out\</code></td></tr>
+        <tr><td>8. 산출물 정리</td><td>생성 7일 경과 임시 산출물 자동 삭제</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout win">
+      <b>Windows 함정 (스크립트가 처리하지만 참고).</b>
+      <ul style="margin:6px 0 0">
+        <li>PATH의 <code>python3</code>/<code>python</code>은 Microsoft Store <b>별칭 stub</b>입니다 —
+          실제 Python은 <code>%LOCALAPPDATA%\Programs\Python\Python3xx\python.exe</code>.
+          <code>figma_mcp_client.py</code> 호출 시 이 <b>전체 경로 + <code>PYTHONUTF8=1</code></b> 환경변수를 사용합니다.</li>
+        <li>winget 설치 직후 <b>같은 PowerShell 세션은 PATH가 갱신 안 됨</b> — <code>node</code>/<code>npm</code>이
+          안 잡히면 <code>C:\Program Files\nodejs\</code> 전체 경로 사용(스크립트가 자동 처리).</li>
+        <li>스크립트 종료 시 출력되는 <b>Python 전체 경로</b>를 기억해 두세요.</li>
+      </ul>
+    </div>
+
+    <h3>3단계 · 브리지 서버 기동</h3>
+    <p><b>이 PowerShell 창은 켜둔 채로 유지</b>하세요. 새 창에서 이후 단계를 진행합니다.</p>
+    <pre>npm run bridge</pre>
+    <p class="mut">아래 두 로그가 보이면 정상입니다.</p>
+    <pre><span class="ok">[FigmaWS] Server listening on port 8767</span>
+<span class="ok">[MCP] HTTP server listening</span> ...</pre>
+
+    <h3>4단계 · Figma 데스크톱에 플러그인 등록·실행</h3>
+    <ol class="steps">
+      <li><b>Figma 데스크톱 앱</b>을 엽니다(아무 디자인 파일 또는 새 파일).</li>
+      <li>상단 메뉴 <b>Plugins → Development → Import plugin from manifest…</b></li>
+      <li>파일 선택창에서 <code>figma-design-agent\src\figma-plugin\manifest.json</code> 을 선택합니다.</li>
+      <li>등록 후 <b>Plugins → Development → "Figma Design Agent"</b> 를 실행합니다.</li>
+      <li>플러그인이 <code>ws://localhost:8767</code> 로 자동 연결됩니다. 브리지 창에
+        <code>Figma: connected</code> 가 뜨면 성공.</li>
+    </ol>
+    <div class="callout win"><b>플러그인 이름은 정확히 "Figma Design Agent"</b> 입니다.</div>
+
+    <h3>5단계 · 연결 확인</h3>
+    <p>Windows는 실제 Python 전체 경로 + UTF-8 설정으로 호출합니다(<code>Python3xx</code>는 실제 버전으로 치환).</p>
+    <pre><span class="c"># PowerShell</span>
+$env:PYTHONUTF8=1
+&amp; "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe" scripts\figma_mcp_client.py init</pre>
+    <p class="mut"><code>Ready.</code> 와 실제 세션 ID가 나오면 성공입니다.</p>
+
+    <h3>6~7단계 · 디자인 생성 준비 및 시작</h3>
+    <p>이제 <b>터미널의 Claude Code CLI</b>에서 진행합니다. 아래
+      <a href="#generate">"공통 — 디자인 생성 시작"</a> 섹션을 참고하세요.</p>
+  </div>
+
+  <!-- ===== 공통 생성 시작 ===== -->
+  <section id="generate">
+    <h2 class="sec"><span class="num" style="background:#0ea5a4">2</span>공통 — 디자인 생성 시작</h2>
+    <p class="sec-lead">설치·연결이 끝나면, 실제 디자인 생성은 <b>터미널의 Claude Code CLI</b>에서
+      대화로 진행합니다. 가장 쉬운 방법은 아래 한마디입니다.</p>
+
+    <ol class="steps">
+      <li><b>"디자인 생성 준비" 라고 입력</b>
+        <div class="mut">Claude Code CLI가 OS를 자동 판단해 환경 설정 → 브리지 → 연결 확인 →
+          플러그인 안내 → <b>기획 문서 전체 학습(통독)</b>까지 자동으로 진행합니다.
+          (플러그인 실행만 수동 — 안내가 나오면 Figma에서 "Figma Design Agent"를 실행하세요.)</div></li>
+      <li><b>기획 문서 통독 완료를 기다립니다</b>
+        <div class="mut">서비스 맥락(유스케이스)을 완전히 학습해야 디자인 품질이 보장됩니다. 이 단계가
+          끝나야 빌드 게이트를 통과합니다.</div></li>
+      <li><b>디자인을 요청합니다</b>
+        <div class="mut">예: <i>"메인화면 그려"</i>, <i>"지금 선택한 와이어프레임으로 디자인 생성해"</i>.
+          요구사항(PRD)·와이어프레임을 함께 주면 더 정확합니다.</div></li>
+      <li><b>결과 확인</b>
+        <div class="mut">Figma 파일에 디자인 시스템(색·컴포넌트·텍스트 스타일)이 바인딩된 화면이 생성됩니다.</div></li>
+    </ol>
+
+    <div class="callout">
+      <b>핵심 순서 요약.</b> 환경 설정(스크립트) → <code>npm run bridge</code>(켜둔 채 유지) →
+      Figma에서 플러그인 실행 → <code>… init</code> 으로 연결 확인 → Claude Code CLI에
+      <b>"디자인 생성 준비"</b> → 디자인 요청.
+    </div>
+  </section>
+
+  <!-- ===== 문제 해결 ===== -->
+  <section id="trouble">
+    <h2 class="sec"><span class="num" style="background:#b45309">!</span>문제 해결 (자주 묻는 상황)</h2>
+    <table>
+      <thead><tr><th style="width:34%">증상</th><th>원인 / 해결</th></tr></thead>
+      <tbody>
+        <tr><td><code>Session initialized: None</code></td>
+          <td>브리지 미기동 또는 플러그인 미연결. ① <code>npm run bridge</code>가 떠 있는지,
+            ② Figma에서 "Figma Design Agent" 플러그인이 실행 중인지 확인.</td></tr>
+        <tr><td>브리지 로그에 <code>Figma: connected</code> 가 안 뜸</td>
+          <td>Figma <b>데스크톱</b> 앱에서 플러그인을 실행해야 함(브라우저 버전 불가).
+            Plugins → Development → Figma Design Agent.</td></tr>
+        <tr><td><span class="osband win">Win</span> 한글이 <code>cp949 UnicodeEncodeError</code></td>
+          <td><code>PYTHONUTF8=1</code> 환경변수 누락. 스크립트가 등록하지만, 수동 호출 시
+            <code>$env:PYTHONUTF8=1</code> 을 먼저 실행.</td></tr>
+        <tr><td><span class="osband win">Win</span> <code>python</code>/<code>node</code> 명령을 못 찾음</td>
+          <td>설치 직후 같은 세션은 PATH 미갱신. PowerShell을 새로 열거나 전체 경로 사용
+            (<code>%LOCALAPPDATA%\Programs\Python\…</code>, <code>C:\Program Files\nodejs\</code>).</td></tr>
+        <tr><td><span class="osband win">Win</span> winget이 없음</td>
+          <td>Microsoft Store에서 <b>"앱 설치 관리자"(App Installer)</b> 설치 후 재실행.</td></tr>
+        <tr><td><span class="osband mac">Mac</span> Homebrew 자동 설치가 멈춤</td>
+          <td>sudo 암호 입력이 필요한 경우. 위 macOS 1단계의 수동 설치 명령으로 설치 후 재실행.</td></tr>
+        <tr><td><span class="osband mac">Mac</span> <code>pip install</code> 권한/환경 오류</td>
+          <td>최신 macOS의 PEP 668 제약. 스크립트가 <code>--break-system-packages</code>→<code>--user</code>로
+            자동 폴백하므로 스크립트를 재실행.</td></tr>
+        <tr><td>빌드 직후 색·텍스트 스타일이 안 입혀짐</td>
+          <td>빌드 도중 타임아웃 가능. <code>… post-fix &lt;rootId&gt;</code> 또는
+            <code>… apply-text-styles &lt;rootId&gt;</code> 로 보완(자동 복구도 동작).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>설치가 정상인지 빠른 체크</h3>
+    <ul class="chk">
+      <li>저장소 폴더에 <code>out/</code> 가 생성됨 (빌드 성공)</li>
+      <li><code>npm run bridge</code> 로그에 포트 8767·8769 리스닝 표시</li>
+      <li>Figma 브리지 로그에 <code>Figma: connected</code></li>
+      <li><code>… init</code> 실행 시 <code>Ready.</code> + 세션 ID 출력</li>
+    </ul>
+  </section>
+
+  <footer>
+    Figma Design Agent · 신규 사용자 설치 가이드 · 본 저장소(figma-design-agent) 기준 작성
+  </footer>
+</div>
+
+<script>
+  function showOS(os){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.os===os));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+os));
+  }
+  // OS 자동 감지로 기본 탭 선택
+  (function(){
+    var ua=(navigator.userAgent||navigator.platform||'').toLowerCase();
+    if(ua.indexOf('win')>-1) showOS('win');
+  })();
+</script>
+</body>
+</html>

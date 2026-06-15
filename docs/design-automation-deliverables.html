@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>디자인 자동화 산출물 정의서 — Figma Design Agent</title>
+<style>
+  :root{
+    --ink:#1f2937; --ink2:#475569; --mut:#64748b; --line:#e2e8f0;
+    --bg:#f8fafc; --card:#ffffff; --brand:#6d28d9; --brand2:#7c3aed;
+    --accent:#0ea5a4; --warn:#b45309; --ok:#15803d; --code:#0f172a;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard",
+    "Malgun Gothic",sans-serif;line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px 80px}
+  header.cover{background:linear-gradient(135deg,#5b21b6,#7c3aed 60%,#0ea5a4);
+    color:#fff;padding:56px 24px 44px;margin-bottom:0}
+  header.cover .inner{max-width:980px;margin:0 auto}
+  header.cover .eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+    opacity:.85;font-weight:600}
+  header.cover h1{font-size:34px;line-height:1.25;margin:10px 0 6px;font-weight:800}
+  header.cover p.sub{font-size:16px;opacity:.92;margin:0;max-width:680px}
+  header.cover .meta{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px}
+  header.cover .meta span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);
+    padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:600}
+  .toc{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:18px 22px;margin:28px 0 8px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .toc h2{margin:0 0 8px;font-size:14px;color:var(--mut);letter-spacing:.04em;text-transform:uppercase}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:36px}
+  .toc a{color:var(--ink2);text-decoration:none}
+  .toc a:hover{color:var(--brand);text-decoration:underline}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:30px 34px;margin:22px 0;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  h2.sec{font-size:23px;font-weight:800;margin:0 0 4px;display:flex;align-items:center;gap:12px}
+  h2.sec .num{display:inline-flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;
+    font-size:15px;font-weight:800;flex:0 0 auto}
+  .sec-lead{color:var(--mut);margin:2px 0 18px;font-size:14.5px}
+  h3{font-size:16.5px;font-weight:700;margin:26px 0 8px;color:var(--ink)}
+  h4{font-size:14px;font-weight:700;margin:16px 0 6px;color:var(--brand2)}
+  p{margin:8px 0}
+  ul,ol{margin:8px 0;padding-left:22px}
+  li{margin:4px 0}
+  code{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:1px 6px;
+    font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:#0f172a}
+  .mut{color:var(--mut)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f8fafc;font-weight:700;color:var(--ink2);font-size:12.5px;
+    text-transform:uppercase;letter-spacing:.03em}
+  tr:last-child td{border-bottom:none}
+  .map-table td:first-child{font-weight:700;color:var(--brand2);white-space:nowrap}
+  .callout{border-left:4px solid var(--accent);background:#f0fdfa;border-radius:0 10px 10px 0;
+    padding:12px 16px;margin:16px 0;font-size:14px}
+  .callout.warn{border-color:var(--warn);background:#fffbeb}
+  .callout b{color:var(--ink)}
+  .flow{margin:18px 0;display:flex;flex-direction:column;gap:0}
+  .flow .node{background:#faf7ff;border:1.5px solid #ddd6fe;border-radius:12px;padding:13px 16px}
+  .flow .node b{color:var(--brand);font-size:14.5px}
+  .flow .node .d{color:var(--mut);font-size:13px;margin-top:2px}
+  .flow .arrow{align-self:center;color:#a78bfa;font-size:18px;line-height:1.1;margin:5px 0}
+  .flow .node.plug{background:#f0fdfa;border-color:#99f6e4}
+  .flow .node.plug b{color:var(--accent)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  .mini{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .mini h4{margin-top:0}
+  .pill{display:inline-block;background:#ede9fe;color:#6d28d9;border-radius:999px;
+    padding:2px 10px;font-size:12px;font-weight:700;margin:2px 4px 2px 0}
+  .pill.g{background:#dcfce7;color:#15803d}
+  .pill.o{background:#ffedd5;color:#b45309}
+  pre{background:var(--code);color:#e2e8f0;border-radius:12px;padding:16px 18px;overflow:auto;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.55;margin:14px 0}
+  pre .c{color:#94a3b8}
+  pre .k{color:#c4b5fd}
+  pre .s{color:#7dd3fc}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+  .kpi .b{background:#faf7ff;border:1px solid #ede9fe;border-radius:12px;padding:14px;text-align:center}
+  .kpi .b .n{font-size:24px;font-weight:800;color:var(--brand)}
+  .kpi .b .l{font-size:12px;color:var(--mut);margin-top:2px}
+  footer{color:var(--mut);font-size:12.5px;text-align:center;margin-top:30px;padding-top:18px;
+    border-top:1px solid var(--line)}
+  @media(max-width:720px){.toc ol,.grid2,.kpi{columns:1;grid-template-columns:1fr}
+    header.cover h1{font-size:26px} .wrap{padding:0 16px 60px} section{padding:22px 18px}}
+  @media print{body{background:#fff} section,.toc{box-shadow:none;break-inside:avoid}
+    header.cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="inner">
+    <div class="eyebrow">디자인 자동화 산출물 정의서 · Project Deliverables</div>
+    <h1>Figma Design Agent<br>AI 기반 디자인 자동 생성 시스템</h1>
+    <p class="sub">자연어 요구사항·와이어프레임을 입력하면, 디자인 시스템(Imin DS)을 준수하는
+      모바일 Figma 화면을 자동으로 설계·생성하는 도구입니다.</p>
+    <div class="meta">
+      <span>저장소: figma-design-agent</span>
+      <span>런타임: 터미널 CLI 기반 (Electron 아님)</span>
+      <span>대상: Figma 데스크톱 + Imin Design System</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="toc">
+    <h2>목차 · 클라이언트 요구 항목 매핑</h2>
+    <ol>
+      <li><a href="#overview">개요 — 항목 매핑</a></li>
+      <li><a href="#s1">산출물 ① 자동화 구조 정의서</a></li>
+      <li><a href="#s2">산출물 ② 프롬프트 설계 / 로직</a></li>
+      <li><a href="#s3">산출물 ③ 결과물 생성 코드 / 연동 방식</a></li>
+      <li><a href="#appendix">부록 — 실행 방법 · 파일 구조</a></li>
+    </ol>
+  </div>
+
+  <!-- ===================== 개요 ===================== -->
+  <section id="overview">
+    <h2 class="sec"><span class="num">∗</span>개요 — 요구 항목과 실제 산출물 매핑</h2>
+    <p class="sec-lead">클라이언트 요구사항(3개 항목)을 본 저장소의 실제 구성요소에 1:1로 매핑했습니다.
+      각 항목은 추상적 문서가 아니라 <b>저장소에 실제로 구현·운영되는 시스템</b>을 가리킵니다.</p>
+
+    <table class="map-table">
+      <thead><tr><th style="width:30%">요구 항목</th><th>본 저장소에서의 실체</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>자동화 구조 정의서</td>
+          <td>5단계 파이프라인 아키텍처 — <b>터미널 Claude Code CLI → Python 클라이언트 →
+            Node 브리지 → Figma 플러그인 → Figma 파일</b>. 각 계층의 역할·통신 방식·기술 스택.
+            (§1)</td>
+        </tr>
+        <tr>
+          <td>프롬프트 설계 또는 로직</td>
+          <td>본 시스템의 "프롬프트"는 단일 텍스트가 아니라 <b>계층형 룰·게이트 엔진</b>입니다 —
+            프로젝트 규칙 문서(<code>CLAUDE.md</code>) + 디자인 룰 엔진(43개 룰) + 품질·창의성
+            게이트. AI가 매번 일관된 품질과 디자인 시스템 준수를 보장하도록 설계된 로직. (§2)</td>
+        </tr>
+        <tr>
+          <td>결과물 생성 코드 또는 연동 방식</td>
+          <td>빌드 파이프라인(<code>figma_mcp_client.py</code>, 약 14,000줄) + 브리지 연동
+            프로토콜(WebSocket·HTTP MCP, 70여 개 도구) + 디자인 시스템 자동 동기화. 입력을
+            받아 Figma에 실제 노드를 생성하기까지의 전 과정. (§3)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <b>한 줄 요약.</b> "AI가 룰 엔진(②)의 통제를 받으며, 정해진 연동 구조(①)를 통해 Figma에
+      디자인 결과물을 생성(③)하는 자동화 시스템"입니다. 세 항목은 같은 시스템의 세 단면입니다.
+    </div>
+
+    <div class="kpi">
+      <div class="b"><div class="n">5단계</div><div class="l">파이프라인 계층</div></div>
+      <div class="b"><div class="n">70+</div><div class="l">내장 Figma 제어 도구</div></div>
+      <div class="b"><div class="n">43</div><div class="l">자동 디자인 룰</div></div>
+      <div class="b"><div class="n">2계층</div><div class="l">룰 체계(정합성·스타일)</div></div>
+    </div>
+  </section>
+
+  <!-- ===================== 산출물 1 ===================== -->
+  <section id="s1">
+    <h2 class="sec"><span class="num">1</span>자동화 구조 정의서</h2>
+    <p class="sec-lead">디자인이 생성되기까지 데이터가 흐르는 전체 구조와, 각 구성요소의 역할·통신
+      방식입니다.</p>
+
+    <div class="callout warn">
+      <b>중요 — 실제 런타임 구조.</b> 본 시스템은 별도의 데스크톱 앱(Electron)이 아니라
+      <b>터미널 Claude Code CLI 기반</b>으로 동작합니다. 설치된 패키지에 Electron·Vite는 없으며,
+      빌드 산출물(<code>out/bridge/index.js</code>)은 순수 Node 프로세스입니다.
+    </div>
+
+    <h3>1.1 전체 데이터 흐름 (5단계)</h3>
+    <div class="flow">
+      <div class="node"><b>① 터미널 Claude Code CLI</b>
+        <div class="d">사용자 요구사항(자연어·와이어프레임) 입력 + AI 오케스트레이션(요구사항 해석,
+          룰 적용 판단)을 수행하는 진입점.</div></div>
+      <div class="arrow">▼ 요구사항 해석 → 빌드 명령</div>
+      <div class="node"><b>② Python 클라이언트 <code>scripts/figma_mcp_client.py</code></b>
+        <div class="d">빌드 파이프라인·룰 엔진. 검증 → 조립 → 빌드 → 후처리(post-fix) → 토큰 바인딩
+          → 자가검증. CLI가 Bash로 호출. (약 14,000줄)</div></div>
+      <div class="arrow">▼ HTTP MCP (포트 8769)</div>
+      <div class="node"><b>③ Node 브리지 <code>src/bridge/index.ts</code></b>
+        <div class="d">중계 서버. WebSocket(8767, 플러그인 ↔) + HTTP MCP(8769, 클라이언트 ↔)를
+          동시 기동. Electron 의존성 없음. 70여 개 Figma 제어 도구 보유.</div></div>
+      <div class="arrow">▼ WebSocket (포트 8767)</div>
+      <div class="node plug"><b>④ Figma 플러그인 "Figma Design Agent"</b>
+        <div class="d"><code>src/figma-plugin/code.js</code>. Figma 데스크톱 앱 <i>안에서</i> 실행되며
+          브리지에 WebSocket으로 연결. 실제 노드 생성·수정 명령을 수행. (유일한 수동 단계:
+          플러그인 실행)</div></div>
+      <div class="arrow">▼ Figma Plugin API</div>
+      <div class="node plug"><b>⑤ Figma 파일</b>
+        <div class="d">디자인 시스템 변수·컴포넌트가 바인딩된 모바일 화면이 실제로 생성됨.</div></div>
+    </div>
+
+    <h3>1.2 구성요소별 역할</h3>
+    <table>
+      <thead><tr><th style="width:34%">구성요소 (파일)</th><th>역할</th></tr></thead>
+      <tbody>
+        <tr><td>터미널 Claude Code CLI</td><td>요구사항 해석 + AI 오케스트레이션 (진입점)</td></tr>
+        <tr><td><code>scripts/figma_mcp_client.py</code></td><td>빌드 파이프라인·룰 엔진 — 검증/조립/빌드/후처리/자가검증</td></tr>
+        <tr><td><code>src/bridge/index.ts</code></td><td>브리지 진입점 — WS 8767 + HTTP MCP 8769 기동</td></tr>
+        <tr><td><code>src/main/figma-ws-server.ts</code></td><td>Figma 플러그인 WebSocket 서버(8767)</td></tr>
+        <tr><td><code>src/main/mcp-http-server.ts</code></td><td>HTTP MCP 서버(8769) — Python 클라이언트 접속</td></tr>
+        <tr><td><code>src/main/figma-mcp-embedded.ts</code></td><td>70여 개 Figma 제어 도구 레지스트리</td></tr>
+        <tr><td><code>src/main/ds-lookup-tools.ts</code></td><td>디자인 시스템 조회 도구</td></tr>
+        <tr><td><code>src/main/yoga-simulator.ts</code></td><td>Yoga 기반 레이아웃 사전 시뮬레이터(빌드 전 검증)</td></tr>
+        <tr><td><code>src/figma-plugin/code.js</code></td><td>Figma 데스크톱 내 실행 플러그인 (약 6,600줄)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>1.3 기술 스택</h3>
+    <p>
+      <span class="pill">Node.js</span><span class="pill">TypeScript</span><span class="pill">Python 3</span>
+      <span class="pill">WebSocket (ws)</span><span class="pill">MCP (@modelcontextprotocol/sdk · @hono/mcp)</span>
+      <span class="pill">Hono (HTTP)</span><span class="pill">Yoga Layout</span>
+      <span class="pill">sharp (이미지)</span><span class="pill">tsup (빌드)</span><span class="pill">vitest (테스트)</span>
+    </p>
+    <p class="mut">빌드: <code>npm run build</code>(tsup → <code>out/</code>) · 기동: <code>npm run bridge</code>.
+      Vite/Electron 패키징 없음 — 레포 클론 → 셋업 스크립트(<code>setup-mac.sh</code>/<code>setup-windows.ps1</code>)
+      → 브리지 기동 → Figma 플러그인 실행 순으로 배포.</p>
+  </section>
+
+  <!-- ===================== 산출물 2 ===================== -->
+  <section id="s2">
+    <h2 class="sec"><span class="num">2</span>프롬프트 설계 / 로직</h2>
+    <p class="sec-lead">본 시스템의 "프롬프트"는 한 줄의 명령문이 아니라, AI가 매번 <b>일관된 품질과
+      디자인 시스템 준수</b>를 보장하도록 만든 <b>계층형 룰·게이트 엔진</b>입니다.</p>
+
+    <div class="callout">
+      <b>설계 핵심.</b> AI에게 자유롭게 "디자인해줘"라고 맡기면 결과 품질이 들쭉날쭉합니다.
+      그래서 ⓐ 따라야 할 규칙을 문서로 명문화하고(<code>CLAUDE.md</code>), ⓑ 그 규칙을 코드로
+      강제하는 룰 엔진을 두고(43개 룰), ⓒ 빌드 전후로 통과해야 하는 품질 게이트를 박았습니다.
+    </div>
+
+    <h3>2.1 규칙 명문화 — <code>CLAUDE.md</code> (프로젝트 룰북)</h3>
+    <p>AI가 모든 작업에서 반드시 따르는 규칙 문서입니다. 핵심은 <b>2계층 룰 체계</b>입니다.</p>
+    <div class="grid2">
+      <div class="mini">
+        <h4>① 정합성 룰 (하드 — 항상 강제)</h4>
+        <p class="mut" style="font-size:13px;margin:0">디자인이 깨지지 않도록 보장. 변경 불가.</p>
+        <ul style="font-size:13px;margin:8px 0 0">
+          <li>콘텐츠 1:1 (와이어 텍스트/숫자 그대로)</li>
+          <li>디자인 시스템 컴포넌트·색 보존</li>
+          <li>토큰/텍스트스타일/간격 변수 바인딩</li>
+          <li>접근성(색 대비)·디바이스 규격(852px)</li>
+          <li>레이아웃 무결성(요소 붕괴 방지)</li>
+        </ul>
+      </div>
+      <div class="mini">
+        <h4>② 스타일 룰 (기본값 — 작성자 선택이 우선)</h4>
+        <p class="mut" style="font-size:13px;margin:0">획일화를 막기 위해 "명시 안 했을 때만 기본값"
+          으로 동작.</p>
+        <ul style="font-size:13px;margin:8px 0 0">
+          <li>카드 표면·보더·밴드 처리</li>
+          <li>섹션 간격·여백</li>
+          <li>타이포 위계·강조 색</li>
+          <li>→ AI가 명시한 디자인 선택을 덮어쓰지 않음</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>2.2 품질·창의성 게이트 (빌드 차단 조건)</h3>
+    <p>빌드 파이프라인은 다음 게이트를 통과해야만 진행됩니다. 통과 못 하면 빌드가 멈춰 품질 미달
+      결과물이 나오는 것을 원천 차단합니다.</p>
+    <table>
+      <thead><tr><th style="width:26%">게이트</th><th>역할</th></tr></thead>
+      <tbody>
+        <tr><td>기획 통독 게이트</td><td>서비스 기획 문서(유스케이스)를 완독해야 빌드 허용 — 맥락 없는 생성 방지</td></tr>
+        <tr><td>레퍼런스 학습 (0-G)</td><td>내장 레퍼런스 이미지(uibowl)를 실제로 열람·학습하도록 강제</td></tr>
+        <tr><td>콘텐츠 1:1 (0-E / S22·S23)</td><td>와이어프레임의 텍스트·숫자를 그대로 반영했는지 검증</td></tr>
+        <tr><td>자가검증 (0-F)</td><td>생성 결과 스크린샷을 AI가 재확인 — 체크리스트 12항목</td></tr>
+        <tr><td>컨셉 선언 (S24)</td><td>이번 시안의 핵심 차별 아이디어를 명시해야 통과</td></tr>
+        <tr><td>디자인 방향 선언 (S25)</td><td>이번 시안의 시각 방향(타이포·컬러·레이아웃·간격 전략) 선언</td></tr>
+        <tr><td>창의성 게이트 (novelty)</td><td>직전 결과물과 너무 유사하면 차단 → 매 시안 다른 디자인 강제</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <b>창의성 보장 로직(핵심 설계).</b> "콘텐츠는 동일하게(요구사항 충실), 비주얼은 매번 다르게"가
+      되도록, 결과물의 시각 시그니처(섹션 구성·색·간격·정렬·타이포 분포)를 저장해 직전 결과물과
+      비교합니다. 80% 이상 유사하면 빌드를 막아 <b>레이아웃·컬러·간격·타이포를 다시 설계</b>하게 합니다.
+    </div>
+
+    <h3>2.3 디자인 룰 엔진 — <code>scripts/design_rules/</code> (43개 룰)</h3>
+    <p>각 규칙은 4단계로 동작하는 코드 모듈입니다. 사람의 검수 없이도 일관된 디자인 결과를 보장합니다.</p>
+    <table>
+      <thead><tr><th>단계</th><th>동작</th></tr></thead>
+      <tbody>
+        <tr><td><b>Lint</b> (검증)</td><td>빌드 전 설계도(blueprint)에서 규칙 위반을 탐지·경고</td></tr>
+        <tr><td><b>Inject</b> (자동 주입)</td><td>빌드 직전 설계도를 자동 교정 (예: 탭을 올바른 컴포넌트로 변환)</td></tr>
+        <tr><td><b>Auto-fix</b> (후처리)</td><td>빌드된 실제 노드를 자동 수정 (예: 정렬·색 바인딩)</td></tr>
+        <tr><td><b>Verify</b> (사후 검증)</td><td>빌드 결과가 규칙을 지켰는지 최종 확인</td></tr>
+      </tbody>
+    </table>
+    <p class="mut">예시 규칙: 상단 탭은 underline tabs로(R60), 하단 네비게이션은 DS 컴포넌트로(0-M),
+      상단 툴바는 DS Tool Bar 인스턴스로(0-W), 섹션 타이틀 좌측 정렬(R59) 등. 룰 번호 R05~R64,
+      S20~S25.</p>
+  </section>
+
+  <!-- ===================== 산출물 3 ===================== -->
+  <section id="s3">
+    <h2 class="sec"><span class="num">3</span>결과물 생성 코드 / 연동 방식</h2>
+    <p class="sec-lead">입력(요구사항·와이어프레임)을 받아 Figma에 실제 디자인을 생성하기까지의
+      코드 파이프라인과, 각 시스템 간 연동 방식입니다.</p>
+
+    <h3>3.1 빌드 파이프라인 (결과물 생성 코드)</h3>
+    <p>진입점은 <code>scripts/figma_mcp_client.py</code>(약 14,000줄)이며, 다음 순서로 동작합니다.</p>
+    <table>
+      <thead><tr><th style="width:24%">단계</th><th>처리 내용</th></tr></thead>
+      <tbody>
+        <tr><td>1. 조립 (assemble)</td><td>고정 섹션(NavBar·TabBar 등)은 템플릿, 화면별 섹션만 작성해 설계도(blueprint) 생성</td></tr>
+        <tr><td>2. 검증·게이트</td><td>§2의 룰 Lint + 콘텐츠/컨셉/방향/창의성 게이트 통과 확인</td></tr>
+        <tr><td>3. 레이아웃 시뮬레이션</td><td>Yoga 엔진으로 빌드 전 레이아웃을 미리 계산해 오류 사전 차단</td></tr>
+        <tr><td>4. 빌드 (batch_build_screen)</td><td>플러그인을 통해 Figma에 실제 노드 일괄 생성</td></tr>
+        <tr><td>5. 후처리 (post-fix)</td><td>약 58개 자동 보정기 — 사이징·정렬·색/간격 변수 바인딩·텍스트 스타일 적용</td></tr>
+        <tr><td>6. 품질 검사 (QA)</td><td>색 대비·레이아웃 무결성 자동 검사 + 자가검증(스크린샷 재확인)</td></tr>
+        <tr><td>7. 정리</td><td>사용한 설계도·임시 산출물 자동 삭제</td></tr>
+      </tbody>
+    </table>
+
+    <h4>주요 CLI 명령 (연동 진입점)</h4>
+    <pre><span class="c"># 디자인 빌드 (조립 → 빌드 → 자동 후처리)</span>
+python3 scripts/figma_mcp_client.py <span class="k">assemble</span> scripts/my_config.json
+python3 scripts/figma_mcp_client.py <span class="k">build</span>    scripts/blueprint_xxx.json
+
+<span class="c"># 개별 단계 / 운영 명령</span>
+python3 scripts/figma_mcp_client.py <span class="k">init</span>            <span class="c"># 세션 초기화·연결 확인</span>
+python3 scripts/figma_mcp_client.py <span class="k">post-fix</span> &lt;id&gt;   <span class="c"># 후처리 단독 실행</span>
+python3 scripts/figma_mcp_client.py <span class="k">learn-planning</span>  <span class="c"># 기획 문서 학습</span>
+python3 scripts/figma_mcp_client.py <span class="k">sync-text-styles</span> <span class="c"># DS 텍스트 스타일 동기화</span></pre>
+
+    <h3>3.2 시스템 간 연동 방식</h3>
+    <table>
+      <thead><tr><th style="width:26%">연동 구간</th><th>방식</th></tr></thead>
+      <tbody>
+        <tr><td>Python 클라이언트 ↔ 브리지</td><td><b>HTTP MCP</b> (Model Context Protocol, 포트 8769) — 70여 개 도구 호출</td></tr>
+        <tr><td>브리지 ↔ Figma 플러그인</td><td><b>WebSocket</b> (포트 8767) — 실시간 양방향 명령/응답</td></tr>
+        <tr><td>플러그인 ↔ Figma 파일</td><td><b>Figma Plugin API</b> — 노드 생성·변수 바인딩·스타일 적용</td></tr>
+        <tr><td>디자인 시스템 동기화</td><td>별도 레포(<code>design-system</code>)의 토큰을 빌드 시 자동 재생성·동기화</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Figma 제어 도구 (70여 개) — 예시</h4>
+    <p>
+      <span class="pill g">create_frame</span><span class="pill g">create_text</span>
+      <span class="pill g">batch_build_screen</span><span class="pill g">set_auto_layout</span>
+      <span class="pill g">set_fill_color</span><span class="pill g">set_bound_variables</span>
+      <span class="pill g">set_text_style_id</span><span class="pill g">create_component_instance</span>
+      <span class="pill g">set_instance_properties</span><span class="pill g">export_node_as_image</span>
+      <span class="pill g">scan_text_nodes</span><span class="pill g">get_node_info</span>…
+    </p>
+
+    <h3>3.3 디자인 시스템 연동 (Imin Design System)</h3>
+    <p>디자인 결과물이 회사 디자인 시스템을 정확히 따르도록, 토큰·컴포넌트를 자동 동기화합니다.</p>
+    <table>
+      <thead><tr><th style="width:34%">산출물</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr><td><code>ds/TOKEN_MAP.json</code> · <code>DESIGN_TOKENS.md</code></td><td>색·간격·radius 등 디자인 토큰 (design-system 레포에서 자동 동기화)</td></tr>
+        <tr><td><code>ds/DS_COMPONENT_DOCS.json</code> · <code>COMPONENT_KEY_MAP.json</code></td><td>버튼·뱃지·탭바 등 DS 컴포넌트 정의·키</td></tr>
+        <tr><td><code>ds/TEXT_STYLE_MAP.json</code></td><td>DS 텍스트 스타일 매핑</td></tr>
+        <tr><td><code>references/uibowl/</code> · <code>references/external/</code></td><td>레퍼런스 화면 이미지 (toss·kakaopay 등 + 수집본) — 디자인 품질 학습용</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <b>요약.</b> 결과물 생성은 ⓐ <b>코드</b>(<code>figma_mcp_client.py</code> 빌드 파이프라인 +
+      <code>code.js</code> 플러그인)와 ⓑ <b>연동</b>(HTTP MCP ↔ WebSocket ↔ Figma API + DS 자동
+      동기화)의 결합으로 이뤄집니다.
+    </div>
+  </section>
+
+  <!-- ===================== 부록 ===================== -->
+  <section id="appendix">
+    <h2 class="sec"><span class="num">＋</span>부록 — 실행 방법 · 파일 구조</h2>
+
+    <h3>실행 순서</h3>
+    <pre><span class="c"># 1) 최초 1회 — 환경 설정 (멱등, 비대화식)</span>
+bash scripts/setup-mac.sh        <span class="c"># macOS</span>
+powershell -File scripts/setup-windows.ps1   <span class="c"># Windows</span>
+
+<span class="c"># 2) 브리지 기동 (WS 8767 + HTTP MCP 8769)</span>
+npm run bridge
+
+<span class="c"># 3) Figma 데스크톱에서 "Figma Design Agent" 플러그인 실행  (유일한 수동 단계)</span>
+
+<span class="c"># 4) 연결 확인 후 디자인 생성</span>
+python3 scripts/figma_mcp_client.py init</pre>
+
+    <h3>핵심 디렉토리</h3>
+    <table>
+      <thead><tr><th style="width:32%">경로</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr><td><code>scripts/figma_mcp_client.py</code></td><td>빌드 파이프라인·룰 엔진 (진입점, ~14,000줄)</td></tr>
+        <tr><td><code>scripts/design_rules/</code></td><td>디자인 룰 엔진 (43개 룰 모듈)</td></tr>
+        <tr><td><code>src/main/</code></td><td>브리지 핵심 로직 (WS·MCP 서버, 70여 개 도구, Yoga)</td></tr>
+        <tr><td><code>src/bridge/</code></td><td>브리지 진입점 (Node)</td></tr>
+        <tr><td><code>src/figma-plugin/</code></td><td>Figma 플러그인 코드</td></tr>
+        <tr><td><code>ds/</code></td><td>디자인 시스템 토큰·컴포넌트 산출물</td></tr>
+        <tr><td><code>references/</code></td><td>레퍼런스 화면 이미지 (디자인 품질 학습용)</td></tr>
+        <tr><td><code>CLAUDE.md</code></td><td>프로젝트 룰북 — AI가 따르는 모든 규칙·게이트 정의</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <b>참고.</b> 본 문서의 수치(룰 43개, 도구 70여 개, 코드 ~14,000줄 등)는 작성 시점 저장소
+      기준입니다. 세부 규칙·도구는 지속 추가/개선됩니다 — 최신 정의는 <code>CLAUDE.md</code>와
+      <code>scripts/design_rules/</code>가 단일 출처(source of truth)입니다.
+    </div>
+  </section>
+
+  <footer>
+    Figma Design Agent · 디자인 자동화 산출물 정의서 · 본 저장소(figma-design-agent) 기준 작성
+  </footer>
+
+</div>
+</body>
+</html>
