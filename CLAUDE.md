@@ -337,63 +337,85 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > **빌드 후 검증:** badge/button 의 fill·stroke·라벨 색이 DS variant 기본값과 일치하는지
 > (스크린샷). 회색으로 덮였으면 위반 — `_collect_bindings`/중앙 가드 점검.
 
-> 🔴 **절대 규칙 0-J — 2-tab 이상 텍스트 탭 nav 는 DS Horizontal Tabs 인스턴스 강제 (2026-06-01 사용자 룰)**
+> 🔴 **절대 규칙 0-J — 콘텐츠/뷰 전환 탭(2+ 텍스트 탭)은 underline tabs 가 기본, Segmented_control 은 명시적 토글만 (2026-06-01 / 🔴 2026-06-12 전면 개편)**
 >
-> 사용자 명시: *"'거래현황', '누적거래' 2 tabs가 있는데 tabs component가 사용되지 않았다.
-> 왜 사용하지 않았는지 원인을 찾고 재발하지 않도록 문제 수정해. 새 세션에서 생성했을때
-> 또 지금과 같은 컴포넌트를 사용하지 않는 일이 없어야 된다."*
+> 사용자 명시(2026-06-01): *"'거래현황', '누적거래' 2 tabs가 있는데 tabs component가
+> 사용되지 않았다. 새 세션에서 생성했을때 또 지금과 같은 컴포넌트를 사용하지 않는 일이
+> 없어야 된다."*
 >
-> **금지:** "Mode Tabs Wrap" / "Section Tabs" / "Top Tabs" / "Page Tabs" / "Underline Tabs"
-> 등 이름의 HORIZONTAL frame 안에 raw tab cell frame 들을 직접 그리는 것. (e.g. 자식
-> "Mode Tab Active" + "Mode Tab Inactive" 각각이 TEXT 만 들어있는 frame)
+> 🔴 **사용자 명시(2026-06-12, 이 룰의 핵심 개편):** *"지금 화면에 내에서 tabs 컴포넌트로
+> 쓰여야할 ui들이 segmented control로 쓰여지고 있어서. 그거 규칙 수정하고 코드도 수정해야한다.
+> 예를들어 내가 지금 피그마에서 선택한 노드들이 그러해."* (입금/지급 'View Tabs' 가
+> Segmented_control 인스턴스로 빌드된 것을 가리킴.)
 >
-> 🔴 **2026-06-02 DS v7 → Imin Design System 마이그레이션 (사용자 룰):** 기존 DS v7
-> "Horizontal tabs Underline"(`6b613d…` 등)은 **모바일에서 드롭다운으로 붕괴 + DS v7
-> 라이브러리 의존** → 전면 폐기. Imin Design System 의 **`Segmented_control`** 으로 통일.
+> **🎯 판별 기준 (tabs vs segmented control):**
+> - **underline tabs (= 기본/디폴트):** 콘텐츠·뷰를 전환하는 네비게이션 탭. 라벨이 *보여줄
+>   내용/카테고리* 다 — **입금/지급**, 추천/전체, 거래현황/누적거래, 후기/문의/상세 등.
+>   화면·카드의 뷰를 바꾸는 모든 멀티옵션 텍스트 컨트롤은 여기에 속한다. → **이게 표준.**
+> - **Segmented_control (= 예외):** *같은 뷰 안*의 컴팩트 on/off 토글·필터(주/월/년,
+>   On/Off 등). 오직 노드에 **`"_forceSegmented": true`** 마커가 있을 때만. (0-V 와 동일 철학)
 >
-> **올바른 방법:** blueprint 에 `type: "instance"` + Segmented_control variant 키를 박는다.
+> ⚠️ 헷갈리면 **underline tabs** 가 정답이다 — Segmented_control 은 의식적으로 컴팩트 토글을
+> 원할 때만 `_forceSegmented` 로 옵트인한다.
+>
+> **금지:** "Mode Tabs Wrap" / "Section Tabs" / "Top Tabs" / "View Tabs" 등 이름의 HORIZONTAL
+> frame 안에 raw tab cell frame 들을 직접 그리는 것(R60 이 styled underline 으로 자동 변환).
+> 입금/지급 같은 뷰 전환 탭을 `_segLabels`(Segmented_control)로 작성하는 것(컴팩트 토글처럼 보임).
+>
+> **올바른 방법 — underline tabs styled frame** (`_underlineTabs: true` 마커, tab-hint 없는 이름은
+> 굳이 필요 없음. R60 이 'view tabs' 등 이름도 인식):
 >
 > ```json
 > {
->   "name": "View Tabs",
->   "type": "instance",
->   "componentKey": "47a01673a46dc3bc9bfd62948c10e5fa9f2e5e78",  // Segmented_control Style=hug
->   "_segLabels": ["거래 현황", "누적 거래"]
+>   "name": "View Tabs", "type": "frame", "_underlineTabs": true,
+>   "layoutSizingHorizontal": "HUG",
+>   "autoLayout": {"layoutMode": "HORIZONTAL", "itemSpacing": 18, "counterAxisAlignItems": "MIN"},
+>   "children": [
+>     {"name": "Tab 입금", "type": "frame", "layoutSizingHorizontal": "HUG",
+>      "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 7, "counterAxisAlignItems": "CENTER"},
+>      "children": [
+>        {"type": "text", "text": "입금", "fontSize": 16, "fontName": {"family": "Pretendard", "style": "Bold"},
+>         "fontColor": "$token(text-primary)"},
+>        {"name": "Tab Underline 입금", "type": "frame", "layoutSizingHorizontal": "FILL",
+>         "layoutSizingVertical": "FIXED", "height": 3, "cornerRadius": 999, "fill": "$token(fg-primary)"}
+>      ]},
+>     {"name": "Tab 지급", "type": "frame", "layoutSizingHorizontal": "HUG",
+>      "autoLayout": {"layoutMode": "VERTICAL", "itemSpacing": 7, "counterAxisAlignItems": "CENTER"},
+>      "children": [
+>        {"type": "text", "text": "지급", "fontSize": 16, "fontName": {"family": "Pretendard", "style": "Bold"},
+>         "fontColor": "$token(text-tertiary)"},
+>        {"name": "Tab Underline 지급", "type": "frame", "layoutSizingHorizontal": "FILL",
+>         "layoutSizingVertical": "FIXED", "height": 3, "cornerRadius": 999, "fill": null}
+>      ]}
+>   ]
 > }
 > ```
+> - active 탭: 텍스트 `text-primary` + 밑줄 bar `fg-primary` fill. inactive: 텍스트 `text-tertiary`
+>   + 밑줄 bar fill `null`(투명). fontSize 는 DS 스케일(카드 내 16, 상단 페이지 탭은 20~24).
+> - 큰 텍스트 페이지 탭(추천/전체)은 fontSize 22~24 로 키운다(0-V). 참조 구현:
+>   `gen_stage_recommend_20260609.py` 의 `_utab`, `gen_schedule_20260609.py` 의 `_vtab`.
 >
- **빌드 후 설정 — 🔴 prop 기반 (2026-06-02 사용자: 텍스트 레이어를 컴포넌트 prop 으로):**
-> 세그먼트 라벨/선택은 nested 텍스트 노드 id(variant 마다 달라 깨짐)가 아니라 **세그먼트
-> 인스턴스의 컴포넌트 prop** 으로 설정한다 — 견고함:
-> - 세그먼트 개수 = `set_instance_properties(ctrlId, {"Show Segment 3#16713:0": False, …})` (n=3..8, `#16713:{n-3}`)
-> - 라벨 = 각 세그먼트 인스턴스(`I{ctrl};{segId}`)에 `Label#17537:11` TEXT prop
-> - 선택 = 각 세그먼트 인스턴스에 `Active` = `on`/`off`
+> **Segmented_control 이 정말 필요할 때만** (컴팩트 토글, `_forceSegmented: true`):
+> ```json
+> {"name": "Sort Toggle", "type": "instance",
+>  "componentKey": "47a01673a46dc3bc9bfd62948c10e5fa9f2e5e78",
+>  "_segLabels": ["주", "월", "년"], "_segActive": 0, "_forceSegmented": true}
+> ```
+> Segmented_control 키: Style=hug `47a01673a46dc3bc9bfd62948c10e5fa9f2e5e78` /
+> Style=fill `2ee9d12d4c904650ab496b9bcdf874a648e73ceb` / set(import 불가) `143ee3e3…`.
+> `_configure_segmented_control` 가 prop(Show Segment/Label#/Active)로 자동 설정. Size=md(0-P).
 >
-> **자동화:** blueprint 의 탭 인스턴스에 `"_segLabels": ["추천","전체"]`(+ 선택 시
-> `"_segActive": 0`) 마커만 박으면 — `cmd_build` 가 `_configure_segmented_control` 로
-> 위 prop 들을 자동 설정한다. 빌드 로그 `[seg-tabs] Segmented_control 설정 완료` 확인.
+> **시스템 강제 (R60, 자동):** `scripts/design_rules/R60_tabs_ds_instance.py`
+> - **L2 lint**: raw tab-nav frame / `_segLabels` 뷰 전환 탭(non-forced) 발견 시 WARN.
+> - **L3 inject**: 빌드 직전 자동 변환 — raw tab-nav frame 과 `_segLabels`(Segmented_control)
+>   뷰 전환 탭을 **underline tabs styled frame** 으로 변환(라벨·active 밑줄 직접 생성).
+>   `_forceSegmented:true` 면 변환 안 함(Segmented_control 유지).
+> - **L5 verify**: 뷰 전환 탭이 Segmented_control 인스턴스로 남으면 WARN.
 >
-> **Imin DS Segmented_control 키:**
-> | Variant | 컴포넌트 키 |
-> |---------|------------|
-> | Style=hug (기본) | `47a01673a46dc3bc9bfd62948c10e5fa9f2e5e78` |
-> | Style=fill (전폭) | `2ee9d12d4c904650ab496b9bcdf874a648e73ceb` |
-> | (set key, import 불가) | `143ee3e3fdd529c89c4360e3d70a583be4a83f53` |
->
-> **시스템 강제 (4중 방어, 자동):**
-> 1. `scripts/design_rules/R60_tabs_ds_instance.py`
->    - **L2 lint**: raw tab nav frame 발견 시 WARN
->    - **L3 inject**: 빌드 직전 자동 swap — `type: frame` → `instance`, componentKey 박기,
->      라벨/active idx 메타 저장, raw children → `_originalChildren` 보존
->    - **L4 post-fix**: 빌드된 instance 의 내부 TEXT 노드 findAll + 라벨 순서대로
->      `set_text_content` 호출 (텍스트 매핑 자동화)
->    - **L5 verify**: built tree 의 tab nav wrapper 가 INSTANCE 가 아니면 ERROR
-> 2. `scripts/design_rules/ds_catalog.py` 의 COMPONENT_KEYS 에 6종 variant + 4종 alias
->    ("Mode Tabs", "Mode Tabs Wrap", "Section Tabs", "Top Tabs") 등록 — resolve_component_key 자동 매칭
->
-> **빌드 후 검증:** 빌드 로그에 `[inject R60] Mode Tabs raw frame → DS Horizontal Tabs
-> instance: N건` + `R60 Tabs instance: '<name>' 라벨 N개 매핑` 라인이 보이면 자동 처리 성공.
-> 스크린샷에서 탭 영역이 DS Underline tabs 스타일로 표시되어야 한다.
+> **빌드 후 검증:** 빌드 로그에 `[inject R60] Segmented_control 뷰 전환 탭 → underline tabs: N건`
+> 또는 `[inject R60] raw tab-nav frame → underline tabs: N건` 라인 확인. 스크린샷에서 탭이
+> **밑줄(underline) 스타일**(active 탭 아래 bar)인지 — 알약(pill) Segmented_control 이 아니어야 한다.
+> 테스트: `scripts/tests/test_tabs_underline_default.py`.
 
 > 🔴 **절대 규칙 0-M — 하단 Tab Bar = DS 'Tab bar' 인스턴스 (2026-06-02 사용자 룰)**
 >
@@ -895,21 +917,26 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > 4. **작성 규칙:** 아이콘 버튼은 처음부터 fill/radius/stroke 없이 아이콘만(`fr(name, width, height,
 >    children=[icon(...)])`). 스타일 버튼은 `_buttonChrome:true`.
 
-> 🔴 **절대 규칙 0-V — 큰 텍스트 탭은 underline tabs (Segmented_control 아님) (2026-06-09 사용자 룰)**
+> 🔴 **절대 규칙 0-V — 콘텐츠/뷰 전환 탭 = underline tabs (Segmented_control 아님) (2026-06-09 / 🔴 2026-06-12 확장)**
 >
-> 사용자 명시: *"NavBar 추천/전체는 segmented control 말고 tabs component underline 스타일로.
-> 텍스트가 크게 잘 보여야 할땐 tabs 를 쓰는게 좋아!"* **큰 텍스트로 보여야 하는 상단 페이지 탭**
-> (추천/전체 등)은 Segmented_control(컴팩트 토글) 대신 **underline tabs** — 큰 Bold 라벨(≈22px) +
-> active 탭 아래 underline bar, 비활성은 회색. 컴팩트 on/off 토글만 Segmented_control.
-> → 절대 규칙 0-J(2탭 텍스트=Segmented)를 **'큰 텍스트 탭'에 한해 override**.
+> 사용자 명시(2026-06-09): *"NavBar 추천/전체는 segmented control 말고 tabs component underline
+> 스타일로. 텍스트가 크게 잘 보여야 할땐 tabs 를 쓰는게 좋아!"*
+> 🔴 사용자 명시(2026-06-12): 입금/지급 'View Tabs' 도 Segmented 가 아니라 tabs 여야 한다.
+>
+> **콘텐츠/뷰를 전환하는 모든 탭은 underline tabs 가 기본** (절대 규칙 0-J 와 동일 — 0-V 는
+> 그 구체 적용). active 탭 아래 underline bar(active=`fg-primary`·inactive=투명), 텍스트
+> active=`text-primary`/inactive=`text-tertiary`. **컴팩트 on/off 토글만 Segmented_control**
+> (`_forceSegmented:true`). 큰 페이지 탭(추천/전체)은 라벨 22~24 Bold 로, 카드 내 뷰 탭(입금/지급)은
+> 16 Bold 로.
 >
 > ⚠️ **DS underline tabs 컴포넌트(143ee3e3…/f11bda3c…)는 import 불가**(deprecated set key, "Component
 > not found"). 그래서 **styled raw frame 으로 작성**: View Tabs(HORIZONTAL) 안에 탭별 VERTICAL
-> [라벨 22 Bold + underline bar(FILL h3, active=dark/brand·inactive=투명)].
+> [라벨 Bold + underline bar(FILL h3, active=fg-primary·inactive=투명)]. (전체 JSON 예시는 0-J 참조.)
 >
-> **시스템 강제 (코드 박힘):** `scripts/design_rules/R60_tabs_ds_instance.py` `_is_tab_nav_wrapper` 가
-> `"_underlineTabs": true` 마커 노드를 **swap 대상에서 제외**(Segmented_control 강제 안 함). 작성 시
-> underline tabs frame 에 `_underlineTabs:true` + tab-hint 없는 이름(예 'View Tabs')으로 둔다.
+> **시스템 강제 (코드 박힘):** `scripts/design_rules/R60_tabs_ds_instance.py`
+> - `_is_tab_nav_wrapper` 가 `"_underlineTabs": true`·`"_forceSegmented": true` 노드를 변환 대상에서 제외.
+> - `_inject` 가 raw tab-nav frame + `_segLabels`(non-forced) 뷰 전환 탭을 **underline tabs 로 자동
+>   변환**. 작성 시 underline tabs frame 에 `_underlineTabs:true`(이름은 'View Tabs' 등 자유).
 
 > 🔴 **절대 규칙 0-W — 상단 툴바(NavBar) = DS 'Tool Bar' 컴포넌트 인스턴스 (2026-06-12 사용자 룰)**
 >
@@ -1381,12 +1408,17 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - HUG/FIXED 혼용 금지 — 아이템 간격이 불균등해짐
 - 빌드 후 반드시 Tab Bar 아이템 사이징 검증할 것
 
-### 5-B. ⚠️ 상단 모드 탭 = Imin DS Segmented_control (2026-06-02 DS v7 폐기)
-- 🔴 **DS v7 "Horizontal tabs"(129dd87…/dda7a104…) 전면 폐기** — 모바일에서 드롭다운("My details")으로 붕괴 + DS v7 라이브러리 의존. 사용자 룰(2026-06-02)에 따라 Imin DS **`Segmented_control`** 으로 통일. 절대 규칙 0-J 참조.
-- **컴포넌트 키** (Imin Design System): Style=hug `47a01673a46dc3bc9bfd62948c10e5fa9f2e5e78` / Style=fill `2ee9d12d4c904650ab496b9bcdf874a648e73ceb` (set `143ee3e3…` import 불가).
-- **생성기**: `unified_blueprint.py _gen_mode_tabs` 가 Mode Tabs Wrap 안에 Segmented_control 인스턴스 1개 emit + **`_segLabels:[…]` + `_segActive:N`** 마커.
-- **✅ 완전 자동화 (prop 기반, 2026-06-02)**: `cmd_build` 의 `_configure_segmented_control` 가 자동으로 — `Show Segment 3~8#16713:{n-3}` 불리언으로 세그먼트 개수 + 각 세그먼트 인스턴스의 `Label#17537:11` TEXT prop 으로 라벨 + `Active` on/off prop 으로 선택. nested 텍스트노드 id 가 아니라 **prop** 으로 설정해 견고(텍스트노드 id 는 variant 마다 달라 깨짐). 수동 단계 불필요.
-- 회귀 신호: 탭이 "전체/전체" / 드롭다운 / DS v7 키(129dd87…) 사용. 상세 → 메모리 [[segmented-control-prop-labels]].
+### 5-B. ⚠️ 상단 모드 탭 = underline tabs (🔴 2026-06-12 Segmented_control 에서 전환)
+- 🔴 **2026-06-12 개편 (절대 규칙 0-J/0-V):** 상단 모드 탭(거래현황/누적거래, 추천/전체 등 콘텐츠
+  전환 탭)도 **underline tabs 가 기본** — Segmented_control(알약 토글)이 아니다. `_segLabels`(non-forced)
+  로 작성돼도 R60 `_inject` 가 빌드 직전 **underline tabs styled frame 으로 자동 변환**한다.
+- 🔴 **DS v7 "Horizontal tabs"(129dd87…/dda7a104…) 폐기**(모바일 드롭다운 붕괴)는 그대로 유효.
+- **Segmented_control 은 컴팩트 on/off 토글에만** (`_forceSegmented:true`). 키: Style=hug
+  `47a01673a46dc3bc9bfd62948c10e5fa9f2e5e78` / Style=fill `2ee9d12d4c904650ab496b9bcdf874a648e73ceb`
+  (set `143ee3e3…` import 불가). `_configure_segmented_control` 가 prop(Show Segment/Label#/Active) 자동 설정.
+- **생성기**: `unified_blueprint.py _gen_mode_tabs` 가 `_segLabels` 로 emit 해도 R60 이 underline 으로 변환.
+- 회귀 신호: 상단 모드 탭이 **알약(pill) Segmented** 로 보임(밑줄 tabs 가 아님) / "전체/전체" / DS v7 키.
+  상세 → 메모리 [[segmented-control-prop-labels]], [[tabs-underline-default]].
 
 ### 6. Underline Tab Active/Inactive 높이 일치 + Individual Stroke
 - Underline 스타일 탭에서 Active에는 Underline Bar(2px)가 있어 Inactive보다 높아짐
