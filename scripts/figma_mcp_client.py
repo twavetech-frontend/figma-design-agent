@@ -12725,6 +12725,50 @@ def cmd_sync_text_styles() -> None:
     print("  이 파일을 커밋하면 새 세션에서도 text style 이 자동 적용됩니다.")
 
 
+def _effect_style_map_path() -> str:
+    return os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "ds", "EFFECT_STYLE_MAP.json")
+
+
+def cmd_sync_effect_styles() -> None:
+    """DS 파일(Imin Design System)의 로컬 effect style(Shadows/* 등)을 키와 함께 추출해
+    ds/EFFECT_STYLE_MAP.json 에 저장한다.
+
+    ⚠️ plugin 이 **DS 파일(Imin Design System)에 연결된 상태**에서 실행해야 한다.
+    작업 파일에는 effect style 이 라이브러리 *참조*만 있어 `getLocalEffectStylesAsync()`
+    가 0건을 반환한다(Figma 는 라이브러리 스타일을 이름으로 조회하는 API 가 없음 —
+    variables→VARIABLE_KEY_MAP.json, text style→TEXT_STYLE_MAP.json 과 동일 한계).
+    한 번 추출해 커밋해두면 이후 모든 세션에서 `set_effect_style_id`(importStyleByKeyAsync)
+    로 'Shadows/shadow-basic' 같은 DS effect style 을 키로 바인딩할 수 있다."""
+    try:
+        d = parse_content(call_tool("get_styles", {})).get("json") or {}
+    except Exception as e:
+        print(f"❌ get_styles 실패: {e}")
+        return
+    effects = d.get("effects") or []
+    out = []
+    for e in effects:
+        key = e.get("key")
+        if not key:
+            continue
+        out.append({"name": e.get("name") or "", "key": key})
+    if not out:
+        print("⚠️ 로컬 effect style 0건 — plugin 이 DS 파일(Imin Design System)에 "
+              "연결됐는지 확인하세요.")
+        print("   작업 파일에는 로컬 effect style 이 없습니다(라이브러리 참조만). "
+              "Figma 에서 DS 파일을 열고 plugin 실행 후 다시 시도하세요.")
+        return
+    path = _effect_style_map_path()
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=2)
+    names = [o["name"] for o in out if "shadow" in (o["name"] or "").lower()]
+    print(f"✓ DS effect style {len(out)}개 추출 → {path}")
+    if names:
+        print(f"  shadow 계열: {', '.join(names[:12])}")
+    print("  이 파일을 커밋하면 새 세션에서도 effect style 키로 바인딩됩니다.")
+
+
 def cmd_sync_components() -> None:
     """DS 파일(Imin Design System)의 로컬 COMPONENT / COMPONENT_SET 을 키와 함께
     추출해 ds/COMPONENT_KEY_MAP.json 에 저장한다 (DS v7 → Imin Design System 전수
@@ -13008,6 +13052,18 @@ def _load_effect_style_map() -> dict:
         key = e.get("key")
         if name and key:
             idx[name] = key
+    # fallback: 작업 파일엔 로컬 effect style 이 0건(라이브러리 참조) → 사전 추출본
+    # ds/EFFECT_STYLE_MAP.json(sync-effect-styles) 을 병합 (TEXT_STYLE_MAP 과 동일 패턴).
+    if not idx:
+        try:
+            p = _effect_style_map_path()
+            if os.path.exists(p):
+                with open(p, encoding="utf-8") as fh:
+                    for o in json.load(fh) or []:
+                        if o.get("name") and o.get("key"):
+                            idx[o["name"]] = o["key"]
+        except Exception as e:
+            print(f"  [effect-style] EFFECT_STYLE_MAP.json 로드 실패: {e}")
     _EFFECT_STYLE_MAP_CACHE = idx
     return idx
 
@@ -14165,6 +14221,12 @@ def main():
         # 이 추출본이 _load_text_style_map 의 fallback 으로 쓰인다.
         ensure_session()
         cmd_sync_text_styles()
+    elif cmd == "sync-effect-styles":
+        # DS 파일(Imin Design System)에 plugin 연결된 상태에서 1회 실행 →
+        # ds/EFFECT_STYLE_MAP.json 생성(Shadows/shadow-basic 등 키). 작업 파일엔
+        # effect style 이 라이브러리 참조만 있어 0건이므로 DS 파일에서 추출해야 함.
+        ensure_session()
+        cmd_sync_effect_styles()
     elif cmd == "apply-text-styles":
         # 빌드된 화면에 DS text style 만 별도 적용 (재빌드 없이).
         if len(sys.argv) < 3:
