@@ -1600,6 +1600,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
     sub-card 를 흰색화하지 않는다(작성자 fill 존중).
   - 강조 수단은 색 밴드 외에도 자유: 컬러 히어로 카드·타이포 위계·여백·그룹화 등. 디자인 방향(S25)에
     따라 매번 다르게.
+  - 🔴 **회색(bg-secondary) 도배 지양 (2026-06-18 사용자: "여전히 secondary 쓰고 있어 너무 칙칙해졌다"):**
+    여러 섹션·밴드를 전부 `bg-secondary`(회색)로 채우면 화면이 **칙칙**해진다. 강조 밴드는 밝은 톤을
+    우선 — **흰 카드 대비(bg-primary)** 또는 **brand-tint 라벤더(`bg-brand-primary`)** (그 위에 흰
+    sub-card 가 살아남). 회색은 *보조 영역에 절제* 사용하고 화면 전체를 회색으로 덮지 말 것.
 - **`_band` 마커 = '풀폭 구조'만:** 노드에 `"_band": true` 를 박으면 그 섹션은 **풀폭(FILL) + 상/하·좌우
   padding fill-in**(미지정 시만)으로 표준화된다. **fill·보더·내부 색은 건드리지 않는다(자율).** 즉
   `_band` 는 "content 좌우 padding 밖으로 빼서 풀폭으로 둔다"는 *레이아웃* 마커일 뿐, 색 마커가 아니다.
