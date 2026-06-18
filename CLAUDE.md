@@ -283,7 +283,12 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > - **19-B** 세로 패딩 대칭(pt==pb) → 미세 차이(≤4px)만 fill-in 교정, **큰 비대칭은 디자인
 >   도구로 존중**(advisory WARN). 의도면 `_asymPad` 로 침묵.
 >
-> 🔴 **③ 창의 프로세스 — "콘텐츠는 1:1, 비주얼은 매 시안 다르게" (2026-06-15 사용자 핵심 룰):**
+> **②-삭제 (2026-06-18 사용자 결정 — 창의 변형과 충돌해 *완전 삭제*):**
+> - ⛔ **0-I 섹션 타이틀 좌측정렬 강제 → 삭제** (R59 파일 제거). 정렬은 작성자 자유(센터드 히어로 등).
+> - ⛔ **`_enforce_text_hierarchy` 금액 30px 자동 승격 → 삭제(no-op)**. 타이포 위계는 작성자 자유.
+>   (DS 스케일 2-C·접근성 하한만 정합성으로 유지.)
+>
+> 🔴 **③ 창의 프로세스 — "콘텐츠는 1:1, 비주얼은 매 시안 다르게" (2026-06-15 / 2026-06-18 사용자 핵심 룰):**
 >
 > 사용자 명시: *"생성되는 디자인들이 와이어프레임과 똑같다는 게 가장 큰 문제. 100번을 생성하면
 > 100번 다 와이어와 똑같이 나오면 디자인이 의미가 없다. 콘텐츠 영역 안에서 레이아웃·컬러·간격·
@@ -308,9 +313,18 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 >   (ERROR `novelty-gate`) → 다른 방향으로 재구성 유도. 레이아웃·간격·정렬·타이포만 바꿔도 시그니처가
 >   충분히 떨어진다(시그니처가 그 차원들을 측정). bypass: `_noveltySkipped` 또는 env
 >   `IMIN_SKIP_NOVELTY_GATE=1`(사용자가 '그대로 다시' 원할 때). 테스트 `test_creative_divergence_gates.py`.
-> - **워크플로**: 빌드 전 레퍼런스(0-G)를 보고 → `_designDirection` 을 직전과 다르게 정하고 →
->   그 방향으로 콘텐츠 영역의 레이아웃/컬러/간격/정렬/타이포를 **새로 설계**(와이어 미러링 금지) →
->   `_concept`·`_designDirection` 박아 빌드. novelty 게이트가 발산을 보증.
+> - 🔴 **S26 와이어/PRD 발산 선언 게이트 (2026-06-18 신규 — 와이어 트레이싱 차단)**: 사용자 명시
+>   *"PRD·특히 와이어프레임 이미지를 그대로 똑같은 UI로 구현하는 게 문제. 그 단계에서 레이아웃·정렬·
+>   텍스트 위계·크기·컬러를 창의적으로 바꿔 생성하라."* → 0-C/0-N(와이어 1:1 복제 금지)을
+>   **advisory→하드 게이트로 승격**. imin_* 빌드는 root 에 **와이어/PRD 대비 *시각 발산*** 을
+>   선언해야 통과 — `"_wireframeDivergence": ["와이어는 …였는데 빌드는 …로 재배치", "...", "..."]`
+>   (구체적 ≥3개, 각 ≥10자). 와이어의 레이아웃/정렬/타이포 위계/크기/컬러를 *어떻게 다르게* 했는지
+>   적는다. 콘텐츠(텍스트/숫자)는 와이어 1:1(0-E)이되 **시각 표현은 트레이싱 금지**. 없거나 공허하면
+>   빌드 차단. bypass: `_wireframeDivergenceSkipped`(와이어 없는 PRD-only / '와이어 그대로' 명시 /
+>   단순 재빌드). ⚠️ 와이어를 px-perfect 로 옮기면 이 게이트에 걸린다 — 디자인적 판단을 더하라.
+> - **워크플로**: 빌드 전 레퍼런스(0-G)·와이어를 보고 → `_designDirection` 을 직전과 다르게 정하고 →
+>   그 방향으로 콘텐츠 영역의 레이아웃/컬러/간격/정렬/타이포를 **새로 설계**(와이어 미러링 금지, S26) →
+>   `_concept`·`_designDirection`·`_wireframeDivergence` 박아 빌드. novelty·S26 게이트가 발산을 보증.
 > - **3안 워크플로 (권장)**: 새 화면/리디자인은 **방향이 서로 다른 3안**을 생성해 사용자가 고른다.
 >   취향은 룰로 박지 않고 *선택*으로 반영하며, 선택안의 방향이 다음 기본값이 된다.
 > - **레퍼런스**: 레포 내장 uibowl(0-G 자동검색)이 표준 소스 — 모든 사용자 환경에서 동일하게 동작.
@@ -481,38 +495,16 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > (`Amount Box`·`Filter Opt`·`Filter Header` 등) 사용. 진짜 DS 컴포넌트가 필요하면
 > `type:instance` + componentKey 로 **직접** 작성한다(모양 의존 금지).
 
-> 🔴 **절대 규칙 0-I — 섹션 타이틀 텍스트는 항상 좌측 정렬 (2026-06-01 사용자 룰)**
+> ⛔ **절대 규칙 0-I — 폐기 (2026-06-18 사용자 결정: 섹션 타이틀 좌측정렬 강제 삭제)**
 >
-> 사용자 명시: *"다른 섹션들은 그렇게 되어 있는데 왜 이것만 중앙으로 배치했는지 이해가
-> 되지 않는다."* — 섹션 헤더/타이틀 텍스트(예: "이번 달 일정", "추천 스테이지",
-> "거래 스케줄", "추천 상품")는 **모두 좌측 정렬**(`textAlignHorizontal: LEFT` 또는
-> 미명시=기본 LEFT)이어야 한다.
+> 구 규칙(2026-06-01): 섹션 타이틀 텍스트를 **항상 좌측 정렬**로 강제(R59 lint/inject/post-fix/verify).
+> → 2026-06-18 **삭제.** 사용자 결정: 와이어를 창의적으로 변형하려면 *정렬*도 작성자가 자유롭게
+> 정해야 한다(센터드 히어로 타이틀·우측 정렬 등 허용). 정렬 획일화가 창의 변형과 충돌.
 >
-> **중앙 정렬을 만드는 두 패턴 (둘 다 금지):**
-> 1. **TEXT 노드에 `textAlignHorizontal: "CENTER"` 직접 박힘** — blueprint 작성 실수.
-> 2. **`primaryAxisAlignItems: SPACE_BETWEEN` + 자식 1개** — Figma 가 단일 자식을
->    row 정중앙에 배치한다. 다른 Title Row 들이 우측에 CTA("전체 보기" / 예치금 라벨)를
->    가진 것과 일관성 위해 자식 1개일 땐 `MIN`(=시작 정렬) 사용.
->
-> **시스템 강제 (자동, 3중 방어):**
-> 1. `scripts/design_rules/R59_section_title_left_align.py`
->    - **L2 lint**: blueprint 사전 검증 — CENTER align 또는 SPACE_BETWEEN+single-child 시 WARN
->    - **L3 inject**: 빌드 직전 blueprint 자동 교정 (CENTER→LEFT, SPACE_BETWEEN→MIN)
->    - **L4 post-fix**: 빌드 후 실제 노드에 `set_text_align(LEFT)` / `set_auto_layout(MIN)` 자동 호출
->    - **L5 verify**: 빌드 후 검증 — 여전히 위반이면 WARN
-> 2. `scripts/design_rules/__init__.py` 의 자동 import — R59 자동 등록
->
-> **스코프 (2026-06-01 좁힘 — 사용자 피드백 "갑자기 모든 정렬이 왼쪽 정렬로 고정된거 같다. 섹션 타이틀만 왼쪽 정렬이어야"):**
-> - TEXT 의 `fontSize ≥ 15` (작은 라벨/본문 제외)
-> - 부모 frame name 이 `Title Row` / `Header Row` 패턴
-> - **ancestor 에 `empty` / `modal` / `dialog` / `sheet` / `popover` / `tooltip` 없음** —
->   Empty state / 모달 안내 텍스트는 와이어 의도(가운데 정렬)를 유지하기 위해 제외
-> - `card` 는 의도적으로 ancestor 차단 hint 에서 제외 — "Day Strip Title" 처럼 카드 안에
->   있어도 섹션 타이틀로 인식되는 경우가 있음 (사용자 1차 요청)
->
-> **빌드 후 검증:** 빌드 로그에서 `R59 inject:` 또는 `R59 section-title:` 라인이
-> 보이면 자동 교정 성공. 스크린샷에서 화면 큰 섹션 타이틀만 LEFT, Empty/Modal 안내는
-> 와이어 의도 정렬 유지.
+> **삭제 내역:** `scripts/design_rules/R59_section_title_left_align.py` 파일 삭제(auto-discovery
+> 대상에서 제거). 더 이상 타이틀 정렬을 강제하지 않는다 — 정렬은 디자인 방향(S25)·발산(S26)에 따라
+> 작성자가 선택. ⚠️ 과거 "왜 이것만 중앙?" 불만이 재발할 수 있으나, 그건 *의도적 정렬 선택*으로
+> 다루며 룰로 막지 않는다(사용자 결정).
 
 > 🔴 **절대 규칙 0-H — 새 root frame 은 기존 화면 우측 빈 공간에 자동 배치 (2026-06-01 사용자 룰)**
 >
@@ -1196,7 +1188,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   2. `_enforce_min_text_size_live(root_id)` (cmd_post_fix, 브랜드 틴트 면 직전) — 라이브 백스톱.
      get_nodes_info(batch)는 styled 텍스트 fontSize 를 None 으로 주므로 **TEXT 노드별 get_node_info 로
      실제 fontSize 를 읽어** 하한 미만이면 `set_font_size` 로 상향. DS 인스턴스 내부(';') 제외.
-- `cmd_build`의 `_enforce_text_hierarchy`가 카드 안의 통화 hero(부호 `+/−` 또는 천단위 콤마가 있는 금액 텍스트)를 자동으로 **30px Bold**로 승격 — 본문이 hero보다 작게 작성되어 있어도 hero가 본문 위로 올라온다.
+- ⛔ **2026-06-18 폐기:** 구 `_enforce_text_hierarchy`(카드 안 통화 hero 금액을 30px Bold 로 *자동 승격*)는 삭제(no-op). 타이포 위계는 이제 **전적으로 작성자(blueprint fontSize)가 결정** — 와이어를 창의적으로 변형(크기·위계 자유)하는 것과 충돌해 사용자 결정으로 제거. hero 수치를 크게 쓰고 싶으면 blueprint 에서 직접 DS 스케일(24/32/40/48 등)로 명시한다. (DS 스케일 준수=2-C·접근성 하한=min-text-size 만 정합성 차원에서 유지.)
 
 ### 2-D. ⚠️ Modal 화면 패턴 — 상단 X만, Footer·Tab Bar·상단 탭 없음 (2026-05-24 룰)
 - **Full modal** (홈 위로 슬라이드업되는 단일 화면, 예: 거래 스케줄 상세) 은:

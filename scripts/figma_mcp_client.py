@@ -4534,68 +4534,13 @@ _HERO_TEXT_SIZE = 30
 
 
 def _enforce_text_hierarchy(blueprint: dict) -> None:
-    """타이포 위계 강화 — 카드 안 hero 금액 텍스트를 28px+ Bold로 자동 승격 (2026-05-23).
+    """🔻 2026-06-18 폐기(no-op) — 사용자 결정(#4a 삭제).
 
-    컬러가 절제될수록 시각 리듬은 크기·굵기 차이로 만들어야 한다. 통화 hero
-    텍스트(부호 prefix 또는 천단위 콤마가 있는 금액)가 카드 안에 있으면 본문
-    수준 폰트(<28px)로 남지 않도록 30px Bold 로 끌어올린다.
-    """
-    bumped = [0]
-
-    def is_hero_amount(text: str) -> bool:
-        t = (text or "").strip()
-        if not t or len(t) > 18:
-            return False
-        return bool(_HERO_AMOUNT_RE.match(t))
-
-    def walk(node, inside_card, parent_layout, narrow_parent_width=None):
-        if not isinstance(node, dict):
-            return
-        in_card_now = inside_card or _is_card_like(node)
-        if node.get("type") in ("text", "TEXT") and inside_card:
-            text = node.get("text") or node.get("characters") or ""
-            # 2026-05-27 fix — HORIZONTAL row 의 인라인 텍스트는 승격 금지.
-            # 인라인 hero 를 30px 로 끌어올리면 row 의 다른 자식(suffix/pill/date 등)이
-            # 깨진다(stage_list 회귀: r2-amt "20,800,000원" 17px → 30px 로 폭주, 카드 밖 흘러나옴).
-            # VERTICAL 부모(또는 root)의 직계 자식 hero 만 승격 의도.
-            if parent_layout == "HORIZONTAL":
-                pass
-            elif is_hero_amount(text):
-                # 2026-05-27 — 좁은 부모(<150px) 안에서는 30px hero 승격 skip.
-                # Schedule cell(116px) / Lounge card(130px) 안 통화 "+130만원" / "9,800원"
-                # 이 30px Bold 로 승격되면 cell padding 안에 들어가지 못해 wrap → 사용자에게
-                # "잘림" 으로 보임. 좁은 cell 은 본문 폰트(14~16px) 유지.
-                if narrow_parent_width is not None and narrow_parent_width < 150:
-                    pass
-                else:
-                    # 2026-05-28 위계 fix (사용자 분노 "왜 자꾸 텍스트 막 키우냐"):
-                    # fontSize 명시되어 있으면 사용자/_polish 의도 보존. promotion 은 명시
-                    # 안 된 텍스트만. 17/18 등 명시 박은 amount-row value 가 30 으로 덮어
-                    # 씌워지는 회귀 차단.
-                    cur = node.get("fontSize")
-                    if cur is not None:
-                        pass  # 명시 fontSize 보존 — 사용자 의도 우선
-                    else:
-                        node["fontSize"] = _HERO_TEXT_SIZE
-                        font = node.get("fontName") or {}
-                        if (font.get("style") or "").lower() != "bold":
-                            node["fontName"] = {
-                                "family": font.get("family") or "Pretendard",
-                                "style": "Bold",
-                            }
-                        bumped[0] += 1
-        cur_layout = ((node.get("autoLayout") or {}).get("layoutMode")
-                      or node.get("layoutMode") or "").upper()
-        # narrow parent width 추적 — 자식 hero 승격 판단용
-        w = node.get("width")
-        node_width = w if isinstance(w, (int, float)) and w > 0 else None
-        child_narrow = node_width if node_width else narrow_parent_width
-        for child in node.get("children", []) or []:
-            walk(child, in_card_now, cur_layout, child_narrow)
-
-    walk(blueprint, False, "")
-    if bumped[0]:
-        print(f"[규칙] 타이포 위계 — hero 금액 텍스트 {bumped[0]}건 → {_HERO_TEXT_SIZE}px Bold")
+    구 동작: 카드 안 통화 hero 금액 텍스트를 30px Bold 로 *자동 승격*. 와이어를 창의적으로
+    변형(타이포 위계를 작성자가 자유롭게 결정)하는 것과 충돌 → 삭제. 타이포 위계는 이제
+    전적으로 작성자(blueprint fontSize)가 정한다. DS 스케일(2-C)·접근성 하한(min-text-size)만
+    정합성 차원에서 유지. 함수 시그니처는 하위호환 위해 유지(no-op)."""
+    return
 
 
 _DIGIT_ONLY_RE = re.compile(r"^\d+$")
@@ -4961,7 +4906,7 @@ def cmd_build(blueprint_file: str):
     _enforce_home_content_gap(blueprint)  # 2026-06-08 — 홈 Content 섹션 gap=spacing-2xl(20)
     _enforce_brand_tint_surface_primary(blueprint)  # 2026-06-05 — 브랜드 틴트 면=bg-brand-primary
     _enforce_white_card_border(blueprint)  # 2026-05-27 — fill=bg-primary frame 자동 border
-    _enforce_text_hierarchy(blueprint)
+    _enforce_text_hierarchy(blueprint)  # 🔻 2026-06-18 no-op(폐기) — 타이포 위계는 작성자 자유
     _enforce_cta_caption_secondary(blueprint)  # 2026-06-08 — CTA 유도 caption=text-secondary
     _enforce_section_dividers(blueprint)
     _enforce_tooltip_ignore_auto_layout(blueprint)
@@ -4979,8 +4924,11 @@ def cmd_build(blueprint_file: str):
     # 다 똑같다" 차단). 콘텐츠는 1:1, 비주얼은 매 시안 다른 방향.
     direction_issues = _check_design_direction_required(blueprint)
     novelty_issues = _check_novelty_gate(original_blueprint)
+    # S26 와이어/PRD 발산 선언 (2026-06-18 — "와이어 이미지를 그대로 똑같은 UI로 구현" 차단).
+    # 0-C/0-N(와이어 1:1 복제 금지)을 advisory→하드 게이트로 승격.
+    divergence_issues = _check_wireframe_divergence_required(blueprint)
     archetype_issues = (archetype_issues + wc_required_issues + concept_issues
-                        + direction_issues + novelty_issues)
+                        + direction_issues + novelty_issues + divergence_issues)
     if archetype_issues:
         print(f"\n[archetype-check] {len(archetype_issues)}건 발견:")
         for ai in archetype_issues:
@@ -10933,6 +10881,46 @@ def _check_design_direction_required(blueprint: dict) -> list:
         '"layout":"...", "spacing":"..."} (최소 3축 구체 전략). 콘텐츠는 1:1(0-E) 이되 레이아웃·'
         "컬러·간격·정렬·타이포 위계를 이 방향으로 매 시안 다르게 만든다(레퍼런스 0-G 재참조, "
         "직전 빌드와 다른 방향). 단순 재빌드면 root._designDirectionSkipped: \"<reason>\"."
+    )
+    return issues
+
+
+# S26 — 와이어프레임/PRD 발산 선언 (2026-06-18 사용자 룰: "PRD·특히 와이어프레임 이미지를
+# 그대로 똑같은 UI로 구현하는 게 문제. 그 단계에서 창의적으로 레이아웃·정렬·텍스트 위계·크기·
+# 컬러를 바꿔 생성하라"). 0-C/0-N(와이어 1:1 복제 금지·창의 재해석 의무)를 advisory→하드 게이트
+# 로 승격. 콘텐츠(텍스트/숫자)는 1:1(0-E) 이되, *시각 표현*은 와이어를 트레이싱하지 않았음을
+# 구체적으로 선언해야 통과 — 모델이 와이어 이미지를 그대로 베끼는 것을 차단하는 forcing function.
+_WIREFRAME_DIVERGENCE_AXES_HINT = "레이아웃·정렬·타이포 위계·크기·컬러"
+
+
+def _check_wireframe_divergence_required(blueprint: dict) -> list:
+    """S26: imin_* 빌드는 root._wireframeDivergence 선언 의무 — 와이어/PRD 대비 *시각 발산*.
+
+    `"_wireframeDivergence": ["<와이어와 달라진 점 1>", "...", "..."]` (구체적 ≥3개).
+    각 항목은 와이어의 레이아웃/정렬/타이포 위계/크기/컬러를 *어떻게 다르게* 재구성했는지
+    구체적으로 적는다(예: "와이어는 좌측 정렬 라벨 나열 → 금액을 32px 센터 히어로로 재배치",
+    "와이어 단일 컬럼 → 2-up 비대칭 카드 그리드"). 콘텐츠(텍스트/숫자)는 와이어 1:1(0-E)이되
+    *시각 표현*은 트레이싱 금지. 형식 통과용 공허한 값("색을 바꿈" 식 추상)은 금지 — 구체적이어야.
+    bypass: root._wireframeDivergenceSkipped: "<reason>" (와이어 없는 PRD 텍스트만의 빌드 /
+    사용자가 '와이어 그대로' 명시한 경우 / 단순 재빌드)."""
+    issues = []
+    if not _is_archetype_build(blueprint):
+        return issues
+    if blueprint.get("_wireframeDivergenceSkipped"):
+        return issues
+    div = blueprint.get("_wireframeDivergence")
+    items = [str(d).strip() for d in div if str(d).strip()] if isinstance(div, list) else []
+    # 공허한 한두 단어 항목 방지 — 최소 길이로 구체성 약식 검증
+    concrete = [d for d in items if len(d) >= 10]
+    if len(concrete) >= 3:
+        print(f"[S26-divergence] ✓ 와이어 발산 선언 {len(concrete)}건 — 시각 표현 트레이싱 안 함")
+        return issues
+    issues.append(
+        "ERROR (S26): archetype 빌드인데 root._wireframeDivergence 누락/불충분. 와이어프레임/PRD "
+        f"의 {_WIREFRAME_DIVERGENCE_AXES_HINT} 를 그대로 베끼지 말고, *어떻게 다르게* 재구성했는지 "
+        '구체적으로 ≥3개 선언할 것 — {"_wireframeDivergence": ["와이어는 …였는데 빌드는 …로 재배치", '
+        '"…", "…"]}. 콘텐츠(텍스트/숫자)는 와이어 1:1(0-E) 이되 시각 표현은 트레이싱 금지(0-C/0-N). '
+        "와이어 없는 PRD-only 빌드/단순 재빌드면 root._wireframeDivergenceSkipped: \"<reason>\"."
     )
     return issues
 

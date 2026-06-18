@@ -44,6 +44,49 @@ def test_non_archetype_skips_direction_gate():
     assert f._check_design_direction_required(bp) == []
 
 
+# ── S26 와이어/PRD 발산 선언 게이트 ─────────────────────────────
+def test_wireframe_divergence_required_blocks_when_missing():
+    bp = {"name": "imin_home_v9", "children": []}
+    issues = f._check_wireframe_divergence_required(bp)
+    assert any(i.startswith("ERROR (S26)") for i in issues), issues
+
+
+def test_wireframe_divergence_passes_with_3_concrete():
+    bp = {"name": "imin_home_v9", "children": [], "_wireframeDivergence": [
+        "와이어는 좌측 라벨 나열인데 빌드는 금액을 32px 센터 히어로로 재배치",
+        "와이어 단일 컬럼을 2-up 비대칭 카드 그리드로 변경",
+        "와이어 평이한 그레이를 brand 액센트+상태색으로 위계화"]}
+    assert f._check_wireframe_divergence_required(bp) == []
+
+
+def test_wireframe_divergence_blocks_vague_items():
+    """공허한 한두 단어 항목(<10자)은 차단."""
+    bp = {"name": "imin_home_v9", "children": [],
+          "_wireframeDivergence": ["색 바꿈", "크기", "정렬"]}
+    assert f._check_wireframe_divergence_required(bp), "공허한 항목은 통과 못 함"
+
+
+def test_wireframe_divergence_skipped_bypass():
+    bp = {"name": "imin_home_v9", "children": [], "_wireframeDivergenceSkipped": "PRD 텍스트만"}
+    assert f._check_wireframe_divergence_required(bp) == []
+
+
+def test_wireframe_divergence_non_archetype_skips():
+    bp = {"name": "tmp_sheet", "children": []}
+    assert f._check_wireframe_divergence_required(bp) == []
+
+
+def test_text_hierarchy_no_longer_auto_promotes():
+    """#4a 폐기 — 카드 안 금액 텍스트를 30px로 자동 승격하지 않음(작성자 자유)."""
+    bp = {"name": "r", "type": "frame", "children": [
+        {"name": "Card", "type": "frame", "cornerRadius": 16, "fill": "$token(bg-primary)",
+         "autoLayout": {"layoutMode": "VERTICAL"},
+         "children": [{"type": "text", "text": "1,000,000원"}]}]}
+    f._enforce_text_hierarchy(bp)
+    amt = bp["children"][0]["children"][0]
+    assert amt.get("fontSize") is None, "자동 승격되면 안 됨(작성자 미지정 그대로)"
+
+
 # ── 시그니처 민감도 ─────────────────────────────────────────────
 def _bp(mode, gap, size, align, weight):
     return {"name": "x", "type": "frame", "children": [
