@@ -1152,6 +1152,23 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   마커는 author 가 보더리스 면을 *의도*했을 때만. 적용 예: `imin_signup_home_v5` 의 현황 스트립·
   한도 콜아웃·출석/초대 그룹.
 
+### 2-B-3. 🔴 흰 카드 elevation = DS `Shadows/shadow-basic` 자동 바인딩 (2026-06-18 사용자: "표준으로 박아줘, 빌드마다 자동")
+- 사용자 명시: 흰 면+보더 카드에 shadow-basic 효과를 표준으로, **빌드마다 자동** 적용.
+- **시스템 강제 (코드 박힘, 자동):** `_apply_card_shadow_live`(cmd_post_fix **맨 끝**, drop-shadow strip *뒤*라
+  살아남음) — 흰 fill(bg-primary) + 보이는 보더 + width≥80 + (cornerRadius 8~99 둥근 카드 **또는**
+  `_cardShadow` 마커) 인 FRAME 에 DS **`Shadows/shadow-basic`** effect style 을 `set_effect_style_id`
+  (`S:{key},{id}`)로 바인딩. 키는 `_load_effect_style_map()` → **`ds/EFFECT_STYLE_MAP.json`**(sync-effect-styles
+  추출본) fallback. DS 인스턴스·stepper-btn(원형 999/작은 폭)·skip 마커는 제외. 멱등.
+- **제외 (그림자 없음):** 노드에 `"_noShadow": true` 또는 `"_placeholderAllowed"`(CMS 배너 placeholder 등 —
+  *자체로 두드러져 그림자 불필요*, 2026-06-18 사용자) → skip.
+- **강제 (자동감지 못하는 카드):** 개별 코너 radius(월렛 바처럼 topLeftRadius 만 둥근)는 get_nodes_info 가
+  cornerRadius 를 None 으로 줘서 자동감지 안 됨 → 노드에 `"_cardShadow": true` 로 강제.
+- ⚠️ **이전 "drop-shadow 절대 금지"(2-E/[[feedback_no_drop_shadow]])는 *raw 임의 그림자*만 금지** —
+  DS `Shadows/shadow-basic` 카드 elevation 은 이 표준이 적용한다(strip 뒤에 재바인딩). 테스트 `test_card_shadow.py`.
+- 🔴 **effect style 키 추출:** 작업 파일은 DS 를 라이브러리로 *참조*만 해 `getLocalEffectStylesAsync()` 가
+  0건 → 키 없음. DS 파일(Imin Design System)에 plugin 연결 후 `python3 scripts/figma_mcp_client.py
+  sync-effect-styles` 1회 실행 → `ds/EFFECT_STYLE_MAP.json` 생성·커밋(TEXT_STYLE_MAP·VARIABLE_KEY_MAP 과 동일 패턴).
+
 ### 2-B-2. ⚠️ 브랜드 틴트 '면' = bg-brand-primary — 🔻 2026-06-12 advisory 강등 (명시 fill 존중, live 교정 no-op)
 - 사용자 명시: *"이런건 컬러를 `bg-brand-primary` 를 사용게 시각적으로 맞아."* (강조된 '오늘'
   스케줄 블록 등 브랜드 틴트 면을 가리키며)

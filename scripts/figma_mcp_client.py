@@ -9899,6 +9899,16 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     except Exception as e:
         print(f"  [navbar] 실패 (무시): {e}")
 
+    # 🔴 흰 카드 elevation — DS Shadows/shadow-basic 자동 바인딩 (2026-06-18 사용자: "표준으로
+    # 박아줘, 빌드마다 자동"). drop-shadow strip *맨 뒤*에서 — 흰 면+보더 카드에 shadow-basic 적용.
+    # 배너 placeholder(_noShadow/_placeholderAllowed) 제외, 월렛 등 개별코너 카드는 _cardShadow 강제.
+    print("\n[규칙] 흰 카드 Shadows/shadow-basic elevation 적용 중...")
+    try:
+        _csf, _css = _collect_card_shadow_markers(injected_blueprint or original_blueprint or {})
+        _apply_card_shadow_live(root_node_id, _csf, _css)
+    except Exception as e:
+        print(f"  [card-shadow] 실패 (무시): {e}")
+
     elapsed = time.time() - start
     print(f"\n{'='*50}")
     print(f"POST-FIX 완료 — {elapsed:.1f}s")
@@ -13066,6 +13076,102 @@ def _load_effect_style_map() -> dict:
             print(f"  [effect-style] EFFECT_STYLE_MAP.json 로드 실패: {e}")
     _EFFECT_STYLE_MAP_CACHE = idx
     return idx
+
+
+def _collect_card_shadow_markers(bp: dict) -> tuple:
+    """blueprint 에서 카드 그림자 마커 수집 → (force_names, skip_names).
+
+    `_cardShadow: true` → force(자동감지 못하는 카드도 강제: 월렛 등 개별코너 radius).
+    `_noShadow: true` / `_placeholderAllowed` → skip(배너 placeholder 등 그림자 제외).
+    """
+    force, skip = set(), set()
+
+    def walk(n):
+        if isinstance(n, dict):
+            nm = n.get("name")
+            if nm:
+                if n.get("_cardShadow"):
+                    force.add(nm)
+                if n.get("_noShadow") or n.get("_placeholderAllowed"):
+                    skip.add(nm)
+            for c in n.get("children") or []:
+                walk(c)
+    walk(bp or {})
+    return force, skip
+
+
+def _apply_card_shadow_live(root_id: str, force_names: set, skip_names: set) -> int:
+    """흰 면+보더 카드에 DS `Shadows/shadow-basic` effect style 을 자동 바인딩 (2026-06-18 사용자 룰:
+    "표준으로 박아줘 — 빌드마다 자동").
+
+    대상: FRAME + 흰 fill(bg-primary) + 보이는 보더 + width≥80 + DS 인스턴스 아님 + 이름이 skip 아님,
+    그리고 (cornerRadius 8~99 둥근 카드) **또는** 이름이 force_names. shadow-basic = innerShadow(1px)
+    + dropShadow(0,10,blur24). `_strip_all_drop_shadows` *뒤*(cmd_post_fix 맨 끝)에 실행해 살아남는다.
+    키는 _load_effect_style_map()(→ds/EFFECT_STYLE_MAP.json fallback)에서. 멱등.
+    """
+    style_map = _load_effect_style_map()
+    key = style_map.get("Shadows/shadow-basic")
+    if not key:
+        print("  [card-shadow] shadow-basic 키 없음 — skip "
+              "(DS 파일에서 sync-effect-styles 1회 필요)")
+        return 0
+    applied = [0]
+
+    def _is_white_border(n):
+        if (n.get("type") or "").upper() != "FRAME":
+            return False
+        if ";" in (n.get("id") or "") or n.get("componentKey"):
+            return False
+        fills = n.get("fills") or []
+        if not (fills and isinstance(fills[0], dict) and fills[0].get("visible", True)
+                and fills[0].get("type") == "SOLID"):
+            return False
+        c = fills[0].get("color") or {}
+        if not (c.get("r", 0) > 0.93 and c.get("g", 0) > 0.93 and c.get("b", 0) > 0.93):
+            return False
+        strokes = n.get("strokes") or []
+        if not (strokes and isinstance(strokes[0], dict) and strokes[0].get("visible", True)):
+            return False
+        bb = n.get("absoluteBoundingBox") or {}
+        return (bb.get("width") or 0) >= 80
+
+    def _is_frame_card(n):
+        # forced 카드용 기본 체크(흰색 아니어도 됨): FRAME + DS 인스턴스 아님 + width≥80
+        if (n.get("type") or "").upper() != "FRAME":
+            return False
+        if ";" in (n.get("id") or "") or n.get("componentKey"):
+            return False
+        bb = n.get("absoluteBoundingBox") or {}
+        return (bb.get("width") or 0) >= 80
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        nm = n.get("name")
+        if nm not in skip_names:
+            cr = n.get("cornerRadius")
+            rounded = isinstance(cr, (int, float)) and 8 <= cr < 100
+            forced = nm in force_names
+            # 흰+보더 둥근 카드(자동) 또는 _cardShadow 마커(흰색 아니어도 — 강조 CTA 등)
+            if (_is_white_border(n) and rounded) or (forced and _is_frame_card(n)):
+                try:
+                    call_tool("set_effect_style_id",
+                              {"nodeId": n["id"], "effectStyleId": f"S:{key},{n['id']}"})
+                    applied[0] += 1
+                except Exception as e:
+                    print(f"  [card-shadow] '{n.get('id')}' fail: {e}")
+        for c in n.get("children") or []:
+            walk(c)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0])
+    except Exception as e:
+        print(f"  [card-shadow] root fetch fail: {e}")
+    if applied[0]:
+        print(f"  [card-shadow] ✓ 흰 카드 {applied[0]}개 Shadows/shadow-basic 바인딩")
+    return applied[0]
 
 
 def _shadow_fingerprint(effects) -> Optional[tuple]:
