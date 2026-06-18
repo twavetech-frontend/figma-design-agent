@@ -8066,6 +8066,61 @@ def _enforce_multicol_fill_live(root_id: str) -> int:
     return fixed[0]
 
 
+def _fix_collapsed_text_width_live(root_id: str) -> int:
+    """긴 텍스트가 좁은 컨테이너에 갇혀 *글자단위로 줄바꿈*되는 붕괴를 라이브 교정 (2026-06-18 사용자 QA).
+
+    회귀: 카드 타이틀 '27년 6월 25일에 7,000,000원 받아요.' 가 폭 22px 컨테이너(Quote Texts)에
+    갇혀 한 글자씩 세로로 쌓임. 생성기는 FILL 을 설정했지만 batch_build 가 떨어뜨리고
+    `_enforce_multicol_fill_live`(≤3px 가드)도 22px 를 비껴감 → 별도 가드.
+
+    감지: TEXT 의 폭이 fontSize*4 미만(=한 줄에 4글자도 못 들어감)인데 글자수>6(긴 텍스트) →
+    컨테이너 폭 붕괴. 복원: 그 TEXT + 붕괴한 조상 프레임(폭<80px)들을 layoutSizingHorizontal=FILL.
+    DS 인스턴스 내부(';')·장식 텍스트 제외. idempotent.
+    """
+    fixed = [0]
+
+    def _w(n):
+        b = n.get("absoluteBoundingBox") or {}
+        return b.get("width") or 0
+
+    def walk(n, parents):
+        if not isinstance(n, dict):
+            return
+        if (n.get("type") or "").upper() == "TEXT":
+            chars = (n.get("characters") or "").strip()
+            w = _w(n)
+            style = n.get("style") or {}
+            fs = style.get("fontSize") or n.get("fontSize") or 14
+            if len(chars) > 6 and 0 < w < fs * 4 and ";" not in (n.get("id") or ""):
+                # 붕괴한 TEXT + 좁은(<80px) 조상 프레임들을 FILL 로 복원 (넓은 부모 만나면 중단)
+                targets = [n]
+                for p in reversed(parents):
+                    if (p.get("type") or "").upper() == "FRAME" and 0 < _w(p) < 80 \
+                            and ";" not in (p.get("id") or ""):
+                        targets.append(p)
+                    else:
+                        break
+                for t in targets:
+                    try:
+                        call_tool("set_layout_sizing", {"nodeId": t["id"], "horizontal": "FILL"})
+                        fixed[0] += 1
+                    except Exception as e:
+                        print(f"  [collapsed-text] '{t.get('id')}' fail: {e}")
+                print(f"  [collapsed-text] ✓ 붕괴 텍스트 복원 \"{chars[:18]}\" (폭 {round(w)}px → FILL)")
+        for c in n.get("children", []) or []:
+            walk(c, parents + [n])
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0], [])
+    except Exception as e:
+        print(f"  [collapsed-text] root fetch fail: {e}")
+    if fixed[0]:
+        print(f"  [collapsed-text] ✓ 폭 붕괴 텍스트/컨테이너 {fixed[0]}개 FILL 복원")
+    return fixed[0]
+
+
 def _enforce_ds_instance_text(root_id: str, path_text_map: dict) -> int:
     """빌드 트리 DS instance 의 내부 첫 TEXT 를 원래 콘텐츠로 override (2026-05-28).
 
@@ -9747,6 +9802,12 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_multicol_fill_live(root_node_id)
     except Exception as e:
         print(f"  [multicol-fill] 실패 (무시): {e}")
+    # 긴 텍스트가 좁은 컨테이너에 갇혀 글자단위 줄바꿈되는 붕괴 복원 (2026-06-18 — multicol 의
+    # ≤3px 가드를 비껴가는 22px 대 텍스트 컨테이너 붕괴 차단. 카드 타이틀 세로 깨짐 회귀).
+    try:
+        _fix_collapsed_text_width_live(root_node_id)
+    except Exception as e:
+        print(f"  [collapsed-text] 실패 (무시): {e}")
 
     # 🔴 2026-06-05 사용자 룰: "CTA 버튼이 위 아래 연속적으로 있을땐 좀 더 덜 중요한 버튼의
     #    위계를 tertiary 나 outline 으로". 세로로 인접한 전폭 Primary CTA 위계 차등.
