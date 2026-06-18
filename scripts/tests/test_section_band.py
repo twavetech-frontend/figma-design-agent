@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""규칙 13 회귀 테스트 (2026-06-08): 중요 섹션 = 풀폭 bg-secondary 밴드.
+"""규칙 13 회귀 테스트 (🔻 2026-06-18 색 강제 삭제): `_band` = 풀폭 *구조*만, 색은 자율.
 
-사용자 룰: 메인·모든 탭바 홈 화면에서 목돈 만들기/스테이지 현황/추천 스테이지 같은 중요
-섹션은 content 에서 분리해 풀폭 bg-secondary 밴드로 강조한다. 검증:
-  1. `_band:true` 노드 → bg-secondary fill·FILL·상하24/좌우20·보더 제거 표준화
-  2. 밴드 내부 sub-card(bg-secondary)는 bg-primary + border-secondary 로 자동 흰색화
-  3. brand tint·aqua 등 다른 fill 의 내부 요소는 흰색화 안 함(존중)
-  4. 홈 화면에서 중요 이름 섹션이 _band 가 아니면 lint WARN, ribbon/summary 는 제외
+사용자 룰(2026-06-18): "중요 섹션 frame fill 을 bg-secondary 로 고정하는 건 삭제, 자율 판단.
+섹션 안 블록도 꼭 secondary 로 채울 필요 없어." 검증:
+  1. `_band:true` 노드 → FILL + padding fill-in 만. **fill 은 강제하지 않는다(미지정이면 미설정).**
+  2. 밴드 내부 sub-card 의 색은 **흰색화하지 않는다**(bg-secondary 면 그대로 유지).
+  3. 작성자가 명시한 fill(밴드·내부 모두)은 그대로 존중.
+  4. 밴드 nudge lint 폐기 — 어떤 출력도 없어야.
 """
 import os
 import sys
@@ -37,75 +37,55 @@ def _home_bp():
     ]}
 
 
-# ── 1. 밴드 표준화 ──────────────────────────────────────────────
-def test_band_standardized():
+# ── 1. _band = 풀폭 구조만 (fill 강제 안 함) ───────────────────
+def test_band_structure_only_no_fill_forced():
     bp = _home_bp()
     fc._enforce_section_band(bp)
-    ss = bp["children"][1]
-    assert ss["fill"] == "$token(bg-secondary)"
-    assert ss["layoutSizingHorizontal"] == "FILL"
+    ss = bp["children"][1]  # Stage Status Section (_band, fill 미지정)
+    assert "fill" not in ss or ss.get("fill") is None, "fill 을 강제하면 안 됨(자율)"
+    assert ss["layoutSizingHorizontal"] == "FILL"  # 풀폭 구조는 유지
     assert ss["autoLayout"]["paddingTop"] == 24
     assert ss["autoLayout"]["paddingBottom"] == 24
     assert ss["autoLayout"]["paddingLeft"] == 20
     assert ss["autoLayout"]["paddingRight"] == 20
-    # 보더 제거
-    for k in fc._STROKE_KEYS:
-        assert k not in ss
 
 
-# ── 2. 내부 sub-card 흰색화 ────────────────────────────────────
-def test_inner_subcard_whitened():
+# ── 2. 내부 sub-card 흰색화 안 함 (색 유지) ────────────────────
+def test_inner_subcard_not_whitened():
     bp = _home_bp()
     fc._enforce_section_band(bp)
-    amount = bp["children"][1]["children"][1]  # Amount Card
-    assert amount["fill"] == "$token(bg-primary)"
-    assert amount["strokeColor"] == "$token(border-secondary)"
-    assert amount["strokeWeight"] == 1
+    amount = bp["children"][1]["children"][1]  # Amount Card (bg-secondary)
+    assert amount["fill"] == "$token(bg-secondary)", "내부 블록 색을 흰색화하면 안 됨(자율)"
+    assert "strokeColor" not in amount, "보더 자동부착도 안 함"
     tile = bp["children"][1]["children"][0]["children"][0]  # Stat Tile (중첩)
-    assert tile["fill"] == "$token(bg-primary)"  # 깊은 내부도 흰색화
+    assert tile["fill"] == "$token(bg-secondary)"  # 깊은 내부도 그대로
 
 
-# ── 3. brand tint·aqua 내부는 흰색화 안 함 ────────────────────
-def test_inner_tint_preserved():
+# ── 3. 작성자 명시 fill 은 밴드·내부 모두 존중 ────────────────
+def test_explicit_fills_respected():
     bp = _home_bp()
+    # 밴드에 명시 fill 을 주면 그대로 유지
+    bp["children"][2]["fill"] = "$token(bg-brand-primary)"
     fc._enforce_section_band(bp)
-    choice = bp["children"][2]["children"][0]  # Choice Tile (brand tint)
-    assert choice["fill"] == "$token(bg-brand-primary)"  # 존중
-    stepper = bp["children"][2]["children"][1]  # Stepper (bg-secondary → 흰색)
-    assert stepper["fill"] == "$token(bg-primary)"
+    rec = bp["children"][2]
+    assert rec["fill"] == "$token(bg-brand-primary)"  # 명시 밴드 fill 존중
+    choice = rec["children"][0]
+    assert choice["fill"] == "$token(bg-brand-primary)"  # 내부 brand tint 존중
+    stepper = rec["children"][1]
+    assert stepper["fill"] == "$token(bg-secondary)"  # 내부 bg-secondary 도 그대로(흰색화 X)
 
 
-# ── 4. lint: 중요 섹션이 _band 아니면 WARN, ribbon 제외 ───────
-def test_lint_warns_non_band_important(capsys):
+# ── 4. 밴드 nudge lint 폐기 — 어떤 안내도 없어야 ──────────────
+def test_no_band_lint_output(capsys):
     bp = {"rootName": "imin_done_home", "name": "imin_done_home", "type": "frame", "children": [
         {"name": "Content", "type": "frame", "children": [
             {"name": "Stage Status Section", "type": "frame", "fill": "$token(bg-primary)",
              "children": [{"name": "x", "type": "text", "text": "현황"}]},
-            {"name": "Total Summary Ribbon", "type": "frame", "children": []},
         ]},
     ]}
     fc._enforce_section_band(bp)
     out = capsys.readouterr().out
-    # 🔻 2026-06-12 룰 2계층: lint 는 WARN → INFO 강등 (밴드는 강조의 한 수단)
-    assert "규칙13-INFO" in out
-    assert "Stage Status Section" in out
-    assert "Total Summary Ribbon" not in out  # ribbon/summary 제외
-
-
-def test_lint_silent_when_banded(capsys):
-    bp = _home_bp()
-    fc._enforce_section_band(bp)
-    out = capsys.readouterr().out
-    assert "규칙13-INFO" not in out  # 전부 _band 라 안내 없음
-
-
-def test_non_home_no_lint(capsys):
-    bp = {"rootName": "imin_payment_detail", "name": "imin_payment_detail", "type": "frame",
-          "children": [{"name": "Recommend Section", "type": "frame",
-                        "children": [{"name": "x", "type": "text"}]}]}
-    fc._enforce_section_band(bp)
-    out = capsys.readouterr().out
-    assert "규칙13-INFO" not in out  # 홈 화면 아님 → lint 비대상
+    assert "규칙13-INFO" not in out and "규칙13-WARN" not in out  # lint 폐기
 
 
 # ── 규칙 13-B: 홈 Content 섹션 gap = spacing-2xl(20) ────────────

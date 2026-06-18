@@ -3382,8 +3382,8 @@ def _enforce_symmetric_vpad(blueprint: dict) -> None:
         print(f"[규칙] 세로 패딩 미세 비대칭(≤4px) 교정 {fixed[0]}건 (큰 비대칭은 존중)")
 
 
-# 🔴 규칙 13 — 메인/탭바 홈 화면의 '중요 섹션' 이름 패턴 (목돈 만들기·스테이지 현황·추천 스테이지).
-# 이 섹션들은 풀폭 bg-secondary 밴드(_band)로 분리해야 한다(2026-06-08 사용자 룰). lint 가 미적용 시 WARN.
+# 규칙 13 — '중요 섹션' 이름 패턴 (구 lint 용, 2026-06-18 lint 폐기 후 미사용/참조용).
+# 🔻 2026-06-18: 중요 섹션을 bg-secondary 밴드로 강제하던 룰 삭제 — 밴드 여부·색은 작성자 자율.
 _BAND_IMPORTANT_NAME_KW = (
     "목돈 만들기", "목돈만들기", "시작 유도", "start guide",
     "스테이지 현황", "현황 섹션", "stage status",
@@ -3399,61 +3399,34 @@ def _is_home_blueprint(blueprint: dict) -> bool:
 
 
 def _enforce_section_band(blueprint: dict) -> None:
-    """중요 섹션 = root 직계 풀폭 배경 밴드 패턴 표준화 (2026-06-05 / 강화 2026-06-08 사용자 룰).
+    """_band 섹션 = 풀폭(FILL) **구조만** 표준화. 🔻 2026-06-18 색 강제 전면 삭제 (사용자 결정).
 
-    사용자 명시(2026-06-05): *"중요한 섹션은 배경 컬러를 두고 content frame에서 벗어나 root 위
-    별도 프레임으로 분리하고, frame에 fill color를 넣는다."*
-    사용자 명시(2026-06-08): *"목돈만들기, 스테이지 현황 및 추천 스테이지 같은 중요한 섹션들은
-    content frame에서 분리하고 bg fill color를 bg-secondary로 교체해서 다른 섹션과 분리되어
-    보여지게 강조 … 메인화면과 각 탭바 홈화면에서 중요한 섹션은 이런식으로 처리해야 된다."*
+    🔴 사용자 명시(2026-06-18): *"중요 섹션 frame fill color 를 bg-secondary 로 고정하는 건 삭제하고,
+    자율적으로 판단해서 넣거나 primary 를 쓰거나 하는 걸로. 섹션 안 블록을 꼭 secondary 로 채울
+    필요는 없어."*
 
-    핵심/강조 섹션(목돈 만들기·스테이지 현황·추천 스테이지 등)은 좌우 padding 있는 content 안
-    흰 카드가 아니라 **풀폭 밴드(bg-secondary, 좌우 끝까지)**로 둔다. 보조 섹션(총 스테이지 수·
-    이용한도·출석/친구·내 스케줄)은 흰 카드 유지.
+    구 동작(삭제): ① `_band` 섹션 fill 이 없으면 bg-secondary 로 강제. ② 밴드 내부 sub-card 의
+    bg-secondary fill 을 bg-primary(흰)로 흰색화 + 보더. → **둘 다 폐기.** 밴드 fill·내부 블록 fill
+    같은 **색은 전적으로 작성자가 자율 판단**한다(bg-primary / bg-secondary / brand-tint / 무fill 등).
 
-    구현: blueprint 노드에 `"_band": true` 마커를 박으면(그리고 좌우 padding 없는 프레임 = content
-    또는 root 직계에 배치하면) 이 함수가 표준화한다 —
-      1) fill 없으면 bg-secondary, layoutSizingHorizontal=FILL, autoLayout 상/하 24·좌우 20, 보더 제거.
-      2) 🔴 밴드 내부 sub-card(자식 있는 frame)의 fill 이 밴드와 같은 bg-secondary 면 → bg-primary 로
-         자동 전환(회색 위에 묻히지 않고 흰 카드로 도드라지게). brand tint·aqua 등 다른 fill 은 존중.
-      3) lint: 홈 화면(_is_home_blueprint)에서 중요 이름 섹션이 `_band` 가 아니면 WARN.
+    이 함수는 이제 **구조만** 표준화: `_band` → 풀폭 `layoutSizingHorizontal=FILL` + 좌우/상하 padding
+    fill-in(미지정일 때만). **fill·보더·내부 색은 건드리지 않는다(author 존중).** lint(밴드 nudge)도 제거.
     ⚠️ 풀폭이 되려면 좌우 padding 있는 프레임 안에 두면 안 된다(content 의 가로 padding 0 또는 root 직계).
     """
     cnt = [0]
-    inner = [0]
-    band_fill = "$token(bg-secondary)"
-
-    def _whiten_inner(n, depth=0):
-        # 밴드 내부에서 밴드와 같은 회색 fill 을 가진 sub-card(자식 보유 frame)는 흰색으로 → 도드라짐.
-        for c in (n.get("children") or []):
-            if not isinstance(c, dict):
-                continue
-            if (c.get("type") or "frame") in ("frame", "FRAME") and c.get("children"):
-                cf = c.get("fill")
-                if isinstance(cf, str) and cf.replace(" ", "") in (
-                        "$token(bg-secondary)", "$token(bg-secondary-alt)", "$token(bg-secondary_alt)"):
-                    c["fill"] = "$token(bg-primary)"
-                    # 흰 카드 경계 — 회색 밴드 위라 border-secondary (live white-card-border 가 백드롭 보정)
-                    if not any(c.get(k) for k in _STROKE_KEYS):
-                        c["strokeColor"] = "$token(border-secondary)"
-                        c["strokeWeight"] = 1
-                    inner[0] += 1
-            _whiten_inner(c, depth + 1)
 
     def walk(n):
         if not isinstance(n, dict):
             return
         if n.get("_band") is True and (n.get("type") or "frame") in ("frame", "FRAME"):
-            if not n.get("fill"):
-                n["fill"] = band_fill
+            # 색은 손대지 않는다 (fill 없으면 없는 대로 = 작성자 의도). 구조만 풀폭 FILL.
             n["layoutSizingHorizontal"] = "FILL"
             al = n.get("autoLayout")
             if not isinstance(al, dict):
                 al = {"layoutMode": "VERTICAL", "itemSpacing": 0}
                 n["autoLayout"] = al
             al.setdefault("layoutMode", "VERTICAL")
-            # 🔻 2026-06-12 fill-in-only 로 강등 (전면 개편): 패딩은 author 양수 명시를 존중하고
-            # 0/None(미지정)일 때만 기본값(상하 24 / 좌우 20)을 채운다. 보더도 명시 시 존중.
+            # 패딩은 fill-in-only — author 명시값 존중, 미지정(0/None)일 때만 기본값.
             if not al.get("paddingTop"):
                 al["paddingTop"] = 24
             if not al.get("paddingBottom"):
@@ -3462,22 +3435,16 @@ def _enforce_section_band(blueprint: dict) -> None:
                 al["paddingLeft"] = 20
             if not al.get("paddingRight"):
                 al["paddingRight"] = 20
-            # 밴드 fill 이 bg-secondary 계열일 때만 내부 흰색화(brand tint 밴드는 그대로 둠)
-            nf = n.get("fill")
-            if isinstance(nf, str) and "bg-secondary" in nf:
-                _whiten_inner(n)
             cnt[0] += 1
         for c in (n.get("children") or []):
             walk(c)
     walk(blueprint)
     if cnt[0]:
-        msg = f"[규칙] 풀폭 밴드 섹션 표준화 {cnt[0]}건 (_band → bg fill·FILL·상하24/좌우20·보더제거)"
-        if inner[0]:
-            msg += f" + 내부 sub-card 흰색화 {inner[0]}건"
-        print(msg)
+        print(f"[규칙] _band 섹션 풀폭 구조 표준화 {cnt[0]}건 "
+              f"(FILL + padding fill-in; 색·내부 블록 fill 은 author 자율 — 강제 안 함)")
 
-    # lint — 홈 화면에서 중요 이름 섹션이 밴드가 아니면 WARN (규칙 13, 회귀 차단)
-    if _is_home_blueprint(blueprint):
+    # 🔻 2026-06-18 밴드 nudge lint 제거 — 어느 섹션을 강조/밴드/색 처리할지는 작성자 자율.
+    if False:  # (구 규칙13-INFO lint 폐기, 하위 호환 위해 블록만 비활성)
         missing = []
 
         def lint(n, in_band=False):

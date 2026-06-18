@@ -277,8 +277,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 > - **2-B-2** 브랜드 틴트 면 = bg-brand-primary → advisory WARN (live 교정 no-op).
 > - **2-H** 큰 면적 brand fill 금지 → advisory WARN — **의도된 컬러 히어로 카드/밴드 허용**.
 >   가독성은 대비 QA(_auto_fix_invisible_text + _qa_visual_checks)가 방어.
-> - **규칙 13** 중요 섹션 밴드 → `_band` 는 강조의 *한 수단*(기본값). lint 는 INFO — 다른 방식
->   (컬러 히어로 카드·타이포 위계 등)으로 강조했으면 OK. 밴드 패딩도 fill-in-only.
+> - **규칙 13** 🔻 2026-06-18 **색 강제 삭제**: 중요 섹션을 bg-secondary 밴드로 고정 + 내부 블록 흰색화 →
+>   둘 다 폐기. 강조 여부·섹션 색·내부 블록 색 **전부 작성자 자율**. `_band` 는 색 마커가 아니라 *풀폭
+>   구조* 마커(FILL + padding fill-in)일 뿐 — 색면 원하면 `fill` 직접 명시.
 > - **13-B** Content gap 20 → 명시 gap 존중(WARN), 미지정만 20.
 > - **19-B** 세로 패딩 대칭(pt==pb) → 미세 차이(≤4px)만 fill-in 교정, **큰 비대칭은 디자인
 >   도구로 존중**(advisory WARN). 의도면 `_asymPad` 로 침묵.
@@ -1563,42 +1564,26 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   *"위아래 패딩값 24로 맞추고 토큰 바인딩도 해."* 24 는 post-fix `_bind_spacing_tokens_live` 가
   **spacing-3xl 토큰으로 자동 바인딩**(절대값 아님). 위 enforcer 의 '밴드' 분기가 강제 → 재빌드에도 유지.
 
-### 13. 중요 섹션 강조 — 🔻 2026-06-12 기본값으로 강등 (밴드는 *한 수단*; lint=INFO, 패딩 fill-in-only, 다른 강조 방식 허용)
-- 사용자 명시(2026-06-05): *"중요한 섹션은 배경 컬러를 두고 content frame에서 벗어나 root 위 별도
-  프레임으로 분리하고, frame에 fill color를 넣는다. 새 세션에서 다시 디자인 생성할 때도 이렇게."*
-- 🔴 사용자 명시(2026-06-08): *"목돈만들기, 스테이지 현황 및 추천 스테이지 같은 중요한 섹션들은
-  content frame에서 분리하고 bg fill color를 bg-secondary로 교체해서 다른 섹션과 분리되어 보여지게
-  강조 … **메인화면과 각 탭바 홈화면에서 중요한 섹션은 이런식으로 처리해야 된다.**"*
-- 🔴 **밴드로 분리할 '중요 섹션' (메인 + 홈/커뮤니티/스테이지/라운지/나 탭 홈 모두 동일 적용):**
-  **목돈 만들기**(시작 유도) · **스테이지 현황**(진행/완료 현황+금액) · **추천 스테이지**.
-  화면 성격상 그 화면의 핵심 액션·요약에 해당하는 섹션이면 동일 처리.
-- **패턴:**
-  - **중요 섹션** = 좌우 padding 있는 `Content` 안 흰 카드로 두지 말고 **풀폭(FILL) bg-secondary 밴드**
-    로 분리. ⚠️ brand tint(bg-brand-primary)는 2-H(큰 면적 brand fill 금지)가 벗겨 흰색이 되므로 밴드
-    배경엔 금지 — **`bg-secondary`** 사용.
-  - 🔴 **밴드 내부 sub-card(통계 타일·금액 카드·스테퍼 등)는 `bg-primary`(흰색) + border** 로 둬서
-    회색 밴드 위에 도드라지게 한다(밴드와 같은 bg-secondary 면 묻힌다). choice tile 의 brand tint·aqua
-    같은 의도된 틴트는 그대로(흰색화 대상 아님).
-  - **보조 섹션**(총 스테이지 수·이용한도·출석/친구·내 스케줄)은 `Content`(좌우 padding 20) 안 **흰
-    카드(bg-primary + border)** 로 유지.
-  - 결과: 흰 배경 위에 중요 섹션만 풀폭 회색 밴드로 떠 위계가 분명.
-- **작성법:** 중요 섹션 노드에 **`"_band": true`** 마커를 박고, **좌우 padding 없는 프레임**(=가로
-  padding 0 인 `Content`, 또는 `root.children` 직계)에 배치한다. 내부 sub-card 는 흰색이 자동
-  적용되므로(아래 시스템 강제 2) blueprint 에서 bg-secondary 로 남겨둬도 빌드가 흰색화한다.
-- **시스템 강제 (코드 박힘, `_enforce_section_band`, cmd_build pre-process, no-large-brand-fill 직후):**
-  1. `_band:true` 노드 → fill 없으면 bg-secondary, FILL, autoLayout 상/하 24·좌우 20, 보더 제거(fill 명시 존중).
-  2. 🔴 **내부 흰색화** — 밴드(bg-secondary)의 내부 sub-card(자식 있는 frame) fill 이 bg-secondary 면
-     `bg-primary` + `border-secondary` 1px 로 자동 전환(회색 위 흰 카드). brand tint·aqua 등 다른 fill 은 존중.
-  3. 🔴 **lint** — `_is_home_blueprint`(rootName/name 에 home·메인·main) 화면에서 중요 이름 섹션
-     (`_BAND_IMPORTANT_NAME_KW`: 목돈 만들기·스테이지 현황·추천 스테이지·start guide·stage status·
-     recommend section …)이 `_band` 가 아니면 `[규칙13-WARN]` 출력(회귀 차단). ribbon/총합/summary 는 제외.
-  - 이후 `_bind_spacing_tokens_live`(24→spacing-3xl), `_enforce_section_bg_gap_padding`/
-    `_enforce_indicator_symmetric_gap`(경계 여백) 가 정리. `_band` 노드는 no-large-brand-fill 스트립 예외.
-  ⚠️ 풀폭이 되려면 **좌우 padding 있는 프레임 안에 두면 안 됨**(content 가로 padding 0 또는 root 직계).
-- **빌드 후 검증:** 로그 `[규칙] 풀폭 밴드 섹션 표준화 N건 (+ 내부 sub-card 흰색화 M건)` +
-  `[규칙13-WARN]` 없는지 확인. 스크린샷에서 중요 섹션이 풀폭 회색 밴드 + 내부 흰 카드, 보조 섹션은
-  흰 카드인지 확인. 생성기 참고: `gen_signup_home_v4.py`·`gen_active_home_v3.py`·`gen_done_home_v3.py`
-  의 `band()` 헬퍼(목돈만들기/스테이지 현황/추천을 밴드로 emit).
+### 13. 섹션 강조 — 🔻 2026-06-18 색 강제 전면 삭제 (밴드 여부·색 모두 작성자 자율)
+- 🔴 사용자 명시(2026-06-18): *"중요 섹션 frame fill color 를 bg-secondary 로 고정하는 건 삭제하고,
+  자율적으로 판단해서 넣거나 primary 를 쓰거나 하는 걸로. 섹션 안 블록을 꼭 secondary 로 채울 필요는 없어."*
+- **이전 룰(폐기):** 중요 섹션(목돈만들기·스테이지 현황·추천)을 **풀폭 bg-secondary 밴드로 강제** +
+  **밴드 내부 sub-card 를 bg-primary 로 흰색화** + 미적용 시 lint. → 2026-06-18 **전부 삭제.**
+- **새 규칙 (자율):**
+  - **섹션을 강조할지, 어떤 색을 줄지(bg-primary / bg-secondary / brand-tint / 무fill 등)는 전적으로
+    작성자가 판단**한다. bg-secondary 로 고정하지 않는다.
+  - **밴드 내부 블록도 특정 색(secondary)으로 채울 필요 없다** — 내부 색도 자율. 빌드가 더 이상 내부
+    sub-card 를 흰색화하지 않는다(작성자 fill 존중).
+  - 강조 수단은 색 밴드 외에도 자유: 컬러 히어로 카드·타이포 위계·여백·그룹화 등. 디자인 방향(S25)에
+    따라 매번 다르게.
+- **`_band` 마커 = '풀폭 구조'만:** 노드에 `"_band": true` 를 박으면 그 섹션은 **풀폭(FILL) + 상/하·좌우
+  padding fill-in**(미지정 시만)으로 표준화된다. **fill·보더·내부 색은 건드리지 않는다(자율).** 즉
+  `_band` 는 "content 좌우 padding 밖으로 빼서 풀폭으로 둔다"는 *레이아웃* 마커일 뿐, 색 마커가 아니다.
+  풀폭 색면을 원하면 그 노드에 `fill` 을 직접 명시한다(예 `bg-secondary`, `bg-brand-primary` 등).
+- **시스템 (`_enforce_section_band`, cmd_build pre-process):** `_band` → `layoutSizingHorizontal=FILL`
+  + padding fill-in 만. 색·내부 블록·보더 미관여. lint(밴드 nudge) 폐기. 로그
+  `[규칙] _band 섹션 풀폭 구조 표준화 N건 (… 색·내부 블록 fill 은 author 자율 — 강제 안 함)`.
+  ⚠️ 풀폭이 되려면 좌우 padding 있는 프레임 안에 두면 안 됨(content 가로 padding 0 또는 root 직계).
 - **13-B (🔻 2026-06-12 기본값 강등 — 명시 gap 존중·WARN, 미지정만 20 채움). 홈 Content(섹션 스택) gap = `spacing-2xl`(20) (2026-06-08 사용자: "content gap이 32로
   spacing-4xl 로 설정되있는데, spacing-2xl 이여야 해 … 코드에 박아"):** 메인·모든 탭바 홈 화면의 섹션
   스택(`Content`/`Content Mid` 등) 프레임 itemSpacing 은 32(spacing-4xl)가 과하므로 **20(spacing-2xl)**
