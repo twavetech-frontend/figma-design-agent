@@ -1,0 +1,86 @@
+[
+  {
+    "name": "Shadows/shadow-basic",
+    "key": "cc82e4325c3366023cb4e86a7ab504fd6c9e77b0"
+  },
+  {
+    "name": "Shadows/shadow-xs",
+    "key": "a5177f3d2fe92f9019d1ef042aa482cab0fc86e8"
+  },
+  {
+    "name": "Shadows/shadow-sm",
+    "key": "5e172d97d852202422aeb526ff2d1738ab37f627"
+  },
+  {
+    "name": "Shadows/shadow-md",
+    "key": "89026dc4cd5f1a3cf9778fc3e1252c18b89356ff"
+  },
+  {
+    "name": "Shadows/shadow-lg",
+    "key": "1da899a278f4a5b6ce21d7c885c29173d7169a3d"
+  },
+  {
+    "name": "Shadows/shadow-xl",
+    "key": "896fe826aaafa43f72f1526cdceeb335386c8338"
+  },
+  {
+    "name": "Shadows/shadow-2xl",
+    "key": "6e1699ffea7c127b1e5218b1b089121b5180f9c7"
+  },
+  {
+    "name": "Shadows/shadow-3xl",
+    "key": "029dd6b5351a733b873f31fcf2c10ba05de58784"
+  },
+  {
+    "name": "Shadows/shadow-4xl",
+    "key": "810d37501e6aba6089a5a7d7b989c9058260c2b6"
+  },
+  {
+    "name": "Shadows/shadow-field",
+    "key": "d2afda51b8b5562f1b9661eaacc29bb635192a2f"
+  },
+  {
+    "name": "Focus rings/focus-ring",
+    "key": "283a2ae36abd4bc3b94ef760505748f488d8ea91"
+  },
+  {
+    "name": "Focus rings/focus-ring-shadow-xs",
+    "key": "081973f4b14426ec3f9068d42826c18abc083d8c"
+  },
+  {
+    "name": "Focus rings/focus-ring-shadow-xs-skeuomorphic",
+    "key": "ca7d3ee021b6220c33a385ee74c2d09828ec915a"
+  },
+  {
+    "name": "Focus rings/focus-ring-shadow-sm",
+    "key": "9c397ad4f351264fc41f902f7a26bcaae51291fb"
+  },
+  {
+    "name": "Focus rings/focus-ring-error",
+    "key": "32ce8b25d742eed471391612c719bdd938b4b18f"
+  },
+  {
+    "name": "Focus rings/focus-ring-error-shadow-xs",
+    "key": "0a440d369abbbf8e951314b4cb7b1213411e7f13"
+  },
+  {
+    "name": "Focus rings/focus-ring-error-shadow-xs-skeuomorphic",
+    "key": "a6717de634888d239cd4c21c2219903a63350026"
+  },
+  {
+    "name": "Backdrop blurs/backdrop-blur-sm",
+    "key": "b14fd3402aa91c3aaa78ad6601666ed7e53c9d3b"
+  },
+  {
+    "name": "Backdrop blurs/backdrop-blur-md",
+    "key": "c67e020a2e37f175e6bdbb614aca747a504c1bbf"
+  },
+  {
+    "name": "Backdrop blurs/backdrop-blur-lg",
+    "key": "3b96ea51c943ebe24b718377e9bb4d33f21e4a7a"
+  },
+  {
+    "name": "Backdrop blurs/backdrop-blur-xl",
+    "key": "cd4b7f6ef12d741e34aa667fa7c48bab4d73ef21"
+  }
+]
