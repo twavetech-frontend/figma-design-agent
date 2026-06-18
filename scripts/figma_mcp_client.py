@@ -8737,6 +8737,22 @@ def _enforce_fixed_size_invariants_final(root_id: str) -> int:
                 fixed[0] += 1
             except Exception as e:
                 print(f"  [size-invariant] circle '{nid}' fail: {e}")
+        # 🔴 SVG 아이콘 프레임이 FILL 로 늘어남/한 축 붕괴 → 정사각 복원 (2026-06-18 사용자 QA).
+        # cornerRadius=0 라 위 원형 가드(_is_circle_iconbox)가 못 잡는 케이스. 회귀 사례:
+        # choice tile 아이콘 'piggy-bank-01' 가 28×28 → 134×28(가로 FILL)로 늘어나 vector 가 납작해짐.
+        # 자연 아이콘 크기 추정: 큰 축이 비현실적(>64)이면 작은 축(=늘어난 케이스), 아니면 큰 축(=붕괴).
+        elif (ntype == "FRAME" and node.get("componentKey") is None and ";" not in (nid or "")
+              and _is_stretched_icon_frame(node)):
+            mx, mn = max(w, h), min(w, h)
+            side = round(mn if mx > 64 else mx)
+            if 8 <= side <= 64:
+                try:
+                    call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": "FIXED", "vertical": "FIXED"})
+                    call_tool("resize_node", {"nodeId": nid, "width": side, "height": side})
+                    fixed[0] += 1
+                    print(f"  [size-invariant] ✓ 아이콘 프레임 정사각 복원 '{name}' {round(w)}×{round(h)} → {side}×{side}")
+                except Exception as e:
+                    print(f"  [size-invariant] icon-frame '{nid}' fail: {e}")
         # 카드 padding 복원 (batch_build 가 grid row 안 카드의 padding 을 누락 →
         # 요소가 경계에 붙음). 실제 카드 surface 만 (cornerRadius>=12) padding 16 복원.
         # ⚠️ 2026-05-28 사용자 분노 (근본 원인): 예전엔 이름에 "card" 가 들어간 *모든*
@@ -10385,6 +10401,29 @@ def _is_svg_icon_frame(n: dict) -> bool:
     w = bb.get("width") or n.get("width") or 0
     h = bb.get("height") or n.get("height") or 0
     return bool(w and h and max(w, h) <= 64 and 0.6 <= (w / h) <= 1.67)
+
+
+def _is_stretched_icon_frame(n: dict) -> bool:
+    """아이콘 프레임이 *비정사각으로 변형*됐는지 판정 (FILL 로 늘어남 / 한 축 붕괴).
+
+    `_is_svg_icon_frame` 과 달리 **정사각 제약을 두지 않는다** — 변형된 아이콘(예 134×28)을
+    잡는 게 목적이다. 자식이 모두 vector 계열(VECTOR ≥1) + 작은 축이 아이콘 범위(≤64) +
+    |w−h|>6(명백히 비정사각). `_enforce_fixed_size_invariants_final` 의 정사각 복원 대상.
+    """
+    if (n.get("type") or "").upper() != "FRAME":
+        return False
+    kids = n.get("_children_full") or n.get("children") or []
+    if not kids:
+        return False
+    allowed = _ICON_VECTOR_TYPES | {"ELLIPSE", "RECTANGLE"}
+    if not all((c.get("type") or "").upper() in allowed for c in kids):
+        return False
+    if not any((c.get("type") or "").upper() in _ICON_VECTOR_TYPES for c in kids):
+        return False
+    w, h = _node_wh(n)
+    if not (isinstance(w, (int, float)) and isinstance(h, (int, float)) and w and h):
+        return False
+    return min(w, h) <= 64 and abs(w - h) > 6
 
 
 def _strip_icon_frame_hidden_fills_live(root_id: str) -> int:
