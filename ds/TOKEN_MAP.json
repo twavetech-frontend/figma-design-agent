@@ -1335,12 +1335,12 @@
     "type": "COLOR"
   },
   "--colors-background-bgQuaternaryHover": {
-    "figmaPath": "Colors/Background/bg-quaternary_hover",
+    "figmaPath": "Colors/Background/bg-quaternary-hover",
     "value": "#b3bdc7",
     "type": "COLOR"
   },
   "--colors-background-bgTertiaryHover": {
-    "figmaPath": "Colors/Background/bg-tertiary_hover",
+    "figmaPath": "Colors/Background/bg-tertiary-hover",
     "value": "#dce0e5",
     "type": "COLOR"
   },

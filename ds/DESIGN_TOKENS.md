@@ -12,7 +12,7 @@
 
 ## Colors
 
-### Primitive Colors (318 tokens)
+### Primitive Colors (316 tokens)
 
 | Token | Value | CSS Variable |
 |-------|-------|-------------|
@@ -288,8 +288,6 @@
 | Colors/Background/bg-error-secondary-hover | #eca8a8 | `--colors-background-bgErrorSecondaryHover` |
 | Colors/Background/bg-brand-secondary-hover | #cfaeff | `--colors-background-bgBrandSecondaryHover` |
 | Colors/Background/bg-field | #f3f5f7 | `--colors-background-bgField` |
-| Colors/Background/bg-quaternary_hover | #b3bdc7 | `--colors-background-bgQuaternaryHover` |
-| Colors/Background/bg-tertiary_hover | #dce0e5 | `--colors-background-bgTertiaryHover` |
 | Colors/Background/bg-brand-primary_hover | #e6d4ff | `--colors-background-bgBrandPrimaryHover` |
 | Colors/Foreground/fg-secondary | #6f7e8d | `--colors-foreground-fgSecondary` |
 | Colors/Foreground/fg-warning-primary | #f16d00 | `--colors-foreground-fgWarningPrimary` |
