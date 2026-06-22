@@ -621,6 +621,10 @@
 | fontWeights/carmen-sans-ExtraBold | ExtraBold | `--fontWeights-carmenSansExtraBold` |
 | fontWeights/carmen-sans-Bold | Bold | `--fontWeights-carmenSansBold` |
 | fontWeights/carmen-sans-Regular | Regular | `--fontWeights-carmenSansRegular` |
+| fontWeights/Regular | 400 | `--fontWeights-regular` |
+| fontWeights/Medium | 500 | `--fontWeights-medium` |
+| fontWeights/SemiBold | 600 | `--fontWeights-semiBold` |
+| fontWeights/Bold | 700 | `--fontWeights-bold` |
 | fontWeights/carmen-sans-4 | ExtraBold | `--fontWeights-carmenSans4` |
 | fontWeights/carmen-sans-5 | Bold | `--fontWeights-carmenSans5` |
 | fontWeights/carmen-sans-6 | Regular | `--fontWeights-carmenSans6` |
