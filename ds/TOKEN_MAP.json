@@ -1149,11 +1149,6 @@
     "value": "#eceef1",
     "type": "COLOR"
   },
-  "--colors-border-borderErrorSubtle": {
-    "figmaPath": "Colors/Border/border-error_subtle",
-    "value": "#d83f3f",
-    "type": "COLOR"
-  },
   "--colors-border-borderPrimary": {
     "figmaPath": "Colors/Border/border-primary",
     "value": "#dce0e5",
@@ -1172,11 +1167,6 @@
   "--colors-border-borderError": {
     "figmaPath": "Colors/Border/border-error",
     "value": "#df1634",
-    "type": "COLOR"
-  },
-  "--colors-border-borderDisabledSubtle": {
-    "figmaPath": "Colors/Border/border-disabled_subtle",
-    "value": "#eceef1",
     "type": "COLOR"
   },
   "--colors-border-borderTertiary": {
