@@ -1325,12 +1325,12 @@
     "type": "COLOR"
   },
   "--colors-background-bgQuaternaryHover": {
-    "figmaPath": "Colors/Background/bg-quaternary-hover",
+    "figmaPath": "Colors/Background/bg-quaternary_hover",
     "value": "#b3bdc7",
     "type": "COLOR"
   },
   "--colors-background-bgTertiaryHover": {
-    "figmaPath": "Colors/Background/bg-tertiary-hover",
+    "figmaPath": "Colors/Background/bg-tertiary_hover",
     "value": "#dce0e5",
     "type": "COLOR"
   },
@@ -1571,162 +1571,162 @@
   },
   "--spacing-0-0px": {
     "figmaPath": "Spacing/0 (0px)",
-    "value": "0",
+    "value": 0,
     "type": "NUMBER"
   },
   "--spacing-0․5-2px": {
     "figmaPath": "Spacing/0․5 (2px)",
-    "value": "2",
+    "value": 2,
     "type": "NUMBER"
   },
   "--spacing-1-4px": {
     "figmaPath": "Spacing/1 (4px)",
-    "value": "4",
+    "value": 4,
     "type": "NUMBER"
   },
   "--spacing-2-8px": {
     "figmaPath": "Spacing/2 (8px)",
-    "value": "8",
+    "value": 8,
     "type": "NUMBER"
   },
   "--spacing-3-12px": {
     "figmaPath": "Spacing/3 (12px)",
-    "value": "12",
+    "value": 12,
     "type": "NUMBER"
   },
   "--spacing-4-16px": {
     "figmaPath": "Spacing/4 (16px)",
-    "value": "16",
+    "value": 16,
     "type": "NUMBER"
   },
   "--spacing-5-20px": {
     "figmaPath": "Spacing/5 (20px)",
-    "value": "20",
+    "value": 20,
     "type": "NUMBER"
   },
   "--spacing-6-24px": {
     "figmaPath": "Spacing/6 (24px)",
-    "value": "24",
+    "value": 24,
     "type": "NUMBER"
   },
   "--spacing-8-32px": {
     "figmaPath": "Spacing/8 (32px)",
-    "value": "32",
+    "value": 32,
     "type": "NUMBER"
   },
   "--spacing-10-40px": {
     "figmaPath": "Spacing/10 (40px)",
-    "value": "40",
+    "value": 40,
     "type": "NUMBER"
   },
   "--spacing-12-48px": {
     "figmaPath": "Spacing/12 (48px)",
-    "value": "48",
+    "value": 48,
     "type": "NUMBER"
   },
   "--spacing-16-64px": {
     "figmaPath": "Spacing/16 (64px)",
-    "value": "64",
+    "value": 64,
     "type": "NUMBER"
   },
   "--spacing-20-80px": {
     "figmaPath": "Spacing/20 (80px)",
-    "value": "80",
+    "value": 80,
     "type": "NUMBER"
   },
   "--spacing-24-96px": {
     "figmaPath": "Spacing/24 (96px)",
-    "value": "96",
+    "value": 96,
     "type": "NUMBER"
   },
   "--spacing-32-128px": {
     "figmaPath": "Spacing/32 (128px)",
-    "value": "128",
+    "value": 128,
     "type": "NUMBER"
   },
   "--spacing-40-160px": {
     "figmaPath": "Spacing/40 (160px)",
-    "value": "160",
+    "value": 160,
     "type": "NUMBER"
   },
   "--spacing-48-192px": {
     "figmaPath": "Spacing/48 (192px)",
-    "value": "192",
+    "value": 192,
     "type": "NUMBER"
   },
   "--spacing-56-224px": {
     "figmaPath": "Spacing/56 (224px)",
-    "value": "224",
+    "value": 224,
     "type": "NUMBER"
   },
   "--spacing-64-256px": {
     "figmaPath": "Spacing/64 (256px)",
-    "value": "256",
+    "value": 256,
     "type": "NUMBER"
   },
   "--spacing-96-384px": {
     "figmaPath": "Spacing/96 (384px)",
-    "value": "384",
+    "value": 384,
     "type": "NUMBER"
   },
   "--spacing-80-320px": {
     "figmaPath": "Spacing/80 (320px)",
-    "value": "320",
+    "value": 320,
     "type": "NUMBER"
   },
   "--spacing-120-480px": {
     "figmaPath": "Spacing/120 (480px)",
-    "value": "480",
+    "value": 480,
     "type": "NUMBER"
   },
   "--spacing-160-640px": {
     "figmaPath": "Spacing/160 (640px)",
-    "value": "640",
+    "value": 640,
     "type": "NUMBER"
   },
   "--spacing-192-768px": {
     "figmaPath": "Spacing/192 (768px)",
-    "value": "768",
+    "value": 768,
     "type": "NUMBER"
   },
   "--spacing-256-1024px": {
     "figmaPath": "Spacing/256 (1,024px)",
-    "value": "1024",
+    "value": 1024,
     "type": "NUMBER"
   },
   "--spacing-320-1280px": {
     "figmaPath": "Spacing/320 (1,280px)",
-    "value": "1280",
+    "value": 1280,
     "type": "NUMBER"
   },
   "--spacing-360-1440px": {
     "figmaPath": "Spacing/360 (1,440px)",
-    "value": "1440",
+    "value": 1440,
     "type": "NUMBER"
   },
   "--spacing-400-1600px": {
     "figmaPath": "Spacing/400 (1,600px)",
-    "value": "1600",
+    "value": 1600,
     "type": "NUMBER"
   },
   "--spacing-480-1920px": {
     "figmaPath": "Spacing/480 (1,920px)",
-    "value": "1920",
+    "value": 1920,
     "type": "NUMBER"
   },
   "--spacing-1․5-6px": {
     "figmaPath": "Spacing/1․5 (6px)",
-    "value": "6",
+    "value": 6,
     "type": "NUMBER"
   },
   "--spacing-140-560px": {
     "figmaPath": "Spacing/140 (560px)",
-    "value": "560",
+    "value": 560,
     "type": "NUMBER"
   },
   "--spacing-180-720px": {
     "figmaPath": "Spacing/180 (720px)",
-    "value": "720",
+    "value": 720,
     "type": "NUMBER"
   },
   "--base-white": {
@@ -5296,152 +5296,152 @@
   },
   "--radiusNone": {
     "figmaPath": "radius-none",
-    "value": "0",
+    "value": 0,
     "type": "NUMBER"
   },
   "--radiusXxs": {
     "figmaPath": "radius-xxs",
-    "value": "2",
+    "value": 2,
     "type": "NUMBER"
   },
   "--radiusXs": {
     "figmaPath": "radius-xs",
-    "value": "4",
+    "value": 4,
     "type": "NUMBER"
   },
   "--radiusSm": {
     "figmaPath": "radius-sm",
-    "value": "8",
+    "value": 8,
     "type": "NUMBER"
   },
   "--radiusMd": {
     "figmaPath": "radius-md",
-    "value": "12",
+    "value": 12,
     "type": "NUMBER"
   },
   "--radiusXl": {
     "figmaPath": "radius-xl",
-    "value": "20",
+    "value": 20,
     "type": "NUMBER"
   },
   "--radius2xl": {
     "figmaPath": "radius-2xl",
-    "value": "24",
+    "value": 24,
     "type": "NUMBER"
   },
   "--radius4xl": {
     "figmaPath": "radius-4xl",
-    "value": "36",
+    "value": 36,
     "type": "NUMBER"
   },
   "--radiusFull": {
     "figmaPath": "radius-full",
-    "value": "9999",
+    "value": 9999,
     "type": "NUMBER"
   },
   "--radiusLg": {
     "figmaPath": "radius-lg",
-    "value": "16",
+    "value": 16,
     "type": "NUMBER"
   },
   "--radius3xl": {
     "figmaPath": "radius-3xl",
-    "value": "32",
+    "value": 32,
     "type": "NUMBER"
   },
   "--radius5xl": {
     "figmaPath": "radius-5xl",
-    "value": "40",
+    "value": 40,
     "type": "NUMBER"
   },
   "--radius6xl": {
     "figmaPath": "radius-6xl",
-    "value": "48",
+    "value": 48,
     "type": "NUMBER"
   },
   "--spacingNone": {
     "figmaPath": "spacing-none",
-    "value": "0",
+    "value": 0,
     "type": "NUMBER"
   },
   "--spacingXxs": {
     "figmaPath": "spacing-xxs",
-    "value": "2",
+    "value": 2,
     "type": "NUMBER"
   },
   "--spacingXs": {
     "figmaPath": "spacing-xs",
-    "value": "4",
+    "value": 4,
     "type": "NUMBER"
   },
   "--spacingMd": {
     "figmaPath": "spacing-md",
-    "value": "8",
+    "value": 8,
     "type": "NUMBER"
   },
   "--spacingLg": {
     "figmaPath": "spacing-lg",
-    "value": "12",
+    "value": 12,
     "type": "NUMBER"
   },
   "--spacingXl": {
     "figmaPath": "spacing-xl",
-    "value": "16",
+    "value": 16,
     "type": "NUMBER"
   },
   "--spacing2xl": {
     "figmaPath": "spacing-2xl",
-    "value": "20",
+    "value": 20,
     "type": "NUMBER"
   },
   "--spacing3xl": {
     "figmaPath": "spacing-3xl",
-    "value": "24",
+    "value": 24,
     "type": "NUMBER"
   },
   "--spacing4xl": {
     "figmaPath": "spacing-4xl",
-    "value": "32",
+    "value": 32,
     "type": "NUMBER"
   },
   "--spacing6xl": {
     "figmaPath": "spacing-6xl",
-    "value": "48",
+    "value": 48,
     "type": "NUMBER"
   },
   "--spacing7xl": {
     "figmaPath": "spacing-7xl",
-    "value": "64",
+    "value": 64,
     "type": "NUMBER"
   },
   "--spacing8xl": {
     "figmaPath": "spacing-8xl",
-    "value": "80",
+    "value": 80,
     "type": "NUMBER"
   },
   "--spacing9xl": {
     "figmaPath": "spacing-9xl",
-    "value": "96",
+    "value": 96,
     "type": "NUMBER"
   },
   "--spacing10xl": {
     "figmaPath": "spacing-10xl",
-    "value": "128",
+    "value": 128,
     "type": "NUMBER"
   },
   "--spacing11xl": {
     "figmaPath": "spacing-11xl",
-    "value": "160",
+    "value": 160,
     "type": "NUMBER"
   },
   "--spacingSm": {
     "figmaPath": "spacing-sm",
-    "value": "6",
+    "value": 6,
     "type": "NUMBER"
   },
   "--spacing5xl": {
     "figmaPath": "spacing-5xl",
-    "value": "40",
+    "value": 40,
     "type": "NUMBER"
   },
   "--fontFamily-fontFamilyHeading": {
@@ -5481,132 +5481,127 @@
   },
   "--fontSize-bodyXs": {
     "figmaPath": "Font size/body-xs",
-    "value": "12",
+    "value": 12,
     "type": "NUMBER"
   },
   "--fontSize-bodySm": {
     "figmaPath": "Font size/body-sm",
-    "value": "14",
+    "value": 14,
     "type": "NUMBER"
   },
   "--fontSize-bodyMd": {
     "figmaPath": "Font size/body-md",
-    "value": "16",
+    "value": 16,
     "type": "NUMBER"
   },
   "--fontSize-bodyXl": {
     "figmaPath": "Font size/body-xl",
-    "value": "20",
+    "value": 20,
     "type": "NUMBER"
   },
   "--fontSize-headingXs": {
     "figmaPath": "Font size/heading-xs",
-    "value": "24",
+    "value": 24,
     "type": "NUMBER"
   },
   "--fontSize-headingSm": {
     "figmaPath": "Font size/heading-sm",
-    "value": "32",
+    "value": 32,
     "type": "NUMBER"
   },
   "--fontSize-headingLg": {
     "figmaPath": "Font size/heading-lg",
-    "value": "40",
+    "value": 40,
     "type": "NUMBER"
   },
   "--fontSize-headingXl": {
     "figmaPath": "Font size/heading-xl",
-    "value": "48",
+    "value": 48,
     "type": "NUMBER"
   },
   "--fontSize-heading2xl": {
     "figmaPath": "Font size/heading-2xl",
-    "value": "60",
+    "value": 60,
     "type": "NUMBER"
   },
   "--fontSize-bodyLg": {
     "figmaPath": "Font size/body-lg",
-    "value": "18",
+    "value": 18,
     "type": "NUMBER"
   },
   "--fontSize-headingMd": {
     "figmaPath": "Font size/heading-md",
-    "value": "36",
+    "value": 36,
     "type": "NUMBER"
   },
   "--fontSize-bodyXxs": {
     "figmaPath": "Font size/body-xxs",
-    "value": "10",
+    "value": 10,
     "type": "NUMBER"
   },
   "--lineHeight-bodyXs": {
     "figmaPath": "Line height/body-xs",
-    "value": "18",
+    "value": 18,
     "type": "NUMBER"
   },
   "--lineHeight-bodySm": {
     "figmaPath": "Line height/body-sm",
-    "value": "20",
+    "value": 20,
     "type": "NUMBER"
   },
   "--lineHeight-bodyMd": {
     "figmaPath": "Line height/body-md",
-    "value": "24",
+    "value": 24,
     "type": "NUMBER"
   },
   "--lineHeight-bodyLg": {
     "figmaPath": "Line height/body-lg",
-    "value": "26",
+    "value": 26,
     "type": "NUMBER"
   },
   "--lineHeight-bodyXl": {
     "figmaPath": "Line height/body-xl",
-    "value": "28",
+    "value": 28,
     "type": "NUMBER"
   },
   "--lineHeight-headingXs": {
     "figmaPath": "Line height/heading-xs",
-    "value": "32",
+    "value": 32,
     "type": "NUMBER"
   },
   "--lineHeight-headingSm": {
     "figmaPath": "Line height/heading-sm",
-    "value": "40",
+    "value": 40,
     "type": "NUMBER"
   },
   "--lineHeight-headingMd": {
     "figmaPath": "Line height/heading-md",
-    "value": "44",
+    "value": 44,
     "type": "NUMBER"
   },
   "--lineHeight-headingLg": {
     "figmaPath": "Line height/heading-lg",
-    "value": "48",
+    "value": 48,
     "type": "NUMBER"
   },
   "--lineHeight-headingXl": {
     "figmaPath": "Line height/heading-xl",
-    "value": "56",
+    "value": 56,
     "type": "NUMBER"
   },
   "--lineHeight-heading2xl": {
     "figmaPath": "Line height/heading-2xl",
-    "value": "68",
+    "value": 68,
     "type": "NUMBER"
   },
   "--lineHeight-bodyXxs": {
     "figmaPath": "Line height/body-xxs",
-    "value": "14",
-    "type": "NUMBER"
-  },
-  "--diabledOpacity": {
-    "figmaPath": "diabled_opacity",
-    "value": "50",
+    "value": 14,
     "type": "NUMBER"
   },
   "--disabledOpacity": {
     "figmaPath": "disabled_opacity",
-    "value": "20",
+    "value": 20,
     "type": "NUMBER"
   }
 }
