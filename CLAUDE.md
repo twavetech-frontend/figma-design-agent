@@ -151,7 +151,17 @@ npm run build   # tsup → out/ (bridge + yoga-cli, CJS). Vite/Electron 빌드 �
 npm run bridge  # 브리지 기동: WS 8767 + HTTP MCP 8769 (Node, Electron 없음)
 npm test        # vitest
 python3 scripts/figma_mcp_client.py doctor  # 환경 통합 진단 (브리지/세션/플러그인/DS맵/통독 게이트, FAIL≥1 → exit 1)
+python3 scripts/figma_mcp_client.py component "Tab bar" [--full]  # DS 컴포넌트 do/don't + componentKey 조회
+python3 scripts/figma_mcp_client.py search "탭"                   # 가이드+카탈로그 통합 검색
+python3 scripts/figma_mcp_client.py manifest                     # CLI 명령 표면 자기서술 (26개)
 ```
+
+> 🔵 **DS 컴포넌트 작성 전 `component` 조회 우선 (2026-07-08 신설, Astryx 패턴)** —
+> Tab bar/Tool Bar/Badge/Segmented/CTA 등 DS 컴포넌트를 blueprint 에 쓰기 전에
+> `component "<이름>"` 으로 **do/don't 가이드 + componentKey(ds_catalog 런타임 해석)** 를
+> 조회한다. 소스는 `ds/COMPONENT_GUIDANCE.json`(우리 소유, 커밋 대상 — 자동 sync 아님).
+> 이 문서의 키 테이블(0-M/0-W 등)과 동일 내용의 조회형 뷰 — **키를 기억/추측하지 말고 조회**.
+> 컴포넌트 룰이 바뀌면 CLAUDE.md 와 COMPONENT_GUIDANCE.json 을 함께 갱신할 것.
 
 > 🔴 **BUILD-SUMMARY-JSON — 빌드 결과는 stdout 마지막 블록의 JSON 으로 판독 (2026-07-08 신설, Astryx 패턴)**
 >

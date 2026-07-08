@@ -6,6 +6,12 @@ Usage:
     # 0. 환경 진단 (준비 상태 통합 체크 — 브리지/세션/플러그인/DS맵/통독 게이트)
     python3 scripts/figma_mcp_client.py doctor [--json]
 
+    # 0-b. DS 컴포넌트 가이드 조회 / 검색 / CLI 자기서술
+    python3 scripts/figma_mcp_client.py component "Tab bar" [--full] [--json]
+    python3 scripts/figma_mcp_client.py component --list
+    python3 scripts/figma_mcp_client.py search "탭" [--json]
+    python3 scripts/figma_mcp_client.py manifest [--json]
+
     # 1. 세션 초기화 (필수 — 첫 실행 시)
     python3 scripts/figma_mcp_client.py init
 
@@ -14556,6 +14562,145 @@ def cmd_doctor(json_out: bool = False) -> None:
         sys.exit(1)
 
 
+# ─── component / search / manifest — DS 조회 + 자기서술 (Astryx 패턴, 2026-07-08) ────
+
+def cmd_component(name: str = None, json_out: bool = False, full: bool = False,
+                  list_all: bool = False) -> None:
+    """DS 컴포넌트 가이드 조회 — ds/COMPONENT_GUIDANCE.json(do/don't) +
+    ds_catalog.COMPONENT_KEYS(키) + DS_COMPONENT_DOCS(--full variants/props) 통합."""
+    import ds_guidance as dg
+    entries = dg.load_guidance()
+    if list_all or not name:
+        if json_out:
+            print(json.dumps({"type": "component-list",
+                              "components": [{"name": e["name"], "rule": e.get("rule"),
+                                              "aliases": e.get("aliases") or []}
+                                             for e in entries]}, ensure_ascii=False, indent=2))
+        else:
+            print("DS 컴포넌트 가이드 (%d개) — component <이름> 으로 상세 조회:" % len(entries))
+            for e in entries:
+                al = ", ".join(e.get("aliases") or [])
+                print("  - %s%s%s" % (e["name"],
+                                      " (규칙 %s)" % e.get("rule") if e.get("rule") else "",
+                                      "  [%s]" % al if al else ""))
+        return
+    entry, candidates = dg.find(name, entries)
+    if not entry:
+        if json_out:
+            print(json.dumps({"type": "component", "error": "not found",
+                              "code": "ERR_UNKNOWN", "query": name,
+                              "candidates": candidates}, ensure_ascii=False, indent=2))
+        else:
+            print("'%s' 컴포넌트를 찾지 못했습니다." % name)
+            if candidates:
+                print("후보: %s" % ", ".join(candidates))
+            print("전체 목록: python3 scripts/figma_mcp_client.py component --list")
+        sys.exit(1)
+    if json_out:
+        print(json.dumps(dg.entry_as_json(entry, full=full), ensure_ascii=False, indent=2))
+    else:
+        print(dg.format_entry(entry, full=full))
+
+
+def cmd_search(query: str, json_out: bool = False) -> None:
+    """가이드(키워드/별칭/본문) + ds_catalog 이름 통합 랭킹 검색."""
+    import ds_guidance as dg
+    results = dg.search(query)
+    if json_out:
+        print(json.dumps({"type": "search", "query": query, "results": results},
+                         ensure_ascii=False, indent=2))
+        return
+    if not results:
+        print("'%s' 검색 결과 없음 — component --list 로 가이드 목록 확인." % query)
+        return
+    print("'%s' 검색 결과 %d건:" % (query, len(results)))
+    for r in results:
+        if r["kind"] == "guidance":
+            print("  [가이드] %s%s — %s" % (r["name"],
+                                            " (규칙 %s)" % r.get("rule") if r.get("rule") else "",
+                                            r["snippet"]))
+        else:
+            print("  [카탈로그] %s = %s" % (r["name"], r["snippet"]))
+    print("상세: python3 scripts/figma_mcp_client.py component \"<이름>\"")
+
+
+# CLI 자기서술 매니페스트 (Astryx manifest 패턴) — 에이전트가 --help 스크래핑/CLAUDE.md 없이
+# 명령 표면을 발견한다. ⚠️ main() 의 dispatch 분기와 이 테이블은 드리프트 가드 테스트
+# (test_manifest.py)가 동기화를 강제한다 — 명령 추가 시 반드시 여기에도 등록할 것.
+CLI_COMMANDS = [
+    {"name": "init", "usage": "init", "description": "MCP 세션 초기화 (브리지 자동 기동)"},
+    {"name": "doctor", "usage": "doctor [--json]", "json": True,
+     "description": "환경/준비 상태 통합 진단 — 브리지/세션/플러그인/DS맵/통독 게이트. FAIL≥1 → exit 1"},
+    {"name": "component", "usage": "component <이름>|--list [--full] [--json]", "json": True,
+     "description": "DS 컴포넌트 do/don't 가이드 + componentKey 조회 (dense 기본, --full 로 예시/props)"},
+    {"name": "search", "usage": "search <쿼리> [--json]", "json": True,
+     "description": "컴포넌트 가이드 + ds_catalog 통합 랭킹 검색"},
+    {"name": "manifest", "usage": "manifest [--json]", "json": True,
+     "description": "이 CLI 의 명령 표면 자기서술 (OpenAPI 처럼 — 에이전트 self-discovery)"},
+    {"name": "learn-planning", "usage": "learn-planning [--force]",
+     "description": "src/기획 → 통독용 digest 생성 (변경 감지, ack 무효화)"},
+    {"name": "ack-planning", "usage": "ack-planning <토큰>",
+     "description": "digest 통독 확인 (토큰은 digest 맨 끝 — 없으면 빌드 차단)"},
+    {"name": "call", "usage": "call <tool> [args_json] [--compact]",
+     "description": "브리지 MCP 도구 단건 호출"},
+    {"name": "export", "usage": "export <nodeId> [out] [--scale N] [--jpg]",
+     "description": "노드를 이미지로 export"},
+    {"name": "build", "usage": "build <blueprint.json> [--force]",
+     "description": "디자인 빌드 파이프라인 — 검증·게이트·조립·post-fix·QA. 결과는 마지막 BUILD-SUMMARY-JSON 블록으로 판독"},
+    {"name": "bind", "usage": "bind <bindings.json>", "description": "DS 변수 수동 바인딩"},
+    {"name": "auto-bind", "usage": "auto-bind <rootId> <blueprint.json>",
+     "description": "blueprint $token 참조 기반 색 변수 자동 바인딩"},
+    {"name": "bind-text-styles", "usage": "bind-text-styles <styles.json>",
+     "description": "텍스트 스타일 수동 바인딩"},
+    {"name": "bind-effect-styles", "usage": "bind-effect-styles <rootId>",
+     "description": "DS effect style (Shadows/*) 재바인딩"},
+    {"name": "sync-variable-keys", "usage": "sync-variable-keys",
+     "description": "ds/VARIABLE_KEY_MAP.json 추출 (DS 파일 연결 상태에서 1회)"},
+    {"name": "set-badge-color", "usage": "set-badge-color <nodeId> <Color>",
+     "description": "Badge 색 변경 — Color prop 만 (0-K)"},
+    {"name": "sync-components", "usage": "sync-components",
+     "description": "ds/COMPONENT_KEY_MAP.json 추출 (DS 파일 연결 상태에서 1회)"},
+    {"name": "sync-text-styles", "usage": "sync-text-styles",
+     "description": "ds/TEXT_STYLE_MAP.json 추출 (DS 파일 연결 상태에서 1회)"},
+    {"name": "sync-effect-styles", "usage": "sync-effect-styles",
+     "description": "ds/EFFECT_STYLE_MAP.json 추출 (DS 파일 연결 상태에서 1회)"},
+    {"name": "apply-text-styles", "usage": "apply-text-styles <rootId>",
+     "description": "빌드된 화면에 DS 텍스트 스타일 적용 (재빌드 없이)"},
+    {"name": "apply-images", "usage": "apply-images <rootId> [blueprint.json]",
+     "description": "imageQuery 기반 이미지 fill 적용"},
+    {"name": "post-fix", "usage": "post-fix <rootId>",
+     "description": "빌드 후처리 — FILL/위치/바인딩/enforcer 체인 재실행"},
+    {"name": "validate", "usage": "validate <blueprint.json>",
+     "description": "blueprint 구조 검증만 (빌드 없이)"},
+    {"name": "assemble", "usage": "assemble <config.json>",
+     "description": "템플릿 기반 blueprint 조립 (blueprint_templates.json)"},
+    {"name": "cleanup-qa", "usage": "cleanup-qa",
+     "description": "QA 스크린샷 + 레퍼런스 썸네일 삭제 (작업 종료 시 1회 — 0-F-2)"},
+    {"name": "interactive", "usage": "interactive", "description": "인터랙티브 REPL 모드"},
+]
+
+
+def cmd_manifest(json_out: bool = False) -> None:
+    if json_out:
+        print(json.dumps({
+            "type": "manifest",
+            "name": "figma_mcp_client",
+            "commands": CLI_COMMANDS,
+            "responseTypes": {
+                "doctor": ["doctor"],
+                "build": ["build-summary"],
+                "component": ["component", "component-list"],
+                "search": ["search"],
+                "manifest": ["manifest"],
+            },
+            "errorCodesModule": "scripts/error_codes.py",
+        }, ensure_ascii=False, indent=2))
+        return
+    print("figma_mcp_client — 명령 %d개 (기계 판독: manifest --json):" % len(CLI_COMMANDS))
+    for c in CLI_COMMANDS:
+        print("  %-52s %s" % (c["usage"], c["description"]))
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -14568,6 +14713,18 @@ def main():
     elif cmd == "doctor":
         # 환경/설정 진단 — PASS/WARN/FAIL + fix 안내. FAIL ≥1 이면 exit 1.
         cmd_doctor(json_out="--json" in sys.argv)
+    elif cmd == "component":
+        _name = next((a for a in sys.argv[2:] if not a.startswith("--")), None)
+        cmd_component(_name, json_out="--json" in sys.argv, full="--full" in sys.argv,
+                      list_all="--list" in sys.argv)
+    elif cmd == "search":
+        _q = next((a for a in sys.argv[2:] if not a.startswith("--")), None)
+        if not _q:
+            print("Usage: figma_mcp_client.py search <쿼리> [--json]")
+            sys.exit(1)
+        cmd_search(_q, json_out="--json" in sys.argv)
+    elif cmd == "manifest":
+        cmd_manifest(json_out="--json" in sys.argv)
     elif cmd == "learn-planning":
         _force = "--force" in sys.argv
         _out = next((a for a in sys.argv[2:] if a != "--force"), "scripts/_planning_digest.txt")
