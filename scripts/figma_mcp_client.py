@@ -36,6 +36,10 @@ from typing import Any, Optional, List, Dict
 _scripts_dir_for_unified = os.path.dirname(os.path.abspath(__file__))
 if _scripts_dir_for_unified not in sys.path:
     sys.path.insert(0, _scripts_dir_for_unified)
+
+# 안정적 기계 판독 에러 코드 (Astryx 패턴, 2026-07-08) — BUILD-SUMMARY-JSON 의 code 필드.
+# 에이전트는 사람용 prose 가 아니라 이 코드로 분기한다 (append-only 계약, error_codes.py).
+from error_codes import codes_for_issues as _codes_for_issues  # noqa: E402
 try:
     from unified_blueprint import (  # type: ignore
         build_unified_blueprint as _unified_build,
@@ -981,6 +985,68 @@ def cmd_ack_planning(token: str, out_rel: str = "scripts/_planning_digest.txt"):
           f"서비스 맥락 이해 상태로 디자인 생성 가능.")
 
 
+# ── BUILD-SUMMARY-JSON — 기계 판독 빌드 결과 요약 (Astryx 패턴, 2026-07-08) ────────
+# cmd_build 의 모든 종료 지점(게이트 차단·검증 실패·성공·빌드 실패)에서 stdout **마지막
+# 블록**으로 구조화 요약을 출력한다. 목적: 에이전트가 빌드 로그를 tail/grep 으로 필터해도
+# (0-G 레퍼런스 Read 누락의 근본 원인) 결과·필수 후속 액션을 항상 기계 판독으로 받게 한다.
+# 계약:
+#   - 마커 라인 "📋 BUILD-SUMMARY-JSON" 다음에 JSON 1개 (그 아래 다른 출력 없음)
+#   - result: "success" | "blocked" | "failed"
+#   - code/codes: error_codes.py 의 안정 코드 (prose 분기 금지)
+#   - requiredActions: [{type: "read"|"run"|"export_and_read"|"fill_checklist", ...}]
+#     → type=read 의 paths 는 **반드시 Read 도구로 열어야 하는** 파일들 (0-G/0-F)
+_BUILD_SUMMARY_MARKER = "📋 BUILD-SUMMARY-JSON"
+
+
+def _emit_build_summary(result: str, codes: list = None, root_id: str = None,
+                        issues: list = None, warnings: list = None,
+                        required_actions: list = None, note: str = None) -> None:
+    doc: dict = {"type": "build-summary", "result": result}
+    if codes:
+        doc["code"] = codes[0]
+        doc["codes"] = codes
+    if root_id:
+        doc["rootId"] = root_id
+    if issues:
+        doc["issues"] = issues[:40]
+    if warnings:
+        doc["warningCount"] = len(warnings)
+    if required_actions:
+        doc["requiredActions"] = required_actions
+    if note:
+        doc["note"] = note
+    print("\n" + _BUILD_SUMMARY_MARKER)
+    print(json.dumps(doc, ensure_ascii=False, indent=2))
+
+
+def _post_build_required_actions() -> list:
+    """빌드 성공 후 에이전트가 반드시 수행해야 하는 후속 액션 목록 (0-G 레퍼런스 Read +
+    0-F self-verify). 게이트가 다음 build/cleanup-qa 에서 미이행을 차단하므로, 요약에
+    구조화해 미리 알린다."""
+    actions = []
+    if _LAST_REFERENCE_THUMBS:
+        actions.append({
+            "type": "read",
+            "why": "레퍼런스 시각 학습 (절대 규칙 0-G) — 미Read 시 다음 build 차단",
+            "paths": list(_LAST_REFERENCE_THUMBS),
+        })
+    try:
+        pend_path = _pending_selfverify_path()
+        if os.path.exists(pend_path):
+            with open(pend_path, encoding="utf-8") as fh:
+                pend = json.load(fh)
+            actions.append({
+                "type": "export_and_read",
+                "why": "self-verify (절대 규칙 0-F) — 섹션 PNG 재export(scale=2)+Read, "
+                       "미이행 시 다음 build/cleanup-qa 차단",
+                "nodeIds": pend.get("nodeIds") or [],
+                "checklistPath": pend.get("checklist_path"),
+            })
+    except Exception:
+        pass
+    return actions
+
+
 def _enforce_planning_read_gate() -> None:
     """🔴 디자인 빌드 하드 게이트 — 기획 통독 안 했으면 빌드 차단 (references S20~S23 패턴).
 
@@ -1007,6 +1073,14 @@ def _enforce_planning_read_gate() -> None:
     print("      ※ 훅 비활성 환경이면 추가로: ack-planning <digest 끝의 토큰>")
     print("   (긴급 우회: IMIN_SKIP_PLANNING_GATE=1)")
     print("=" * 64)
+    _emit_build_summary("blocked", codes=["ERR_PLANNING_GATE"], note=reason,
+                        required_actions=[
+                            {"type": "run",
+                             "command": "python3 scripts/figma_mcp_client.py learn-planning"},
+                            {"type": "read",
+                             "why": "이 세션에서 digest 를 끝까지 통독 (Read 커버리지 훅이 추적)",
+                             "paths": ["scripts/_planning_digest.txt"]},
+                        ])
     sys.exit(2)
 
 
@@ -1055,6 +1129,13 @@ def _enforce_reference_read_gate() -> None:
     print("   → 위 PNG 들을 Read 도구로 열어 시각 학습한 뒤 references[] 에 반영하고 다시 build.")
     print("   (긴급 우회: IMIN_SKIP_REFERENCE_GATE=1)")
     print("=" * 64)
+    _emit_build_summary("blocked", codes=["ERR_REFERENCE_READ_PENDING"],
+                        required_actions=[{
+                            "type": "read",
+                            "why": "레퍼런스 시각 학습 (절대 규칙 0-G) 후 다시 build",
+                            "paths": [p for p in _LAST_REFERENCE_THUMBS
+                                      if os.path.basename(p) in missing],
+                        }])
     sys.exit(2)
 
 
@@ -1134,6 +1215,15 @@ def _enforce_selfverify_gate(context: str = "build") -> None:
     print(f"     checklist({pend.get('checklist_path')}) 12개 항목을 PASS/FAIL/NA 로 채울 것.")
     print("   (긴급 우회: IMIN_SKIP_SELFVERIFY_GATE=1)")
     print("=" * 64)
+    _emit_build_summary("blocked", codes=["ERR_SELF_VERIFY_PENDING"],
+                        root_id=pend.get("root_id"),
+                        required_actions=[
+                            {"type": "export_and_read",
+                             "why": "self-verify (절대 규칙 0-F) — 섹션 PNG 재export(scale=2)+Read",
+                             "nodeIds": missing},
+                            {"type": "fill_checklist",
+                             "path": pend.get("checklist_path")},
+                        ])
     sys.exit(2)
 
 
@@ -4972,6 +5062,9 @@ def cmd_build(blueprint_file: str):
         print(f"{'='*50}\n")
         print("Fix errors before building. Use --force to skip validation.")
         if "--force" not in sys.argv:
+            _emit_build_summary("blocked", codes=_codes_for_issues(errors),
+                                issues=errors, warnings=warns,
+                                note="blueprint 수정 후 다시 build (--force 로 검증 skip 가능)")
             return
     elif warns:
         print(f"Blueprint validation: {len(warns)} warning(s)")
@@ -5435,6 +5528,17 @@ def cmd_build(blueprint_file: str):
         # original_blueprint = $token 참조가 살아있는 사본 (resolve 전) — 시그니처에 적합.
         _novelty_save(original_blueprint)
         _cleanup_build_input(blueprint_file)
+
+    # 🔴 BUILD-SUMMARY-JSON — 항상 stdout 마지막 블록 (Astryx 패턴, 2026-07-08).
+    # 에이전트가 로그를 tail/grep 으로 봐도 결과 + 필수 후속 액션(0-G Read / 0-F self-verify)
+    # 을 기계 판독으로 받는다. prose 대신 code 로 분기할 것 (scripts/error_codes.py).
+    if root_id:
+        _emit_build_summary("success", root_id=root_id, warnings=warns,
+                            required_actions=_post_build_required_actions())
+    else:
+        _emit_build_summary("failed", codes=["ERR_BUILD_FAILED"], warnings=warns,
+                            note="batch_build_screen 실패 — 브리지/플러그인 상태 확인 "
+                                 "(python3 scripts/figma_mcp_client.py doctor)")
 
 
 def _cleanup_build_input(input_path: str) -> None:

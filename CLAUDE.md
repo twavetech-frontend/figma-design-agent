@@ -152,6 +152,21 @@ npm run bridge  # 브리지 기동: WS 8767 + HTTP MCP 8769 (Node, Electron 없�
 npm test        # vitest
 python3 scripts/figma_mcp_client.py doctor  # 환경 통합 진단 (브리지/세션/플러그인/DS맵/통독 게이트, FAIL≥1 → exit 1)
 ```
+
+> 🔴 **BUILD-SUMMARY-JSON — 빌드 결과는 stdout 마지막 블록의 JSON 으로 판독 (2026-07-08 신설, Astryx 패턴)**
+>
+> `build` 는 모든 종료 지점(게이트 차단·검증 실패·성공·빌드 실패)에서 **마지막 출력**으로
+> `📋 BUILD-SUMMARY-JSON` 마커 + JSON 1개를 낸다. **빌드 로그를 tail 로 봐도 이 블록은 항상
+> 걸린다** — 결과 판단은 사람용 로그 문장(prose)이 아니라 이 블록의 `code` 로 분기할 것.
+> - `result`: `success` | `blocked` | `failed` · `code`/`codes`: `scripts/error_codes.py` 의
+>   안정 코드(append-only — 의미 불변·삭제 금지. ERR_PLANNING_GATE, ERR_WIREFRAME_CONTENT_MISSING(S23),
+>   ERR_NOVELTY_DUPLICATE, ERR_REFERENCE_READ_PENDING(0-G), ERR_SELF_VERIFY_PENDING(0-F) 등)
+> - `requiredActions`: **반드시 수행할 후속 액션** — `type:"read"` 의 `paths`(레퍼런스 PNG,
+>   digest)는 Read 도구로 열고, `type:"export_and_read"` 의 `nodeIds` 는 self-verify 재export.
+>   성공 요약에도 0-G/0-F 액션이 실리므로 이 블록만 봐도 다음 할 일이 완결된다.
+> - 새 하드 게이트 추가 시: ERROR_CODES 에 코드 + GATE_TAG_TO_CODE 에 태그 등록
+>   (`test_error_codes.py` 드리프트 가드가 미등록 태그·요약 없는 exit(2)를 CI 에서 차단).
+
 - 실제 디자인 생성은 **터미널 Claude Code CLI에서** `scripts/figma_mcp_client.py`를 호출해 진행한다(브리지가 떠 있어야 함).
 - Figma 데스크톱에서 **"Figma Design Agent"** 플러그인을 실행해야 브리지와 연결된다(유일한 수동 단계).
 
