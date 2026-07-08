@@ -8400,6 +8400,21 @@ def _configure_tool_bar(root_id: str, configs: List[dict]) -> int:
             continue
         iid = inst.get("id")
         if cfg.get("title"):
+            # 🔴 2026-07-03 실측: SET:…:Type=Detail view 키로 import 하면 batch_build 가 항상
+            # 기본 **Home** variant(로고+우측 채팅)로 떨어진다(variant 미적용). title 이 있으면
+            # 서브(Detail) 화면이므로 View variant 를 flip 해야 back+타이틀이 나온다.
+            # ⚠️ variant 값은 'Detail view' 가 아니라 **'Detail'** (라이브 실측). flip 후에야
+            # 타이틀 TEXT 노드가 생긴다(flip 전 scan_text_nodes=[]).
+            for _vv in ("Detail", "Detail view"):
+                try:
+                    _r = call_tool("set_instance_properties",
+                                   {"nodeId": iid, "properties": {"View": _vv}})
+                    _txt = (_r[0].get("text", "") if isinstance(_r, list) and _r else "")
+                    if "Error" not in _txt:
+                        print(f"  [tool-bar] ✓ View variant → {_vv} (Home→Detail flip)")
+                        break
+                except Exception:
+                    pass
             try:
                 title_tid = None
                 for x in call_tool("scan_text_nodes", {"nodeId": iid}):
