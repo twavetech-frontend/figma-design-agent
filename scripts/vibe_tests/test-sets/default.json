@@ -1,0 +1,122 @@
+{
+  "_readme": [
+    "blueprint vibe-tests 배터리 (docs/vibe-tests-design.md 4장).",
+    "⚠️ expected 는 채점 전용 — 생성 에이전트에게 절대 노출 금지 (공정성 불변식 3).",
+    "런너가 tasks/ 에 쓰는 sanitized task 에는 id/prdBrief/wireframeContent 만 담는다.",
+    "v1: 케이스 1(home-signup)만 시딩 — 나머지 11개는 Phase 4b 에서 추가."
+  ],
+  "config": "full",
+  "samplesPerCase": 2,
+  "cases": [
+    {
+      "id": "home-signup",
+      "category": "home-dashboard",
+      "complexity": "complex",
+      "screenName": "imin_signup_home_vibe",
+      "prdBrief": "가입 전(스테이지 0건) 사용자 홈 대시보드. 상단 로고 툴바 + 거래 현황/누적 거래 전환 탭 + 진행 카드(빈 상태) + 데이 스트립 + 시작 유도 섹션. 하단 탭바(홈 active) + FAB.",
+      "wireframeContent": {
+        "section_1_1_navbar": {
+          "logo": "imin",
+          "icons": [
+            "bell",
+            "chat"
+          ]
+        },
+        "section_1_2_tabs": {
+          "active": "거래 현황",
+          "inactive": "누적 거래"
+        },
+        "section_1_3_progress_card": {
+          "header": "진행중인 0건의 스테이지 내역",
+          "row_collected_label": "모은 금액",
+          "row_collected_value": "+ 0원",
+          "row_borrowed_label": "빌린 금액",
+          "row_borrowed_value": "- 0원"
+        },
+        "section_1_3_day_strip": {
+          "day_1": "14일 수",
+          "day_1_amount": "0원",
+          "day_2": "15일 목",
+          "day_2_amount": "0원",
+          "day_3": "16일 금",
+          "day_3_amount": "0원",
+          "day_4_today": "17일 토",
+          "day_4_amount": "0원",
+          "day_5": "18일 일",
+          "day_5_amount": "0원",
+          "day_6": "19일 월",
+          "day_6_amount": "0원"
+        },
+        "section_1_3_calc_cta": {
+          "icon": "help",
+          "text": "얼마까지 모을 수 있는 지 확인해보세요."
+        },
+        "section_1_4_attendance_banner": {
+          "icon": "calendar",
+          "title": "연속 0일째 출석 체크 중",
+          "subtitle": "매일매일 출첵하면 특별한 혜택이!"
+        },
+        "section_1_5_recommend": {
+          "title": "추천 스테이지",
+          "monthly_pill": "10만원",
+          "period_pill": "13개월",
+          "round_selector": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13"
+          ],
+          "round_active": "6",
+          "round_caption": "1회차",
+          "round_sub": "납입 후 목적 수령",
+          "goal_text": "총 1300만원 모으기 도전",
+          "view_all": "추천 전체 보기(13개)"
+        },
+        "section_1_6_stage_tabs": {
+          "tab1": "참여 중인 스테이지",
+          "tab2_active": "찜한 스테이지",
+          "placeholder_grid_count": 4,
+          "fab_icon": "bookmark"
+        },
+        "section_1_7_lounge": {
+          "title": "추천 상품 (라운지)",
+          "deposit": "예치금(포인트): 312,490원(100p)",
+          "card_count": 5
+        },
+        "section_1_8_tabbar": {
+          "tabs": [
+            "홈",
+            "라운지",
+            "스테이지",
+            "커뮤니티",
+            "전체"
+          ],
+          "active": "홈"
+        }
+      },
+      "expected": {
+        "dsComponents": [
+          "Tab Bar",
+          "Tool Bar",
+          "Action Button"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs",
+          "raw-navbar-frame"
+        ],
+        "notes": "거래현황/누적거래 는 underline tabs 여야 함 (0-J). 채점 전용 — 에이전트 비노출."
+      }
+    }
+  ]
+}
