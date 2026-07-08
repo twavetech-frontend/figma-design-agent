@@ -1,9 +1,10 @@
 {
   "_readme": [
-    "blueprint vibe-tests 배터리 (docs/vibe-tests-design.md 4장).",
+    "blueprint vibe-tests 배터리 (docs/vibe-tests-design.md 4장) — 12케이스 완성 (Phase 4b).",
     "⚠️ expected 는 채점 전용 — 생성 에이전트에게 절대 노출 금지 (공정성 불변식 3).",
-    "런너가 tasks/ 에 쓰는 sanitized task 에는 id/prdBrief/wireframeContent 만 담는다.",
-    "v1: 케이스 1(home-signup)만 시딩 — 나머지 11개는 Phase 4b 에서 추가."
+    "런너가 tasks/ 에 쓰는 sanitized task 에는 id/screenName/prdBrief/wireframeContent 만 담는다.",
+    "expected.dsComponents 는 룰이 '요구'하는 것만 (스타일 선택은 기대하지 않는다 — 공정성).",
+    "콘텐츠 출처: wireframe_content_imin_home_v14(실자산)·archetype_specs/imin_home mock_data·CLAUDE.md 0-E 와이어 인용·메모리 화면 기록."
   ],
   "config": "full",
   "samplesPerCase": 2,
@@ -116,6 +117,449 @@
           "raw-navbar-frame"
         ],
         "notes": "거래현황/누적거래 는 underline tabs 여야 함 (0-J). 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "home-active",
+      "category": "home-dashboard",
+      "complexity": "complex",
+      "screenName": "imin_active_home_vibe",
+      "prdBrief": "진행 중 스테이지 3건 사용자 홈 대시보드. 로고 툴바 + 거래 현황/누적 거래 전환 탭 + 진행 카드(수치) + 데이 스트립 + 추천 스테이지. 하단 탭바(홈 active) + FAB + 마이 월렛 바.",
+      "wireframeContent": {
+        "tabs": {
+          "active": "거래 현황",
+          "inactive": "누적 거래"
+        },
+        "progress_card": {
+          "header": "진행중인 3건의 스테이지 내역",
+          "more": "자세히",
+          "row1_label": "모은 금액",
+          "row1_value": "+1,240,000원",
+          "row2_label": "빌린 금액",
+          "row2_value": "-340,000원"
+        },
+        "day_strip": {
+          "d1": "12일 화",
+          "d1_value": "-32만",
+          "d1_status": "미납",
+          "d2": "18일 토",
+          "d2_value": "-45만",
+          "d2_status": "오늘 납입",
+          "d3": "25일 금",
+          "d3_value": "+260만",
+          "d3_status": "지급"
+        },
+        "recommend": {
+          "title": "추천 스테이지",
+          "card_amount": "1,300,000원",
+          "card_period": "13개월",
+          "card_cta": "참여하기"
+        },
+        "wallet": {
+          "title": "마이 월렛",
+          "balance": "132,000P",
+          "cta": "목돈 출금하기"
+        }
+      },
+      "expected": {
+        "dsComponents": [
+          "Tab Bar",
+          "Tool Bar",
+          "Action Button"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs",
+          "raw-navbar-frame"
+        ],
+        "notes": "거래현황/누적거래=underline tabs(0-J). 월렛 바 top radius 16(0-T). 연속 CTA 위계(2-G-4). 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "home-empty",
+      "category": "empty-state",
+      "complexity": "moderate",
+      "screenName": "imin_signup_home_empty_vibe",
+      "prdBrief": "스테이지 0건 빈 상태 홈. 진행 카드가 전부 0원/0건 — 시작 유도가 핵심. 하단 탭바(홈 active) + FAB.",
+      "wireframeContent": {
+        "tabs": {
+          "active": "거래 현황",
+          "inactive": "누적 거래"
+        },
+        "progress_card": {
+          "header": "진행중인 0건의 스테이지 내역",
+          "row1_label": "모은 금액",
+          "row1_value": "+ 0원",
+          "row2_label": "빌린 금액",
+          "row2_value": "- 0원"
+        },
+        "start": {
+          "title": "어떤 방법으로 시작할까요?",
+          "opt1": "차근차근 모을게요",
+          "opt2": "목돈이 필요해요",
+          "calc_cta": "얼마까지 모을 수 있는 지 확인해보세요"
+        }
+      },
+      "expected": {
+        "dsComponents": [
+          "Tab Bar",
+          "Tool Bar"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs",
+          "raw-navbar-frame"
+        ],
+        "notes": "0원/0건 콘텐츠 1:1 유지(0-E — mock 치환 금지 케이스). 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "stage-recommend",
+      "category": "list-recommend",
+      "complexity": "moderate",
+      "screenName": "imin_stage_recommend_vibe",
+      "prdBrief": "스테이지 탭 홈 — 상단 큰 페이지 탭(추천/전체) + 추천 스테이지 카드 리스트(카드마다 기간/월 입금 스테퍼 + 참여하기). 하단 탭바(스테이지 active) + FAB.",
+      "wireframeContent": {
+        "page_tabs": {
+          "active": "추천",
+          "inactive": "전체"
+        },
+        "card1": {
+          "title": "1,300만원 모으기",
+          "people": "13명",
+          "period_label": "기간",
+          "period_value": "13개월",
+          "monthly_label": "월 입금",
+          "monthly_value": "100만원",
+          "cta": "참여하기"
+        },
+        "card2": {
+          "title": "650만원 모으기",
+          "people": "13명",
+          "period_value": "13개월",
+          "monthly_value": "50만원",
+          "cta": "참여하기"
+        },
+        "filter": {
+          "sort": "인기순"
+        }
+      },
+      "expected": {
+        "dsComponents": [
+          "Tab Bar",
+          "Action Button"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs",
+          "raw-navbar-frame"
+        ],
+        "notes": "추천/전체=underline tabs 22~24 Bold(0-V). 스테퍼=세로 2-row(14-B). 수평 반복 참여하기=Tertiary(2-G-5). 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "stage-detail",
+      "category": "detail",
+      "complexity": "complex",
+      "screenName": "imin_stage_detail_vibe",
+      "prdBrief": "스테이지 상세 — back 툴바 + 금액 히어로 + 회차 선택(1~13 라운드 셀, 내 수령 회차 강조) + 조건 요약 + 하단 참여하기 CTA.",
+      "wireframeContent": {
+        "nav": {
+          "title": "스테이지 상세"
+        },
+        "hero": {
+          "amount": "13,000,000원",
+          "sub": "13개월 · 13명 · 월 100만원"
+        },
+        "rounds": {
+          "label": "수령 회차 선택",
+          "cells": "1 2 3 4 5 6 7 8 9 10 11 12 13",
+          "my_round": "7회차",
+          "hint": "빠를수록 대출형, 늦을수록 적금형"
+        },
+        "summary": {
+          "row1_label": "월 납입금",
+          "row1_value": "1,000,000원",
+          "row2_label": "총 수령액",
+          "row2_value": "13,000,000원",
+          "row3_label": "아임인 보전",
+          "row3_value": "안전 보전 중"
+        },
+        "cta": "참여하기"
+      },
+      "expected": {
+        "dsComponents": [
+          "Tool Bar",
+          "Action Button"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs",
+          "raw-navbar-frame"
+        ],
+        "notes": "brand 퍼플='나의 것'(내 수령 회차·CTA)에 한정. 회차 셀=중립 이름(0-L, Badge 금지). Tool Bar Detail+_navTitle. 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "stage-done",
+      "category": "detail",
+      "complexity": "moderate",
+      "screenName": "imin_stage_done_vibe",
+      "prdBrief": "스테이지 완료 화면 — 납입 완료 상태(체크) + 총 모은 금액 + 회차 기록 + 재참여 유도 CTA.",
+      "wireframeContent": {
+        "nav": {
+          "title": "완료된 스테이지"
+        },
+        "done": {
+          "badge": "납입 완료",
+          "title": "13회차 납입을 모두 완료했어요",
+          "amount_label": "총 모은 금액",
+          "amount": "13,000,000원"
+        },
+        "history": {
+          "row1": "1회차 2025.06.18 +1,000,000원",
+          "row2": "13회차 2026.06.18 +1,000,000원"
+        },
+        "next": {
+          "caption": "함께 모은 목돈, 다시 모아볼까요?",
+          "cta": "새 스테이지 참여하기"
+        }
+      },
+      "expected": {
+        "dsComponents": [
+          "Tool Bar",
+          "Action Button"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs",
+          "raw-navbar-frame"
+        ],
+        "notes": "완료 상태=success 계열(0-G-2 확정 시맨틱 — brand 퍼플 남발 금지). caption=text-secondary(11-B). 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "schedule",
+      "category": "detail",
+      "complexity": "moderate",
+      "screenName": "imin_schedule_vibe",
+      "prdBrief": "내 스케줄 — back 툴바(타이틀 '내 스케줄') + 입금/지급 전환 탭 + 날짜별 스케줄 리스트(날짜 셀 + 내역).",
+      "wireframeContent": {
+        "nav": {
+          "title": "내 스케줄"
+        },
+        "view_tabs": {
+          "active": "입금",
+          "inactive": "지급"
+        },
+        "month": "2026년 7월",
+        "row1": {
+          "date": "18일 토",
+          "name": "1,300만원 모으기 스테이지",
+          "amount": "-1,000,000원",
+          "status": "오늘 납입"
+        },
+        "row2": {
+          "date": "25일 금",
+          "name": "650만원 모으기 스테이지",
+          "amount": "-500,000원",
+          "status": "예정"
+        }
+      },
+      "expected": {
+        "dsComponents": [
+          "Tool Bar"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs",
+          "raw-navbar-frame"
+        ],
+        "notes": "입금/지급=underline tabs 16 Bold — Segmented 로 쓰면 0-J 위반(함정). 날짜 셀 FIXED 폭 존중. 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "payment-sheet",
+      "category": "bottom-sheet",
+      "complexity": "moderate",
+      "screenName": "imin_payment_sheet_vibe",
+      "prdBrief": "납입 바텀시트 — dim 위 하단 시트: 드래그 핸들 + 납입 정보 + 결제 수단 + 납입하기 CTA. _screenType bottom-sheet.",
+      "wireframeContent": {
+        "sheet": {
+          "title": "7월 납입",
+          "amount_label": "납입 금액",
+          "amount": "1,000,000원",
+          "due": "2026.07.18 토",
+          "method_label": "결제 수단",
+          "method": "imin 월렛 132,000P",
+          "cta": "지금 납입하기"
+        }
+      },
+      "expected": {
+        "dsComponents": [
+          "Action Button"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs"
+        ],
+        "notes": "_screenType bottom-sheet(0-D): root 852 FIXED+dim+시트 풀폭·top radius 16·상단 pad 8(_asymPad). Tab Bar/Footer 금지. 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "tx-modal",
+      "category": "full-modal",
+      "complexity": "moderate",
+      "screenName": "imin_tx_schedule_modal_vibe",
+      "prdBrief": "거래 스케줄 상세 full modal — 상단 X 닫기만. 월별 거래 스케줄 표 + 안내 문구. _screenType modal.",
+      "wireframeContent": {
+        "header": {
+          "close": "X"
+        },
+        "title": "거래 스케줄",
+        "table": {
+          "col1": "회차",
+          "col2": "일자",
+          "col3": "금액",
+          "row1": "1회차 2025.06.18 1,000,000원",
+          "row2": "2회차 2025.07.18 1,000,000원"
+        },
+        "notice": "매월 18일에 자동으로 납입돼요"
+      },
+      "expected": {
+        "dsComponents": [
+          "Action Button"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs"
+        ],
+        "notes": "modal(2-D): X만·Footer/TabBar/홈 섹션 금지(R58 함정)·root HUG. 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "join-form",
+      "category": "form",
+      "complexity": "simple",
+      "screenName": "imin_stage_join_form_vibe",
+      "prdBrief": "스테이지 참여 폼 — back 툴바 + 약관 동의 체크박스 3개 + 자동이체 계좌 표시 + 하단 참여 확정 CTA.",
+      "wireframeContent": {
+        "nav": {
+          "title": "참여하기"
+        },
+        "agree": {
+          "all": "전체 동의",
+          "t1": "스테이지 이용약관 동의 (필수)",
+          "t2": "자동이체 출금 동의 (필수)",
+          "t3": "마케팅 정보 수신 동의 (선택)"
+        },
+        "account": {
+          "label": "자동이체 계좌",
+          "value": "카카오뱅크 3333-01-1234567"
+        },
+        "cta": "참여 확정하기"
+      },
+      "expected": {
+        "dsComponents": [
+          "Tool Bar",
+          "Checkbox",
+          "Action Button"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs",
+          "raw-navbar-frame"
+        ],
+        "notes": "체크박스=DS Checkbox 인스턴스(2-I — raw frame 금지 함정). CTA Size=lg. 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "lounge-list",
+      "category": "list-recommend",
+      "complexity": "simple",
+      "screenName": "imin_lounge_home_vibe",
+      "prdBrief": "라운지 탭 홈 — 커뮤니티 글 리스트(작성자/제목/좋아요·댓글 카운트). 하단 탭바(라운지 active).",
+      "wireframeContent": {
+        "section": "라운지",
+        "post1": {
+          "author": "Plan3님",
+          "title": "13개월 완주 후기 공유해요",
+          "likes": "좋아요 24",
+          "comments": "댓글 8"
+        },
+        "post2": {
+          "author": "moya님",
+          "title": "7회차 수령했습니다",
+          "likes": "좋아요 11",
+          "comments": "댓글 3"
+        },
+        "write_cta": "글쓰기"
+      },
+      "expected": {
+        "dsComponents": [
+          "Tab Bar",
+          "Tool Bar"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs",
+          "raw-navbar-frame"
+        ],
+        "notes": "짧은 라벨 wrap 스멜(22-B) 주의. 아바타=랜덤 이미지 허용(2-E-5). 채점 전용 — 에이전트 비노출."
+      }
+    },
+    {
+      "id": "calc",
+      "category": "tool",
+      "complexity": "simple",
+      "screenName": "imin_calc_vibe",
+      "prdBrief": "모으기 계산기 — 월 납입액 스테퍼(10만원 단위) + 기간 스테퍼(13개월) + 1~13 회차 선택 + 결과 히어로(총 목표액) + 확인 CTA.",
+      "wireframeContent": {
+        "nav": {
+          "title": "모으기 계산기"
+        },
+        "stepper1": {
+          "label": "월 납입액",
+          "value": "100만원",
+          "unit": "10만원 단위"
+        },
+        "stepper2": {
+          "label": "기간",
+          "value": "13개월"
+        },
+        "rounds": {
+          "label": "수령 회차",
+          "cells": "1 2 3 4 5 6 7 8 9 10 11 12 13",
+          "selected": "1회차"
+        },
+        "result": {
+          "caption": "납입 후 목적 수령",
+          "hero": "총 1,300만원 모으기 도전"
+        },
+        "cta": "이 조건으로 시작하기"
+      },
+      "expected": {
+        "dsComponents": [
+          "Tool Bar",
+          "Action Button"
+        ],
+        "forbiddenPatterns": [
+          "status-bar-node",
+          "raw-tab-bar-frame",
+          "segmented-view-tabs",
+          "raw-navbar-frame"
+        ],
+        "notes": "스테퍼=세로 2-row(14-B 함정). 1~13 회차 셀=HUG 원형(2-E-5), Badge 이름 금지(0-L). 채점 전용 — 에이전트 비노출."
       }
     }
   ]

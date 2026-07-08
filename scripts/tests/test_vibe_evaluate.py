@@ -190,3 +190,36 @@ def test_default_testset_sanity():
     for c in ts["cases"]:
         assert c.get("prdBrief") and isinstance(c.get("wireframeContent"), dict)
         assert c.get("expected", {}).get("dsComponents")
+
+
+def test_default_testset_battery_complete():
+    """Phase 4b 배터리 계약 — 12케이스, 설계 4장 복잡도 분포(3/6/3)."""
+    with open(ev.DEFAULT_TESTSET, encoding="utf-8") as fh:
+        ts = json.load(fh)
+    assert len(ts["cases"]) == 12
+    cx = {}
+    for c in ts["cases"]:
+        cx[c["complexity"]] = cx.get(c["complexity"], 0) + 1
+    assert cx == {"simple": 3, "moderate": 6, "complex": 3}
+    # 콘텐츠 dict 는 실제 채점 가능해야 — string 값 ≥5개
+    for c in ts["cases"]:
+        assert len(ev._content_values(c["wireframeContent"])) >= 5, c["id"]
+
+
+def test_default_testset_drift_guards():
+    """배터리 ↔ 채점기 드리프트 가드 — 미지원 패턴/유령 컴포넌트가 배터리에 들어오면 실패."""
+    with open(ev.DEFAULT_TESTSET, encoding="utf-8") as fh:
+        ts = json.load(fh)
+    catalog = ev._catalog()
+    for c in ts["cases"]:
+        for pat in c["expected"].get("forbiddenPatterns") or []:
+            assert pat in ev._FORBIDDEN_MATCHERS, (
+                "%s: 매처 없는 forbiddenPattern '%s'" % (c["id"], pat))
+        for prefix in c["expected"]["dsComponents"]:
+            in_catalog = any(n.startswith(prefix) for n in catalog)
+            assert in_catalog or prefix.startswith("Tool Bar"), (
+                "%s: 카탈로그에 없는 expected 컴포넌트 '%s'" % (c["id"], prefix))
+    # 모달/시트 케이스는 탭바 케이스와 forbidden 구성이 달라야 한다 (탭바 자체가 없음)
+    by_id = {c["id"]: c for c in ts["cases"]}
+    assert "raw-navbar-frame" not in by_id["payment-sheet"]["expected"]["forbiddenPatterns"]
+    assert "raw-navbar-frame" not in by_id["tx-modal"]["expected"]["forbiddenPatterns"]
