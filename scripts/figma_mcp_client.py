@@ -3,6 +3,9 @@
 Figma MCP HTTP Client — 디자인 생성, 수정, 바인딩을 위한 Python 클라이언트
 
 Usage:
+    # 0. 환경 진단 (준비 상태 통합 체크 — 브리지/세션/플러그인/DS맵/통독 게이트)
+    python3 scripts/figma_mcp_client.py doctor [--json]
+
     # 1. 세션 초기화 (필수 — 첫 실행 시)
     python3 scripts/figma_mcp_client.py init
 
@@ -14243,6 +14246,212 @@ def _apply_template_vars(node: dict, vars_dict: dict, section_name: str) -> dict
     return node
 
 
+# ─── doctor — 환경/설정 진단 (Astryx CLI 패턴 차용, 2026-07-08) ─────────────────
+# 새 세션/새 사용자의 "디자인 생성 준비" 검증 단계들을 한 명령으로 통합 진단한다.
+# 계약 (Astryx doctor 와 동일):
+#   - 항목별 PASS(✓)/WARN(⚠)/FAIL(✗)/INFO(ℹ, 선행 실패로 판정 불가) + 실행 가능한 fix 안내
+#   - exit code: FAIL ≥ 1 → 1 (CI/스크립트 게이트 겸용), 아니면 0 (WARN 은 실패 아님)
+#   - --json: 기계 소비용 {"type":"doctor","checks":[...],"summary":{...}} (사람용 출력 없음)
+# ⚠ 진단 전용 — 상태를 바꾸지 않는다 (_ensure_bridge_server 자동 기동 호출 금지).
+
+_DOCTOR_GLYPH = {"pass": "✓", "warn": "⚠", "fail": "✗", "info": "ℹ"}
+
+
+def _doctor_checks() -> List[dict]:
+    """진단 체크 실행. 각 항목 {id, label, status, message, fix?}."""
+    import io
+    import contextlib
+
+    checks: List[dict] = []
+    here = os.path.dirname(os.path.abspath(__file__))
+    root = os.path.dirname(here)
+
+    def add(cid: str, label: str, status: str, message: str, fix: str = None):
+        c = {"id": cid, "label": label, "status": status, "message": message}
+        if fix:
+            c["fix"] = fix
+        checks.append(c)
+
+    # 1. Python 패키지 (requests 는 이 스크립트 import 시점에 필수 — 여기 도달 = 있음)
+    try:
+        import PIL  # noqa: F401
+        add("python-deps", "Python 패키지 (requests, Pillow)", "pass",
+            "requests + Pillow 사용 가능")
+    except Exception:
+        add("python-deps", "Python 패키지 (requests, Pillow)", "warn",
+            "Pillow 미설치 — 레퍼런스 썸네일/이미지 QA 기능 제한",
+            "python3 -m pip install Pillow (PEP 668 환경이면 --user 폴백)")
+
+    # 2. 브리지 빌드 산출물 존재 + src/*.ts 대비 최신성
+    bridge_js = os.path.join(root, "out", "bridge", "index.js")
+    if not os.path.exists(bridge_js):
+        add("build", "브리지 빌드 (out/bridge/index.js)", "fail",
+            "빌드 산출물 없음", "npm run build")
+    else:
+        built_at = os.path.getmtime(bridge_js)
+        newest_src, newest_path = 0.0, ""
+        for dirpath, _dirs, files in os.walk(os.path.join(root, "src")):
+            for fn in files:
+                if fn.endswith((".ts", ".tsx")):
+                    p = os.path.join(dirpath, fn)
+                    try:
+                        mt = os.path.getmtime(p)
+                    except OSError:
+                        continue
+                    if mt > newest_src:
+                        newest_src, newest_path = mt, os.path.relpath(p, root)
+        if newest_src > built_at:
+            add("build", "브리지 빌드 (out/bridge/index.js)", "warn",
+                "src/ 가 빌드보다 최신 (%s) — 브리지가 옛 코드로 동작 중일 수 있음" % newest_path,
+                "npm run build 후 브리지 재시작 (플러그인도 재실행)")
+        else:
+            add("build", "브리지 빌드 (out/bridge/index.js)", "pass", "빌드가 src/ 보다 최신")
+
+    # 3. 브리지 기동 (HTTP MCP 8769) — 자동 기동 없이 순수 진단
+    bridge_up = False
+    try:
+        requests.get(MCP_URL, timeout=2)
+        bridge_up = True
+        add("bridge", "브리지 프로세스 (WS 8767 + HTTP MCP 8769)", "pass",
+            "HTTP MCP 8769 응답 정상")
+    except Exception:
+        add("bridge", "브리지 프로세스 (WS 8767 + HTTP MCP 8769)", "fail",
+            "8769 응답 없음 — 브리지 미기동",
+            "npm run bridge (백그라운드 실행, 로그에 'Server listening on port 8767' 확인)")
+
+    # 4. MCP 세션 초기화 (브리지 기동 시에만 판정 가능)
+    session_ok = False
+    if not bridge_up:
+        add("mcp-session", "MCP 세션 초기화", "info", "브리지 미기동 — 판정 불가")
+    else:
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                sid = init_session()
+            if sid:
+                session_ok = True
+                add("mcp-session", "MCP 세션 초기화", "pass", "세션 ID 발급 정상")
+            else:
+                add("mcp-session", "MCP 세션 초기화", "fail",
+                    "Session initialized: None — @hono/mcp 패치 누락 의심",
+                    "npm install 재실행 (postinstall 이 scripts/patch-hono-mcp.js 적용) 후 브리지 재시작")
+        except Exception as e:
+            add("mcp-session", "MCP 세션 초기화", "fail",
+                "세션 초기화 실패: %s" % e, "브리지 로그 확인 (/tmp/bridge-server.log)")
+
+    # 5. Figma 플러그인 연결 (get_ds_loading_status 는 플러그인 불필요 도구 — hang 없음)
+    if not session_ok:
+        add("plugin", "Figma 플러그인 연결", "info", "MCP 세션 없음 — 판정 불가")
+    else:
+        try:
+            res = call_tool("get_ds_loading_status", {})
+            j = _extract_tool_json(res)
+            fc = j.get("figmaConnected")
+            if fc is True:
+                add("plugin", "Figma 플러그인 연결", "pass",
+                    "플러그인 연결됨 (DS 로딩: %s)" % j.get("status"))
+            elif fc is False:
+                add("plugin", "Figma 플러그인 연결", "fail",
+                    "플러그인 미연결",
+                    "Figma 데스크톱 앱에서 'Figma Design Agent' 플러그인 실행 (유일한 수동 단계)")
+            else:
+                add("plugin", "Figma 플러그인 연결", "warn",
+                    "구버전 브리지 — figmaConnected 필드 미지원",
+                    "npm run build 후 브리지 재시작하면 정확 판정")
+        except Exception as e:
+            add("plugin", "Figma 플러그인 연결", "warn", "상태 조회 실패: %s" % e)
+
+    # 6. DS 맵 4종 (토큰/텍스트스타일/이펙트/변수키 — 바인딩 파이프라인의 전제)
+    token_map_path = os.path.join(root, "ds", "TOKEN_MAP.json")
+    try:
+        with open(token_map_path, encoding="utf-8") as fh:
+            tm = json.load(fh)
+        if tm:
+            add("ds-token-map", "DS 토큰 맵 (ds/TOKEN_MAP.json)", "pass",
+                "%d개 항목" % len(tm))
+        else:
+            raise ValueError("빈 맵")
+    except Exception:
+        add("ds-token-map", "DS 토큰 맵 (ds/TOKEN_MAP.json)", "fail",
+            "없거나 손상 — 색/spacing 토큰 바인딩 불가",
+            "브리지 기동 시 자동 sync (수동: bash scripts/sync-tokens-from-github.sh)")
+
+    ts_path = os.path.join(root, "ds", "TEXT_STYLE_MAP.json")
+    try:
+        with open(ts_path, encoding="utf-8") as fh:
+            ts = json.load(fh)
+        body_sm = [e for e in ts if isinstance(e, dict)
+                   and e.get("fontSize") == 14 and e.get("family") == "Pretendard"]
+        if body_sm:
+            add("ds-text-styles", "DS 텍스트 스타일 맵 (ds/TEXT_STYLE_MAP.json)", "pass",
+                "%d개 스타일, Body sm(14px) 포함" % len(ts))
+        else:
+            add("ds-text-styles", "DS 텍스트 스타일 맵 (ds/TEXT_STYLE_MAP.json)", "warn",
+                "Body sm(14px Pretendard) 키 없음 — stale 맵 (보조 텍스트 스타일 바인딩 실패)",
+                "플러그인을 DS 파일(Imin Design System)에 연결 후 sync-text-styles 1회 실행")
+    except Exception:
+        add("ds-text-styles", "DS 텍스트 스타일 맵 (ds/TEXT_STYLE_MAP.json)", "warn",
+            "없거나 손상 — 라이브러리 텍스트 스타일 fallback 불가",
+            "플러그인을 DS 파일에 연결 후 sync-text-styles 1회 실행")
+
+    for cid, fname, syncc, why in (
+        ("ds-effect-styles", "EFFECT_STYLE_MAP.json", "sync-effect-styles",
+         "카드 shadow-basic 바인딩(2-B-3) 불가"),
+        ("ds-variable-keys", "VARIABLE_KEY_MAP.json", "sync-variable-keys",
+         "Draft 파일에서 변수 바인딩(K:key 폴백) 불가"),
+    ):
+        p = os.path.join(root, "ds", fname)
+        if os.path.exists(p):
+            add(cid, "DS 맵 (ds/%s)" % fname, "pass", "존재")
+        else:
+            add(cid, "DS 맵 (ds/%s)" % fname, "warn", "없음 — %s" % why,
+                "플러그인을 DS 파일에 연결 후 %s 1회 실행" % syncc)
+
+    # 7. 기획 통독 게이트 (stale/미통독이면 cmd_build 가 차단됨 — 사전 안내)
+    try:
+        ok, reason = _planning_read_ok()
+        if ok:
+            add("planning", "기획 문서 통독 게이트", "pass", reason)
+        else:
+            add("planning", "기획 문서 통독 게이트", "fail",
+                "%s (이 상태로는 빌드가 차단됨)" % reason,
+                "learn-planning → digest 를 Read 로 끝까지 통독 → ack-planning <맨 끝 토큰>")
+    except Exception as e:
+        add("planning", "기획 문서 통독 게이트", "warn", "판정 실패: %s" % e)
+
+    return checks
+
+
+def cmd_doctor(json_out: bool = False) -> None:
+    checks = _doctor_checks()
+    summary = {s: sum(1 for c in checks if c["status"] == s)
+               for s in ("pass", "warn", "fail", "info")}
+
+    if json_out:
+        print(json.dumps({"type": "doctor", "checks": checks, "summary": summary},
+                         ensure_ascii=False, indent=2))
+    else:
+        print("figma-design-agent doctor — 환경 진단\n")
+        for c in checks:
+            print("  %s %s" % (_DOCTOR_GLYPH.get(c["status"], "·"), c["label"]))
+            print("      %s" % c["message"])
+            if c.get("fix"):
+                print("      → fix: %s" % c["fix"])
+        print()
+        print("Summary: %d passed, %d warning(s), %d failure(s)%s" % (
+            summary["pass"], summary["warn"], summary["fail"],
+            (", %d skipped" % summary["info"]) if summary["info"] else ""))
+        if summary["fail"]:
+            print("\n✗ 실패 항목을 위 fix 안내대로 해결한 뒤 doctor 를 다시 실행하세요.")
+        elif summary["warn"]:
+            print("\n⚠ 실패는 없지만 경고 항목을 확인해 두세요.")
+        else:
+            print("\n모든 체크 통과 — 디자인 생성 준비 완료 상태입니다.")
+
+    # exit code 계약: FAIL ≥ 1 → 1 (WARN 은 실패 아님) — CI/준비 스크립트 게이트 겸용
+    if summary["fail"]:
+        sys.exit(1)
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -14252,6 +14461,9 @@ def main():
 
     if cmd == "init":
         cmd_init()
+    elif cmd == "doctor":
+        # 환경/설정 진단 — PASS/WARN/FAIL + fix 안내. FAIL ≥1 이면 exit 1.
+        cmd_doctor(json_out="--json" in sys.argv)
     elif cmd == "learn-planning":
         _force = "--force" in sys.argv
         _out = next((a for a in sys.argv[2:] if a != "--force"), "scripts/_planning_digest.txt")

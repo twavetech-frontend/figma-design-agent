@@ -44,6 +44,9 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
    *"Figma 데스크톱 앱에서 **'Figma Design Agent'** 플러그인을 실행해 주세요"* 라고 안내한다
    (플러그인 실행은 자동화 불가 — 유일한 수동 단계).
    ⚠️ 플러그인 이름은 정확히 **"Figma Design Agent"** — "Claude MCP" 등 다른 이름으로 부르지 말 것.
+   ✅ **2~4단계 + DS 맵 + 통독 게이트 상태는 `python3 scripts/figma_mcp_client.py doctor` 한 번으로
+   통합 진단** (2026-07-08 신설, Astryx doctor 패턴) — 항목별 ✓/⚠/✗ + fix 안내, FAIL≥1 → exit 1,
+   `--json` 지원. 준비 절차 검증·문제 발생 시 원인 파악에 이걸 먼저 실행할 것.
 5. 🔴 **기획 문서 전체 학습 (맥락 100% — 2026-06-04 사용자 필수 룰)** — 디자인 생성 전,
    `src/기획/` 폴더의 **모든 기획 HTML(유스케이스 스펙)을 읽어 imin 서비스 맥락을 완전히
    이해한 상태**로 만든다. 🔴 **목표: 준비가 끝나면 사용자가 곧바로 "메인화면 그려"라고만 해도
@@ -147,6 +150,7 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
 npm run build   # tsup → out/ (bridge + yoga-cli, CJS). Vite/Electron 빌드 없음
 npm run bridge  # 브리지 기동: WS 8767 + HTTP MCP 8769 (Node, Electron 없음)
 npm test        # vitest
+python3 scripts/figma_mcp_client.py doctor  # 환경 통합 진단 (브리지/세션/플러그인/DS맵/통독 게이트, FAIL≥1 → exit 1)
 ```
 - 실제 디자인 생성은 **터미널 Claude Code CLI에서** `scripts/figma_mcp_client.py`를 호출해 진행한다(브리지가 떠 있어야 함).
 - Figma 데스크톱에서 **"Figma Design Agent"** 플러그인을 실행해야 브리지와 연결된다(유일한 수동 단계).

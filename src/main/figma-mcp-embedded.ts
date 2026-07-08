@@ -72,7 +72,7 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
   //    폴링한 뒤 통독 progress 를 시작한다. 플러그인 연결 불필요(서버 인메모리 상태).
   reg('get_ds_loading_status', 'Get current DS docs loading status: "idle" (plugin not connected / no load), "loading" (DS docs syncing), or "done" (finished). Used to gate planning-doc learning until DS loading completes.', {
     type: 'object', properties: {}
-  }, async () => ({ status: figmaWS.dsLoading }));
+  }, async () => ({ status: figmaWS.dsLoading, figmaConnected: figmaWS.isConnected }));
 
   reg('get_document_info', 'Get information about the current Figma document', {
     type: 'object', properties: {}
