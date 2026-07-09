@@ -11,7 +11,11 @@ Detection (lint ERROR):
 
 Fix guidance: `imageQuery: "<scene description>"` 추가 (cmd_build 이미지 fetch).
 
-Bypass: `_imagelessAllowed: "<reason>"`.
+Bypass:
+  - `_imagelessAllowed: "<reason>"` — 의도적으로 이미지 없는 카드.
+  - `_placeholderAllowed` — 0-E-3 CMS/동적 placeholder (2026-07-09 신설). 와이어에 콘텐츠가
+    없는 동적 영역은 흰 면+보더 placeholder 가 *정답*이라(콘텐츠 날조 금지) imageQuery 를
+    요구하면 두 룰이 충돌한다 — vibe-tests 에서 home-signup D2=0 단독 원인으로 실측된 충돌.
 """
 from __future__ import annotations
 
@@ -39,7 +43,9 @@ def _check(bp: dict, ctx: dict) -> Iterable[Violation]:
     for node, path in walk_blueprint(bp):
         if (node.get("type") or "").lower() != "frame":
             continue
-        if node.get("_imagelessAllowed"):
+        if node.get("_imagelessAllowed") or node.get("_placeholderAllowed"):
+            # _placeholderAllowed = 0-E-3 CMS/동적 placeholder — 콘텐츠 날조 금지가 우선,
+            # 빈 흰 면+보더가 정답인 카드라 imageQuery 를 요구하지 않는다.
             continue
         name = node.get("name") or ""
         if not _CARD_NAME_RE.search(name):
@@ -67,7 +73,8 @@ def _check(bp: dict, ctx: dict) -> Iterable[Violation]:
              f"(icon/instance/rectangle) 없음. 빈 회색 박스 나옴 (RULE 0-C 위반). "
              f"`imageQuery: \"<scene description, e.g. cozy lounge cafe interior natural light>\"` "
              f"또는 icon + label 조합 (children ≥2) 추가. "
-             f"Bypass: `_imagelessAllowed: '<reason>'`."),
+             f"Bypass: `_imagelessAllowed: '<reason>'` / CMS·동적 placeholder(0-E-3)면 "
+             f"`_placeholderAllowed: true`."),
             Phase.LINT,
         )
 
@@ -78,7 +85,8 @@ register(Rule(
     description=(
         "라운지/상품/추천 카드 (이름 lounge/product/shop/recommend/item) 가 "
         "neutral bg + 텍스트만 있으면 회색 빈 박스 → build 차단. "
-        "imageQuery 또는 icon/instance 시각 자식 필수. 2026-05-28 사용자 명시."
+        "imageQuery 또는 icon/instance 시각 자식 필수. 2026-05-28 사용자 명시. "
+        "bypass: _imagelessAllowed / _placeholderAllowed(0-E-3 CMS placeholder)."
     ),
     check_blueprint_fn=_check,
 ))

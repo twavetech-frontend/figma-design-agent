@@ -445,7 +445,9 @@
 > - **CMS/동적/외부주입 영역**(예 "CMS 에서 등록한 배너 영역", 광고 배너, 추천 피드 등 콘텐츠가
 >   런타임에 채워지는 곳)은 **placeholder 로 둔다** — **흰 면(`bg-primary`) + 보더(`border-secondary`)**
 >   + (있으면) 와이어 자체의 영역 라벨만. 가짜 마케팅 콘텐츠/이미지를 생성하지 말 것. 노드에
->   `_placeholderAllowed` 마커를 달면 콘텐츠 매치 QA 가 빈/placeholder 를 허용한다.
+>   `_placeholderAllowed` 마커를 달면 콘텐츠 매치 QA 가 빈/placeholder 를 허용하고,
+>   **R52(라운지/상품 카드 imageQuery 필수)도 bypass** 된다 (2026-07-09 충돌 해소 — 와이어에
+>   콘텐츠 없는 동적 카드에 imageQuery 를 요구하면 날조 금지와 모순. `test_r52_placeholder_bypass.py`).
 >   ⚠️ **placeholder 를 `bg-secondary`(회색)로 만들지 말 것** — 바로 위/아래에 회색 밴드(규칙 13
 >   강조 섹션)가 있으면 *같은 회색 + 0 gap* 으로 맞붙어 폭 불일치 계단처럼 어색해진다(2026-06-18
 >   회귀). 흰 면+보더로 인접 회색 밴드와 구분하고, 섹션 간 gap(흰 여백)을 확보한다.

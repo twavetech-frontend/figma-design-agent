@@ -1,5 +1,12 @@
 # vibe-tests 베이스라인 — 2026-07-09 (config: full)
 
+> 🔵 **채점기 보정 (2026-07-09, Phase 5 직후)**: R52 가 `_placeholderAllowed`(0-E-3 CMS
+> placeholder)를 bypass 로 인정하게 수정됨 — 아래 표의 D2 83/home-signup 79 는 수정 *전*
+> 채점기 수치다. **보정 채점기로 재채점하면 D2 89 / home-signup 92 / 평균 98** — 이후 룰
+> 개편 비교는 이 보정 수치와 대조할 것 (재현: 같은 배터리로 `evaluate.py --iteration
+> 20260709-baseline` 재실행). Phase 5 판정(indexed 83=83)은 수정 전 채점기로 양측 동일
+> 조건에서 이미 확정.
+
 > Phase 4d 확정 베이스라인. 이후 룰/문서 개편(특히 Phase 5 CLAUDE.md 인덱스화)은 같은
 > 배터리·같은 프로토콜로 재실행해 이 수치와 비교한다. **판정 기준: D2(룰 준수)·D5(DS 정합)가
 > 이 베이스라인보다 떨어지면 개편 머지 금지** (설계 10장).

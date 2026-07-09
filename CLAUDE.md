@@ -295,7 +295,8 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 3. **R52 (×10, ERROR) — 이름에 lounge/product/shop/recommend/item 이 든 카드(≥100×100)는
    `imageQuery` 또는 시각 자식(icon/instance) 필수.** neutral bg + 텍스트만이면 회색 빈 박스라
    빌드 차단. 예: `"imageQuery": "cozy lounge cafe interior natural light"`. bypass:
-   `_imagelessAllowed: "<reason>"`.
+   `_imagelessAllowed: "<reason>"` / CMS·동적 placeholder(0-E-3)면 `_placeholderAllowed: true`
+   (와이어에 콘텐츠 없는 동적 카드는 흰 면+보더 placeholder 가 정답 — imageQuery 날조 금지).
 4. 소수 빈발: **R36** 가로 캐로셀은 마지막 카드 peek 이 보이게(카드 FIXED 폭 353, itemSpacing 12) ·
    **R21.1** 배경 위계 건너뛰기 금지(bg-primary 위에 bg-tertiary 직접 ❌ — secondary 경유) ·
    **R10.4** FAB 는 icon-only 56×56 원형(텍스트 라벨 금지) · **R27** 반복 장식 도형/아이콘 그룹

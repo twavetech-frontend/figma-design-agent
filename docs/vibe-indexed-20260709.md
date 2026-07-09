@@ -49,9 +49,14 @@
 **관찰**: 최다 위반 3종은 인덱스 스포트라이트로 노출했음에도 빈도가 사실상 불변(43/20/10 vs
 40/21/10) — 문서 노출량의 문제가 아니라는 뜻. 후속 후보:
 
-- **R52 는 룰 충돌**: 에이전트들이 라운지 placeholder 카드에 0-E-3(`_placeholderAllowed`,
-  콘텐츠 날조 금지)를 적용했지만 R52 는 `_imagelessAllowed`/imageQuery 만 인정한다.
-  → R52 가 `_placeholderAllowed` 도 bypass 로 인정하거나, 0-E-3/R52 관계를 명확화해야 함.
+- **R52 는 룰 충돌 → 해소됨 (2026-07-09 직후)**: 에이전트들이 라운지 placeholder 카드에
+  0-E-3(`_placeholderAllowed`, 콘텐츠 날조 금지)를 적용했지만 R52 는
+  `_imagelessAllowed`/imageQuery 만 인정했다. → R52 가 `_placeholderAllowed` 를 bypass 로
+  인정하도록 수정(`test_r52_placeholder_bypass.py`). **보정 후 재채점** (양쪽 이터레이션 동일
+  채점기): baseline D2 89·총점 98 / indexed D2 88·총점 97 — home-signup 이 79→92/90 으로
+  해소되고 잔여 ±1 은 케이스별 등락 양방향(indexed 가 stage-detail/tx-modal ↑, schedule/
+  lounge-list ↓)인 N=2 샘플 노이즈. 판정 자체는 위 표(수정 전 채점기, 양측 동일 조건
+  83=83)로 이미 확정. **이후 개편 비교는 보정 채점기 기준 baseline D2 89 와 대조할 것.**
 - R23 WARN 다수는 콘텐츠 칩/셀의 모양 매치(오탐 포함 가능) — inject 가 swap 하므로 빌드
   결과엔 무해하나, lint 정밀도 점검 후보.
 
