@@ -397,12 +397,20 @@ def _gate_json_update(fname, key, value):
 
 
 def _handle_ref_thumb_read(data):
-    """Read 대상이 레퍼런스 썸네일(scripts/ref_thumbnails/*.png)이면 세션별로 basename 누적.
-    → ref_<sid>.json. figma_mcp_client 의 레퍼런스 Read 게이트가 검증(절대 규칙 0-G)."""
+    """Read 대상이 레퍼런스 이미지면 세션별로 basename 누적 → ref_<sid>.json.
+    figma_mcp_client 의 레퍼런스 Read 게이트가 검증(절대 규칙 0-G).
+    대상 2종: scripts/ref_thumbnails/*.png (uibowl 썸네일) +
+    references/external/**/*.jpg|png (mobbin 등 깃 보관 외부 레퍼런스 — 2026-07-09 추가:
+    Step A.0 가 이 경로도 요구하는데 훅이 png 썸네일만 기록해 게이트가 영구 차단되던 드리프트)."""
     sid = data.get("session_id")
     fp = (data.get("tool_input") or {}).get("file_path") or ""
     norm = fp.replace("\\", "/")
-    if not sid or "/ref_thumbnails/" not in norm or not norm.lower().endswith(".png"):
+    if not sid:
+        return
+    lower = norm.lower()
+    is_thumb = "/ref_thumbnails/" in norm and lower.endswith(".png")
+    is_external = "/references/" in norm and lower.endswith((".png", ".jpg", ".jpeg"))
+    if not (is_thumb or is_external):
         return
     _gate_json_update("ref_%s.json" % sid, "read", os.path.basename(norm))
 
