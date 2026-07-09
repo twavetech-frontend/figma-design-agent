@@ -131,11 +131,11 @@ def test_content_skips_icon_logo_keys():
 
 
 def test_rules_excludes_pipeline_process_rules():
-    """4c 알려진 비대칭 — S20/S21(레퍼런스 경로/검색 로그)은 build Step A.0 이 주입하는
-    프로세스 룰이라 vibe-tests D2 에서 제외."""
+    """4c/4d 알려진 비대칭 — S20/S21(레퍼런스 경로/검색 로그)·R24(status bar 자동 삽입 안내)는
+    build 파이프라인이 처리하는 프로세스 룰이라 vibe-tests D2 에서 제외."""
     s = ev.score_rules(GOOD_BP)
     for rid in s["errorRules"] + s["warnRules"]:
-        assert not rid.startswith(("S20", "S21")), rid
+        assert not rid.startswith(("S20", "S21", "R24-status-bar")), rid
 
 
 def test_declarations_good_vs_bad():
@@ -223,7 +223,8 @@ def test_default_testset_sanity():
     assert len(ids) == len(set(ids))
     for c in ts["cases"]:
         assert c.get("prdBrief") and isinstance(c.get("wireframeContent"), dict)
-        assert c.get("expected", {}).get("dsComponents")
+        # dsComponents 는 존재해야 하지만 빈 리스트 허용 (full modal 등 필수 컴포넌트 없는 화면)
+        assert isinstance(c.get("expected", {}).get("dsComponents"), list)
 
 
 def test_default_testset_battery_complete():

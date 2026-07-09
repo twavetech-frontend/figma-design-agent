@@ -420,7 +420,7 @@
       "prdBrief": "거래 스케줄 상세 full modal — 상단 X 닫기만. 월별 거래 스케줄 표 + 안내 문구. _screenType modal.",
       "wireframeContent": {
         "header": {
-          "close": "X"
+          "close_icon": "X"
         },
         "title": "거래 스케줄",
         "table": {
@@ -433,15 +433,13 @@
         "notice": "매월 18일에 자동으로 납입돼요"
       },
       "expected": {
-        "dsComponents": [
-          "Action Button"
-        ],
+        "dsComponents": [],
         "forbiddenPatterns": [
           "status-bar-node",
           "raw-tab-bar-frame",
           "segmented-view-tabs"
         ],
-        "notes": "modal(2-D): X만·Footer/TabBar/홈 섹션 금지(R58 함정)·root HUG. 채점 전용 — 에이전트 비노출."
+        "notes": "full modal 은 X-only 헤더(2-D) — 필수 DS 컴포넌트 없음(Action Button 기대는 4d 보정으로 제거: 표 열람 모달에 CTA 는 정당하게 없을 수 있음). R58 함정(홈 섹션 유입 금지) 유지. 채점 전용 — 에이전트 비노출."
       }
     },
     {

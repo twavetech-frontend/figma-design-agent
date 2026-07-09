@@ -105,10 +105,12 @@ def score_validity(bp: dict) -> dict:
 
 # ── D2 룰 준수 ──────────────────────────────────────────────────────────────
 
-# D2 제외 룰 (4c 알려진 비대칭): S20/S21 계열(레퍼런스 경로/검색 로그)은 build 파이프라인
-# Step A.0 이 자동 생성·주입하는 프로세스 룰이라, build 없는 vibe-tests 에선 구조적으로
-# 불만족 → 채점에서 제외. 레퍼런스 학습 자체는 프롬프트+실런에서 별도 확인.
-_EXCLUDED_RULE_PREFIXES = ("S20", "S21")
+# D2 제외 룰 (4c/4d 알려진 비대칭):
+#  - S20/S21 계열(레퍼런스 경로/검색 로그): build Step A.0 이 자동 생성·주입하는 프로세스
+#    룰이라 build 없는 vibe-tests 에선 구조적으로 불만족.
+#  - R24-status-bar: "status bar 없음 — 빌드가 자동 삽입" 정보성 WARN — 규칙 1(blueprint 에
+#    status bar 넣지 말 것)을 올바르게 지킨 blueprint 일수록 뜨는 균일 노이즈.
+_EXCLUDED_RULE_PREFIXES = ("S20", "S21", "R24-status-bar")
 
 
 def score_rules(bp: dict) -> dict:
