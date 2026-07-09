@@ -107,8 +107,7 @@
       "expected": {
         "dsComponents": [
           "Tab Bar",
-          "Tool Bar",
-          "Action Button"
+          "Tool Bar"
         ],
         "forbiddenPatterns": [
           "status-bar-node",
@@ -116,7 +115,7 @@
           "segmented-view-tabs",
           "raw-navbar-frame"
         ],
-        "notes": "거래현황/누적거래 는 underline tabs 여야 함 (0-J). 채점 전용 — 에이전트 비노출."
+        "notes": "거래현황/누적거래 는 underline tabs 여야 함 (0-J). 가입 전 홈은 풀 CTA(Action Button)가 정당하게 없을 수 있어 기대에서 제외(4c 보정). 채점 전용 — 에이전트 비노출."
       }
     },
     {

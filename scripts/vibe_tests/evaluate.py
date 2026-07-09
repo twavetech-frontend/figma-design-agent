@@ -50,25 +50,43 @@ def _walk(node):
             yield from _walk(c)
 
 
+# 텍스트 수집 대상 — TEXT 노드 외에 DS 인스턴스 마커도 콘텐츠를 담는다 (4c 보정:
+# '내 스케줄'(_navTitle)·'참여하기'(_instanceText) 가 오탐 missing 으로 잡히던 문제).
+_TEXT_FIELDS = ("text", "characters")
+_MARKER_TEXT_FIELDS = ("_navTitle", "_instanceText")
+_MARKER_LIST_FIELDS = ("_segLabels", "_navIcons")
+
+
 def _all_texts(bp: dict) -> str:
     parts = []
     for n in _walk(bp):
-        for f in ("text", "characters"):
+        for f in _TEXT_FIELDS + _MARKER_TEXT_FIELDS:
             v = n.get(f)
             if isinstance(v, str) and v:
                 parts.append(v)
+        for f in _MARKER_LIST_FIELDS:
+            v = n.get(f)
+            if isinstance(v, list):
+                parts.extend(str(x) for x in v if x)
     return _norm_text("".join(parts))
 
 
-def _content_values(obj) -> list:
+# 콘텐츠 값 수집에서 제외하는 키 — 아이콘/로고 식별자는 텍스트가 아니라 DS 컴포넌트에
+# 내장되는 시각 요소라 blueprint 텍스트 커버리지로 잴 수 없다 (4c 알려진 비대칭).
+_CONTENT_SKIP_KEY = re.compile(r"(icon|logo)", re.I)
+
+
+def _content_values(obj, key: str = "") -> list:
     """wireframeContent dict 의 모든 string 값 (중첩 dict/list 포함, 키 제외)."""
+    if _CONTENT_SKIP_KEY.search(key or ""):
+        return []
     out = []
     if isinstance(obj, dict):
-        for v in obj.values():
-            out.extend(_content_values(v))
+        for k, v in obj.items():
+            out.extend(_content_values(v, k))
     elif isinstance(obj, list):
         for v in obj:
-            out.extend(_content_values(v))
+            out.extend(_content_values(v, key))
     elif isinstance(obj, str) and obj.strip():
         out.append(obj)
     return out
@@ -87,9 +105,16 @@ def score_validity(bp: dict) -> dict:
 
 # ── D2 룰 준수 ──────────────────────────────────────────────────────────────
 
+# D2 제외 룰 (4c 알려진 비대칭): S20/S21 계열(레퍼런스 경로/검색 로그)은 build 파이프라인
+# Step A.0 이 자동 생성·주입하는 프로세스 룰이라, build 없는 vibe-tests 에선 구조적으로
+# 불만족 → 채점에서 제외. 레퍼런스 학습 자체는 프롬프트+실런에서 별도 확인.
+_EXCLUDED_RULE_PREFIXES = ("S20", "S21")
+
+
 def score_rules(bp: dict) -> dict:
     from design_rules import REGISTRY, Severity
-    violations = REGISTRY.run_lint(copy.deepcopy(bp))
+    violations = [v for v in REGISTRY.run_lint(copy.deepcopy(bp))
+                  if not v.rule_id.startswith(_EXCLUDED_RULE_PREFIXES)]
     errs = [v for v in violations if v.severity == Severity.ERROR]
     warns = [v for v in violations if v.severity == Severity.WARN]
     return {"score": _clamp(100 - 15 * len(errs) - 3 * len(warns)),

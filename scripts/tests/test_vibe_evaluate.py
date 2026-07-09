@@ -104,6 +104,40 @@ def test_content_whitespace_normalized():
     assert ev.score_content(bp, CASE)["score"] == 100
 
 
+def test_content_covers_instance_markers():
+    """4c 보정 — _navTitle/_instanceText/_segLabels 안의 값도 커버로 인정
+    (DS 인스턴스 마커가 콘텐츠를 담는다: Tool Bar 타이틀, Action Button 라벨)."""
+    case = {"wireframeContent": {"nav": {"title": "내 스케줄"},
+                                 "cta": "참여 확정하기", "tabs": {"a": "입금", "b": "지급"}}}
+    bp = {"type": "frame", "children": [
+        {"name": "NavBar", "type": "instance", "componentKey": "SET:x:Type=Detail view",
+         "_navTitle": "내 스케줄"},
+        {"name": "Toggle", "type": "instance", "componentKey": "k",
+         "_segLabels": ["입금", "지급"], "_forceSegmented": True},
+        {"name": "CTA", "type": "instance", "componentKey": "k2",
+         "_instanceText": "참여 확정하기"},
+    ]}
+    assert ev.score_content(bp, case)["score"] == 100
+
+
+def test_content_skips_icon_logo_keys():
+    """4c 알려진 비대칭 — 아이콘/로고 식별자 키는 텍스트 커버리지 대상에서 제외
+    (DS 컴포넌트에 시각 요소로 내장 — blueprint 텍스트로 잴 수 없음)."""
+    case = {"wireframeContent": {"navbar": {"logo": "imin", "icons": ["bell", "chat"]},
+                                 "title": "라운지"}}
+    bp = {"type": "frame", "children": [{"type": "text", "text": "라운지"}]}
+    s = ev.score_content(bp, case)
+    assert s["score"] == 100 and s["total"] == 1
+
+
+def test_rules_excludes_pipeline_process_rules():
+    """4c 알려진 비대칭 — S20/S21(레퍼런스 경로/검색 로그)은 build Step A.0 이 주입하는
+    프로세스 룰이라 vibe-tests D2 에서 제외."""
+    s = ev.score_rules(GOOD_BP)
+    for rid in s["errorRules"] + s["warnRules"]:
+        assert not rid.startswith(("S20", "S21")), rid
+
+
 def test_declarations_good_vs_bad():
     assert ev.score_declarations(GOOD_BP)["score"] == 100
     bad = ev.score_declarations(BAD_BP)

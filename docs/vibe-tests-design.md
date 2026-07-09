@@ -116,8 +116,14 @@ task 파일: scripts/vibe_tests/results/<iter>/tasks/<id>-<n>.json (prdBrief + w
 | **D5 DS 정합** (0~100) | expected.dsComponents 의 인스턴스 사용 커버리지 + forbiddenPatterns 검출(raw tab bar frame, status bar 노드, non-forced `_segLabels` 뷰탭 등 — 구조 매처) | ds_catalog + 신규 매처 |
 
 - 케이스 점수 = 5차원 평균. 이터레이션 점수 = 케이스 평균 + 차원별 분해 테이블.
-- **알려진 비대칭 문서화** (Astryx "Known Accepted Asymmetries"): D4-② 는 N=2 라 분산이 큼
-  (참고 지표로 취급, 케이스 점수 가중치 낮게 시작: D4-② 는 ±10 보정 항).
+- **알려진 비대칭 문서화** (Astryx "Known Accepted Asymmetries"):
+  - D4-② 는 N=2 라 분산이 큼 (참고 지표 — ±10 보정 항으로만 반영).
+  - **S20/S21 계열은 D2 에서 제외** (2026-07-09 스모크 보정): 레퍼런스 경로/검색 로그는
+    build Step A.0 이 자동 생성·주입하는 프로세스 룰이라 build 없는 vibe-tests 에선 구조적
+    불만족. 레퍼런스 학습 자체는 프롬프트가 지시하고 실런 로그로 확인.
+  - **D3 는 DS 인스턴스 마커(_navTitle/_instanceText/_segLabels/_navIcons)도 텍스트로 스캔**
+    (2026-07-09 스모크 보정 — Tool Bar 타이틀/버튼 라벨이 오탐 missing 으로 잡히던 문제),
+    **아이콘/로고 식별자 키(icon·logo)는 커버리지 대상에서 제외** (DS 컴포넌트 내장 시각 요소).
 
 ## 7. 리포트 포맷
 
