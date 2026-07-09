@@ -317,6 +317,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 - **novelty 게이트**: 직전 빌드와 비주얼 시그니처 ≥80% 유사 또는 같은 `_designDirection.id` → 차단.
 - **통독 게이트**: `src/기획` digest 통독+ack 없으면 빌드 차단 (learn-planning → Read 통독 → ack-planning).
+- **S20/S21 — root `references[]` 도 필수** (빌드 전에 미리 넣을 것 — 없으면 lint ERROR 차단): 항목마다
+  `{"section","ref":"<이미지 경로>","extract":"<실제 본 내용>","_searchLog":{"queries":[…],
+  "candidates":[경로 ≥3],"chosen":"<ref 와 동일 경로>","copyNotes":"<무엇을 어떻게 반영했는지>"}}`.
+  0-G 로 Read 한 썸네일들의 실제 검색 트레일로 채운다(날조 금지). bypass: `_referencesSkipped: "<reason>"`.
 - **S22**: 이전 archetype config 재사용 금지 — 콘텐츠는 와이어에서 새로 추출.
 - bypass(단순 재빌드 등 정당 사유만, 사유 문자열 필수): `_conceptSkipped` / `_designDirectionSkipped` /
   `_wireframeDivergenceSkipped` / `_wireframeContentSkipped` / `_noveltySkipped`.
