@@ -4015,6 +4015,85 @@ def _status_bar_fix_needed(node: dict, expected_h: float = _STATUS_BAR_H) -> boo
     return False
 
 
+_STATUS_BAR_NAMES = ("status bar", "statusbar", "status_bar")
+
+
+def _is_error_status_bar_frame(node) -> bool:
+    """R24 inject 의 componentKey 가 stale/미게시라 import 실패했을 때 code.js 가 남기는
+    '⚠ Status Bar' 텍스트를 담은 에러 FRAME 감지 (순수 함수 — 테스트 대상)."""
+    if not isinstance(node, dict):
+        return False
+    if (node.get("type") or "").upper() != "FRAME":
+        return False
+    if (node.get("name") or "").strip().lower() not in _STATUS_BAR_NAMES:
+        return False
+    for ch in (node.get("children") or []):
+        txt = ch.get("characters") or ch.get("text") or ""
+        if (ch.get("type") or "").upper() == "TEXT" and "⚠" in txt:
+            return True
+    return False
+
+
+def _recover_error_status_bar_live(root_node_id: str) -> bool:
+    """🔴 Status Bar 에러 프레임 자동 복구 (2026-07-10, 사용자 지시 옵션 1).
+
+    R24 inject 가 stale 키로 instance 노드를 blueprint 에 박으면 import 실패 →
+    ⚠ 에러 FRAME 이 되고, 'Status Bar 노드가 이미 있음'으로 인식돼 code.js 의 이름 기반
+    FORCED 삽입(정상 폴백)까지 억제된다. 여기서 에러 프레임을 감지해 같은 페이지 다른
+    화면의 Status Bar INSTANCE 를 clone 으로 교체한다 — 키가 다시 stale 해져도 빌드가
+    자가 복구 (실측 회귀: imin_signup_home_20260709, 수동 복구 ~4분 → 자동화).
+    직후 _enforce_status_bar_size_live 가 FILL×FIXED 62 를 재단언한다."""
+    try:
+        info = parse_content(call_tool("get_node_info", {"nodeId": root_node_id})).get("json") or {}
+    except Exception:
+        return False
+    err = None
+    for c in (info.get("children") or [])[:3]:
+        if _is_error_status_bar_frame(c):
+            err = c
+            break
+    if not err:
+        return False
+    # 같은 페이지의 다른 프레임 첫 자식에서 Status Bar INSTANCE 소스 탐색
+    try:
+        doc = parse_content(call_tool("get_document_info", {})).get("json") or {}
+    except Exception:
+        return False
+    source_id = None
+    for pc in (doc.get("children") or []):
+        if pc.get("id") == root_node_id or (pc.get("type") or "").upper() != "FRAME":
+            continue
+        if (pc.get("width") or 0) < 300:  # 모바일 화면 프레임만 후보
+            continue
+        try:
+            pinfo = parse_content(call_tool("get_node_info", {"nodeId": pc["id"]})).get("json") or {}
+        except Exception:
+            continue
+        for cc in (pinfo.get("children") or [])[:2]:
+            if ((cc.get("type") or "").upper() == "INSTANCE"
+                    and (cc.get("name") or "").strip().lower() in _STATUS_BAR_NAMES):
+                source_id = cc.get("id")
+                break
+        if source_id:
+            break
+    if not source_id:
+        print("  [status-bar-recover] ⚠ 에러 프레임 발견 — 페이지에 복제할 Status Bar 인스턴스가 없어 수동 처리 필요 "
+              "(DS 파일 연결 후 ds_catalog 'Status Bar' 키 갱신 권장)")
+        return False
+    try:
+        cloned = parse_content(call_tool("clone_node", {"nodeId": source_id})).get("json") or {}
+        new_id = cloned.get("id")
+        if not new_id:
+            return False
+        call_tool("insert_child", {"parentId": root_node_id, "childId": new_id, "index": 0})
+        call_tool("delete_node", {"nodeId": err.get("id")})
+        print(f"  [status-bar-recover] ✓ ⚠ 에러 프레임 → Status Bar 인스턴스 clone({source_id}) 교체 (stale 키 자동 복구)")
+        return True
+    except Exception as e:
+        print(f"  [status-bar-recover] ⚠ 복구 실패: {e}")
+        return False
+
+
 def _enforce_status_bar_size_live(root_node_id: str) -> int:
     """🔴 Status Bar = 가로 FILL × 세로 FIXED 62 강제 (2026-06-12 사용자 회귀 보고).
 
@@ -9686,6 +9765,9 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
 
     print("\n[규칙] Status Bar 393×62 FIXED 강제 (2026-06-12 HUG 변형 복구) 적용 중...")
     try:
+        # 2026-07-10: stale 키 import 실패로 ⚠ 에러 프레임이 된 Status Bar 를 먼저 자동
+        # 교체(같은 페이지 인스턴스 clone) — 그 후 size 백스톱이 FILL×FIXED 62 재단언.
+        _recover_error_status_bar_live(root_node_id)
         _enforce_status_bar_size_live(root_node_id)
     except Exception as e:
         print(f"  [status-bar-size] 실패 (무시하고 계속): {e}")

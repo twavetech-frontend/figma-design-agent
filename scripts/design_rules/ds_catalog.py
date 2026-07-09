@@ -29,7 +29,10 @@ COMPONENT_KEYS = {
     "Pagination dot group md Dot Framed": "62c7b2992edd5f2b5ae5273cb89b2588894bdc3d",
 
     # ── Mobile system chrome ───────────────────────────────────
-    "Status Bar":           "e11cb49d275c972b7d40242be9b22c26b3dd633a",  # iPhone 9:41
+    # 2026-07-10 키 갱신: 구 키(e11cb49d…)는 import 실패(미게시/구버전) — R24 inject 가
+    # 이 키로 instance 를 박아 ⚠ 에러 프레임이 되고 code.js 이름 기반 폴백까지 억제되던
+    # 회귀. 신 키는 DS 파일(Imin Design System) 연결 상태에서 get_local_components 실측 추출.
+    "Status Bar":           "13557b1ed59ce3f8c2dfbf9df46ec8fa7f772486",  # iPhone 9:41
 
     # ── Bottom Tab Bar (DS 'Tab bar' set, 2026-06-02 추출) ──────
     # variant prop "Selected": 1.홈 / 2 커뮤니티 / 3 스테이지 / 4 라운지 / 5 나.
