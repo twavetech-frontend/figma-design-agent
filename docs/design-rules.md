@@ -1,5 +1,11 @@
 # Design Rules
 
+> ⛔ **DEPRECATED (2026-07-09 Phase 5)** — 이 문서는 **stale** 하다 (폐기된 룰이 다수 남아 있음:
+> Aqua 권장(현행: 자제 2-J), Section Divider 자동 삽입(현행: 폐기 2-E), hero 30px 자동 승격(현행:
+> 삭제), Footer bg-secondary(현행: 배경 없음), FAB pill 120×44(현행: icon-only 56×56) 등).
+> **읽지 말 것.** 현행 룰: CLAUDE.md 압축 인덱스 + `python3 scripts/figma_mcp_client.py rule <id>`
+> (`docs/design-rules-detail.md`). 이 파일은 과거 이력 참고용으로만 잔존.
+
 > **디자인 생성 전 반드시 읽기: 기본 빌드 규칙 (MUST READ FIRST)**
 
 ## 기본 빌드 규칙 (디자인 생성 시 첫 번째로 적용)

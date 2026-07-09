@@ -14624,6 +14624,77 @@ def cmd_search(query: str, json_out: bool = False) -> None:
     print("상세: python3 scripts/figma_mcp_client.py component \"<이름>\"")
 
 
+# ── rule 명령 (Phase 5 인덱스화 retrieval, 2026-07-09) ─────────────────────────
+# CLAUDE.md 는 압축 인덱스만 담고, 룰 상세 원문은 docs/design-rules-detail.md 로 이관됐다.
+# 이 명령이 그 문서를 룰 id 로 조회하는 retrieval 표면이다 (Astryx: "상세는 retrieval 로").
+
+RULE_DETAIL_DOC = os.path.join(os.path.dirname(__file__), "..", "docs", "design-rules-detail.md")
+
+# 앵커 = 룰 섹션 시작 라인. 3가지 표기 + 특수 섹션.
+_RULE_RE_ABS = re.compile(r"\*\*절대 규칙 ([0-9][0-9A-Za-z\-]*) —")      # > 🔴 **절대 규칙 0-J — …
+_RULE_RE_BQ = re.compile(r"^>\s*\S{0,4}\s*\*\*([0-9][0-9A-Za-z\-]*)\.")  # > 🔴 **2-G-2. …
+_RULE_RE_HDR = re.compile(r"^###\s+([0-9][0-9A-Za-z\-]*)\.")             # ### 2-B. …
+_RULE_SPECIAL_ALIASES = {
+    "post-fix": "post-fix", "postfix": "post-fix",
+    "troubleshooting": "troubleshooting", "트러블슈팅": "troubleshooting",
+    # 창의 프로세스/게이트는 규칙 섹션 서두(룰 2계층 + S24~S26 + novelty)에 있다
+    "creative": "creative", "창의": "creative", "two-tier": "creative",
+    "s22": "creative", "s23": "creative", "s24": "creative", "s25": "creative",
+    "s26": "creative", "novelty": "creative",
+    # 부모 섹션에 내장된 하위 룰 (자체 앵커 없음)
+    "13-b": "13",
+}
+
+
+def _parse_rule_sections():
+    """detail 문서를 (id → (title, [lines])) 로 파싱. 섹션 = 앵커 라인 ~ 다음 앵커 직전."""
+    if not os.path.exists(RULE_DETAIL_DOC):
+        print("docs/design-rules-detail.md 가 없습니다 — 레포 상태 확인.")
+        sys.exit(1)
+    lines = open(RULE_DETAIL_DOC, encoding="utf-8").read().splitlines()
+    anchors = []  # (line_idx, id, title)
+    for i, ln in enumerate(lines):
+        m = _RULE_RE_ABS.search(ln) or _RULE_RE_BQ.match(ln) or _RULE_RE_HDR.match(ln)
+        if m:
+            anchors.append((i, m.group(1).upper(), ln.strip().lstrip("> #").strip()))
+            continue
+        if ln.startswith("## 빌드 후 자동 후처리"):
+            anchors.append((i, "POST-FIX", ln.strip("# ").strip()))
+        elif ln.startswith("## 트러블슈팅"):
+            anchors.append((i, "TROUBLESHOOTING", ln.strip("# ").strip()))
+        elif ln.startswith("## 디자인 생성 필수 규칙"):
+            anchors.append((i, "CREATIVE", "창의 프로세스 — 룰 2계층 + S22~S26/novelty 게이트"))
+    sections = {}
+    order = []
+    for n, (start, rid, title) in enumerate(anchors):
+        end = anchors[n + 1][0] if n + 1 < len(anchors) else len(lines)
+        if rid not in sections:  # 같은 id 첫 앵커 우선
+            sections[rid] = (title, lines[start:end])
+            order.append(rid)
+    return sections, order
+
+
+def cmd_rule(rule_id: str = None, list_all: bool = False) -> None:
+    """디자인 룰 상세 원문 조회 — CLAUDE.md 압축 인덱스의 retrieval 짝."""
+    sections, order = _parse_rule_sections()
+    if list_all or not rule_id:
+        print("디자인 룰 %d개 — rule <id> 로 상세 원문 조회 (예: rule 0-J):" % len(order))
+        for rid in order:
+            print("  %-16s %s" % (rid, sections[rid][0][:88]))
+        return
+    key = rule_id.strip().upper()
+    key = _RULE_SPECIAL_ALIASES.get(key.lower(), key)
+    if key.upper() not in sections:
+        cands = [r for r in order if key.upper() in r]
+        print("룰 '%s' 을 찾지 못했습니다." % rule_id)
+        if cands:
+            print("후보: %s" % ", ".join(cands))
+        print("전체 목록: python3 scripts/figma_mcp_client.py rule --list")
+        sys.exit(1)
+    title, body = sections[key.upper()]
+    print("\n".join(body).rstrip())
+
+
 # CLI 자기서술 매니페스트 (Astryx manifest 패턴) — 에이전트가 --help 스크래핑/CLAUDE.md 없이
 # 명령 표면을 발견한다. ⚠️ main() 의 dispatch 분기와 이 테이블은 드리프트 가드 테스트
 # (test_manifest.py)가 동기화를 강제한다 — 명령 추가 시 반드시 여기에도 등록할 것.
@@ -14635,6 +14706,8 @@ CLI_COMMANDS = [
      "description": "DS 컴포넌트 do/don't 가이드 + componentKey 조회 (dense 기본, --full 로 예시/props)"},
     {"name": "search", "usage": "search <쿼리> [--json]", "json": True,
      "description": "컴포넌트 가이드 + ds_catalog 통합 랭킹 검색"},
+    {"name": "rule", "usage": "rule <id>|--list",
+     "description": "디자인 룰 상세 원문 조회 (CLAUDE.md 압축 인덱스의 retrieval — docs/design-rules-detail.md)"},
     {"name": "manifest", "usage": "manifest [--json]", "json": True,
      "description": "이 CLI 의 명령 표면 자기서술 (OpenAPI 처럼 — 에이전트 self-discovery)"},
     {"name": "learn-planning", "usage": "learn-planning [--force]",
@@ -14723,6 +14796,9 @@ def main():
             print("Usage: figma_mcp_client.py search <쿼리> [--json]")
             sys.exit(1)
         cmd_search(_q, json_out="--json" in sys.argv)
+    elif cmd == "rule":
+        _rid = next((a for a in sys.argv[2:] if not a.startswith("--")), None)
+        cmd_rule(_rid, list_all="--list" in sys.argv)
     elif cmd == "manifest":
         cmd_manifest(json_out="--json" in sys.argv)
     elif cmd == "learn-planning":
