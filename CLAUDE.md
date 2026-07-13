@@ -253,6 +253,13 @@ python3 scripts/figma_mcp_client.py manifest                     # CLI 명령 �
 # 2. Blueprint 조립
 python3 scripts/figma_mcp_client.py assemble scripts/my_config.json
 
+# 2.5 🔴 prebuild — 빌드 전 필수 (2026-07-13 신설, 게이트 차단 왕복 제거)
+#    validate + 빌드동일 lint + Step A.0 레퍼런스 사전 검색을 수 초에 실행.
+#    출력된 썸네일들을 Read 로 학습해 두면 build 가 0-G 게이트 차단 없이 1회 통과.
+#    ⚠️ 가이드 10종 밖 DS componentKey 는 사용자 승인 화면 노드 구조(get_nodes_info)
+#    확인 or 단건 테스트 렌더로 실물 검증 후 사용 (2026-07-13 Select/Tag 렌더 붕괴 교훈).
+python3 scripts/figma_mcp_client.py prebuild scripts/blueprint_assembled_XXX.json
+
 # 3. 빌드 (+ 자동 post-fix)
 python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
