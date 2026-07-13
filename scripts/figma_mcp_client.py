@@ -14947,10 +14947,12 @@ def cmd_validate_blueprint(path: str, with_refs: bool = False) -> None:
     violations, lint_errors, lint_warns = _run_blueprint_lint(bp)
     if violations:
         print(f"  [LINT] {len(lint_errors)} ERROR / {len(lint_warns)} WARN")
-        for v in violations[:30]:
+        # ERROR 를 항상 먼저 (30건 절단에 ERROR 가 묻히던 표시 버그 fix)
+        ordered = lint_errors + [v for v in violations if v not in lint_errors]
+        for v in ordered[:30]:
             print(f"    {v.format()}")
-        if len(violations) > 30:
-            print(f"    ... +{len(violations) - 30}개")
+        if len(ordered) > 30:
+            print(f"    ... +{len(ordered) - 30}개")
     else:
         print("  [LINT] ✓ 모든 룰 통과")
 
