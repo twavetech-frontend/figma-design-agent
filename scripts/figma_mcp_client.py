@@ -12079,8 +12079,12 @@ def _fix_overflow_children(root_id: str) -> int:
         left_overflow = nx < (rx - 1)
         # 2026-05-27 — carousel 자식은 FIXED width 의도이므로 절대 FILL 금지.
         # 부모 frame name 에 'scroll' / 'carousel' 포함하면 그 직계 자식 skip.
+        # 2026-07-13 — 짧은 텍스트(숫자 셀 라벨 등, ≤6자)는 FILL 금지: 부모 셀의 CENTER
+        # 정렬이 깨져 좌측 쏠림(Turn Cell 6·7 회귀). 셀(frame) FILL 만으로 overflow 는 해소됨.
+        is_short_text = ((node.get("type") or "").upper() == "TEXT"
+                         and len((node.get("characters") or "").strip()) <= 6)
         if (right_overflow or left_overflow) and node.get("layoutSizingHorizontal") != "FILL":
-            if _is_icon_like(node) or _is_small_pill(node) or parent_is_carousel:
+            if _is_icon_like(node) or _is_small_pill(node) or parent_is_carousel or is_short_text:
                 pass
             else:
                 queue.append({"nodeId": node.get("id"), "horizontal": "FILL"})
