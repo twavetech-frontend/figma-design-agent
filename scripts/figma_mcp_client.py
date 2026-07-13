@@ -5516,8 +5516,9 @@ def cmd_build(blueprint_file: str):
             # 🔴 intent 존중 (2026-06-10): `_keepSizing` 노드의 선언 H/V 사이징을 최종 재단언.
             # FILL/vertical-hug enforcer 가 author HUG/FIXED 를 망쳐도 여기서 되돌린다.
             n_ks = _enforce_keep_sizing_live(root_id, _collect_keep_sizing(_final_bp))
-            if n_fw or n_bp or n_ks:
-                print(f"[Step E.7.7] blueprint FIXED 폭 {n_fw}건 + padding {n_bp}건 + _keepSizing {n_ks}건 최종 복원")
+            n_tf = _enforce_text_fill_live(root_id, _collect_text_fill_keys(_final_bp))
+            if n_fw or n_bp or n_ks or n_tf:
+                print(f"[Step E.7.7] blueprint FIXED 폭 {n_fw}건 + padding {n_bp}건 + _keepSizing {n_ks}건 + TEXT FILL {n_tf}건 최종 복원")
         except Exception as e:
             print(f"  [bp-final] 실패 (무시): {e}")
 
@@ -7968,6 +7969,64 @@ def _enforce_blueprint_padding(root_id: str, pad_map: dict) -> int:
     return fixed[0]
 
 
+def _collect_text_fill_keys(blueprint: Optional[dict]) -> set:
+    """blueprint 에서 layoutSizingHorizontal=FILL 을 명시한 TEXT 의 (부모경로, 텍스트20자) 수집.
+
+    2026-07-13 회귀 2회: HORIZONTAL 행(타이틀 FILL + 우측 아이콘)에서 build/enforcer 가
+    TEXT 의 FILL 을 HUG 로 풀어 아이콘이 타이틀 옆에 붙음 (북마크 우측 정렬 파괴).
+    bp-padding 과 같은 철학으로 E.7.7 에서 최종 재단언한다.
+    """
+    out = set()
+    if not isinstance(blueprint, dict):
+        return out
+    root = blueprint.get("root") or blueprint
+
+    def walk(node, chain):
+        if not isinstance(node, dict):
+            return
+        nm = node.get("name") or ""
+        cur = chain + ((nm,) if nm else ())
+        if (node.get("type") or "").lower() == "text" \
+                and (node.get("layoutSizingHorizontal") or "").upper() == "FILL":
+            out.add((chain, (node.get("text") or "")[:20]))
+        for c in (node.get("children") or node.get("_originalChildren") or []):
+            walk(c, cur)
+    walk(root, ())
+    return out
+
+
+def _enforce_text_fill_live(root_id: str, keys: set) -> int:
+    """빌드 트리에서 blueprint 명시 TEXT FILL 을 재단언 (배치 1콜, 멱등)."""
+    if not keys:
+        return 0
+    queue = []
+
+    def walk(n, chain):
+        if not isinstance(n, dict):
+            return
+        nm = n.get("name") or ""
+        if (n.get("type") or "").upper() == "TEXT":
+            key = (chain, (n.get("characters") or "")[:20])
+            if key in keys and (n.get("layoutSizingHorizontal") or "").upper() != "FILL":
+                queue.append({"nodeId": n["id"], "horizontal": "FILL"})
+            return
+        cur = chain + ((nm,) if nm else ())
+        for c in n.get("children", []) or []:
+            walk(c, cur)
+
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+        if isinstance(items, list) and items:
+            walk(items[0].get("document") or items[0], ())
+    except Exception as e:
+        print(f"  [text-fill-final] root fetch fail: {e}")
+        return 0
+    n = _set_sizing_batch(queue)
+    if n:
+        print(f"  [text-fill-final] ✓ blueprint 명시 TEXT FILL {n}건 복원 (타이틀+우측 아이콘 행 정렬)")
+    return n
+
+
 def _collect_radius_clip_paths(blueprint: Optional[dict]) -> dict:
     """🔴 절대규칙 0-Q (2026-06-04): radius>0 frame 의 {이름경로: layoutMode} 수집.
 
@@ -10126,6 +10185,7 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
                     _fw_bp = json.load(_ff)
         _enforce_fixed_widths(root_node_id, _collect_fixed_widths(_fw_bp))
         _enforce_blueprint_padding(root_node_id, _collect_blueprint_padding(_fw_bp))
+        _enforce_text_fill_live(root_node_id, _collect_text_fill_keys(_fw_bp))
     except Exception as e:
         print(f"  [fixed-width] 실패 (무시): {e}")
 
