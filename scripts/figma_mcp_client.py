@@ -554,6 +554,36 @@ def init_session() -> str:
     return sid
 
 
+# ── call_tool 타이밍 계측 (2026-07-13 — post-fix 471s 회귀 진단용) ──────────────
+# 도구별 (호출수, 누적초) 를 기록하고, 임계 초과 단건은 즉시 [slow-call] 로 프린트.
+# cmd_post_fix / cmd_build 끝에서 _print_call_stats() 로 상위 오프렌더 출력.
+_CALL_STATS: Dict[str, list] = {}
+_SLOW_CALL_SEC = float(os.environ.get("IMIN_SLOW_CALL_SEC", "3"))
+
+
+def _record_call_stat(name: str, secs: float, args: dict) -> None:
+    st = _CALL_STATS.setdefault(name, [0, 0.0])
+    st[0] += 1
+    st[1] += secs
+    if secs >= _SLOW_CALL_SEC:
+        nid = args.get("nodeId") or args.get("nodeIds") or ""
+        print(f"  [slow-call] {name} {secs:.1f}s" + (f" nodeId={nid}" if nid else ""))
+
+
+def _print_call_stats(label: str = "") -> None:
+    """도구별 누적 시간 상위 8개 출력 후 리셋 — 어디서 시간이 새는지 로그로 남김."""
+    if not _CALL_STATS:
+        return
+    total_n = sum(v[0] for v in _CALL_STATS.values())
+    total_s = sum(v[1] for v in _CALL_STATS.values())
+    top = sorted(_CALL_STATS.items(), key=lambda kv: -kv[1][1])[:8]
+    print(f"\n  [call-stats{(' ' + label) if label else ''}] "
+          f"MCP 호출 {total_n}건 / {total_s:.1f}s — 상위:")
+    for nm, (n, s) in top:
+        print(f"    {nm:32s} {n:4d}건  {s:7.1f}s  (평균 {s / max(n, 1):.2f}s)")
+    _CALL_STATS.clear()
+
+
 def call_tool(name: str, args: dict, msg_id: int = 1) -> List[dict]:
     """Call an MCP tool and return content array."""
     # 방어: set_image_fill에 url 파라미터 사용 차단
@@ -593,10 +623,12 @@ def call_tool(name: str, args: dict, msg_id: int = 1) -> List[dict]:
         args = {**args, "bindings": {
             k: (_binding_value(v) if isinstance(v, str) else v)
             for k, v in args["bindings"].items()}}
+    _t0 = time.time()
     result = mcp_request("tools/call", {
         "name": name,
         "arguments": args
     }, msg_id)
+    _record_call_stat(name, time.time() - _t0, args)
 
     if "error" in result:
         raise Exception(f"MCP error: {result['error']}")
@@ -5586,6 +5618,7 @@ def cmd_build(blueprint_file: str):
 
     total_elapsed = time.time() - start
     print(f"\n{'='*50}")
+    _print_call_stats("build-tail")  # post-fix 이후 구간(바인딩/QA)의 시간 분해
     print(f"전체 완료: {total_elapsed:.1f}s (빌드 {build_elapsed:.1f}s + 후처리)")
     # ⚠️ 2026-05-24 사용자 "다 박아" — latest rootId 명시 (post-fix/screenshot/binding 재사용용)
     if root_id:
@@ -5903,6 +5936,7 @@ def _fix_fill_sizing(tree: dict) -> int:
     # FAB/Tab Bar는 ABSOLUTE로 배치되므로 FILL 변환하면 안 됨
     ABSOLUTE_NAME_KEYWORDS = ("fab", "tab bar", "tabbar")
     fix_count = 0
+    _fill_queue: List[dict] = []  # 2026-07-13 — 개별 호출 대신 배치 큐
 
     # 2026-05-28 — 원형/icon-box frame 식별 (cornerRadius >= w/2 또는 단일 icon 자식)
     # 이전 회귀: piggy-bank box (72×72 cornerRadius 18) + circle (40×40 cornerRadius 999)
@@ -5972,15 +6006,8 @@ def _fix_fill_sizing(tree: dict) -> int:
                 skip = True
 
             if not skip and sizing_h != "FILL":
-                try:
-                    call_tool("set_layout_sizing", {
-                        "nodeId": node_id,
-                        "horizontal": "FILL"
-                    })
-                    fix_count += 1
-                    print(f"  FILL 수정: {node_name} ({node_id}) [{sizing_h} → FILL]")
-                except Exception as e:
-                    print(f"  FILL 수정 실패: {node_name} ({node_id}): {e}")
+                _fill_queue.append({"nodeId": node_id, "horizontal": "FILL"})
+                print(f"  FILL 수정: {node_name} ({node_id}) [{sizing_h} → FILL]")
 
         # 자식 노드 재귀
         current_layout = node.get("layoutMode", "")
@@ -6018,22 +6045,26 @@ def _fix_fill_sizing(tree: dict) -> int:
                     and not any(kw in child_name for kw in ABSOLUTE_NAME_KEYWORDS_LOWER)
                     and not _SKIP_RE.search(child_name)
                     and child.get("layoutPositioning") != "ABSOLUTE"):
-                try:
-                    call_tool("set_layout_sizing", {
-                        "nodeId": child_id,
-                        "horizontal": "FILL"
-                    })
-                    fix_count += 1
-                    depth_label = "루트 자식" if depth == 0 else f"depth {depth + 1}"
-                    print(f"  FILL 강제({depth_label}): {child.get('name', '?')} ({child_id}) [{child_sizing} → FILL]")
-                except Exception as e:
-                    print(f"  FILL 강제 실패: {child.get('name', '?')} ({child_id}): {e}")
+                _fill_queue.append({"nodeId": child_id, "horizontal": "FILL"})
+                depth_label = "루트 자식" if depth == 0 else f"depth {depth + 1}"
+                print(f"  FILL 강제({depth_label}): {child.get('name', '?')} ({child_id}) [{child_sizing} → FILL]")
 
             # 재귀: FRAME/COMPONENT 자식의 하위도 검사
             if child_type in ("FRAME", "COMPONENT") and depth < max_depth:
                 _force_fill_recursive(child, depth + 1, max_depth)
 
     _force_fill_recursive(tree)
+
+    # 2026-07-13 — 개별 set_layout_sizing 라운드트립 대신 배치 1콜 (post-fix 471s 회귀 fix).
+    # dedup: 같은 nodeId 가 walk/강제 두 경로에서 중복 큐잉될 수 있음.
+    _seen_ids = set()
+    _deduped = []
+    for it in _fill_queue:
+        if it["nodeId"] in _seen_ids:
+            continue
+        _seen_ids.add(it["nodeId"])
+        _deduped.append(it)
+    fix_count += _set_sizing_batch(_deduped)
 
     return fix_count
 
@@ -8239,20 +8270,18 @@ def _enforce_multicol_fill_live(root_id: str) -> int:
                     for c in tiles:
                         to_fill[c["id"]] = c
             for c in to_fill.values():
-                try:
-                    call_tool("set_layout_sizing", {"nodeId": c["id"], "horizontal": "FILL"})
-                    fixed[0] += 1
-                except Exception as e:
-                    print(f"  [multicol-fill] '{c.get('id')}' fail: {e}")
+                queue[c["id"]] = {"nodeId": c["id"], "horizontal": "FILL"}
         for c in n.get("children", []) or []:
             walk(c)
 
+    queue: Dict[str, dict] = {}  # 2026-07-13 — 개별 호출 대신 배치 (dedup by nodeId)
     try:
         items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
         if isinstance(items, list) and items:
             walk(items[0].get("document") or items[0])
     except Exception as e:
         print(f"  [multicol-fill] root fetch fail: {e}")
+    fixed[0] = _set_sizing_batch(list(queue.values()))
     if fixed[0]:
         print(f"  [multicol-fill] ✓ 붕괴 컬럼 {fixed[0]}개 FILL 복원 (2-col collapse 차단)")
     return fixed[0]
@@ -10126,6 +10155,7 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
     print(f"  Tab Bar/Stroke 수정: {tab_fixes}건")
     print(f"  텍스트 수정: {text_fixes}건")
     print(f"  루트 높이: {layout_result['root_height']}")
+    _print_call_stats("post-fix")  # 2026-07-13 — 시간이 어디서 새는지 항상 로그에 남김
     print(f"{'='*50}\n")
 
 
@@ -11869,6 +11899,35 @@ def _qa_visual_checks(root_id: str) -> int:
 # 3) small text center — chat-badge 같은 짧은 텍스트가 FILL 폭에 LEFT align되어
 #    부모 frame 중앙 자식과 어긋날 때 CENTER로 자동 변환
 
+def _set_sizing_batch(items: List[dict]) -> int:
+    """set_layout_sizing N건을 plugin 의 set_layout_sizing_batch 1콜로 실행.
+
+    2026-07-13 — post-fix 471s 회귀의 주범이 사이징 개별 호출 라운드트립(1회차에만
+    ~100건)이라 배칭. 플러그인/브리지에 배치 커맨드가 이미 있었는데 Python 이 안 썼음.
+    items: [{"nodeId": ..., "horizontal": "FILL", "vertical": "HUG"}, ...]
+    배치 실패 시 개별 호출 폴백. returns 적용 건수.
+    """
+    if not items:
+        return 0
+    try:
+        res = parse_content(call_tool("set_layout_sizing_batch", {"items": items})).get("json") or {}
+        ok = res.get("succeeded")
+        errs = res.get("errors") or []
+        for e in errs[:5]:
+            print(f"    [sizing-batch] item 실패: {e}")
+        return ok if isinstance(ok, int) else len(items)
+    except Exception as e:
+        print(f"  [sizing-batch] batch 도구 실패 → 개별 폴백: {e}")
+        n = 0
+        for it in items:
+            try:
+                call_tool("set_layout_sizing", {k: v for k, v in it.items()})
+                n += 1
+            except Exception:
+                pass
+        return n
+
+
 def _fix_overflow_children(root_id: str) -> int:
     """root width를 넘어 그려진 자식을 detect → layoutSizingHorizontal=FILL 강제.
 
@@ -11964,23 +12023,19 @@ def _fix_overflow_children(root_id: str) -> int:
             if _is_icon_like(node) or _is_small_pill(node) or parent_is_carousel:
                 pass
             else:
-                try:
-                    call_tool("set_layout_sizing", {
-                        "nodeId": node.get("id"), "horizontal": "FILL",
-                    })
-                    fixed += 1
-                    if left_overflow:
-                        print(f"  [overflow] '{node.get('name')}' x={int(nx)} < root left {int(rx)} → FILL (좌측)")
-                    else:
-                        print(f"  [overflow] '{node.get('name')}' x+w={int(nx+nw)} > root right {int(right_limit)} → FILL (우측)")
-                except Exception:
-                    pass
+                queue.append({"nodeId": node.get("id"), "horizontal": "FILL"})
+                if left_overflow:
+                    print(f"  [overflow] '{node.get('name')}' x={int(nx)} < root left {int(rx)} → FILL (좌측)")
+                else:
+                    print(f"  [overflow] '{node.get('name')}' x+w={int(nx+nw)} > root right {int(right_limit)} → FILL (우측)")
         # 자식 walk — 이 node가 carousel이면 자식들은 parent_is_carousel=True
         node_is_carousel = _is_carousel_name(node.get("name"))
         for c in node.get("children") or []:
             walk(c, node_is_carousel)
 
+    queue: List[dict] = []
     walk(root)
+    fixed = _set_sizing_batch(queue)
     if fixed == 0:
         print("  [overflow] OK — root width 초과 자식 없음")
     return fixed
@@ -13648,8 +13703,9 @@ def _strip_large_brand_fills(root_id: str) -> int:
     WHITE = (0.988, 0.99, 0.992)
     # 🔻 2026-06-12 advisory 로 강등 (전면 개편): 라이브에서 brand 면을 흰카드로 벗기던 동작
     # 중지 — author 의 히어로/강조 컬러 면을 존중한다. 가독성은 _auto_fix_invisible_text(대비
-    # 자동교정)와 _qa_visual_checks 가 별도 방어. WHITE/BORDER 상수는 구 동작 흔적(미사용).
-    _ = (WHITE, BORDER)
+    # 자동교정)와 _qa_visual_checks 가 별도 방어. WHITE 상수는 구 동작 흔적(미사용).
+    # (2026-07-13: 삭제된 BORDER 참조 NameError 로 이 룰 전체가 매 빌드 조용히 죽던 버그 수정)
+    _ = WHITE
     for nid, name in targets:
         print(f"    [스타일-기본값] 큰 brand 면 '{name}' — author 의도 존중(변경 안 함, 의도 확인만)")
     return fixed
@@ -14780,6 +14836,72 @@ def cmd_rule(rule_id: str = None, list_all: bool = False) -> None:
 # CLI 자기서술 매니페스트 (Astryx manifest 패턴) — 에이전트가 --help 스크래핑/CLAUDE.md 없이
 # 명령 표면을 발견한다. ⚠️ main() 의 dispatch 분기와 이 테이블은 드리프트 가드 테스트
 # (test_manifest.py)가 동기화를 강제한다 — 명령 추가 시 반드시 여기에도 등록할 것.
+def _run_blueprint_lint(bp: dict):
+    """cmd_build 의 design_rules LINT 와 동일한 검증을 빌드 밖에서 실행.
+
+    2026-07-13 — validate 가 구조만 보고 룰 lint 를 안 봐서, R22.2 같은 ERROR 가
+    빌드에 가서야 차단돼 왕복이 늘던 문제 해소 (validate/prebuild 공용).
+    returns (violations, errors, warns). import 실패 시 ([], [], []).
+    """
+    try:
+        import sys as _sys
+        _scripts_dir = os.path.dirname(os.path.abspath(__file__))
+        if _scripts_dir not in _sys.path:
+            _sys.path.insert(0, _scripts_dir)
+        from design_rules import REGISTRY as _REG, Severity as _Sev  # noqa: E402
+        violations = _REG.run_lint(bp)
+        errors = [v for v in violations if v.severity == _Sev.ERROR]
+        warns = [v for v in violations if v.severity == _Sev.WARN]
+        return violations, errors, warns
+    except Exception as e:
+        print(f"  [lint] design_rules 로드 실패 — lint 생략: {e}")
+        return [], [], []
+
+
+def cmd_validate_blueprint(path: str, with_refs: bool = False) -> None:
+    """validate: 구조 검증 + design_rules lint (빌드와 동일 기준, 빌드 없이 수 초).
+
+    with_refs=True (prebuild): Step A.0 레퍼런스 검색까지 미리 실행 — 빌드 전에
+    썸네일을 Read 해두면 0-G 게이트에 안 걸려 빌드 왕복 1회로 끝난다 (2026-07-13,
+    23분 회귀의 게이트 차단 2회 왕복 제거).
+    """
+    with open(path) as f:
+        bp = json.load(f)
+    bp = _flatten_padding_objects(bp)
+
+    issues = validate_blueprint(bp)
+    struct_errors = [i for i in issues if i.startswith("ERROR")]
+    struct_warns = [i for i in issues if i.startswith("WARN")]
+    if issues:
+        print(f"{'✗' if struct_errors else '⚠'} 구조 검증: {len(struct_errors)} error(s), {len(struct_warns)} warning(s):")
+        for issue in issues:
+            print(f"  {issue}")
+    else:
+        print("✓ 구조 검증 통과")
+
+    print("\n[design_rules:LINT] 룰 검증 중 (빌드와 동일 기준)...")
+    violations, lint_errors, lint_warns = _run_blueprint_lint(bp)
+    if violations:
+        print(f"  [LINT] {len(lint_errors)} ERROR / {len(lint_warns)} WARN")
+        for v in violations[:30]:
+            print(f"    {v.format()}")
+        if len(violations) > 30:
+            print(f"    ... +{len(violations) - 30}개")
+    else:
+        print("  [LINT] ✓ 모든 룰 통과")
+
+    if with_refs:
+        # Step A.0 과 동일 검색 — 빌드가 요구할 썸네일 목록을 미리 노출
+        _auto_search_uibowl_references(bp)
+        if _LAST_REFERENCE_THUMBS:
+            print("👉 위 썸네일들을 지금 Read 로 학습해 두면 build 의 0-G 게이트를 한 번에 통과한다.")
+
+    if struct_errors or lint_errors:
+        print(f"\n✗ ERROR {len(struct_errors) + len(lint_errors)}건 — blueprint 수정 후 다시 실행 (이대로 build 하면 차단됨)")
+        sys.exit(1)
+    print("\n✓ build 가능 상태" + (" — 레퍼런스 Read 후 build 실행" if with_refs else ""))
+
+
 CLI_COMMANDS = [
     {"name": "init", "usage": "init", "description": "MCP 세션 초기화 (브리지 자동 기동)"},
     {"name": "doctor", "usage": "doctor [--json]", "json": True,
@@ -14826,7 +14948,9 @@ CLI_COMMANDS = [
     {"name": "post-fix", "usage": "post-fix <rootId>",
      "description": "빌드 후처리 — FILL/위치/바인딩/enforcer 체인 재실행"},
     {"name": "validate", "usage": "validate <blueprint.json>",
-     "description": "blueprint 구조 검증만 (빌드 없이)"},
+     "description": "blueprint 구조 검증 + design_rules lint (빌드와 동일 기준, 빌드 없이). ERROR≥1 → exit 1"},
+    {"name": "prebuild", "usage": "prebuild <blueprint.json>",
+     "description": "validate(+lint) + Step A.0 레퍼런스 사전 검색 — 썸네일을 미리 Read 하면 build 0-G 게이트 1회 통과"},
     {"name": "assemble", "usage": "assemble <config.json>",
      "description": "템플릿 기반 blueprint 조립 (blueprint_templates.json)"},
     {"name": "cleanup-qa", "usage": "cleanup-qa",
@@ -15016,18 +15140,12 @@ def main():
         if len(sys.argv) < 3:
             print("Usage: figma_mcp_client.py validate <blueprint.json>")
             sys.exit(1)
-        with open(sys.argv[2]) as f:
-            bp = json.load(f)
-        bp = _flatten_padding_objects(bp)
-        issues = validate_blueprint(bp)
-        if not issues:
-            print("✓ Blueprint validation passed — no issues found")
-        else:
-            errors = [i for i in issues if i.startswith("ERROR")]
-            warns = [i for i in issues if i.startswith("WARN")]
-            print(f"{'✗' if errors else '⚠'} {len(errors)} error(s), {len(warns)} warning(s):")
-            for issue in issues:
-                print(f"  {issue}")
+        cmd_validate_blueprint(sys.argv[2], with_refs=False)
+    elif cmd == "prebuild":
+        if len(sys.argv) < 3:
+            print("Usage: figma_mcp_client.py prebuild <blueprint.json>")
+            sys.exit(1)
+        cmd_validate_blueprint(sys.argv[2], with_refs=True)
     elif cmd == "assemble":
         if len(sys.argv) < 3:
             print("Usage: figma_mcp_client.py assemble <config.json>")
