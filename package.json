@@ -11,7 +11,11 @@
     "setup:mac": "bash scripts/setup-mac.sh",
     "postinstall": "node scripts/patch-hono-mcp.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "bridge:install": "bash scripts/bridge-daemon-install.sh",
+    "bridge:uninstall": "bash scripts/bridge-daemon-uninstall.sh",
+    "bridge:install:win": "powershell -ExecutionPolicy Bypass -File scripts/bridge-daemon-install.ps1",
+    "bridge:uninstall:win": "powershell -ExecutionPolicy Bypass -File scripts/bridge-daemon-uninstall.ps1"
   },
   "dependencies": {
     "@hono/mcp": "^0.2.3",

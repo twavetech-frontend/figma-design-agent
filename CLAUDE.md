@@ -36,7 +36,8 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
    멱등 스크립트가 패키지 매니저(winget/brew)·Python·Python 패키지·Node LTS·npm 의존성·
    sharp 네이티브 모듈·빌드를 한 번에 처리한다. 출력의 `[OK]` 라인들을 확인.
    도중에 멈추거나 사용자에게 묻지 말 것.
-2. **브리지 기동** — `npm run bridge`를 백그라운드로 실행. 로그에
+2. **브리지 기동** — 데몬 등록돼 있으면(`npm run bridge:install`, launchd) 이미 떠 있으므로 skip.
+   아니면 `npm run bridge`를 백그라운드로 실행. 로그에
    `[FigmaWS] Server listening on port 8767` + `[MCP] HTTP server listening`이 뜨면 OK.
 3. **MCP 접속 검증** — `figma_mcp_client.py init` 실행.
    `Ready.` + 실제 세션 ID가 나오면 OK (`Session initialized: None`이면 실패 → 브리지/패치 점검).
@@ -149,6 +150,9 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
 ```bash
 npm run build   # tsup → out/ (bridge + yoga-cli, CJS). Vite/Electron 빌드 없음
 npm run bridge  # 브리지 기동: WS 8767 + HTTP MCP 8769 (Node, Electron 없음)
+npm run bridge:install    # 🔵 브리지 상시 데몬 등록 (macOS launchd — 로그인 자동시작+사망시 자동재시작,
+                          #    세션 종료와 무관. Windows: bridge:install:win. 해제: bridge:uninstall[:win])
+                          # 등록돼 있으면 2단계(브리지 기동)는 불필요 — 이미 떠 있음
 npm test        # vitest
 python3 scripts/figma_mcp_client.py doctor  # 환경 통합 진단 (브리지/세션/플러그인/DS맵/통독 게이트, FAIL≥1 → exit 1)
 python3 scripts/figma_mcp_client.py component "Tab bar" [--full]  # DS 컴포넌트 do/don't + componentKey 조회
