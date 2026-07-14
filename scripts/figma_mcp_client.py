@@ -8696,21 +8696,28 @@ def _configure_tool_bar(root_id: str, configs: List[dict]) -> int:
                 except Exception:
                     pass
             try:
-                title_tid = None
+                text_nodes = []
                 for x in call_tool("scan_text_nodes", {"nodeId": iid}):
                     if x.get("type") == "text":
                         d = json.loads(x["text"])
-                        for tn in d.get("textNodes", []):
-                            title_tid = tn.get("id")
-                            break
-                    if title_tid:
-                        break
-                if not title_tid:
+                        text_nodes.extend(d.get("textNodes", []))
+                if not text_nodes:
                     print(f"  [tool-bar] '{cfg.get('name')}' 내부 타이틀 TEXT 없음 — skip")
                 else:
-                    call_tool("set_text_content", {"nodeId": title_tid, "text": str(cfg["title"])})
+                    call_tool("set_text_content", {"nodeId": text_nodes[0].get("id"),
+                                                   "text": str(cfg["title"])})
                     print(f"  [tool-bar] ✓ '{cfg.get('name')}' 타이틀 → '{cfg['title']}'")
                     done += 1
+                    # 🔴 2026-07-14: Detail 마스터의 잔여 카운트 TEXT('num'='5' 등)가 타이틀
+                    # 옆에 그대로 노출되던 회귀 — 타이틀 외 짧은 텍스트는 비운다.
+                    for tn in text_nodes[1:]:
+                        raw = (tn.get("characters") or tn.get("name") or "")
+                        if len(str(raw).strip()) <= 6:
+                            try:
+                                call_tool("set_text_content", {"nodeId": tn.get("id"), "text": ""})
+                                print(f"  [tool-bar] ✓ 잔여 카운트 TEXT('{raw}') 제거")
+                            except Exception:
+                                pass
             except Exception as e:
                 print(f"  [tool-bar] 타이틀 적용 실패(무시): {e}")
         if cfg.get("icons") is not None:
