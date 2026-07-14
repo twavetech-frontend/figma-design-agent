@@ -146,6 +146,33 @@ def _is_modal_screen(bp: dict) -> bool:
 def _check_blueprint(bp: dict, ctx: dict) -> Iterable[Violation]:
     if _is_modal_screen(bp):
         return
+    # 🔴 2026-07-14 (사용자: "왜 NavBar 를 인스턴스 안 쓰고 직접 만드냐 — 규칙/코드에 박아뒀는데"):
+    # _customNavBar 는 다른 bypass 와 달리 boolean 만으로 뚫리던 유일한 탈출구였다.
+    # ① 사유 문자열 필수 (boolean true → ERROR)
+    # ② '아이콘이 없다'류 사유 거부 — 미지원 아이콘은 우회 사유가 아니라 NAV_ICON_KEYS
+    #    확장 대상 (search_design_system 으로 키 확보 → ds_catalog 등록).
+    for node, path in walk_blueprint(bp):
+        cnb = node.get("_customNavBar") if isinstance(node, dict) else None
+        if cnb is None:
+            continue
+        if not isinstance(cnb, str) or len(cnb.strip()) < 5:
+            yield Violation(
+                "R64-custom-navbar-reason", Severity.ERROR, path,
+                ("_customNavBar 는 boolean 금지 — 사유 문자열 필수 "
+                 "(예: '검색바 내장 헤더 — Tool Bar variant 로 표현 불가'). "
+                 "우측 아이콘이 NAV_ICON_KEYS 에 없다는 이유라면 우회가 아니라 "
+                 "search_design_system 으로 키를 확보해 ds_catalog.NAV_ICON_KEYS 에 "
+                 "등록할 것 (2026-07-14 사용자 룰)."),
+                Phase.LINT,
+            )
+        elif any(k in cnb for k in ("아이콘", "icon", "키가 없", "키맵", "NAV_ICON")):
+            yield Violation(
+                "R64-custom-navbar-reason", Severity.ERROR, path,
+                (f"_customNavBar 사유('{cnb[:40]}')가 아이콘 미지원 — 이는 우회 사유가 "
+                 "아니다. search_design_system 으로 아이콘 키를 확보해 "
+                 "ds_catalog.NAV_ICON_KEYS 에 등록하고 Tool Bar 인스턴스를 쓸 것."),
+                Phase.LINT,
+            )
     for node, path in walk_blueprint(bp):
         if not _is_navbar_frame(node):
             continue

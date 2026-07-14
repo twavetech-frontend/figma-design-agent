@@ -225,6 +225,13 @@ NAV_ICON_KEYS = {
     # 2026-06-12 search_design_system 으로 확보 (정확 이름 일치 항목만)
     "share-07":            "f3279037645fb703bf67be50991e319c62d00625",
     "share":               "f3279037645fb703bf67be50991e319c62d00625",
+    "share-01":            "f3279037645fb703bf67be50991e319c62d00625",
+    # 2026-07-14 사용자 지적("왜 NavBar 를 직접 만드냐") 후 search_design_system 으로 확보 —
+    # 키가 없으면 _customNavBar 우회가 아니라 이렇게 **키를 확보해 여기 등록**하는 것이 정답.
+    "edit-01":             "cf4b7befec381191ddc14244fc59e85be85b1662",
+    "edit":                "cf4b7befec381191ddc14244fc59e85be85b1662",
+    "pencil-01":           "cf4b7befec381191ddc14244fc59e85be85b1662",
+    "pencil":              "cf4b7befec381191ddc14244fc59e85be85b1662",
     "settings-01":         "110d888816e9bb5ce620761786951ce6ad2cf459",
     "settings":            "110d888816e9bb5ce620761786951ce6ad2cf459",
     "dots-vertical":       "4701c3d1add2af0b2cacd0362c19a23c08a04773",

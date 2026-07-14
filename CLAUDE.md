@@ -359,7 +359,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   variant key 로 생성 — raw frame 금지.
 - **0-W** — 상단 NavBar = DS **'Tool Bar'** 인스턴스(`SET:` 키). 메인=Type Home(로고 내장),
   서브=Type Detail view + `_navTitle`. 우측 버튼은 `_navIcons`(빈 배열 `[]` = 버튼 없음/empty,
-  최대 2개). 검색바 등 표현 불가 케이스만 raw + `_customNavBar`.
+  최대 2개). 검색바 등 표현 불가 케이스만 raw + `_customNavBar:"<사유>"` (🔴 boolean 금지 —
+  R64 ERROR. **아이콘이 키맵에 없다는 건 우회 사유가 아님** — search_design_system 으로 키 확보 후
+  ds_catalog.NAV_ICON_KEYS 등록이 정답, 2026-07-14 사용자 룰. edit-01 키 등록됨).
 - **0-J-2** — 🔴 **생애주기 상태 나열(준비중/참여중/진행중/스테이지 완료 등)은 탭이 아니라
   진행 step 표시다 (2026-07-14 사용자)** — underline tabs 로 그리지 말고 step indicator
   (현재 단계 강조 + 단계 도트/체크 + 연결 흐름)로. 기획서 생애주기(모집→마감→진행→종료)와 대조해 판별.

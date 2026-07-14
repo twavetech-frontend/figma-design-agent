@@ -209,6 +209,24 @@
 > **밑줄(underline) 스타일**(active 탭 아래 bar)인지 — 알약(pill) Segmented_control 이 아니어야 한다.
 > 테스트: `scripts/tests/test_tabs_underline_default.py`.
 
+### 0-W-2. 🔴 _customNavBar 는 사유 문자열 필수 — 아이콘 미지원은 우회 사유가 아님 (2026-07-14)
+
+> 사용자: *"너 왜 navigation bar 를 컴포넌트 인스턴스 안 쓰고 직접 만들어? 규칙이랑 코드에
+> 박아뒀을텐데."* — joined/preparing 상세 4개 빌드에서 edit 아이콘이 NAV_ICON_KEYS 에 없다는
+> 이유로 `_customNavBar: true` 우회가 반복·복붙 전파된 회귀.
+>
+> **원인:** ① `_customNavBar` 가 유일하게 **사유 없이 boolean 으로 뚫리는 탈출구**였음
+> (다른 bypass 는 전부 사유 문자열 필수) ② 키맵에 없는 아이콘의 대응 절차(확보→등록)가
+> 문서화돼 있지 않아 '없으면 우회'로 흘렀음.
+>
+> **룰 (R64-custom-navbar-reason, LINT ERROR):**
+> 1. `_customNavBar` 는 사유 문자열 필수 — boolean `true` 는 빌드 차단.
+> 2. 사유에 '아이콘 없음' 류가 들어가면 그것도 차단 — 정답은 우회가 아니라
+>    `search_design_system` 으로 published key 확보 → `ds_catalog.NAV_ICON_KEYS` 등록.
+>    (2026-07-14 에 edit-01/pencil = `cf4b7befec…` 등록 완료.)
+> 3. 정당한 사유 예: 검색바 내장 헤더, 타이틀 좌측 커스텀 위젯 등 Tool Bar variant 로
+>    구조적으로 표현 불가한 경우만.
+
 ### 0-J-2. 🔴 생애주기 상태 나열 = 탭이 아니라 진행 step (2026-07-14 사용자 룰)
 
 > 사용자: *"상단 준비중, 참여중, 진행중, 스테이지완료는 탭메뉴가 아니라 진행 step 을 표시한거야.
