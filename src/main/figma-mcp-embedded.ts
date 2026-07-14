@@ -2027,6 +2027,16 @@ function isTabBar(n: Record<string, unknown>): boolean {
   const children = n.children as Record<string, unknown>[] | undefined;
   if (!children || children.length < 2) return false;
 
+  // 🔴 2026-07-14: 뷰 전환 underline tabs 를 하단 탭바로 오인해 fixTabBar 가
+  // 아이콘 주입(star-01/layers-three-01)·흰 fill·SPACE_BETWEEN 을 강제하던 버그.
+  // _underlineTabs 마커 또는 'Underline' 자식(0-J 문법)이 있으면 탭바가 아니다.
+  if (n._underlineTabs) return false;
+  const hasUnderlineChild = children.some(c => {
+    const cc = c.children as Record<string, unknown>[] | undefined;
+    return cc?.some(gc => ((gc.name as string) || '').toLowerCase().includes('underline'));
+  });
+  if (hasUnderlineChild) return false;
+
   // Tab bars: horizontal, 3-5 children, near bottom (height ~50-90)
   const al = n.autoLayout as Record<string, unknown> | undefined;
   const isHorizontal = al?.layoutMode === 'HORIZONTAL';

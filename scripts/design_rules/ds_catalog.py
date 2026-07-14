@@ -1022,6 +1022,10 @@ def detect_progress_shape(node: dict):
     if (node.get("type") or "frame").lower() != "frame" or node.get("componentKey"):
         return None
     nl = (node.get("name") or "").lower()
+    # 2026-07-14: underline tabs 의 3px 밑줄 bar(0-J 문법)가 progress 로 오인돼
+    # DS Progress bar 인스턴스로 auto-swap 되던 회귀(참여중/진행중 탭) — 명시 제외.
+    if "underline" in nl:
+        return None
     name_ok = ("progress" in nl and ("track" in nl or "bar" in nl)) or _name_ends_with(node, "progress")
     has_bar_child = any(
         isinstance(c.get("height"), (int, float)) and c["height"] <= 14
