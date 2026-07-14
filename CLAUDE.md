@@ -324,7 +324,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 | `_wireframeContent` | 와이어의 모든 텍스트/숫자/카운트 dict — 콘텐츠 1:1(누락 금지 0-E, 날조 금지 0-E-3) | S23 |
 | `_concept` | `{"idea": "<핵심 차별 아이디어>", "diffs": ["직전 버전과 달라지는 점", …≥3]}` — 형식 통과용 공허한 값 금지 | S24 |
 | `_designDirection` | `{"id","typography","color","layout","spacing"}` — 4축 중 ≥3축 구체 전략, id 는 직전 빌드와 다르게 | S25 |
-| `_wireframeDivergence` | 와이어 대비 시각 발산 ≥3개(각 ≥10자) — 레이아웃/정렬/위계/크기/컬러를 *어떻게 다르게* 했는지 | S26 |
+| `_wireframeDivergence` | 와이어 대비 시각 발산 ≥3개(각 ≥10자), **이 중 ≥2개는 구조 레벨**(섹션 통합/카드 그룹핑/위계 역전/히어로 승격 — 코스메틱만이면 S26-structural 차단). 본문에 표면 그룹 없는 평면 나열은 R65 가 차단 | S26·R65 |
 
 - **novelty 게이트**: 직전 빌드와 비주얼 시그니처 ≥80% 유사 또는 같은 `_designDirection.id` → 차단.
 - **통독 게이트**: `src/기획` digest 통독+ack 없으면 빌드 차단 (learn-planning → Read 통독 → ack-planning).
@@ -360,6 +360,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **0-W** — 상단 NavBar = DS **'Tool Bar'** 인스턴스(`SET:` 키). 메인=Type Home(로고 내장),
   서브=Type Detail view + `_navTitle`. 우측 버튼은 `_navIcons`(빈 배열 `[]` = 버튼 없음/empty,
   최대 2개). 검색바 등 표현 불가 케이스만 raw + `_customNavBar`.
+- **0-J-2** — 🔴 **생애주기 상태 나열(준비중/참여중/진행중/스테이지 완료 등)은 탭이 아니라
+  진행 step 표시다 (2026-07-14 사용자)** — underline tabs 로 그리지 말고 step indicator
+  (현재 단계 강조 + 단계 도트/체크 + 연결 흐름)로. 기획서 생애주기(모집→마감→진행→종료)와 대조해 판별.
 - **0-J/0-V/5-B** — 콘텐츠/뷰 전환 탭(입금/지급·추천/전체·거래현황/누적거래 등)은 **underline tabs
   styled frame**(`_underlineTabs:true`, active=text-primary+fg-primary bar / inactive=text-tertiary+투명)
   이 기본. **Segmented_control 은 `_forceSegmented:true` 컴팩트 토글(주/월/년 등)만.** 헷갈리면 underline.

@@ -11289,8 +11289,23 @@ def _check_wireframe_divergence_required(blueprint: dict) -> list:
     items = [str(d).strip() for d in div if str(d).strip()] if isinstance(div, list) else []
     # 공허한 한두 단어 항목 방지 — 최소 길이로 구체성 약식 검증
     concrete = [d for d in items if len(d) >= 10]
-    if len(concrete) >= 3:
-        print(f"[S26-divergence] ✓ 와이어 발산 선언 {len(concrete)}건 — 시각 표현 트레이싱 안 함")
+    # 🔴 2026-07-14 (사용자: "와이어프레임이랑 아주 똑같다! 이러면 맡길 이유가 없지" — 코스메틱
+    # 발산으로 형식만 채우고 배치를 트레이싱한 회귀): 선언 중 ≥2개는 **구조 레벨** 어휘를
+    # 포함해야 통과. 코스메틱(점선→솔리드/이모지 제외/색 매핑)만으로는 발산이 아니다.
+    _STRUCT_RE = re.compile(
+        r"통합|그룹핑|묶|승격|역전|재배치|재배열|병합|분리|재구성|재편|무대|카드로|카드 로|"
+        r"스텝|계층|위계.{0,6}(바꾸|역전|재)|섹션.{0,6}(합|통|병)|그리드로|타일로|배너로|히어로로")
+    structural = [d for d in concrete if _STRUCT_RE.search(d)]
+    if len(concrete) >= 3 and len(structural) >= 2:
+        print(f"[S26-divergence] ✓ 와이어 발산 선언 {len(concrete)}건 (구조 레벨 {len(structural)}건) — 트레이싱 안 함")
+        return issues
+    if len(concrete) >= 3 and len(structural) < 2:
+        issues.append(
+            "ERROR (S26-structural): _wireframeDivergence 가 코스메틱 수준(스타일 치환)뿐 — 구조 레벨 "
+            "발산(섹션 통합/카드 그룹핑/위계 역전/히어로 승격/그리드 재편 등) 선언이 ≥2개 필요. "
+            "콘텐츠 1:1 + 메트릭 승계(2-L) 위에서 정보 구조·그룹핑·위계를 실제로 재설계할 것 "
+            "(2026-07-14 사용자: '와이어와 똑같으면 맡길 이유가 없다')."
+        )
         return issues
     issues.append(
         "ERROR (S26): archetype 빌드인데 root._wireframeDivergence 누락/불충분. 와이어프레임/PRD "
@@ -14943,6 +14958,17 @@ def cmd_validate_blueprint(path: str, with_refs: bool = False) -> None:
     else:
         print("✓ 구조 검증 통과")
 
+    # 창의 게이트(S24~S26)도 빌드 전에 미리 — 특히 S26 구조 발산 검사 (2026-07-14 강화)
+    gate_issues = []
+    for fn in (_check_wireframe_divergence_required,):
+        try:
+            gate_issues += fn(bp)
+        except Exception as e:
+            print(f"  [prebuild-gates] {getattr(fn, '__name__', '?')} 실패 (무시): {e}")
+    for gi in gate_issues:
+        print(f"  {gi}")
+    gate_errors = [g for g in gate_issues if str(g).startswith("ERROR")]
+
     print("\n[design_rules:LINT] 룰 검증 중 (빌드와 동일 기준)...")
     violations, lint_errors, lint_warns = _run_blueprint_lint(bp)
     if violations:
@@ -14962,8 +14988,8 @@ def cmd_validate_blueprint(path: str, with_refs: bool = False) -> None:
         if _LAST_REFERENCE_THUMBS:
             print("👉 위 썸네일들을 지금 Read 로 학습해 두면 build 의 0-G 게이트를 한 번에 통과한다.")
 
-    if struct_errors or lint_errors:
-        print(f"\n✗ ERROR {len(struct_errors) + len(lint_errors)}건 — blueprint 수정 후 다시 실행 (이대로 build 하면 차단됨)")
+    if struct_errors or lint_errors or gate_errors:
+        print(f"\n✗ ERROR {len(struct_errors) + len(lint_errors) + len(gate_errors)}건 — blueprint 수정 후 다시 실행 (이대로 build 하면 차단됨)")
         sys.exit(1)
     print("\n✓ build 가능 상태" + (" — 레퍼런스 Read 후 build 실행" if with_refs else ""))
 
