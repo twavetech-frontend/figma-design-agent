@@ -74,7 +74,11 @@ def _walk(node: dict, path: str) -> Iterable[Violation]:
     kids = [c for c in (node.get("children") or []) if isinstance(c, dict)]
     al = node.get("autoLayout") or {}
     is_vertical = (al.get("layoutMode") or "").upper() == "VERTICAL"
+    # 컨테이너 자체가 표면(fill/stroke 보유 카드·밴드)이면 이미 그룹핑된 것 —
+    # 카드 안의 라벨-값 테이블 등은 정당한 평면 리스트다 (페이지 바탕의 나열만 잡는다).
+    is_surface_self = bool(node.get("fill")) or bool(node.get("stroke"))
     if (is_vertical and len(kids) >= _MIN_CHILDREN
+            and not is_surface_self
             and not node.get("_flatStackAllowed")):
         surfaces = sum(1 for c in kids if _has_surface(c))
         naked = [c.get("name") or c.get("text", "?")[:12] for c in kids if _is_naked_content(c)]
