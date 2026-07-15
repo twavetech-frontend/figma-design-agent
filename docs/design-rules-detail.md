@@ -209,6 +209,32 @@
 > **밑줄(underline) 스타일**(active 탭 아래 bar)인지 — 알약(pill) Segmented_control 이 아니어야 한다.
 > 테스트: `scripts/tests/test_tabs_underline_default.py`.
 
+### S27. 🔴 재구성 맵 하드 게이트 — 선언을 실물과 대조 (2026-07-15 사용자 룰)
+
+> 사용자: *"자꾸 새 세션을 시작하고 디자인 생성하면 와이어프레임이랑 똑같이 생성하던데,
+> 다신 그러지 않게 방법을 찾아봐."* — 선언형 게이트(S24~S26)는 새 세션이 형식적으로 채우면
+> 뚫린다는 것이 반복 실측됨. S27 은 선언을 **blueprint 실물과 대조**하는 게이트다.
+>
+> **필수 선언 (root):**
+> ```json
+> "_restructureMap": {
+>   "wireSections": ["헤드라인", "모집현황", "조건 테이블", "순번", "범례"],
+>   "surfaces": [
+>     {"name": "Overview Card", "absorbs": ["헤드라인", "모집현황"]},
+>     {"name": "Cond Card",     "absorbs": ["조건 테이블"]},
+>     {"name": "Seat Card",     "absorbs": ["순번", "범례"]}
+>   ]
+> }
+> ```
+> **코드 검증 3종:**
+> 1. **커버리지** — 모든 wireSection 이 어떤 surface 에든 흡수 (콘텐츠 1:1 누락 방지)
+> 2. **통합** — ≥1 surface 가 섹션 2개 이상 흡수. 섹션별 카드 1:1 래핑("포장된 트레이싱") 차단
+> 3. **실재** — 선언된 surface name 이 blueprint 트리에 존재 + 표면 속성(fill/stroke/instance)
+>
+> bypass: `_restructureMapSkipped: "<reason>"` (설정 메뉴 등 정당한 평면 화면 / 사용자가
+> '와이어 그대로' 명시 / 단순 재빌드). prebuild 도 사전 검사. 회귀 테스트:
+> `scripts/tests/test_wire_tracing_gates.py` (S26-structural·R65·S27 3중 게이트 고정).
+
 ### 0-W-2. 🔴 _customNavBar 는 사유 문자열 필수 — 아이콘 미지원은 우회 사유가 아님 (2026-07-14)
 
 > 사용자: *"너 왜 navigation bar 를 컴포넌트 인스턴스 안 쓰고 직접 만들어? 규칙이랑 코드에

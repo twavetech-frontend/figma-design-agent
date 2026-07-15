@@ -5104,8 +5104,12 @@ def cmd_build(blueprint_file: str):
     # S26 와이어/PRD 발산 선언 (2026-06-18 — "와이어 이미지를 그대로 똑같은 UI로 구현" 차단).
     # 0-C/0-N(와이어 1:1 복제 금지)을 advisory→하드 게이트로 승격.
     divergence_issues = _check_wireframe_divergence_required(blueprint)
+    # S27 재구성 맵 (2026-07-15 — 새 세션마다 와이어 트레이싱이 재발하던 문제의 결정타:
+    # 선언을 실물(blueprint 트리)과 대조. "포장된 트레이싱"(섹션 1:1 카드 래핑)도 차단).
+    restructure_issues = _check_restructure_map_required(blueprint)
     archetype_issues = (archetype_issues + wc_required_issues + concept_issues
-                        + direction_issues + novelty_issues + divergence_issues)
+                        + direction_issues + novelty_issues + divergence_issues
+                        + restructure_issues)
     if archetype_issues:
         print(f"\n[archetype-check] {len(archetype_issues)}건 발견:")
         for ai in archetype_issues:
@@ -11324,6 +11328,104 @@ def _check_wireframe_divergence_required(blueprint: dict) -> list:
     return issues
 
 
+def _check_restructure_map_required(blueprint: dict) -> list:
+    """S27: 재구성 맵 하드 게이트 (2026-07-15 사용자: "새 세션마다 와이어랑 똑같이 생성").
+
+    선언형 게이트(S24~S26)는 새 세션이 형식적으로 채우면 뚫린다는 것이 실측으로 반복 확인됨
+    → 이 게이트는 선언을 **blueprint 실물과 대조**한다.
+
+    root `_restructureMap` 필수:
+      {"wireSections": ["헤드라인", "모집현황", ...],          # 와이어의 섹션 나열 (≥3)
+       "surfaces": [{"name": "Overview Card",                # 빌드의 표면(카드/무대/밴드)
+                     "absorbs": ["헤드라인", "모집현황"]}, ...]}
+
+    검증 3종 (전부 코드 대조 — 글로 못 뚫음):
+      ① 커버리지 — 모든 wireSection 이 어떤 surface 에든 흡수돼야 함 (콘텐츠 누락 방지)
+      ② 통합 — ≥1 surface 가 wireSection 을 2개 이상 흡수해야 함.
+         와이어 섹션을 각각 카드로 1:1 래핑만 한 것("포장된 트레이싱")은 여기서 차단.
+      ③ 실재 — 선언된 surface name 이 blueprint 트리에 실제로 존재하고
+         표면 속성(fill/stroke 보유 frame 또는 instance)을 가져야 함.
+
+    bypass: root._restructureMapSkipped: "<reason>" (설정/약관 등 정당한 평면 리스트 화면,
+    사용자가 '와이어 그대로' 명시, 단순 재빌드)."""
+    issues = []
+    if not _is_archetype_build(blueprint):
+        return issues
+    if blueprint.get("_restructureMapSkipped"):
+        return issues
+    rm = blueprint.get("_restructureMap")
+    if not isinstance(rm, dict):
+        issues.append(
+            "ERROR (S27): archetype 빌드인데 root._restructureMap 누락 — 와이어 섹션을 어떤 "
+            '표면으로 재구성했는지 선언+대조하는 게이트. {"_restructureMap": {"wireSections": '
+            '["섹션1", ...], "surfaces": [{"name": "<빌드 표면 노드명>", "absorbs": ["섹션1", '
+            '"섹션2"]}, ...]}}. 정당한 평면 화면이면 _restructureMapSkipped: "<reason>".')
+        return issues
+    wire_sections = [str(s).strip() for s in (rm.get("wireSections") or []) if str(s).strip()]
+    surfaces = [s for s in (rm.get("surfaces") or []) if isinstance(s, dict)]
+    if len(wire_sections) < 3 or not surfaces:
+        issues.append(
+            "ERROR (S27): _restructureMap 불충분 — wireSections ≥3 + surfaces ≥1 필요 "
+            f"(현재 {len(wire_sections)}/{len(surfaces)}).")
+        return issues
+    # ① 커버리지
+    absorbed = set()
+    for s in surfaces:
+        absorbed.update(str(a).strip() for a in (s.get("absorbs") or []))
+    missing = [w for w in wire_sections if w not in absorbed]
+    if missing:
+        issues.append(
+            f"ERROR (S27-coverage): 와이어 섹션 {missing} 이(가) 어떤 surface 에도 흡수 안 됨 — "
+            "콘텐츠 1:1(0-E) 위반 위험. 모든 와이어 섹션을 surfaces[].absorbs 에 배정할 것.")
+    # ② 통합 — 1:1 래핑(포장된 트레이싱) 차단
+    if not any(len([a for a in (s.get("absorbs") or []) if str(a).strip()]) >= 2 for s in surfaces):
+        issues.append(
+            "ERROR (S27-consolidation): 모든 surface 가 와이어 섹션을 1개씩만 흡수 — 이것은 "
+            "섹션별 카드 래핑일 뿐 구조 재설계가 아니다. 관련 섹션을 묶어 ≥1개 surface 가 "
+            "2개 이상 흡수하도록 재구성할 것 (2026-07-14 '와이어와 똑같으면 맡길 이유 없다').")
+    # ③ 실재 — 선언된 surface 가 blueprint 트리에 표면으로 존재.
+    # 자기 fill/stroke 가 없어도 직계 자식 절반 이상이 표면이면 그룹 래퍼로 인정 (R65 와 동일).
+    def _is_surface(n):
+        if not isinstance(n, dict):
+            return False
+        t = (n.get("type") or "frame").lower()
+        if t == "instance" or n.get("fill") or n.get("stroke"):
+            return True
+        kids = [c for c in (n.get("children") or []) if isinstance(c, dict)]
+        if kids:
+            return sum(1 for c in kids if _is_surface(c)) >= max(1, len(kids) // 2)
+        return False
+
+    tree_surfaces = {}
+
+    def _walk(n):
+        if not isinstance(n, dict):
+            return
+        nm = (n.get("name") or "").strip()
+        if nm:
+            tree_surfaces[nm] = tree_surfaces.get(nm) or _is_surface(n)
+        for c in n.get("children") or []:
+            _walk(c)
+
+    _walk(blueprint)
+    for s in surfaces:
+        nm = str(s.get("name") or "").strip()
+        if nm not in tree_surfaces:
+            issues.append(
+                f"ERROR (S27-exists): 선언된 surface '{nm}' 가 blueprint 트리에 없음 — "
+                "선언과 실물이 불일치 (이름을 트리 노드명과 정확히 일치시킬 것).")
+        elif not tree_surfaces[nm]:
+            issues.append(
+                f"ERROR (S27-exists): surface '{nm}' 가 트리에 있으나 표면 속성(fill/stroke/"
+                "instance)이 없음 — 무표면 래퍼는 그룹핑이 아니다.")
+    if not issues:
+        n_multi = sum(1 for s in surfaces
+                      if len([a for a in (s.get("absorbs") or []) if str(a).strip()]) >= 2)
+        print(f"[S27-restructure] ✓ 재구성 맵 검증 — 와이어 {len(wire_sections)}섹션 → "
+              f"표면 {len(surfaces)}개 (통합 표면 {n_multi}개), 실재 확인")
+    return issues
+
+
 def _novelty_key(blueprint: dict) -> str:
     """root 이름에서 버전/날짜 접미사를 떼 화면(archetype) 단위 키 생성."""
     name = (blueprint.get("name") or "screen").lower().strip()
@@ -14857,7 +14959,7 @@ RULE_DETAIL_DOC = os.path.join(os.path.dirname(__file__), "..", "docs", "design-
 # 앵커 = 룰 섹션 시작 라인. 3가지 표기 + 특수 섹션.
 _RULE_RE_ABS = re.compile(r"\*\*절대 규칙 ([0-9][0-9A-Za-z\-]*) —")      # > 🔴 **절대 규칙 0-J — …
 _RULE_RE_BQ = re.compile(r"^>\s*\S{0,4}\s*\*\*([0-9][0-9A-Za-z\-]*)\.")  # > 🔴 **2-G-2. …
-_RULE_RE_HDR = re.compile(r"^###\s+([0-9][0-9A-Za-z\-]*)\.")             # ### 2-B. …
+_RULE_RE_HDR = re.compile(r"^###\s+([0-9A-Z][0-9A-Za-z\-]*)\.")          # ### 2-B. / ### S27. …
 _RULE_SPECIAL_ALIASES = {
     "post-fix": "post-fix", "postfix": "post-fix",
     "troubleshooting": "troubleshooting", "트러블슈팅": "troubleshooting",
@@ -14967,7 +15069,7 @@ def cmd_validate_blueprint(path: str, with_refs: bool = False) -> None:
 
     # 창의 게이트(S24~S26)도 빌드 전에 미리 — 특히 S26 구조 발산 검사 (2026-07-14 강화)
     gate_issues = []
-    for fn in (_check_wireframe_divergence_required,):
+    for fn in (_check_wireframe_divergence_required, _check_restructure_map_required):
         try:
             gate_issues += fn(bp)
         except Exception as e:

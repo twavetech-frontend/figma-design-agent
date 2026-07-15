@@ -296,6 +296,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 독립 생성 24샘플에서 가장 많이 위반된 룰:
 
+0. **🔴 와이어 트레이싱 (세션마다 재발한 1순위 실패, 2026-07-14~15)** — 와이어 배치를 그대로
+   옮기면 "디자인 생성을 맡길 이유가 없다". 콘텐츠 1:1 + 메트릭 승계(2-L) 위에서 **정보 구조·
+   그룹핑·위계는 반드시 재설계**. 3중 코드 게이트가 차단: S26-structural(구조 어휘 ≥2)·
+   R65(본문 맨몸 나열)·S27(재구성 맵 실물 대조 — 아래 표). 섹션별 카드 1:1 래핑도 트레이싱이다.
 1. **R23 (×40) — DS 컴포넌트 패턴을 raw frame 으로 그리지 말 것.** 버튼/badge/체크박스/탭바/
    navbar/드롭다운/인풋/토글은 `component "<이름>"` 으로 키를 조회해 `type:"instance"` 로 작성.
    반대로 콘텐츠/장식 frame 은 DS 로 오인되지 않게 **중립 이름**을 쓴다(0-L — 이름에
@@ -324,6 +328,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 | `_wireframeContent` | 와이어의 모든 텍스트/숫자/카운트 dict — 콘텐츠 1:1(누락 금지 0-E, 날조 금지 0-E-3) | S23 |
 | `_concept` | `{"idea": "<핵심 차별 아이디어>", "diffs": ["직전 버전과 달라지는 점", …≥3]}` — 형식 통과용 공허한 값 금지 | S24 |
 | `_designDirection` | `{"id","typography","color","layout","spacing"}` — 4축 중 ≥3축 구체 전략, id 는 직전 빌드와 다르게 | S25 |
+| `_restructureMap` | `{"wireSections":[...≥3], "surfaces":[{"name":"<트리 노드명>","absorbs":[...]}]}` — 커버리지(전 섹션 흡수)·통합(≥1 표면이 2+ 흡수, 1:1 래핑 차단)·실재(트리 대조) 3종 코드 검증 | S27 |
 | `_wireframeDivergence` | 와이어 대비 시각 발산 ≥3개(각 ≥10자), **이 중 ≥2개는 구조 레벨**(섹션 통합/카드 그룹핑/위계 역전/히어로 승격 — 코스메틱만이면 S26-structural 차단). 본문에 표면 그룹 없는 평면 나열은 R65 가 차단 | S26·R65 |
 
 - **novelty 게이트**: 직전 빌드와 비주얼 시그니처 ≥80% 유사 또는 같은 `_designDirection.id` → 차단.
@@ -334,7 +339,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   0-G 로 Read 한 썸네일들의 실제 검색 트레일로 채운다(날조 금지). bypass: `_referencesSkipped: "<reason>"`.
 - **S22**: 이전 archetype config 재사용 금지 — 콘텐츠는 와이어에서 새로 추출.
 - bypass(단순 재빌드 등 정당 사유만, 사유 문자열 필수): `_conceptSkipped` / `_designDirectionSkipped` /
-  `_wireframeDivergenceSkipped` / `_wireframeContentSkipped` / `_noveltySkipped`.
+  `_restructureMapSkipped` / `_wireframeDivergenceSkipped` / `_wireframeContentSkipped` / `_noveltySkipped`.
 - **워크플로**: 레퍼런스 Read(0-G) + 같은 화면 기존/사용자 수정본 학습(0-G-2) → 방향을 직전과 다르게
   정하고 → 콘텐츠 영역의 레이아웃/컬러/간격/정렬/타이포를 **새로 설계** → 선언 4종 박아 빌드.
   새 화면/리디자인은 방향이 다른 **3안** 생성 권장. 결정형 생성기(gen_*.py)는 fallback 일 뿐 —
