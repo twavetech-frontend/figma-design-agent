@@ -345,7 +345,10 @@
           "Hierarchy": "Primary",
           "Size": "lg"
         }
-      }
+      },
+      "donts": [
+        "'Action Button sm'(a8a4d7eb…) 키는 라벨 버튼이 아니라 Edit 링크형(텍스트+화살표+밑줄) 컴포넌트 — 행 내 소형 버튼도 md Outline(f00aebde…) + instanceProperties {Size:'sm', Icon leading/trailing:false} 로 쓸 것 (2026-07-16 실측)"
+      ]
     },
     {
       "name": "Badge",
