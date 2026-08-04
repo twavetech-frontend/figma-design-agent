@@ -4126,6 +4126,47 @@ def _recover_error_status_bar_live(root_node_id: str) -> bool:
         return False
 
 
+def _enforce_home_indicator_fill_live(root_node_id: str) -> int:
+    """🔴 HomeIndicator 인스턴스 = 가로 FILL 강제 (2026-08-04 사용자 룰 —
+    "왜 자꾸 homeindicator instance 가 width 360 고정으로 들어와지는거야. width=fill 로").
+
+    구 화면(360)에서 클론/복제된 HomeIndicator 가 FIXED 360 으로 남아 393 루트에서
+    우측 33px 이 비는 회귀의 백스톱. auto-layout 부모면 FILL, 아니면 루트 폭으로 resize."""
+    try:
+        info = parse_content(call_tool("get_node_info", {"nodeId": root_node_id})).get("json") or {}
+    except Exception:
+        return 0
+    root_w = info.get("width") or 393
+    fixed = 0
+
+    def _walk(n, parent_lm):
+        nonlocal fixed
+        if not isinstance(n, dict):
+            return
+        nm = (n.get("name") or "").lower().replace(" ", "")
+        if "homeindicator" in nm and (n.get("type") or "").upper() == "INSTANCE":
+            w = n.get("width") or 0
+            sizh = n.get("layoutSizingHorizontal")
+            if sizh != "FILL" or abs(w - root_w) > 1:
+                nid = n.get("id")
+                try:
+                    if parent_lm in ("VERTICAL", "HORIZONTAL"):
+                        call_tool("set_layout_sizing", {"nodeId": nid, "layoutSizingHorizontal": "FILL"})
+                    else:
+                        h = n.get("height") or 34
+                        call_tool("resize_node", {"nodeId": nid, "width": root_w, "height": h})
+                    fixed += 1
+                    print(f"  [home-indicator-fill] ✓ '{n.get('name')}' {w}→FILL/{root_w}")
+                except Exception as e:
+                    print(f"  [home-indicator-fill] fail {nid}: {e}")
+            return
+        for c in n.get("children") or []:
+            _walk(c, (n.get("layoutMode") or "").upper())
+
+    _walk(info, "")
+    return fixed
+
+
 def _enforce_status_bar_size_live(root_node_id: str) -> int:
     """🔴 Status Bar = 가로 FILL × 세로 FIXED 62 강제 (2026-06-12 사용자 회귀 보고).
 
@@ -8476,7 +8517,8 @@ def _collect_tool_bar_configs(blueprint: dict) -> List[dict]:
                 or n.get("_navTitle") or n.get("_navIcons") is not None):
             # icons: None = 마커 없음(마스터 기본 유지) / [] = 명시적 empty / [..] = swap 대상
             out.append({"name": n.get("name"), "title": n.get("_navTitle"),
-                        "icons": n.get("_navIcons")})
+                        "icons": n.get("_navIcons"),
+                        "modal": bool(n.get("_navModal"))})
             return
         for c in n.get("children") or []:
             walk(c)
@@ -8651,7 +8693,7 @@ def _configure_tool_bar(root_id: str, configs: List[dict]) -> int:
     Tool Bar 내부 TEXT 는 타이틀 1개뿐이라 첫 TEXT 에 적용.
     `_navIcons` 마커가 있으면 우측 버튼 개수(Type=empty/1 button/2 button) 설정 +
     중첩 아이콘 인스턴스 swap (`_swap_tool_bar_icons`). `_navIcons: []` = 명시적 empty."""
-    todo = [c for c in configs if c.get("title") or c.get("icons") is not None]
+    todo = [c for c in configs if c.get("title") or c.get("icons") is not None or c.get("modal")]
     if not todo:
         return 0
     try:
@@ -8683,13 +8725,31 @@ def _configure_tool_bar(root_id: str, configs: List[dict]) -> int:
             print(f"  [tool-bar] '{cfg.get('name')}' 인스턴스 없음 — skip")
             continue
         iid = inst.get("id")
+        if cfg.get("modal"):
+            # 🔴 2026-08-04 사용자 룰 ("X 헤더도 Tool Bar 인스턴스"): View=modal variant flip
+            # + Back/Num(및 타이틀 없으면 Title) BOOLEAN off. x-close 는 _navIcons 로 처리.
+            try:
+                call_tool("set_instance_properties", {"nodeId": iid, "properties": {"View": "modal"}})
+                _props = parse_content(call_tool("get_instance_properties", {"nodeId": iid})).get("json") or {}
+                _pd = _props.get("properties") or {}
+                _bools = {}
+                for _pn, _pi in _pd.items():
+                    _pl = _pn.lower()
+                    if isinstance(_pi, dict) and _pi.get("type") == "BOOLEAN" and _pi.get("value"):
+                        if "back" in _pl or "num" in _pl or ("title" in _pl and not cfg.get("title")):
+                            _bools[_pn] = False
+                if _bools:
+                    call_tool("set_instance_properties", {"nodeId": iid, "properties": _bools})
+                print(f"  [tool-bar] ✓ View=modal (X 헤더) + off {list(_bools.keys())}")
+            except Exception as e:
+                print(f"  [tool-bar] modal 구성 실패(무시): {e}")
         if cfg.get("title"):
             # 🔴 2026-07-03 실측: SET:…:Type=Detail view 키로 import 하면 batch_build 가 항상
             # 기본 **Home** variant(로고+우측 채팅)로 떨어진다(variant 미적용). title 이 있으면
             # 서브(Detail) 화면이므로 View variant 를 flip 해야 back+타이틀이 나온다.
             # ⚠️ variant 값은 'Detail view' 가 아니라 **'Detail'** (라이브 실측). flip 후에야
-            # 타이틀 TEXT 노드가 생긴다(flip 전 scan_text_nodes=[]).
-            for _vv in ("Detail", "Detail view"):
+            # 타이틀 TEXT 노드가 생긴다(flip 전 scan_text_nodes=[]). modal 이면 flip 생략.
+            for _vv in (() if cfg.get("modal") else ("Detail", "Detail view")):
                 try:
                     _r = call_tool("set_instance_properties",
                                    {"nodeId": iid, "properties": {"View": _vv}})
@@ -9870,6 +9930,11 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_status_bar_size_live(root_node_id)
     except Exception as e:
         print(f"  [status-bar-size] 실패 (무시하고 계속): {e}")
+
+    try:
+        _enforce_home_indicator_fill_live(root_node_id)
+    except Exception as e:
+        print(f"  [home-indicator-fill] 실패 (무시하고 계속): {e}")
 
     print("\n[규칙] 인디케이터 프레임 위 gap = 아래 padding 대칭 (2026-06-05) 적용 중...")
     try:

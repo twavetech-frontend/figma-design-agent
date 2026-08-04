@@ -802,6 +802,15 @@
 > |------|---------|--------------|
 > | 메인·탭바 홈 (로고+우측 아이콘) | Type=Home | `SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Home` |
 > | 서브 (back+중앙 타이틀+우측 아이콘) | Type=Detail view | `SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view` |
+> | 모달 X 헤더 (타이틀 유/무 + X) | **View=modal** | Detail 키로 생성 후 `View=modal` flip |
+>
+> 🔴 **모달 X 헤더도 Tool Bar 인스턴스 — 제외 아님 (2026-08-04 사용자 룰: "왜 tool bar
+> instance 안 쓰고 일반 프레임으로 만든거야? 왜 규칙을 어긴거지").** 과거 R64 는 x-close
+> 헤더를 swap 제외했으나(2-D 별도 패턴 근거), 실물 검증 결과 Tool Bar 는 **View=modal
+> variant + Back button/Title/Num BOOLEAN prop** 으로 X-only·타이틀+X 헤더를 모두 표현
+> 가능하다. blueprint 마커 `_navModal: true` → `_configure_tool_bar` 가 View=modal flip +
+> (타이틀 없으면 Title off) + Back/Num off, X 는 `_navIcons:["x-close"]` (R64 inject 가
+> x-close 헤더 감지 시 자동 부여). raw X 헤더 유지는 규칙 위반.
 >
 > ⚠️ **`SET:` 키 형식**: Tool Bar 는 variant 개별 키가 비공개(컴포넌트 셋만 게시)라
 > `"SET:<setKey>:<Variant>"` 형식을 쓴다 — `code.js importComponentFlexible` 가

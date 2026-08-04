@@ -21,10 +21,15 @@ variant 이름("Type=Home")을 prop 단위로 매칭해 인스턴스를 만든�
   L5 verify — 빌드 후에도 NavBar 가 FRAME 으로 남아 있으면 WARN.
 
 스코프 제외 (swap 안 함):
-  • `_customNavBar: true` 마커 — 검색바 등 특수 navbar 는 author 의도 존중
+  • `_customNavBar: "<사유>"` 마커 — 검색바 등 특수 navbar 는 author 의도 존중
   • modal/bottom-sheet 화면 (`_screenType`) — X-only 헤더는 별도 패턴 (2-D)
-  • x-close 아이콘만 든 navbar — modal 헤더
   • 로고도 back 도 없는 navbar — 의도 불명, WARN 만 (파괴적 swap 회피)
+
+🔴 2026-08-04 사용자 룰 ("왜 tool bar instance 안 쓰고 일반 프레임으로 만든거야"):
+  x-close 모달 헤더도 **제외 대상 아님** — Tool Bar 는 View=modal variant +
+  Back/Title/Num BOOLEAN prop 으로 X-only 헤더를 표현할 수 있다 (실물 검증 2026-08-04).
+  _classify 가 'modal' 로 분류 → inject 가 _navModal 마커로 swap,
+  _configure_tool_bar 가 View=modal flip + Title/Back/Num off + x-close 아이콘 적용.
 """
 from __future__ import annotations
 
@@ -125,9 +130,10 @@ def _is_navbar_frame(node: dict) -> bool:
 
 
 def _classify(navbar: dict):
-    """swap 대상 분류 → ('home'|'detail'|None, title)."""
-    if _has_xclose(navbar):           # modal X-only 헤더 — 별도 패턴 (2-D)
-        return None, None
+    """swap 대상 분류 → ('home'|'detail'|'modal'|None, title)."""
+    if _has_xclose(navbar):
+        # 🔴 2026-08-04 사용자 룰: X 헤더도 Tool Bar 인스턴스 (View=modal variant)
+        return "modal", _extract_title(navbar)
     back = _has_back(navbar)
     if back:
         return "detail", _extract_title(navbar)
@@ -222,7 +228,14 @@ def _inject(bp: dict) -> dict:
                 right_icons = _extract_right_icons(n)
                 n["type"] = "instance"
                 n["componentKey"] = _TOOLBAR_HOME_KEY if kind == "home" else _TOOLBAR_DETAIL_KEY
-                n["_dsResolvedRole"] = f"Tool Bar Type={'Home' if kind == 'home' else 'Detail view'}"
+                n["_dsResolvedRole"] = ("Tool Bar View=modal" if kind == "modal" else
+                                        f"Tool Bar Type={'Home' if kind == 'home' else 'Detail view'}")
+                if kind == "modal":
+                    # 🔴 2026-08-04: X 헤더 = View=modal variant (+Title/Back/Num off는
+                    # _configure_tool_bar 가 처리). X 는 우측 1버튼 x-close 로 유지.
+                    n["_navModal"] = True
+                    if not right_icons:
+                        right_icons = ["x-close"]
                 if title:
                     n["_navTitle"] = title
                 # 빈 리스트도 명시적으로 박는다 — 와이어에 우측 아이콘 없음 = Type=empty
