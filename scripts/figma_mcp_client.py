@@ -7267,14 +7267,14 @@ def _enforce_ds_button_sizing(root_id: str, label_map: Optional[dict] = None) ->
                 if isinstance(pinfo, dict) and pinfo.get("type") == "BOOLEAN" \
                         and ("icon leading" in pl or "icon trailing" in pl) and pinfo.get("value"):
                     off[pname] = False
-            # ⚠️ 2026-05-28 사용자 명시: "하단에 고정되거나 보여지는 버튼 컴포넌트 size 는
-            # Lg 를 기본". 전폭(VERTICAL 부모) 하단 CTA 의 Size VARIANT 를 lg 로 강제.
+            # ⚠️ 2026-08-04 사용자 룰 (2026-05-28 'lg 기본' 을 개정): "기본 화면들에서
+            # CTA 버튼의 크기는 2xl". 전폭(VERTICAL 부모) 하단 CTA 의 Size VARIANT 를 2xl 로 강제.
             if parent_layout == "VERTICAL":
                 for pname, pinfo in pdict.items():
                     if (isinstance(pinfo, dict) and pinfo.get("type") == "VARIANT"
                             and pname.lower() == "size"
-                            and str(pinfo.get("value")).lower() != "lg"):
-                        off[pname] = "lg"
+                            and str(pinfo.get("value")).lower() != "2xl"):
+                        off[pname] = "2xl"
             if off:
                 call_tool("set_instance_properties", {"nodeId": nid, "properties": off})
         except Exception as e:

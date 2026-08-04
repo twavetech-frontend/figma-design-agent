@@ -314,7 +314,7 @@
       "guidance": [
         {
           "do": true,
-          "description": "하단 CTA(Bottom Action Bar 의 Primary CTA/참여하기 등)는 무조건 DS 'Action Button' 인스턴스. 하단 고정/보이는 CTA 는 Size=lg 기본(post-fix 가 전폭 CTA 자동 강제)."
+          "description": "하단 CTA(Bottom Action Bar 의 Primary CTA/참여하기 등)는 무조건 DS 'Action Button' 인스턴스. 기본 화면의 하단 고정/보이는 CTA 는 Size=2xl 기본(post-fix 가 전폭 CTA 자동 강제 — 2026-08-04 사용자 룰, 구 lg 개정)."
         },
         {
           "do": true,

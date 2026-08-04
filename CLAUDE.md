@@ -374,7 +374,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   styled frame**(`_underlineTabs:true`, active=text-primary+fg-primary bar / inactive=text-tertiary+투명)
   이 기본. **Segmented_control 은 `_forceSegmented:true` 컴팩트 토글(주/월/년 등)만.** 헷갈리면 underline.
 - **0-P** — Segmented_control 은 Size=md 기본(자동).
-- **2-G** — 하단/전폭 CTA = DS **'Action Button'** 인스턴스. Size=lg 기본(자동 강제), 라벨은
+- **2-G** — 하단/전폭 CTA = DS **'Action Button'** 인스턴스. Size=2xl 기본(자동 강제 — 2026-08-04 사용자, 구 lg 개정), 라벨은
   `_instanceText`. ⚠️ md Primary 키는 import 깨짐 → Secondary 키 + `instanceProperties:{"Hierarchy":"Primary"}`
   flip(빌드 후 자동 적용). 버튼 높이는 padding(상하 16)으로 확보(규칙 20).
 - **2-G-2~5** — 액션바 안 버튼 높이 통일(자동) · NavBar 우측 액션 = 아이콘 버튼(텍스트 금지, R62) ·

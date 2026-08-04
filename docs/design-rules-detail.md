@@ -1114,8 +1114,8 @@
   - `Action Button md Primary` (`ed0032bcf28f03da97e4b3006f54d30a0fbe5914`) — 기본 CTA
   - `Action Button md Secondary` / `Tertiary` / `Outline` / `Ghost` — 위계별
   - `Action Button sm` (`a8a4d7eb7874c469ab89105cc342fad85a3d28ce`) — 보조 CTA
-- **🔴 사이즈 — 하단에 고정되거나 보이는 CTA 버튼은 `Size: lg` 가 기본 (2026-05-28 사용자 명시).** 비활성은 `State: Disabled`.
-  - **코드 강제:** blueprint 의 `properties:{Size:lg}` 는 빌드 때 무시되므로, `_enforce_ds_button_sizing` (post-fix) 가 **VERTICAL 부모의 전폭 CTA 의 Size variant 를 lg 로 자동 강제** → `set_instance_properties`. 매 빌드 자동 적용.
+- **🔴 사이즈 — 기본 화면의 하단 고정/보이는 CTA 버튼은 `Size: 2xl` 이 기본 (2026-08-04 사용자 룰 — 2026-05-28 'lg 기본' 개정. "버튼 사이즈가 너무 작다. 기본 화면들에서 cta버튼의 크기는 2xl").** 비활성은 `State: Disabled`.
+  - **코드 강제:** blueprint 의 `properties:{Size:2xl}` 는 빌드 때 무시되므로, `_enforce_ds_button_sizing` (post-fix) 가 **VERTICAL 부모의 전폭 CTA 의 Size variant 를 2xl 로 자동 강제** → `set_instance_properties`. 매 빌드 자동 적용.
 - **라벨:** Action Button 라벨은 nested TEXT("Button CTA") 라 `properties.label` 로 **안 바뀐다**. `set_text_content` 또는 inject 의 `_instanceText` / label_map 로 override. ⚠️ Size 등 **variant 변경 후엔 라벨 재확인** (variant swap 이 override 를 리셋할 수 있음).
 - **시스템 강제 (기존):** R23 inject 의 `detect_button_shape` 가 raw button frame 을 자동 swap. catalog 미스 시 build ERROR.
 - Blueprint 작성 시: `{"type":"instance","componentKey":"ed0032bcf28f03da97e4b3006f54d30a0fbe5914","_instanceText":"참여하기","properties":{"Size":"lg","State":"Disabled"}}` 패턴.
