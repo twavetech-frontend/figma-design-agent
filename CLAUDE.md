@@ -384,7 +384,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **2-G-2~5** — 액션바 안 버튼 높이 통일(자동) · NavBar 우측 액션 = 아이콘 버튼(텍스트 금지, R62) ·
   세로 연속 전폭 Primary CTA 는 더 중요한 것에 `_ctaKeepPrimary:true` 명시(나머지 Outline 자동) ·
   FAB 화면의 수평 반복 동일 라벨 CTA 는 Tertiary(자동).
-- **2-I** — 폼 컨트롤(체크박스/토글/라디오/인풋/슬라이더/드롭다운) = DS 인스턴스 직접 작성 —
+- **2-I** — 폼 컨트롤(체크박스/토글/라디오/인풋/슬라이더/드롭다운) = DS 인스턴스 직접 작성.
+  🔴 텍스트 인풋 = **'Input field'** 인스턴스(Size=md, State=Placeholder, 라벨·helper 는 밖에 raw —
+  2026-08-05 사용자 실측 패턴) —
   raw frame 은 자동 swap 안 되는 케이스라 사용자 분노 회귀.
 - **10** — 캐로셀/배너 인디케이터 = DS **'Pagination dot group'** 인스턴스(raw dot/bullet 금지).
 - **0-K** — DS 인스턴스(내부 노드 포함)의 fill·stroke·라벨 색 **절대 변경 금지** — variant/prop 만.

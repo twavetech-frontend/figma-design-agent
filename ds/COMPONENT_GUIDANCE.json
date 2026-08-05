@@ -505,6 +505,51 @@
           "description": "fg-white(alias, silent skip 위험)/fg-primary_on-brand/검정/raw RGB 금지."
         }
       ]
+    },
+    {
+      "name": "Input field",
+      "rule": "2-I",
+      "aliases": [
+        "인풋",
+        "입력 필드",
+        "텍스트 필드",
+        "text field",
+        "input"
+      ],
+      "keywords": [
+        "input",
+        "인풋",
+        "입력",
+        "placeholder",
+        "폼"
+      ],
+      "catalogPrefixes": [
+        "Input field"
+      ],
+      "guidance": [
+        {
+          "do": true,
+          "description": "텍스트 입력 영역은 DS 'Input field' 인스턴스 (key 074f2839b4ce11d761931642b0305f277f811563). variants: Size=md, Type=Default, Destructive=False, 미입력 상태 State=Placeholder. placeholder 는 내부 TEXT override, 가로 FILL. (2026-08-05 사용자 실측 패턴 — 쿠폰등록 인풋 직접 교체)"
+        },
+        {
+          "do": true,
+          "description": "라벨(위)과 helper text(ⓘ+안내, 아래)는 인스턴스 밖 raw 로 구성 — Input field 는 입력 박스만 담당."
+        },
+        {
+          "do": false,
+          "description": "밑줄/박스형 raw 인풋 frame 을 그리거나 유지하지 말 것 — 변환(리바인딩) 작업에서도 발견 시 Input field 인스턴스로 교체 (2-I)."
+        }
+      ],
+      "blueprintExample": {
+        "type": "instance",
+        "componentKey": "074f2839b4ce11d761931642b0305f277f811563",
+        "instanceProperties": {
+          "Size": "md",
+          "State": "Placeholder"
+        },
+        "_instanceText": "쿠폰 코드를 입력해 주세요.",
+        "layoutSizingHorizontal": "FILL"
+      }
     }
   ]
 }

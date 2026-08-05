@@ -1246,6 +1246,12 @@
   - 토글/라디오/인풋/슬라이더/드롭다운도 동일 — `_VERIFIED_AUTOSWAP_ROLES` 의 DS 컴포넌트로.
 - Blueprint: `{"type":"instance","componentKey":"bbd5c20958464e51295e73c3c90ef7d54c0b0b69"}` 패턴.
 - R23 의 `detect_checkbox_shape` 는 현재 key UNVERIFIED → WARN only 라 자동 swap 안 됨 — **작성 시 직접 instance 로 쓸 것** (raw frame 으로 그리면 사용자 분노).
+- 🔴 **텍스트 인풋 = DS 'Input field' 인스턴스 (2026-08-05 사용자 실측 패턴 — 쿠폰등록_DS 인풋을 직접 교체하며 확정):**
+  - key: `074f2839b4ce11d761931642b0305f277f811563` (ds_catalog 'Input field')
+  - variants: **Size=md, Type=Default, Destructive=False**, 미입력 상태는 **State=Placeholder**
+  - placeholder 문구는 내부 TEXT override(`set_text_content`) · 가로 `FILL`
+  - **라벨(위)과 helper text(아래 ⓘ+안내)는 인스턴스 밖 raw 로 유지** — Input field 인스턴스는 입력 박스만 담당
+  - 변환(리바인딩) 작업에서도 raw 밑줄/박스형 인풋을 만나면 이 인스턴스로 교체할 것
 
 ### 2-F. ⚠️ 루트 minHeight=852 + 하단 바 bottom-pin (2026-05-24 룰)
 - 루트 프레임 **min height = 852** (iPhone 16 뷰포트). 콘텐츠가 늘어나면 그에 따라 같이 늘어남.
