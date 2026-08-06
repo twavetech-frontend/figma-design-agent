@@ -365,6 +365,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **0-W** — 상단 NavBar = DS **'Tool Bar'** 인스턴스(`SET:` 키). 메인=Type Home(로고 내장),
   서브=Type Detail view + `_navTitle`. 🔴 **모달 X 헤더도 인스턴스 — View=modal variant +
   Back/Title/Num BOOLEAN off + `_navModal:true` (2026-08-04 사용자 룰, 구 'X헤더 제외' 폐기)**.
+  🔴 **파일 내 import 캐시 마스터가 구버전일 수 있음(2026-08-06 타이틀 16px 회귀 ×2)** —
+  타이틀은 Body xl/Semibold(20px)가 정본. `_enforce_tool_bar_title_style_live`(post-fix)와
+  `_configure_tool_bar` 가 20px 재단언(백스톱). 근본 해결 = Figma 라이브러리 업데이트 수락(수동).
+  Tool Bar 인스턴스를 수동 생성하는 흐름에서도 생성 직후 타이틀 크기 검증할 것.
   우측 버튼은 `_navIcons`(빈 배열 `[]` = 버튼 없음/empty,
   최대 2개). 검색바 등 표현 불가 케이스만 raw + `_customNavBar:"<사유>"` (🔴 boolean 금지 —
   R64 ERROR. **아이콘이 키맵에 없다는 건 우회 사유가 아님** — search_design_system 으로 키 확보 후

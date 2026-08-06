@@ -4126,6 +4126,71 @@ def _recover_error_status_bar_live(root_node_id: str) -> bool:
         return False
 
 
+def _enforce_tool_bar_title_style_live(root_node_id: str) -> int:
+    """🔴 Tool Bar 타이틀 = Body xl/Semibold(20px) 강제 (2026-08-06 사용자 회귀 보고 ×2).
+
+    근본 원인: 파일에 import 캐시된 Tool Bar 컴포넌트 마스터가 **구버전(타이틀 16px
+    Body md)** 일 수 있다 — importComponentSetByKeyAsync 는 파일 내 기존 컴포넌트를
+    재사용하므로 라이브러리가 20px 로 업데이트돼도 새 인스턴스는 계속 16px 로 생성된다.
+    근본 해결 = Figma 'Assets > 라이브러리 업데이트' 수락(수동). 이 enforcer 는 그 전까지
+    모든 경로(빌드·수동 인스턴스 생성)에서 타이틀을 DS 정본 20px 로 재단언하는 백스톱.
+    ⚠️ Status Bar 등 다른 인스턴스는 건드리지 않는다(이름 필터). 빈 텍스트 스킵."""
+    try:
+        sm = _load_text_style_map()
+        xl = sm.get((20, "semibold"))
+    except Exception:
+        xl = None
+    if not xl:
+        return 0
+    try:
+        info = parse_content(call_tool("get_node_info", {"nodeId": root_node_id})).get("json") or {}
+    except Exception:
+        return 0
+    fixed = 0
+
+    def _tb_ids(n, depth=0):
+        out = []
+        if not isinstance(n, dict) or depth > 4:
+            return out
+        nm = (n.get("name") or "").lower()
+        if (n.get("type") or "").upper() == "INSTANCE" and ("tool bar" in nm or "navbar" in nm):
+            out.append(n.get("id"))
+            return out
+        for c in n.get("children") or []:
+            try:
+                ci = parse_content(call_tool("get_node_info", {"nodeId": c.get("id")})).get("json") or {}
+            except Exception:
+                continue
+            out += _tb_ids(ci, depth + 1)
+        return out
+
+    for tb in _tb_ids(info):
+        try:
+            scan = parse_content(call_tool("scan_text_nodes", {"nodeId": tb})).get("json") or {}
+            tnodes = scan.get("textNodes") or []
+        except Exception:
+            tnodes = []
+        for t in tnodes:
+            ch = (t.get("characters") or "").strip()
+            if not ch:
+                continue
+            try:
+                ni = parse_content(call_tool("get_node_info", {"nodeId": t.get("id")})).get("json") or {}
+            except Exception:
+                continue
+            fs = ni.get("fontSize")
+            if isinstance(fs, (int, float)) and abs(fs - 20) > 0.5:
+                try:
+                    call_tool("set_text_style_id", {"nodeId": t.get("id"),
+                                                    "textStyleId": f"S:{xl},{tb}"})
+                    fixed += 1
+                    print(f"  [tool-bar-title] ✓ '{ch[:12]}' {fs}→20px (구버전 마스터 백스톱 — "
+                          f"라이브러리 업데이트 필요)")
+                except Exception:
+                    pass
+    return fixed
+
+
 def _enforce_home_indicator_fill_live(root_node_id: str) -> int:
     """🔴 HomeIndicator 인스턴스 = 가로 FILL 강제 (2026-08-04 사용자 룰 —
     "왜 자꾸 homeindicator instance 가 width 360 고정으로 들어와지는거야. width=fill 로").
@@ -8771,6 +8836,20 @@ def _configure_tool_bar(root_id: str, configs: List[dict]) -> int:
                     call_tool("set_text_content", {"nodeId": text_nodes[0].get("id"),
                                                    "text": str(cfg["title"])})
                     print(f"  [tool-bar] ✓ '{cfg.get('name')}' 타이틀 → '{cfg['title']}'")
+                    # 🔴 2026-08-06 사용자 회귀 보고 ("tool bar title 이 16px — DS 는 20px"):
+                    # 파일에 import 캐시된 Tool Bar 마스터가 구버전(타이틀 16 Body md)일 수 있어
+                    # 타이틀에 DS 정본 Body xl/Semibold(20px) 를 항상 재단언한다. 근본 해결은
+                    # Figma 라이브러리 업데이트 수락(수동)이며 이 백스톱은 그 전까지의 방어선.
+                    try:
+                        _sm = _load_text_style_map()
+                        _xl = _sm.get((20, "semibold"))
+                        if _xl:
+                            call_tool("set_text_style_id",
+                                      {"nodeId": text_nodes[0].get("id"),
+                                       "textStyleId": f"S:{_xl},{iid}"})
+                            print("  [tool-bar] ✓ 타이틀 Body xl/Semibold(20px) 재단언")
+                    except Exception:
+                        pass
                     done += 1
                     # 🔴 2026-07-14: Detail 마스터의 잔여 카운트 TEXT('num'='5' 등)가 타이틀
                     # 옆에 그대로 노출되던 회귀 — 타이틀 외 짧은 텍스트는 비운다.
@@ -9935,6 +10014,11 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_home_indicator_fill_live(root_node_id)
     except Exception as e:
         print(f"  [home-indicator-fill] 실패 (무시하고 계속): {e}")
+
+    try:
+        _enforce_tool_bar_title_style_live(root_node_id)
+    except Exception as e:
+        print(f"  [tool-bar-title] 실패 (무시하고 계속): {e}")
 
     print("\n[규칙] 인디케이터 프레임 위 gap = 아래 padding 대칭 (2026-06-05) 적용 중...")
     try:

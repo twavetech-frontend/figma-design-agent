@@ -804,6 +804,21 @@
 > | 서브 (back+중앙 타이틀+우측 아이콘) | Type=Detail view | `SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view` |
 > | 모달 X 헤더 (타이틀 유/무 + X) | **View=modal** | Detail 키로 생성 후 `View=modal` flip |
 >
+> 🔴 **구버전 마스터 캐시 함정 — 타이틀 16px 회귀 (2026-08-06 사용자 보고 ×2: "tool bar
+> title text가 16px인데 ds figma에는 20px", "또 또 tool bar title 텍스트 크기가 작아").**
+> - **원인**: `importComponentSetByKeyAsync` 는 파일에 **이미 import 된 컴포넌트를 재사용**
+>   한다. DS 라이브러리에서 타이틀이 20px(Body xl/Semibold)로 업데이트돼도, 파일 내 캐시
+>   마스터가 구버전(16px Body md)이면 **새로 만드는 인스턴스마다 16px** 로 생성된다.
+>   신선한 인스턴스 실측으로 확정(2026-08-06): 아무 패스도 안 거친 인스턴스가 이미 16px.
+> - **백스톱(코드 강제)**: ① `_enforce_tool_bar_title_style_live` — cmd_post_fix 체인에서
+>   루트 내 모든 Tool Bar/NavBar 인스턴스의 비어있지 않은 타이틀 TEXT 가 20px 가 아니면
+>   Body xl/Semibold 재단언. ② `_configure_tool_bar` 도 타이틀 적용 직후 같은 재단언.
+> - **근본 해결(수동)**: Figma **Assets > 라이브러리 업데이트 수락** — 파일 마스터가 최신이
+>   되면 백스톱은 no-op. 이 함정은 Tool Bar 만이 아니라 **모든 import 캐시 DS 컴포넌트**에
+>   해당([[verify-ds-keys-before-build]] 철학) — 마스터 갱신 의심 시 신선 인스턴스로 실측.
+> - 수동 변환/스크립트 흐름에서 Tool Bar 인스턴스를 직접 만들 때도 생성 직후 타이틀 크기를
+>   검증하고 20px 재단언을 포함할 것.
+>
 > 🔴 **모달 X 헤더도 Tool Bar 인스턴스 — 제외 아님 (2026-08-04 사용자 룰: "왜 tool bar
 > instance 안 쓰고 일반 프레임으로 만든거야? 왜 규칙을 어긴거지").** 과거 R64 는 x-close
 > 헤더를 swap 제외했으나(2-D 별도 패턴 근거), 실물 검증 결과 Tool Bar 는 **View=modal

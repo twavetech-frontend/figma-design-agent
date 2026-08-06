@@ -94,6 +94,10 @@
         {
           "do": false,
           "description": "X 전용 모달 헤더를 raw frame 으로 유지하지 말 것 — View=modal 로 표현 가능하므로 제외 사유 아님 (2026-08-04)."
+        },
+        {
+          "do": true,
+          "description": "타이틀은 Body xl/Semibold(20px)가 정본. 파일 내 import 캐시 마스터가 구버전(16px)일 수 있으므로 인스턴스 생성 직후 타이틀 크기 검증 + 20px 재단언 (_enforce_tool_bar_title_style_live 백스톱, 2026-08-06 회귀 ×2). 근본 해결 = Figma 라이브러리 업데이트 수락."
         }
       ],
       "blueprintExample": {
