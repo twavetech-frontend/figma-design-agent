@@ -115,7 +115,7 @@ smap = json.load(open('/Users/julee/imin/figma-design-agent/ds/TEXT_STYLE_MAP.js
 by_key = {}
 for e in smap:
     by_key[(e.get('fontSize'), (e.get('style') or '').lower())] = e
-SNAP = {11: 12, 13: 12, 15: 14, 17: 16, 18: 16, 22: 24, 26: 24, 28: 24, 30: 32}
+SNAP = {10: 12, 11: 12, 13: 12, 15: 14, 17: 16, 18: 16, 22: 24, 26: 24, 28: 24, 30: 32}
 sc = call('scan_text_nodes', {'nodeId': ROOT}) or {}
 ts = collections.Counter()
 for tnode in (sc.get('textNodes') if isinstance(sc, dict) else sc) or []:
@@ -145,7 +145,11 @@ for tnode in (sc.get('textNodes') if isinstance(sc, dict) else sc) or []:
         ts[f'스냅 {size}->{tgt_size}'] += 1
     # ⚠️ 파라미터명은 textStyleId, 형식은 "S:{key},{아무값}" — 콤마 뒤가 비면 플러그인
     # 정규식(/^S:([^,]+),(.+)$/)을 못 타 로컬 조회로 떨어져 silent 실패한다 (2026-08-10 회귀).
+    deco = info.get('textDecoration')
     call('set_text_style_id', {'nodeId': nid, 'textStyleId': f"S:{e['key']},{nid}"})
+    if deco and deco != 'NONE':
+        # 스타일 적용이 취소선/밑줄을 리셋한다 — 원본 데코 재적용 (2026-08-10 정가 취소선 회귀)
+        call('set_text_decoration', {'nodeId': nid, 'textDecoration': deco})
     chk = call('get_node_info', {'nodeId': nid}) or {}
     if chk.get('textStyleId'):
         ts['스타일 적용(검증)'] += 1
