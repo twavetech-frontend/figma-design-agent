@@ -57,11 +57,14 @@ def main():
             checked += 1
             bv = (call('get_bound_variables', {'nodeId': node_id}) or {}).get('boundVariables') or {}
             if name not in allow:
+                all_vis = [f for f in (n.get('fills') or []) if isinstance(f, dict) and f.get('visible') is not False]
                 cols = []
-                for f in (n.get('fills') or []):
-                    if isinstance(f, dict) and f.get('type') == 'SOLID' and f.get('visible') is not False \
-                            and f.get('opacity', 1) >= 0.999 and (f.get('color') or {}).get('a', 1) >= 0.999:
-                        cols.append(to_hex(f.get('color', {})))
+                # 멀티페인트(그라디언트 등 포함)는 바인딩 불가 대상 — 검사 제외
+                if len(all_vis) == 1:
+                    for f in all_vis:
+                        if f.get('type') == 'SOLID' \
+                                and f.get('opacity', 1) >= 0.999 and (f.get('color') or {}).get('a', 1) >= 0.999:
+                            cols.append(to_hex(f.get('color', {})))
                 scols = []
                 for s in (n.get('strokes') or []):
                     if isinstance(s, dict) and s.get('type') == 'SOLID':
