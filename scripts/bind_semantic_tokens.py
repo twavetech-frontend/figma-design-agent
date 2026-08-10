@@ -85,9 +85,12 @@ def walk(nid, inst=False, d=0):
         bv = (call('get_bound_variables', {'nodeId': n['id']}) or {}).get('boundVariables') or {}
         for slot in ('fill', 'stroke'):
             paints = n.get(f'{slot}s') or []
+            all_vis = [p for p in paints if isinstance(p, dict) and p.get('visible') is not False]
             vis = [(i, p) for i, p in enumerate(paints)
                    if isinstance(p, dict) and p.get('type') == 'SOLID' and p.get('visible') is not False]
-            if len(vis) != 1:
+            # ⚠️ 멀티페인트(그라디언트 포함) 절대 건드리지 말 것 — set_fill_color detach 가
+            # GRADIENT 를 날려 단일색으로 평탄화한다 (2026-08-10 타임딜 배너 회귀)
+            if len(vis) != 1 or len(all_vis) != 1:
                 continue
             i, p = vis[0]
             col = p.get('color', {})
