@@ -25,7 +25,8 @@ def full_name(suffix):
 CANON = {
     'text': {'#2f3943': 'text-primary', '#6f7e8d': 'text-secondary', '#8896a4': 'text-tertiary',
              '#b3bdc7': 'text-placeholder', '#7700ff': 'text-brand-primary',
-             '#df1634': 'text-error-primary', '#3bbf2e': 'text-success-primary'},
+             '#df1634': 'text-error-primary', '#3bbf2e': 'text-success-primary',
+             '#ffffff': 'text-white'},
     'bg':   {'#ffffff': 'bg-primary', '#f3f5f7': 'bg-secondary', '#f4ecff': 'bg-brand-primary'},
     'border': {'#dce0e5': 'border-primary', '#eceef1': 'border-secondary'},
     'fg':   {'#2f3943': 'fg-primary', '#9aa6b3': 'fg-tertiary'},
@@ -96,10 +97,10 @@ def walk(nid, inst=False, d=0):
             if i < len(arr) and arr[i]:
                 stats['이미 바인딩'] += 1; continue
             h = to_hex(col)
-            if h in ('#ffffff', '#000000') and slot == 'fill' and t != 'TEXT':
-                # 흰/검 면은 bg-primary만 바인딩(흰), 검정 스킵
-                if h == '#000000':
-                    continue
+            if h == '#000000':
+                # 순검정은 fill/stroke 모두 스킵 — 아이콘/백버튼 검정 stroke 가
+                # border-primary 로 스냅돼 연회색으로 훼손되던 회귀 (2026-08-10)
+                continue
             bind_paint(n['id'], slot, i, col, cls_of(t, slot), False)
     for c in n.get('children', []) or []:
         walk(c['id'], is_inst, d + 1)
