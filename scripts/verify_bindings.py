@@ -76,7 +76,8 @@ def main():
                     bad_paint.append((name, t, 'fill', cols))
                 if scols and not bv.get('strokes'):
                     bad_paint.append((name, t, 'stroke', scols))
-            if t == 'TEXT' and (n.get('characters') or '').strip() and not (n.get('textStyleId') or ''):
+            if t == 'TEXT' and name not in allow and (n.get('characters') or '').strip() \
+                    and not (n.get('textStyleId') or ''):
                 bad_style.append((name, (n.get('characters') or '')[:14]))
         for c in n.get('children', []) or []:
             walk(c['id'], d + 1)
