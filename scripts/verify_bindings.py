@@ -59,23 +59,40 @@ def main():
             if name not in allow:
                 all_vis = [f for f in (n.get('fills') or []) if isinstance(f, dict) and f.get('visible') is not False]
                 cols = []
+                acols = []  # 순검정/순흰 반투명 — Alpha 토큰 바인딩 대상 (2026-08-12)
                 # 멀티페인트(그라디언트 등 포함)는 바인딩 불가 대상 — 검사 제외
                 if len(all_vis) == 1:
                     for f in all_vis:
-                        if f.get('type') == 'SOLID' \
-                                and f.get('opacity', 1) >= 0.999 and (f.get('color') or {}).get('a', 1) >= 0.999:
-                            cols.append(to_hex(f.get('color', {})))
+                        if f.get('type') != 'SOLID':
+                            continue
+                        eff = f.get('opacity', 1) * (f.get('color') or {}).get('a', 1)
+                        hx = to_hex(f.get('color', {}))
+                        if eff >= 0.999:
+                            cols.append(hx)
+                        elif hx in ('#ffffff', '#000000'):
+                            acols.append((hx, round(eff, 2)))
                 scols = []
+                sacols = []
                 if n.get('strokeWeight') != 'mixed':
                     for s in (n.get('strokes') or []):
-                        if isinstance(s, dict) and s.get('type') == 'SOLID':
-                            scols.append(to_hex(s.get('color', {})))
+                        if not (isinstance(s, dict) and s.get('type') == 'SOLID'):
+                            continue
+                        eff = s.get('opacity', 1) * (s.get('color') or {}).get('a', 1)
+                        hx = to_hex(s.get('color', {}))
+                        if eff >= 0.999:
+                            scols.append(hx)
+                        elif hx in ('#ffffff', '#000000'):
+                            sacols.append((hx, round(eff, 2)))
                 cols = [c for c in cols if c not in ('#ffffff', '#000000')]
                 scols = [c for c in scols if c not in ('#ffffff', '#000000')]
                 if cols and not bv.get('fills'):
                     bad_paint.append((name, t, 'fill', cols))
                 if scols and not bv.get('strokes'):
                     bad_paint.append((name, t, 'stroke', scols))
+                if acols and not bv.get('fills'):
+                    bad_paint.append((name, t, 'fill-alpha', acols))
+                if sacols and not bv.get('strokes'):
+                    bad_paint.append((name, t, 'stroke-alpha', sacols))
             if t == 'TEXT' and name not in allow and (n.get('characters') or '').strip() \
                     and not (n.get('textStyleId') or ''):
                 bad_style.append((name, (n.get('characters') or '')[:14]))

@@ -95,6 +95,29 @@ def walk(nid, inst=False, d=0):
             i, p = vis[0]
             col = p.get('color', {})
             if col.get('a', 1) < 0.999 or p.get('opacity', 1) < 0.999:
+                # 🔴 순검정/순흰 반투명은 Alpha 토큰 바인딩 (2026-08-12 사용자: "black 반투명이
+                # 바인딩 안 됨"). 유색 반투명만 원값 유지. 실효 알파는 라이브 변수 resolve 값을
+                # 따름(문서 스냅샷과 다를 수 있음 — 라운지 실측 60→48%).
+                eff = col.get('a', 1) * p.get('opacity', 1)
+                hx = to_hex(col)
+                fam = 'black' if hx == '#000000' else ('white' if hx == '#ffffff' else None)
+                arr0 = bv.get(f'{slot}s') or []
+                if fam and not (i < len(arr0) and arr0[i]):
+                    steps = [3, 5, 10, 16, 20, 24, 30, 40, 50, 60, 70, 80, 90, 100]
+                    pct = min(steps, key=lambda s: abs(s / 100 - eff))
+                    fn2 = full_name(f'alpha-{fam}-{pct}')
+                    if fn2 and abs(pct / 100 - eff) <= 0.06:
+                        setter = 'set_fill_color' if slot == 'fill' else 'set_stroke_color'
+                        call(setter, {'nodeId': n['id'], 'r': col.get('r', 0), 'g': col.get('g', 0),
+                                      'b': col.get('b', 0), 'a': eff})
+                        call('set_bound_variables', {'nodeId': n['id'], 'bindings': {f'{slot}s/{i}': fn2}})
+                        chk = (call('get_bound_variables', {'nodeId': n['id']}) or {}).get('boundVariables') or {}
+                        arr2 = chk.get(f'{slot}s') or []
+                        if i < len(arr2) and arr2[i]:
+                            stats[f'알파 바인딩({fam}-{pct})'] += 1
+                        else:
+                            stats['알파 실패'] += 1
+                        continue
                 stats['알파 유지'] += 1; continue
             arr = bv.get(f'{slot}s') or []
             if i < len(arr) and arr[i]:
