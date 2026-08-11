@@ -53,7 +53,7 @@ def main():
         node_id = n.get('id') or ''
         t = n.get('type')
         name = n.get('name') or ''
-        if ';' not in node_id and t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE'):
+        if ';' not in node_id and t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE', 'VECTOR', 'LINE', 'BOOLEAN_OPERATION'):
             checked += 1
             bv = (call('get_bound_variables', {'nodeId': node_id}) or {}).get('boundVariables') or {}
             if name not in allow:
@@ -66,9 +66,10 @@ def main():
                                 and f.get('opacity', 1) >= 0.999 and (f.get('color') or {}).get('a', 1) >= 0.999:
                             cols.append(to_hex(f.get('color', {})))
                 scols = []
-                for s in (n.get('strokes') or []):
-                    if isinstance(s, dict) and s.get('type') == 'SOLID':
-                        scols.append(to_hex(s.get('color', {})))
+                if n.get('strokeWeight') != 'mixed':
+                    for s in (n.get('strokes') or []):
+                        if isinstance(s, dict) and s.get('type') == 'SOLID':
+                            scols.append(to_hex(s.get('color', {})))
                 cols = [c for c in cols if c not in ('#ffffff', '#000000')]
                 scols = [c for c in scols if c not in ('#ffffff', '#000000')]
                 if cols and not bv.get('fills'):
