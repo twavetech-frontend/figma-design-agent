@@ -69,7 +69,7 @@ def main():
                         hx = to_hex(f.get('color', {}))
                         if eff >= 0.999:
                             cols.append(hx)
-                        elif hx in ('#ffffff', '#000000'):
+                        elif eff > 0.005 and hx in ('#ffffff', '#000000'):
                             acols.append((hx, round(eff, 2)))
                 scols = []
                 sacols = []
@@ -81,7 +81,8 @@ def main():
                         hx = to_hex(s.get('color', {}))
                         if eff >= 0.999:
                             scols.append(hx)
-                        elif hx in ('#ffffff', '#000000'):
+                        elif eff > 0.005 and hx in ('#ffffff', '#000000'):
+                            # 완전 투명(알파 0)은 시각 무의미 — 바인딩 대상 아님
                             sacols.append((hx, round(eff, 2)))
                 cols = [c for c in cols if c not in ('#ffffff', '#000000')]
                 scols = [c for c in scols if c not in ('#ffffff', '#000000')]
