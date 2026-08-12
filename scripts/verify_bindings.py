@@ -53,7 +53,9 @@ def main():
         node_id = n.get('id') or ''
         t = n.get('type')
         name = n.get('name') or ''
-        if ';' not in node_id and t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE', 'VECTOR', 'LINE', 'BOOLEAN_OPERATION'):
+        # STAR/POLYGON 누락으로 별점 옐로 미바인딩이 게이트를 통과했음 (2026-08-12 사용자 지적)
+        if ';' not in node_id and t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE', 'VECTOR', 'LINE',
+                                        'BOOLEAN_OPERATION', 'STAR', 'POLYGON'):
             checked += 1
             bv = (call('get_bound_variables', {'nodeId': node_id}) or {}).get('boundVariables') or {}
             if name not in allow:
