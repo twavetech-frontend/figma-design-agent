@@ -48,13 +48,17 @@ def pick(h, cls):
 
 stats = collections.Counter()
 
-def bind_paint(nid, slot, i, col, cls, inst):
+def bind_paint(nid, slot, i, col, cls, inst, stroke_weight=None):
     tgt = pick(to_hex(col), cls)[0]
     fn = full_name(tgt)
     if not fn:
         stats['키맵 없음'] += 1; return
     setter = 'set_fill_color' if slot == 'fill' else 'set_stroke_color'
     ar = {'nodeId': nid, 'r': col.get('r',0), 'g': col.get('g',0), 'b': col.get('b',0)}
+    # 🔴 MCP 레이어가 strokeWeight 미지정 시 1 로 강제 — 굵은 stroke 벡터(느낌표 등)가
+    # 가늘어지던 회귀 (2026-08-12 판매종료 화면). 기존 weight 를 그대로 전달.
+    if slot == 'stroke' and isinstance(stroke_weight, (int, float)) and stroke_weight > 0:
+        ar['strokeWeight'] = stroke_weight
     ab = {'nodeId': nid, 'bindings': {f'{slot}s/{i}': fn}}
     if inst:
         ar['_allowComponentColor'] = True; ab['_allowComponentColor'] = True
@@ -131,7 +135,8 @@ def walk(nid, inst=False, d=0):
                 # 순검정은 fill/stroke 모두 스킵 — 아이콘/백버튼 검정 stroke 가
                 # border-primary 로 스냅돼 연회색으로 훼손되던 회귀 (2026-08-10)
                 continue
-            bind_paint(n['id'], slot, i, col, cls_of(t, slot), False)
+            bind_paint(n['id'], slot, i, col, cls_of(t, slot), False,
+                       stroke_weight=(n.get('strokeWeight') if slot == 'stroke' else None))
     for c in n.get('children', []) or []:
         walk(c['id'], is_inst, d + 1)
 
