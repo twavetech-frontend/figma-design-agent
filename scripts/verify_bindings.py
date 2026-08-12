@@ -73,7 +73,10 @@ def main():
                             acols.append((hx, round(eff, 2)))
                 scols = []
                 sacols = []
-                if n.get('strokeWeight') != 'mixed':
+                # mixed strokeWeight(개별 사이드)여도 stroke '색'은 페인트 레벨 — 검사 대상
+                # (2026-08-12: Tab 하단 라인 #eceef1 미바인딩이 mixed 제외 뒤에 숨었음).
+                # 바인딩은 set_bound_variables 로만 (색 setter 는 평탄화).
+                if True:
                     for s in (n.get('strokes') or []):
                         if not (isinstance(s, dict) and s.get('type') == 'SOLID'):
                             continue
