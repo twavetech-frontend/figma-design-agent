@@ -84,6 +84,10 @@ def walk(nid, inst=False, d=0):
     if t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE', 'VECTOR') and not is_inst:
         bv = (call('get_bound_variables', {'nodeId': n['id']}) or {}).get('boundVariables') or {}
         for slot in ('fill', 'stroke'):
+            # 🔴 mixed strokeWeight(개별 사이드 보더 — 탭 밑줄 등)는 set_stroke_color 가
+            # uniform 으로 평탄화해 4면 박스가 된다 (2026-08-12 라운지 쇼핑홈 탭 회귀) — 스킵
+            if slot == 'stroke' and n.get('strokeWeight') == 'mixed':
+                continue
             paints = n.get(f'{slot}s') or []
             all_vis = [p for p in paints if isinstance(p, dict) and p.get('visible') is not False]
             vis = [(i, p) for i, p in enumerate(paints)
