@@ -190,7 +190,9 @@ def normalize_screen(root_id, width=393, min_height=852):
         if d > 9:
             return
         nn = call('get_node_info', {'nodeId': nid}) or {}
-        if nn.get('type') == 'FRAME' and nn.get('layoutSizingHorizontal') == 'FIXED' \
+        # INSTANCE 도 노드 자체 sizing 은 교정 대상 (HomeIndicator FIXED 360 잔재 — 0-X,
+        # 2026-08-13 사용자: "home indicator width가 fill이 아니네?"). 내부로는 안 내려감.
+        if nn.get('type') in ('FRAME', 'INSTANCE') and nn.get('layoutSizingHorizontal') == 'FIXED' \
                 and 300 <= round(nn.get('width') or 0) <= 360:
             call('set_layout_sizing', {'nodeId': nid, 'layoutSizingHorizontal': 'FILL'})
         for c in nn.get('children', []) or []:
