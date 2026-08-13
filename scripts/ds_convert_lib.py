@@ -18,6 +18,8 @@
 - GROUP 은 리사이즈하지 않는다 (내부 개별 보정 → 원크기 중앙 → 최후 2x export 이미지)
 - 간격은 padding/itemSpacing 만 (spacer 프레임 금지)
 - 말단 카드까지 오토레이아웃 재구성이 기본, 클론 보존은 벡터 아트만
+- 🔴 화면 root 는 폭 393 + **최소 높이 852** (원본이 더 작아도 852 로 확장 — normalize_screen 필수,
+  2026-08-13 사용자 룰. verify 의 화면 크기 게이트가 h<852 를 FAIL 로 차단)
 - 완료 보고 전: verify_layout + verify_bindings + **region_compare 전 구역 Read**
   (전체 축소 side_by_side 만으로 판정 금지 — 2026-08-12 사용자: "이런 거 너가 찾아내야")
 - 실측값을 blueprint 로 옮길 때 실측 y/gap ↔ 작성 padding 을 표로 대조 (실측해 놓고
@@ -162,6 +164,30 @@ def verify_layout(gen_root, snap_by_gen_id, tol=2.0):
 
     walk(gen_root)
     return bad
+
+
+def normalize_screen(root_id, width=393, min_height=852):
+    """화면 root 표준화 — 변환/클론 파이프라인의 필수 단계 (2026-08-13 사용자 룰:
+    "화면높이의 최소 사이즈는 852야!" — 원본이 780 이어도 852 로 확장).
+    ① 폭 393 고정 ② h < 852 면 852 로 확장 ③ FIXED 360 잔재 자식 FILL 재단언.
+    하단 고정 요소(홈바/CTA/탭바)는 콘텐츠 영역이 FILL 이면 자동으로 바닥 유지 —
+    콘텐츠 영역이 FILL 이 아닐 때만 경고를 출력한다(spacer 로 채우지 말 것).
+    verify_bindings 의 화면 크기 게이트(w≈393 & h<852 FAIL)와 짝."""
+    n = call('get_node_info', {'nodeId': root_id}) or {}
+    h = n.get('height') or 0
+    call('resize_node', {'nodeId': root_id, 'width': width, 'height': max(h, min_height)})
+    has_fill_v = False
+    for c in n.get('children', []) or []:
+        ci = call('get_node_info', {'nodeId': c['id']}) or {}
+        if ci.get('layoutSizingHorizontal') == 'FIXED' and round(ci.get('width') or 0) == 360:
+            call('set_layout_sizing', {'nodeId': c['id'], 'layoutSizingHorizontal': 'FILL'})
+        if ci.get('layoutSizingVertical') == 'FILL':
+            has_fill_v = True
+    if h < min_height and n.get('layoutMode') in ('VERTICAL',) and not has_fill_v:
+        print(f'  ⚠️ [normalize] {root_id}: h {round(h)}→{min_height} 확장했으나 세로 FILL 자식이 없어 '
+              f'하단 요소가 위에 붙을 수 있음 — 콘텐츠 영역을 FILL 로 지정할 것 (spacer 금지)')
+    n2 = call('get_node_info', {'nodeId': root_id}) or {}
+    return n2.get('width'), n2.get('height')
 
 
 def side_by_side(src_png, gen_png, out_png, scale_w=420):
