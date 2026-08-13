@@ -183,6 +183,20 @@ def normalize_screen(root_id, width=393, min_height=852):
             call('set_layout_sizing', {'nodeId': c['id'], 'layoutSizingHorizontal': 'FILL'})
         if ci.get('layoutSizingVertical') == 'FILL':
             has_fill_v = True
+    # 🔴 내부 행의 FIXED 300~360 잔재도 FILL 재단언 (2026-08-13 사용자: "총액 금액들이
+    # 오른쪽에 딱 안붙어있다!" — 393 확장 시 우측 정렬 행이 원본 폭으로 굳어 우측 여백 생김).
+    # 캐로셀 카드(172) 등 의도 FIXED 는 범위 밖이라 안전.
+    def _deep(nid, d=0):
+        if d > 9:
+            return
+        nn = call('get_node_info', {'nodeId': nid}) or {}
+        if nn.get('type') == 'FRAME' and nn.get('layoutSizingHorizontal') == 'FIXED' \
+                and 300 <= round(nn.get('width') or 0) <= 360:
+            call('set_layout_sizing', {'nodeId': nid, 'layoutSizingHorizontal': 'FILL'})
+        for c in nn.get('children', []) or []:
+            if c.get('type') != 'INSTANCE':
+                _deep(c['id'], d + 1)
+    _deep(root_id)
     if h < min_height and n.get('layoutMode') in ('VERTICAL',) and not has_fill_v:
         print(f'  ⚠️ [normalize] {root_id}: h {round(h)}→{min_height} 확장했으나 세로 FILL 자식이 없어 '
               f'하단 요소가 위에 붙을 수 있음 — 콘텐츠 영역을 FILL 로 지정할 것 (spacer 금지)')
