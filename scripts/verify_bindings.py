@@ -115,7 +115,19 @@ def main():
             walk(c['id'], d + 1)
 
     walk(root)
+    # 🔴 화면 최소 높이 852 (2026-08-13 사용자: "화면높이의 최소 사이즈는 852야!") —
+    # root 가 화면 프레임(폭 393±1)인데 h<852 면 FAIL. 섹션/컴포넌트 단품(폭≠393)은 제외.
+    bad_size = []
+    rn = call('get_node_info', {'nodeId': root}) or {}
+    rw, rh = rn.get('width') or 0, rn.get('height') or 0
+    if abs(rw - 393) <= 1 and rh < 852:
+        bad_size.append((rn.get('name'), f'화면 높이 {round(rh)} < 최소 852'))
     print(f'[verify-bindings] 검사 {checked}노드 (root {root})')
+    if bad_size:
+        print(f'  ✗ 화면 크기 위반 {len(bad_size)}건:')
+        for b in bad_size:
+            print('    ', b)
+        bad_paint.extend(bad_size)
     if bad_paint:
         print(f'  ✗ 색 미바인딩 {len(bad_paint)}건:')
         for b in bad_paint[:15]:
