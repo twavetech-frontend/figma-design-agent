@@ -49,7 +49,12 @@ def pick(h, cls):
 stats = collections.Counter()
 
 def bind_paint(nid, slot, i, col, cls, inst, stroke_weight=None):
-    tgt = pick(to_hex(col), cls)[0]
+    tgt, how = pick(to_hex(col), cls)
+    # 🔴 원거리 근사 스냅 금지 — #7700ff(브랜드 링)가 border-primary(#dce0e5, Δ≈247)로
+    # 오스냅돼 restore 원복→strokeWeight 평탄화 연쇄를 유발 (2026-08-13 라디오 active 회귀).
+    # 근사는 실측 근사 케이스(#e8e9ec→border-secondary, Δ≈8) 수준만 허용.
+    if how.startswith('near') and int(how[5:-1]) > 40:
+        stats[f'원거리 스냅 스킵({cls})'] += 1; return
     fn = full_name(tgt)
     if not fn:
         stats['키맵 없음'] += 1; return

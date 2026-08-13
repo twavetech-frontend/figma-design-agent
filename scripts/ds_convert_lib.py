@@ -136,7 +136,14 @@ def restore_by_map(mapping, thresh=40, skip_black=True):
                 continue
             if color_dist(gh, sh) > thresh:
                 r0 = _rgb(sh)
-                call(setter, {'nodeId': gid, 'r': r0[0] / 255, 'g': r0[1] / 255, 'b': r0[2] / 255})
+                ar = {'nodeId': gid, 'r': r0[0] / 255, 'g': r0[1] / 255, 'b': r0[2] / 255}
+                # 🔴 MCP set_stroke_color 는 strokeWeight 미지정 시 1 로 강제 — 굵은 라디오
+                # active 링(sw 5)이 얇아지던 회귀 (2026-08-13). 원본 weight 재단언.
+                if slot == 'strokes':
+                    ssw = s.get('strokeWeight')
+                    if isinstance(ssw, (int, float)) and ssw > 0:
+                        ar['strokeWeight'] = ssw
+                call(setter, ar)
                 fixed += 1
         # 취소선/밑줄 보존
         if g.get('type') == 'TEXT' and s.get('textDecoration') and s.get('textDecoration') != 'NONE' \
