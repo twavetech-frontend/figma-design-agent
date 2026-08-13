@@ -112,8 +112,14 @@ def walk(nid, inst=False, d=0):
                 arr0 = bv.get(f'{slot}s') or []
                 if fam and not (i < len(arr0) and arr0[i]):
                     steps = [3, 5, 10, 16, 20, 24, 30, 40, 50, 60, 70, 80, 90, 100]
-                    pct = min(steps, key=lambda s: abs(s / 100 - eff))
-                    fn2 = full_name(f'alpha-{fam}-{pct}')
+                    # 최근접 스텝의 토큰이 없으면(black 은 16/24 있음, white 는 없음) 실존하는
+                    # 차선 스텝으로 폴백 (2026-08-13 Pagenation #fff 24% → white-24 없어 스킵되던 갭)
+                    pct, fn2 = None, None
+                    for s in sorted(steps, key=lambda s: abs(s / 100 - eff)):
+                        cand = full_name(f'alpha-{fam}-{s}')
+                        if cand:
+                            pct, fn2 = s, cand
+                            break
                     if fn2 and abs(pct / 100 - eff) <= 0.06:
                         setter = 'set_fill_color' if slot == 'fill' else 'set_stroke_color'
                         call(setter, {'nodeId': n['id'], 'r': col.get('r', 0), 'g': col.get('g', 0),
