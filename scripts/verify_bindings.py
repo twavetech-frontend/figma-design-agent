@@ -111,6 +111,12 @@ def main():
             if t == 'TEXT' and name not in allow and (n.get('characters') or '').strip() \
                     and not (n.get('textStyleId') or ''):
                 bad_style.append((name, (n.get('characters') or '')[:14]))
+            # 🔴 raw 모달/시트 X 헤더 감지 (2026-08-13 사용자: 바텀시트 타이틀도 Tool Bar) —
+            # 룰 0-W(2026-08-04 개정): 모달 X 헤더 = Tool Bar 인스턴스(View=modal). raw close
+            # 버튼 잔존(btn/close, ic_close 류 FRAME)은 헤더 미교체 신호 → FAIL.
+            if t == 'FRAME' and ';' not in node_id and name in ('btn/close', 'btn_close', 'ic_close'):
+                bad_paint.append((name, t, 'raw-modal-header',
+                                  ['모달/시트 헤더는 Tool Bar(View=modal) 인스턴스로 교체']))
         for c in n.get('children', []) or []:
             walk(c['id'], d + 1)
 
@@ -123,6 +129,10 @@ def main():
     if abs(rw - 393) <= 1 and rh < 852:
         bad_size.append((rn.get('name'), f'화면 높이 {round(rh)} < 최소 852'))
     print(f'[verify-bindings] 검사 {checked}노드 (root {root})')
+    # 🔴 0노드 = root 조회 실패(삭제/오타/세션 끊김) — 공허 PASS 방지 (2026-08-13)
+    if checked == 0:
+        print('  ✗ 검사 대상 0노드 — root 미존재/조회 실패. PASS 아님.')
+        return 1
     if bad_size:
         print(f'  ✗ 화면 크기 위반 {len(bad_size)}건:')
         for b in bad_size:
