@@ -740,6 +740,7 @@ Root frame supports: autoLayout, cornerRadius, fill.`, {
     const blueprint = params.blueprint as Record<string, unknown>;
     const enhanced = enhanceBlueprint(blueprint);
     // ★ Step 2: Smart Resolution: resolve semantic names → actual keys
+    unresolvedIconNames.length = 0; // 아이콘 미해석 수집기 리셋 (호출 단위)
     const resolved = await resolveBlueprint(enhanced);
     const resolvedParams = { ...params, blueprint: resolved };
 
@@ -754,6 +755,15 @@ Root frame supports: autoLayout, cornerRadius, fill.`, {
       console.log(`[batch_build_screen] Tracking rootId: ${lastBuiltRootId}`);
     }
     console.log(`[batch_build_screen] Build complete:`, JSON.stringify(result).slice(0, 200));
+
+    // 🔴 아이콘 미해석 → 회색 placeholder 를 결과에 노출 (2026-08-14 — 조용한 fallback 금지)
+    if (unresolvedIconNames.length > 0) {
+      const iconIssues = unresolvedIconNames.map(n =>
+        `[QA][ICON] "${n}" 미해석 → 회색 placeholder(icon-missing:${n})로 대체됨 — svg_icon+svgData 로 교체 필요`);
+      const prev = (result.qaIssues as string[] | undefined) || [];
+      result.qaIssues = [...prev, ...iconIssues];
+      iconIssues.forEach(i => console.warn(`[batch_build_screen] ${i}`));
+    }
 
     // ★ Auto-screenshot: capture immediately after build
     if (result?.rootId) {
@@ -794,7 +804,9 @@ Root frame supports: autoLayout, cornerRadius, fill.`, {
         if (issues.length > 0) {
           console.warn(`[batch_build_screen] Post-build QA found ${issues.length} issues:`);
           issues.forEach(i => console.warn(i));
-          (result as Record<string, unknown>).qaIssues = issues;
+          // merge (아이콘 미해석 등 앞 단계 qaIssues 덮어쓰기 금지 — 2026-08-14)
+          const prevIssues = (result.qaIssues as string[] | undefined) || [];
+          (result as Record<string, unknown>).qaIssues = [...prevIssues, ...issues];
         } else {
           console.log('[batch_build_screen] Post-build QA: all checks passed');
         }
@@ -907,6 +919,12 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
 // Smart Resolution — semantic names → actual Figma keys
 // ============================================================
 
+// 🔴 2026-08-14: type:"icon" 미해석 시 회색 placeholder 로 **조용히** 떨어지던 것을
+// 호출자에게 노출하기 위한 수집기. batch_build_screen 호출마다 리셋되고, 결과 qaIssues 에
+// 합쳐진다 (BUILD-SUMMARY 경로로도 전파). placeholder 노드 이름도 "icon-missing:<name>" 으로
+// 바꿔 트리/verify 에서 눈에 띄게 한다.
+export const unresolvedIconNames: string[] = [];
+
 export async function resolveBlueprint(node: Record<string, unknown>): Promise<Record<string, unknown>> {
   // Deep copy to prevent shared references — shallow copy caused SVG icons
   // to be moved to wrong parents when the same object was mutated in multiple places
@@ -949,9 +967,13 @@ export async function resolveBlueprint(node: Record<string, unknown>): Promise<R
       delete resolved.size;
       console.log(`[resolve] icon "${iconName}" → svg_icon (local, ${iconSize}px)`);
     } else {
-      // Fallback: 회색 원형 placeholder
+      // Fallback: 회색 원형 placeholder — 🔴 2026-08-14: 조용한 fallback 금지.
+      // 수집기에 기록해 batch_build_screen 결과 qaIssues 로 노출 + 이름을 icon-missing:* 로
+      // 바꿔 트리에서 즉시 식별되게 한다 (svg_icon+svgData 로 교체가 정답).
       console.warn(`[resolve] Icon not found: ${iconName}, creating placeholder`);
+      unresolvedIconNames.push(iconName);
       resolved.type = 'frame';
+      resolved.name = `icon-missing:${iconName}`;
       resolved.width = iconSize;
       resolved.height = iconSize;
       resolved.cornerRadius = iconSize / 2;

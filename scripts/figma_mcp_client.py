@@ -979,12 +979,15 @@ def _planning_read_ok(out_rel: str = "scripts/_planning_digest.txt"):
     if meta.get("hash") != fp.get("hash"):
         return False, "기획 문서 변경됨 — learn-planning 재실행 + 재통독 필요"
 
-    # 훅 활성 시: 현재 세션이 직접 끝까지 읽었어야 통과 (토큰 영속 우회 차단)
+    # 훅 활성 시: 현재 세션 완독이면 즉시 통과. 아니면 fingerprint 기준 영속 ack 폴백.
+    # 🔴 2026-08-14 사용자 승인: ack 는 세션이 아니라 **fingerprint 기준 영속** — 기획 문서가
+    # 안 바뀌었으면(위에서 hash 일치 확인됨) 과거 세션의 유효 ack 로 재통독 없이 통과.
+    # 문서가 바뀌면 learn-planning 이 ack 를 무효화하므로 "변경 시 재통독" 취지는 유지된다.
     active, sess_ok, sess_reason = _planning_session_read_ok(out_rel)
-    if active:
-        return (sess_ok, sess_reason)
+    if active and sess_ok:
+        return True, sess_reason
 
-    # 훅 비활성(cron/CLI): 기존 토큰 ack 로 폴백
+    # 훅 비활성(cron/CLI) 또는 이 세션 미통독: 토큰 ack (fingerprint 영속) 폴백
     if not os.path.exists(ack_path):
         return False, "통독 ack 없음 — digest 통독 후 ack-planning 필요"
     try:
@@ -1085,12 +1088,20 @@ def _post_build_required_actions() -> list:
     return actions
 
 
-def _enforce_planning_read_gate() -> None:
+def _enforce_planning_read_gate(root_name: str = None) -> None:
     """🔴 디자인 빌드 하드 게이트 — 기획 통독 안 했으면 빌드 차단 (references S20~S23 패턴).
 
     매번 디자인 생성 시 기획 맥락을 충분히 이해한 상태를 시스템이 보장.
     bypass: 환경변수 IMIN_SKIP_PLANNING_GATE=1 (긴급 시).
+
+    🔴 2026-08-14 사용자 승인: **변환 트랙(비 imin_* root) 은 면제** — 캡처 1:1 DS 변환은
+    기획 재해석이 아니라 기존 화면 옮기기라 통독이 선행 조건이 아니다. 창의 하드 게이트
+    (S24~S27)가 imin_* 만 대상인 것과 동일 기준으로 정렬.
     """
+    if root_name is not None and not str(root_name).strip().lower().startswith("imin"):
+        print(f"ℹ️ [기획] 통독 게이트 면제 — 비 imin_* root '{root_name}' (변환/비창의 트랙, "
+              "2026-08-14 사용자 승인)")
+        return
     if os.environ.get("IMIN_SKIP_PLANNING_GATE") == "1":
         print("⚠️ [기획] 통독 게이트 우회됨 (IMIN_SKIP_PLANNING_GATE=1)")
         return
@@ -4281,11 +4292,24 @@ def _enforce_wallet_bar_radius(root_node_id: str) -> int:
     radius-2xl 토큰으로 자동 바인딩."""
     fixed = [0]
 
-    def walk(node):
+    def _is_wallet_bar(node, nm: str, is_root: bool) -> bool:
+        # 🔴 2026-08-14 회귀 수정: 기존 매칭('wallet'/'월렛' 이름이면 전부)이 너무 넓어
+        # root 프레임("월렛 출금_금액입력" 등 화면명에 '월렛' 포함)까지 top radius 16 을
+        # 박았다. 이 enforcer 의 원 의도는 **하단 고정 월렛 '바'** 하나뿐이므로:
+        #   ① root 는 절대 대상 아님  ② '바(bar)' 이름이거나 ABSOLUTE 하단 고정일 때만.
+        if is_root:
+            return False
+        if "wallet" not in nm and "월렛" not in nm:
+            return False
+        if "bar" in nm or "바" in nm.split()[-1:]:
+            return True
+        return (node.get("layoutPositioning") or "").upper() == "ABSOLUTE"
+
+    def walk(node, is_root=False):
         if not isinstance(node, dict):
             return
         nm = (node.get("name") or "").lower()
-        if (node.get("type") or "").upper() == "FRAME" and ("wallet" in nm or "월렛" in nm):
+        if (node.get("type") or "").upper() == "FRAME" and _is_wallet_bar(node, nm, is_root):
             if node.get("topLeftRadius") != 16 or node.get("topRightRadius") != 16:
                 try:
                     call_tool("set_corner_radius", {"nodeId": node["id"], "radius": 16,
@@ -4299,7 +4323,7 @@ def _enforce_wallet_bar_radius(root_node_id: str) -> int:
     try:
         items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_node_id]})).get("json")
         if isinstance(items, list) and items:
-            walk(items[0].get("document") or items[0])
+            walk(items[0].get("document") or items[0], is_root=True)
     except Exception as e:
         print(f"  [wallet-radius] root fetch fail: {e}")
     if fixed[0]:
@@ -5107,16 +5131,17 @@ def cmd_build(blueprint_file: str):
     """
     ensure_session()
 
+    with open(blueprint_file) as f:
+        blueprint = json.load(f)
+
     # 🔴 기획 통독 하드 게이트 — 통독+ack 안 했으면 빌드 차단 (2026-06-04 사용자: 매 디자인
     # 생성 시 서비스 맥락을 충분히 이해한 상태 시스템 보장). references S20~S23 와 동일 철학.
-    _enforce_planning_read_gate()
+    # 2026-08-14: root 이름을 넘겨 비 imin_*(변환 트랙)는 면제 — blueprint 로드를 게이트 앞으로 이동.
+    _enforce_planning_read_gate(blueprint.get("name") or blueprint.get("archetype"))
 
     # 🔴 직전 빌드 self-verify 미완료면 새 빌드 차단 (2026-06-11 — 절대 규칙 0-F 코드 게이트화).
     # 모델(fable 등)이 self-verify 를 조용히 건너뛰고 다음 화면으로 넘어가는 것 방지.
     _enforce_selfverify_gate("build")
-
-    with open(blueprint_file) as f:
-        blueprint = json.load(f)
 
     # ⚠️ Refactor A (2026-05-28): unified spec 입력 감지 → build_unified_blueprint()
     blueprint = _maybe_resolve_unified_input(blueprint, blueprint_file)

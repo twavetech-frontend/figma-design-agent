@@ -73,6 +73,11 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
      즉 통독 안 하면 디자인을 못 만든다 — "매번 통독해서 이해도 높인 상태" 를 시스템이 보장.
      ack 의 토큰은 digest **맨 끝**에만 있어, 끝까지 통독해야만 정확한 토큰으로 ack 가능(cheat 방지).
      긴급 우회: `IMIN_SKIP_PLANNING_GATE=1`.
+     🔴 **2026-08-14 사용자 승인 개정 2건:** ① **ack 는 세션이 아니라 fingerprint 기준 영속** —
+     기획 문서가 안 바뀌었으면 과거 세션의 유효 ack 로 재통독 없이 통과(새 세션마다 8만자
+     재통독 강제 폐기. 문서 변경 시 learn-planning 이 ack 를 무효화하므로 "변경 시 재통독"은 유지).
+     ② **비 imin_* root(캡처 1:1 변환 트랙 등)는 게이트 면제** — 창의 하드 게이트(S24~S27)가
+     imin_* 만 대상인 것과 동일 기준.
    - 🔴 **변경 감지 + ack 무효화:** `learn-planning` 은 `src/기획/` fingerprint(파일+mtime+size)를
      `_planning_digest.txt.meta.json` 에 저장. **변경 없으면 재생성 스킵**(단 ack 안 됐으면 통독 안내),
      **변경되면 자동 재학습 + 이전 ack 무효화**(`_planning_digest.txt.read.json` 삭제) → 다시 통독+ack

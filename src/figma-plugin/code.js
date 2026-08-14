@@ -6383,13 +6383,18 @@ async function batchBuildScreen(params) {
           node.layoutSizingHorizontal = hSizing;
           // Safety: when FILL is applied, also set node width to parent's inner width
           // This ensures width is correct even if parent auto-layout is later removed
-          if (hSizing === "FILL" && parentNode && parentNode.layoutMode && parentNode.layoutMode !== "NONE") {
+          // 🔴 2026-08-14 회귀 수정: 이 "안전 resize"를 HORIZONTAL 부모에도 적용하면
+          // 주축 FILL 자식이 부모 전폭으로 resize 되면서 Figma 가 FILL→FIXED 로 뒤집어
+          // 형제들이 1px 로 붕괴한다 (3-col 키패드 붕괴의 뿌리, two-col-fill-collapse 동일 계열).
+          // → 교차축(VERTICAL 부모의 가로 FILL)에만 적용하고, resize 후 FILL 을 재단언한다.
+          if (hSizing === "FILL" && parentNode && parentNode.layoutMode === "VERTICAL") {
             try {
               var pPadL = parentNode.paddingLeft || 0;
               var pPadR = parentNode.paddingRight || 0;
               var innerW = parentNode.width - pPadL - pPadR;
               if (innerW > 0 && nodeType !== "text") {
                 node.resize(innerW, node.height);
+                try { node.layoutSizingHorizontal = "FILL"; } catch (e2) { /* ignore */ }
               }
             } catch (e) { /* ignore resize errors */ }
           }
