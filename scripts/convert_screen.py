@@ -62,7 +62,7 @@ def _rgb(h):
 
 # 라운지 배너 장식 블롭 등 — 시맨틱 대응 없는 에셋 고유색 (2026-08-14 5개 배치 반복 실측).
 # sweep 미해결/verify 오탐에서 제외하고 verify 호출에 자동 --allow 로 전달할 노드 이름들.
-ASSET_ALLOW_DEFAULT = {'Ellipse', 'BrandTint25'}
+ASSET_ALLOW_DEFAULT = {'Ellipse', 'BrandTint25', 'BG'}
 SOFT_TINT_RESTORE = {'#faf7ff': 'BrandTint25'}  # 게시 변수 없는 미세 틴트 — 원값 유지+개명
 ASSET_HEXES = {'#f795ae', '#8f95fa', '#55c8c0'}
 
@@ -315,6 +315,36 @@ def swap_cta(root_tree):
     return done
 
 # ── 미바인딩 잔여 일괄 스냅 (verify 1회 원칙) ────────────────────────────────
+BRAND_STEP_TOKENS = {
+    '#5200b0': 'Component colors/Utility/Brand/utility-brand-700',
+    '#6a00e0': 'Component colors/Utility/Brand/utility-brand-600',
+    '#7700ff': 'Component colors/Utility/Brand/utility-brand-500',
+    '#9b55ff': 'Component colors/Utility/Brand/utility-brand-400',
+    '#b685ff': 'Component colors/Utility/Brand/utility-brand-300',
+    '#cfaeff': 'Component colors/Utility/Brand/utility-brand-200'}
+
+def bind_brand_gradients(n, nid2):
+    """DS Gradient/Brand 스텝과 전 stop 정확 일치하는 gradient → stop 별 변수 바인딩
+    (2026-08-14 사용자 지적. 비표준 스텝 혼재 = 에셋 고유 그라데이션 → 원값 유지).
+    플러그인 fills/N/stops/M 바인딩 지원 필요(cc086f1 이후 재실행)."""
+    cnt = 0
+    for slot in ('fills', 'strokes'):
+        for pi, p in enumerate(n.get(slot) or []):
+            if not (isinstance(p, dict) and str(p.get('type', '')).startswith('GRADIENT')
+                    and p.get('visible') is not False):
+                continue
+            stops = p.get('gradientStops') or []
+            hexes = [to_hex(st.get('color', {})) for st in stops]
+            if not hexes or not all(h in BRAND_STEP_TOKENS for h in hexes):
+                continue
+            for si, h in enumerate(hexes):
+                if stops[si].get('bound'):
+                    continue
+                call('set_bound_variables', {'nodeId': nid2,
+                     'bindings': {f'{slot}/{pi}/stops/{si}': 'K:' + KM[BRAND_STEP_TOKENS[h]]}})
+                cnt += 1
+    return cnt
+
 def sweep_unbound(root_id, allow):
     bound = 0
     left = []
@@ -331,6 +361,7 @@ def sweep_unbound(root_id, allow):
         if ';' not in nid2 and t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE', 'VECTOR', 'LINE',
                                      'BOOLEAN_OPERATION', 'STAR', 'POLYGON'):
             bv = (call('get_bound_variables', {'nodeId': nid2}) or {}).get('boundVariables') or {}
+            bound += bind_brand_gradients(n, nid2)
             fills = [f for f in (n.get('fills') or []) if isinstance(f, dict)
                      and f.get('type') == 'SOLID' and f.get('visible') is not False]
             if len(fills) == 1 and not bv.get('fills'):

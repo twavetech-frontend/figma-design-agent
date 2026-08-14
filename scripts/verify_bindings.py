@@ -108,6 +108,21 @@ def main():
                     bad_paint.append((name, t, 'fill-alpha', acols))
                 if sacols and not bv.get('strokes'):
                     bad_paint.append((name, t, 'stroke-alpha', sacols))
+                # 🔴 브랜드 gradient stop 미바인딩 감지 (2026-08-14 사용자: "gradient 값이
+                # ds 토큰이 아니야") — DS Gradient/Brand 스텝과 정확 일치하는 stop 인데
+                # 변수 바인딩이 없으면 FAIL. 비표준 스텝(앱 아이콘 에셋 등)은 검사 제외.
+                _BRAND_STEPS = {'#5200b0', '#6a00e0', '#7700ff', '#9b55ff', '#b685ff', '#cfaeff'}
+                for _slot in ('fills', 'strokes'):
+                    for _p in (n.get(_slot) or []):
+                        if not (isinstance(_p, dict) and str(_p.get('type', '')).startswith('GRADIENT')
+                                and _p.get('visible') is not False):
+                            continue
+                        _stops = _p.get('gradientStops') or []
+                        _hexes = [to_hex(_st.get('color', {})) for _st in _stops]
+                        if _hexes and all(h in _BRAND_STEPS for h in _hexes):
+                            _unbound = [h for _st, h in zip(_stops, _hexes) if not _st.get('bound')]
+                            if _unbound:
+                                bad_paint.append((name, t, 'gradient-stop-unbound', _unbound))
                 # 🔴 아이콘 자리 이미지 크롭 감지 (2026-08-12 사용자: chevron 을 크롭으로 때움) —
                 # ≤36px 정사각급 노드의 IMAGE fill = DS 아이콘(type:'icon'/svg_icon/인스턴스)으로
                 # 교체해야 할 크롭 의심. 사진 썸네일은 이 크기 범위 밖이라 오탐 없음.
