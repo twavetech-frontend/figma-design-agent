@@ -207,6 +207,12 @@ def swap_sheet_headers(root_tree):
         call('delete_node', {'nodeId': hd['id']})
         call('set_layout_sizing', {'nodeId': tb, 'horizontal': 'FILL'})
         call('set_instance_properties', {'nodeId': tb, 'properties': {'View': 'modal', 'Num#17757:3': False}})
+        # 🔴 2026-08-14 사용자 룰: 시트 헤더에 Tool Bar 인스턴스를 쓰면 시트 프레임에
+        # clipsContent=true 필수 — 안 켜면 Tool Bar 사각 모서리가 시트의 상단 코너
+        # radius(16) 를 덮어 라운드가 사라진다.
+        pinfo = call('get_node_info', {'nodeId': pid}) or {}
+        call('set_auto_layout', {'nodeId': pid, 'layoutMode': pinfo.get('layoutMode') or 'VERTICAL',
+                                 'clipsContent': True})
         n = call('get_node_info', {'nodeId': tb}) or {}
         tit_id, rb_id = None, None
         def w(x):

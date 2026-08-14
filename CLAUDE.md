@@ -370,6 +370,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **0-W** — 상단 NavBar = DS **'Tool Bar'** 인스턴스(`SET:` 키). 메인=Type Home(로고 내장),
   서브=Type Detail view + `_navTitle`. 🔴 **모달 X 헤더도 인스턴스 — View=modal variant +
   Back/Title/Num BOOLEAN off + `_navModal:true` (2026-08-04 사용자 룰, 구 'X헤더 제외' 폐기)**.
+  🔴 **바텀시트 헤더에 Tool Bar 인스턴스를 쓰면 시트 프레임 `clipsContent:true` 필수
+  (2026-08-14 사용자 룰)** — 안 켜면 Tool Bar 사각 모서리가 시트 상단 코너 radius(16)를 덮어
+  라운드가 사라진다. convert_screen.py 시트 헤더 스왑이 자동 적용.
   🔴 **파일 내 import 캐시 마스터가 구버전일 수 있음(2026-08-06 타이틀 16px 회귀 ×2)** —
   타이틀은 Body xl/Semibold(20px)가 정본. `_enforce_tool_bar_title_style_live`(post-fix)와
   `_configure_tool_bar` 가 20px 재단언(백스톱). 근본 해결 = Figma 라이브러리 업데이트 수락(수동).

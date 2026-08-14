@@ -827,6 +827,14 @@
 > (타이틀 없으면 Title off) + Back/Num off, X 는 `_navIcons:["x-close"]` (R64 inject 가
 > x-close 헤더 감지 시 자동 부여). raw X 헤더 유지는 규칙 위반.
 >
+> 🔴 **바텀시트 헤더 Tool Bar + 시트 clipsContent (2026-08-14 사용자 룰: "시트 헤더에
+> tool bar instance 를 사용할 경우, 시트 frame 의 Clip content 옵션 체크해야 한다. 그래야
+> 상단 좌우로 corner radius 가 적용되어서 보여져").** Tool Bar 인스턴스는 사각이라, 시트
+> 프레임(top radius 16)이 clipsContent=false 면 헤더 모서리가 라운드를 덮어 각지게 보인다.
+> 시트 헤더를 Tool Bar 로 교체하는 모든 흐름(빌드·변환·convert_screen.py 자동 스왑)에서
+> 교체 직후 시트 프레임 clipsContent=true 를 재단언할 것. 0-Q(radius>0 → clipsContent)의
+> 시트 특화 케이스.
+>
 > ⚠️ **`SET:` 키 형식**: Tool Bar 는 variant 개별 키가 비공개(컴포넌트 셋만 게시)라
 > `"SET:<setKey>:<Variant>"` 형식을 쓴다 — `code.js importComponentFlexible` 가
 > `importComponentSetByKeyAsync` 로 셋을 import 후 variant 이름을 prop 단위로 매칭

@@ -110,6 +110,9 @@
       },
       "dos": [
         "우측 아이콘이 NAV_ICON_KEYS 에 없으면 _customNavBar 우회 금지 — search_design_system 으로 키 확보 후 ds_catalog.NAV_ICON_KEYS 등록 (2026-07-14, edit-01=cf4b7befec… 등록). _customNavBar 는 사유 문자열 필수(R64 ERROR)"
+      ],
+      "do": [
+        "바텀시트 헤더로 쓸 때는 시트 프레임 clipsContent=true 필수 — 안 켜면 Tool Bar 사각 모서리가 시트 top radius 16 을 덮어 라운드가 사라짐 (2026-08-14 사용자 룰)"
       ]
     },
     {
