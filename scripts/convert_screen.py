@@ -186,6 +186,73 @@ def swap_app_bar(root_tree):
         return tb
     return None
 
+def swap_sheet_headers(root_tree):
+    """바텀시트 raw 타이틀+X 헤더 → Tool Bar(View=modal) (0-W, verify raw-modal-header 게이트 짝).
+    2026-08-14 내 혜택 바텀시트 실측: /Bottom sheet/Title(h56, btn/close 포함) 통째 교체."""
+    cands = find_all(root_tree, lambda n: n.get('type') == 'FRAME'
+                     and 40 <= round(n.get('height') or 0) <= 72
+                     and 'app bar' not in (n.get('name') or '').lower()
+                     and bool(find_all(n, lambda m: 'close' in (m.get('name') or '').lower()
+                                       and m.get('id') != n.get('id'))))
+    # 중첩 후보 중 최내곽(헤더 자체)만
+    ids = {c['id'] for c in cands}
+    inner = [c for c in cands if not any(ch['id'] in ids for ch in c.get('_children', []))]
+    for hd in inner:
+        tx = texts_in(hd)
+        title = tx[0]['characters'] if tx else ''
+        info = call('get_node_info', {'nodeId': hd['id']}) or {}
+        pid = info.get('parentId')
+        idx = child_index(pid, hd['id'])
+        tb = new_instance(TB_DETAIL, pid, idx)
+        call('delete_node', {'nodeId': hd['id']})
+        call('set_layout_sizing', {'nodeId': tb, 'horizontal': 'FILL'})
+        call('set_instance_properties', {'nodeId': tb, 'properties': {'View': 'modal', 'Num#17757:3': False}})
+        n = call('get_node_info', {'nodeId': tb}) or {}
+        tit_id, rb_id = None, None
+        def w(x):
+            nonlocal tit_id, rb_id
+            if x.get('name') == 'Title':
+                for c in x.get('children', []) or []:
+                    if c.get('type') == 'TEXT' and c.get('name') != 'num':
+                        tit_id = c['id']
+            if x.get('name') == 'Right Buttons':
+                rb_id = x['id']
+            for c in x.get('children', []) or []:
+                w(c)
+        w(n)
+        if tit_id and title:
+            call('set_text_content', {'nodeId': tit_id, 'text': title})
+            call('set_font_size', {'nodeId': tit_id, 'fontSize': 20})
+        if rb_id:
+            call('set_instance_properties', {'nodeId': rb_id, 'properties': {'Type': '1 button'}})
+            rn = call('get_node_info', {'nodeId': rb_id}) or {}
+            inner_i = []
+            def w2(x):
+                if x.get('type') == 'INSTANCE' and x.get('id') != rb_id:
+                    inner_i.append(x['id'])
+                for c in x.get('children', []) or []:
+                    w2(c)
+            w2(rn)
+            if inner_i:
+                call('swap_instance_component', {'nodeId': inner_i[0], 'componentKey': XCLOSE})
+        print(f'  [swap] Tool Bar(modal) 시트 헤더 "{title}" ← {hd.get("name")} ({hd["id"]})')
+
+
+def normalize_overlay(root_id):
+    """dim 오버레이 화면(root 직속: 배경 스크린 + 'Layer') — 두 레이어를 ABSOLUTE (0,0)
+    393×852 로 정규화 (2026-08-14 내 혜택 바텀시트 실측: HORIZONTAL flow 로 밀려 상단 띠 발생)."""
+    n = call('get_node_info', {'nodeId': root_id}) or {}
+    kids = [c for c in n.get('children', []) or [] if ';' not in (c.get('id') or '')]
+    names = [(c.get('name') or '').lower() for c in kids]
+    if len(kids) == 2 and any(nm == 'layer' for nm in names):
+        h = max(852, round(n.get('height') or 0))
+        for c in kids:
+            call('set_layout_positioning', {'nodeId': c['id'], 'layoutPositioning': 'ABSOLUTE'})
+            call('move_node', {'nodeId': c['id'], 'x': 0, 'y': 0})
+            call('resize_node', {'nodeId': c['id'], 'width': 393, 'height': h})
+        print('  [overlay] 배경+Layer ABSOLUTE 393x%d 정규화' % h)
+
+
 def swap_cta(root_tree):
     done = []
     cands = find_all(root_tree, lambda n: (n.get('name') or '').strip().lower() == 'button'
@@ -306,8 +373,10 @@ def main():
         tree = deep(rid)
         swap_status_bar(tree)
         swap_app_bar(tree)
+        swap_sheet_headers(tree)
         swap_cta(tree)
         w, h = L.normalize_screen(rid)
+        normalize_overlay(rid)
         print(f'  [normalize] {w}x{h}')
         n2 = call('get_node_info', {'nodeId': rid}) or {}
         for c in n2.get('children', []) or []:
