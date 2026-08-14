@@ -48,7 +48,10 @@ _BANNED_PRIMITIVE_PREFIXES = (
 # State / modifier variants — banned for default state
 _BANNED_STATE_SUBSTR = (
     "_hover", "_pressed", "_focused", "_focus", "_visited",
-    "_subtle", "_alt", "_on-brand",
+    "_alt", "_on-brand",
+    # 🔴 2026-08-14: '_subtle' 은 state 가 아니라 표면 단계 토큰 — ban 목록에서 제외.
+    # 사용자 수정본 실측 정본: 변환 트랙 카드 표면 = bg-secondary_subtle(+alpha-black-4 보더).
+    # (wallet-withdraw-user-baseline 메모리 — lint 가 정본 토큰을 막던 규칙-게이트 충돌 해소)
     "/bg-disabled", "/bg-active",
     "/bg-primary-solid", "/bg-secondary-solid",
 )
