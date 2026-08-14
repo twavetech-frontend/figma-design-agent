@@ -536,9 +536,85 @@ def sweep_unbound(root_id, allow):
     print(f'  [sweep] 잔여 스냅 바인딩 {bound}건' + (f' / 미해결 {len(left)}건: {left[:6]}' if left else ''))
     return left
 
+# ── 진단 (detect → fable 이 사고하며 수정) ──────────────────────────────────
+# 🔴 2026-08-14 사용자 방향 전환: "스크립트로 돌렸을 때 문제가 생기면 detecting 해서
+# 생각하고 사고해서 수정하는 쪽으로". 스크립트는 기계 실행 + 이상 감지까지만 담당하고,
+# 감지된 flag 는 마지막 CONVERT-SUMMARY-JSON 에 실려 모델(fable)이 항목별로 판단·수정한다.
+def diagnose(src_id, gen_id):
+    """실측된 실패 클래스 감지기. 반환: flag 문자열 리스트 (비면 이상 없음)."""
+    flags = []
+    gen = call('get_node_info', {'nodeId': gen_id}) or {}
+    gx0 = (gen.get('absoluteBoundingBox') or {}).get('x') or 0
+
+    stats = {'maxx': 0, 'grid_fixed': [], 'strike_gen': 0}
+
+    def walk_gen(nid, d=0):
+        if d > 10:
+            return
+        n = call('get_node_info', {'nodeId': nid}) or {}
+        bb = n.get('absoluteBoundingBox') or {}
+        if bb.get('x') is not None:
+            stats['maxx'] = max(stats['maxx'], (bb.get('x') or 0) + (bb.get('width') or 0) - gx0)
+        kids = [c for c in n.get('children', []) or [] if ';' not in (c.get('id') or '')]
+        # wrap 그리드 잔존: HORIZONTAL 에 등폭 FIXED 셀이 열수보다 많이 남음
+        if n.get('layoutMode') == 'HORIZONTAL':
+            cells = [c for c in kids if c.get('type') == 'FRAME'
+                     and (call('get_node_info', {'nodeId': c['id']}) or {}).get('layoutSizingHorizontal') == 'FIXED']
+            ws = [round(c.get('width') or 0) for c in cells]
+            if len(cells) >= 3 and len(set(ws)) == 1 and ws[0] > 40:
+                stats['grid_fixed'].append(n['id'])
+        # 취소선 카운트
+        if n.get('type') == 'TEXT':
+            try:
+                segs = (call('get_styled_text_segments',
+                             {'nodeId': n['id'], 'property': 'textDecoration'}) or {}).get('segments') or []
+                if any(sg.get('textDecoration') == 'STRIKETHROUGH' for sg in segs):
+                    stats['strike_gen'] += 1
+            except Exception:
+                pass
+        for c in kids:
+            walk_gen(c['id'], d + 1)
+
+    for c in gen.get('children', []) or []:
+        if ';' not in (c.get('id') or ''):
+            walk_gen(c['id'])
+
+    # 원본 취소선 카운트
+    strike_src = [0]
+    def walk_src(nid, d=0):
+        if d > 10:
+            return
+        n = call('get_node_info', {'nodeId': nid}) or {}
+        if n.get('type') == 'TEXT':
+            try:
+                segs = (call('get_styled_text_segments',
+                             {'nodeId': n['id'], 'property': 'textDecoration'}) or {}).get('segments') or []
+                if any(sg.get('textDecoration') == 'STRIKETHROUGH' for sg in segs):
+                    strike_src[0] += 1
+            except Exception:
+                pass
+        for c in n.get('children', []) or []:
+            if ';' not in (c.get('id') or ''):
+                walk_src(c['id'], d + 1)
+    walk_src(src_id)
+
+    if 0 < stats['maxx'] < 369:
+        flags.append(f"left-pinned: 콘텐츠 우측 경계 {round(stats['maxx'])} < 369 — 360 잔재 의심")
+    if stats['grid_fixed']:
+        flags.append(f"grid-fixed-cells: 등폭 FIXED 셀 잔존 {stats['grid_fixed'][:3]} — 행 재편+FILL 필요")
+    if strike_src[0] > stats['strike_gen']:
+        flags.append(f"strikethrough-lost: 취소선 원본 {strike_src[0]}건 → 변환본 {stats['strike_gen']}건")
+    return flags
+
+
 # ── 메인 ─────────────────────────────────────────────────────────────────────
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    _skip = set()
+    for _i, _a in enumerate(sys.argv):
+        if _a in ('--gap', '--allow') and _i + 1 < len(sys.argv):
+            _skip.add(_i + 1)  # 옵션 값이 srcId 로 새지 않게 (2026-08-14 실측 버그)
+    args = [a for _i, a in enumerate(sys.argv[1:], 1)
+            if not a.startswith('--') and _i not in _skip]
     if not args:
         print(__doc__)
         return 2
@@ -585,39 +661,20 @@ def main():
         for c in n2.get('children', []) or []:
             if (c.get('name') or '') == 'Contents':
                 call('set_layout_sizing', {'nodeId': c['id'], 'vertical': 'FILL'})
-        # 🔴 좌측 몰림 자가 점검 (2026-08-14): 콘텐츠 최우측 경계가 393-24 미만이면
-        # 360 잔재 의심 — WARN 을 강제 출력해 사람 QA 없이도 감지되게 한다.
-        rb = call('get_node_info', {'nodeId': rid}) or {}
-        rx0 = 0
-        try:
-            rx0 = (rb.get('absoluteBoundingBox') or {}).get('x') or 0
-        except Exception:
-            pass
-        maxx = [0]
-        def _mx(nid2, d2=0):
-            if d2 > 8:
-                return
-            nn = call('get_node_info', {'nodeId': nid2}) or {}
-            bb = nn.get('absoluteBoundingBox') or {}
-            if bb.get('x') is not None:
-                maxx[0] = max(maxx[0], (bb.get('x') or 0) + (bb.get('width') or 0) - rx0)
-            for cc in nn.get('children', []) or []:
-                if ';' not in (cc.get('id') or ''):
-                    _mx(cc['id'], d2 + 1)
-        for cc in rb.get('children', []) or []:
-            _mx(cc['id'])
-        if 0 < maxx[0] < 369:
-            print(f'  ⚠️ [selfcheck] 콘텐츠 우측 경계 {round(maxx[0])} < 369 — 360 잔재/좌측 몰림 의심. 수동 교정 필요')
         # 토큰 바인딩 (스크립트 1회 — 색/spacing/radius/텍스트 스타일 일괄)
         r = subprocess.run([sys.executable, os.path.join(_HERE, 'bind_semantic_tokens.py'), rid],
                            capture_output=True, text=True)
         print('  [bind]', ([ln for ln in r.stdout.splitlines() if ln.startswith('[색]')] or ['?'])[0])
         sweep_unbound(rid, allow)
-        results.append(rid)
+        flags = diagnose(sid, rid)
+        for f in flags:
+            print(f'  🚩 [detect] {f}')
+        results.append({'src': sid, 'gen': rid, 'flags': flags})
 
     ok = True
     if not no_verify:
-        for rid in results:
+        for entry in results:
+            rid = entry['gen']
             cmd = [sys.executable, os.path.join(_HERE, 'verify_bindings.py'), rid]
             eff_allow = set(allow) | ASSET_ALLOW_DEFAULT
             if eff_allow:
@@ -626,9 +683,20 @@ def main():
             tail = r.stdout.strip().splitlines()[-6:]
             print(f'-- verify {rid}')
             print('   ' + '\n   '.join(tail))
+            entry['verify'] = 'PASS' if r.returncode == 0 else 'FAIL'
             ok = ok and (r.returncode == 0)
-    print(f'\n{"✓" if ok else "✗"} 변환 {len(results)}장 — {round(time.time()-t0, 1)}s → {results}')
-    print('👉 남은 수동 QA: export_node_as_image 로 각 root 를 Read 해 원본과 구역 대조할 것.')
+    gen_ids = [e['gen'] for e in results]
+    n_flags = sum(len(e['flags']) for e in results)
+    print(f'\n{"✓" if ok and not n_flags else "✗"} 변환 {len(results)}장 — {round(time.time()-t0, 1)}s → {gen_ids}')
+    # 🔴 기계 판독 요약 — flags 는 fable 이 항목별로 사고하며 수정해야 하는 목록 (BUILD-SUMMARY 패턴)
+    print('\n📋 CONVERT-SUMMARY-JSON')
+    print(json.dumps({'type': 'convert-summary',
+                      'result': 'ok' if ok and not n_flags else 'needs-review',
+                      'screens': results,
+                      'requiredActions': (
+                          (['각 flags 항목을 fable 이 직접 판단·수정 후 해당 화면 재verify'] if n_flags else []) +
+                          ['전 장(export_node_as_image → Read) 렌더를 원본과 대조 — N장이면 N장 전부'])},
+                     ensure_ascii=False, indent=1))
     return 0 if ok else 1
 
 
