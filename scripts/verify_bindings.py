@@ -13,6 +13,9 @@ FAIL ≥1 → exit 1. 변환 작업은 이 게이트가 0건일 때만 완료 �
 
 사용: python3 scripts/verify_bindings.py <rootId> [--allow "이름1,이름2"]
   --allow: 의도적 원값 복원 노드(브랜드 로고, DS 밖 색 소실 방지 등) 이름 스킵.
+  🔴 2026-08-14: allow 는 **서브트리 전체** 면제 — 브랜드 로고/일러스트 그룹(my_wallet_gp_1 등)의
+  내부 Vector/Ellipse/이미지 크롭은 에셋 고유색이라 토큰 바인딩 대상이 아니다. 이름이 allow 에
+  있으면 그 하위 전부 스킵(사용자 수정본의 일러스트 이식이 게이트에 걸리던 문제 해결).
 인스턴스 내부(';' id)는 0-K(마스터 제어)라 검사 제외.
 """
 import sys
@@ -53,6 +56,9 @@ def main():
         node_id = n.get('id') or ''
         t = n.get('type')
         name = n.get('name') or ''
+        # allow 노드는 서브트리 전체 면제 (2026-08-14 — 브랜드 에셋 내부색은 검사 대상 아님)
+        if name in allow:
+            return
         # STAR/POLYGON 누락으로 별점 옐로 미바인딩이 게이트를 통과했음 (2026-08-12 사용자 지적)
         if ';' not in node_id and t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE', 'VECTOR', 'LINE',
                                         'BOOLEAN_OPERATION', 'STAR', 'POLYGON'):
