@@ -323,6 +323,11 @@ BRAND_STEP_TOKENS = {
     '#b685ff': 'Component colors/Utility/Brand/utility-brand-300',
     '#cfaeff': 'Component colors/Utility/Brand/utility-brand-200'}
 
+# DS gradient color style 키 (원본 실측 — Gradient/Brand/Gradient-6~5~4)
+BRAND_GRADIENT_STYLES = {
+    ('#6a00e0', '#7700ff', '#9b55ff'): 'S:f262f3a4634dc084c188fcd5d4248c74c58c5ebb,x',
+}
+
 def bind_brand_gradients(n, nid2):
     """DS Gradient/Brand 스텝과 전 stop 정확 일치하는 gradient → stop 별 변수 바인딩
     (2026-08-14 사용자 지적. 비표준 스텝 혼재 = 에셋 고유 그라데이션 → 원값 유지).
@@ -336,6 +341,14 @@ def bind_brand_gradients(n, nid2):
             stops = p.get('gradientStops') or []
             hexes = [to_hex(st.get('color', {})) for st in stops]
             if not hexes or not all(h in BRAND_STEP_TOKENS for h in hexes):
+                continue
+            if n.get('fillStyleId'):
+                continue  # 이미 DS color style 연결됨
+            style_key = BRAND_GRADIENT_STYLES.get(tuple(hexes))
+            if style_key and slot == 'fills':
+                # 🔴 정본: DS color style 적용 (2026-08-14 사용자 — stop 변수는 폴백일 뿐)
+                call('set_fill_style_id', {'nodeId': nid2, 'fillStyleId': style_key})
+                cnt += 1
                 continue
             for si, h in enumerate(hexes):
                 if stops[si].get('bound'):

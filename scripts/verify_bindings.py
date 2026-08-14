@@ -120,9 +120,14 @@ def main():
                         _stops = _p.get('gradientStops') or []
                         _hexes = [to_hex(_st.get('color', {})) for _st in _stops]
                         if _hexes and all(h in _BRAND_STEPS for h in _hexes):
+                            # 정본 = DS color style(fillStyleId). 스타일 미확인 시그니처만
+                            # stop 변수 바인딩 폴백 허용 (2026-08-14 사용자: "gradient 는
+                            # DS 의 color style 로 정의되어 있어").
+                            if n.get('fillStyleId'):
+                                continue
                             _unbound = [h for _st, h in zip(_stops, _hexes) if not _st.get('bound')]
                             if _unbound:
-                                bad_paint.append((name, t, 'gradient-stop-unbound', _unbound))
+                                bad_paint.append((name, t, 'gradient-unstyled', _unbound))
                 # 🔴 아이콘 자리 이미지 크롭 감지 (2026-08-12 사용자: chevron 을 크롭으로 때움) —
                 # ≤36px 정사각급 노드의 IMAGE fill = DS 아이콘(type:'icon'/svg_icon/인스턴스)으로
                 # 교체해야 할 크롭 의심. 사진 썸네일은 이 크기 범위 밖이라 오탐 없음.

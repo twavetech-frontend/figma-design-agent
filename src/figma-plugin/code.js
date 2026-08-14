@@ -334,6 +334,8 @@ async function handleCommand(command, params) {
       return await setEffects(params);
     case "set_effect_style_id":
       return await setEffectStyleId(params);
+    case "set_fill_style_id":
+      return await setFillStyleId(params);
     case "set_text_style_id":
       return await setTextStyleId(params);
     case "group_nodes":
@@ -538,6 +540,10 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
           }
           return fill;
         });
+      }
+      // 🔴 2026-08-14: fill 스타일 연결 직렬화 — gradient 가 DS color style 인지 검증용
+      if ("fillStyleId" in node) {
+        info.fillStyleId = (node.fillStyleId === figma.mixed) ? "mixed" : node.fillStyleId;
       }
     } catch (e) { /* mixed fills */ }
   }
@@ -4005,6 +4011,39 @@ async function setEffects(params) {
 }
 
 // Set Effect Style ID Tool
+// 🔴 2026-08-14 사용자: "gradient 는 DS 의 color style 로 정의되어 있어" — gradient 바인딩의
+// 정본은 stop 별 변수가 아니라 **paint(fill) style 적용**. setEffectStyleId 패턴 미러.
+async function setFillStyleId(params) {
+  const { nodeId, fillStyleId } = params || {};
+  if (!nodeId) throw new Error("Missing nodeId parameter");
+  if (!fillStyleId) throw new Error("Missing fillStyleId parameter");
+  const node = await figma.getNodeByIdAsync(nodeId);
+  if (!node) throw new Error(`Node not found with ID: ${nodeId}`);
+  if (!("fillStyleId" in node)) throw new Error(`Node ${nodeId} does not support fill styles`);
+
+  // Remote/library style format: S:key,anything — mirror setTextStyleId pattern
+  var remoteMatch = fillStyleId.match(/^S:([^,]+),(.+)$/);
+  var styleObj = null;
+  if (remoteMatch) {
+    styleObj = await figma.importStyleByKeyAsync(remoteMatch[1]);
+    if (!styleObj) throw new Error("Failed to import remote paint style key: " + remoteMatch[1]);
+  } else {
+    var paintStyles = await figma.getLocalPaintStylesAsync();
+    styleObj = paintStyles.find(function(st) { return st.id === fillStyleId || st.key === fillStyleId; });
+    if (!styleObj) {
+      // 로컬에 없으면 순수 key 로 간주하고 import 시도
+      try { styleObj = await figma.importStyleByKeyAsync(fillStyleId); } catch (e) { /* fallthrough */ }
+    }
+    if (!styleObj) throw new Error("Paint style not found: " + fillStyleId);
+  }
+  if (typeof node.setFillStyleIdAsync === "function") {
+    await node.setFillStyleIdAsync(styleObj.id);
+  } else {
+    node.fillStyleId = styleObj.id;
+  }
+  return { id: node.id, name: node.name, fillStyleId: node.fillStyleId, styleName: styleObj.name };
+}
+
 async function setEffectStyleId(params) {
   const { nodeId, effectStyleId } = params || {};
 

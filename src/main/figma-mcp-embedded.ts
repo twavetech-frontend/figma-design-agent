@@ -313,6 +313,12 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['nodeId', 'effects']
   }, async (params) => cmd('set_effects', params));
 
+  reg('set_fill_style_id', 'Apply a paint(fill) style to a node — "S:key,x" imports library style (DS gradient color styles)', {
+    type: 'object',
+    properties: { nodeId: { type: 'string' }, fillStyleId: { type: 'string' } },
+    required: ['nodeId', 'fillStyleId']
+  }, async (params) => cmd('set_fill_style_id', params));
+
   reg('set_effect_style_id', 'Set effect style ID on a node', {
     type: 'object',
     properties: {

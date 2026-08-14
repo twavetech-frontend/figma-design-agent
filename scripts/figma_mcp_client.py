@@ -13406,6 +13406,38 @@ def cmd_sync_effect_styles() -> None:
     print("  이 파일을 커밋하면 새 세션에서도 effect style 키로 바인딩됩니다.")
 
 
+def cmd_sync_paint_styles() -> None:
+    """DS 파일(Imin Design System)의 로컬 paint(color) style — gradient 포함 — 을 키와 함께
+    추출해 ds/PAINT_STYLE_MAP.json 에 저장한다 (sync-effect-styles 와 동일 패턴/한계).
+
+    ⚠️ plugin 이 **DS 파일에 연결된 상태**에서 실행해야 한다 (작업 파일엔 라이브러리 참조만
+    있어 getLocalPaintStylesAsync 가 0건). 2026-08-14 신설 — 변환본 gradient 버튼이 원본의
+    'Gradient-6~5~4_h'(hover) 스타일을 물고 있어 base 스타일 키가 필요해짐."""
+    try:
+        d = parse_content(call_tool("get_styles", {})).get("json") or {}
+    except Exception as e:
+        print(f"❌ get_styles 실패: {e}")
+        return
+    colors = d.get("colors") or []
+    out = []
+    for c in colors:
+        key = c.get("key")
+        if not key:
+            continue
+        out.append({"name": c.get("name") or "", "key": key})
+    if not out:
+        print("⚠️ 로컬 paint style 0건 — plugin 이 DS 파일(Imin Design System)에 연결됐는지 확인.")
+        return
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "ds", "PAINT_STYLE_MAP.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=2)
+    grads = [o["name"] for o in out if "gradient" in (o["name"] or "").lower()]
+    print(f"✓ DS paint style {len(out)}개 추출 → {path}")
+    if grads:
+        print(f"  gradient 계열: {', '.join(grads[:15])}")
+
+
 def cmd_sync_components() -> None:
     """DS 파일(Imin Design System)의 로컬 COMPONENT / COMPONENT_SET 을 키와 함께
     추출해 ds/COMPONENT_KEY_MAP.json 에 저장한다 (DS v7 → Imin Design System 전수
@@ -15478,6 +15510,10 @@ def main():
         # effect style 이 라이브러리 참조만 있어 0건이므로 DS 파일에서 추출해야 함.
         ensure_session()
         cmd_sync_effect_styles()
+    elif cmd == "sync-paint-styles":
+        # DS 파일 연결 상태에서 1회 실행 → ds/PAINT_STYLE_MAP.json (gradient color style 키)
+        ensure_session()
+        cmd_sync_paint_styles()
     elif cmd == "apply-text-styles":
         # 빌드된 화면에 DS text style 만 별도 적용 (재빌드 없이).
         if len(sys.argv) < 3:
