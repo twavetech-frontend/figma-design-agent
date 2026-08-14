@@ -381,11 +381,37 @@ def normalize_overlay(root_id):
 def swap_cta(root_tree):
     done = []
     cands = find_all(root_tree, lambda n: (n.get('name') or '').strip().lower() == 'button'
-                     and n.get('type') == 'FRAME' and 44 <= round(n.get('height') or 0) <= 64)
+                     and n.get('type') == 'FRAME' and 24 <= round(n.get('height') or 0) <= 64
+                     and n.get('visible') is not False)  # 숨김 노드는 스왑 금지 (2026-08-14 '선택' 버튼 노출 회귀)
     for b in cands:
         tx = texts_in(b)
         if len(tx) != 1:
             print(f'  [skip] raw Button {b["id"]} — 단일 라벨 아님(스왑 불가, raw 유지)')
+            continue
+        # 🔴 소형 라벨 버튼(수정/주소검색 등, h24~42) = Action Button **md** (2026-08-14 사용자
+        # 지적 — CTA(h44+)만 버튼으로 정의했던 커버리지 구멍. md Outline 이 정본:
+        # wallet-withdraw-user-baseline 룰 2). stroke+무채 fill → Outline, 유채 fill → Primary.
+        if round(b.get('height') or 0) <= 42:
+            info0 = call('get_node_info', {'nodeId': b['id']}) or {}
+            fills0 = [f for f in (info0.get('fills') or []) if isinstance(f, dict)
+                      and f.get('type') == 'SOLID' and f.get('visible') is not False]
+            chroma0 = 0
+            if fills0:
+                c0 = fills0[0].get('color', {})
+                vs = [round(c0.get(k, 0) * 255) for k in 'rgb']
+                chroma0 = max(vs) - min(vs)
+            hier = 'Primary' if chroma0 >= 20 else 'Outline'
+            label0 = tx[0]['characters']
+            pid0 = info0.get('parentId')
+            idx0 = child_index(pid0, b['id'])
+            ab0 = new_instance(AB_SEC, pid0, idx0)
+            call('delete_node', {'nodeId': b['id']})
+            call('set_instance_properties', {'nodeId': ab0, 'properties': {
+                'Hierarchy': hier, 'Size': 'md', 'State': 'Default', 'Label#17537:16': label0,
+                '➡️ Icon trailing#3287:2338': False, '⬅️ Icon leading#3287:1577': False,
+                'Loading text#8994:0': False}})
+            print(f'  [swap] Action Button md {hier} "{label0}" ← 소형 raw Button ({b["id"]})')
+            done.append(ab0)
             continue
         label = tx[0]['characters']
         info = call('get_node_info', {'nodeId': b['id']}) or {}
@@ -546,7 +572,7 @@ def diagnose(src_id, gen_id):
     gen = call('get_node_info', {'nodeId': gen_id}) or {}
     gx0 = (gen.get('absoluteBoundingBox') or {}).get('x') or 0
 
-    stats = {'maxx': 0, 'grid_fixed': [], 'strike_gen': 0}
+    stats = {'maxx': 0, 'grid_fixed': [], 'strike_gen': 0, 'raw_buttons': []}
 
     def walk_gen(nid, d=0):
         if d > 10:
@@ -563,6 +589,10 @@ def diagnose(src_id, gen_id):
             ws = [round(c.get('width') or 0) for c in cells]
             if len(cells) >= 3 and len(set(ws)) == 1 and ws[0] > 40:
                 stats['grid_fixed'].append(n['id'])
+        # raw Button 잔존 (스왑 커버리지 감시 — 2026-08-14 수정/주소검색 실측)
+        if n.get('type') == 'FRAME' and (n.get('name') or '').strip().lower() == 'button' \
+                and 24 <= round(n.get('height') or 0) <= 64 and n.get('visible') is not False:
+            stats['raw_buttons'].append(n['id'])
         # 취소선 카운트
         if n.get('type') == 'TEXT':
             try:
@@ -604,6 +634,8 @@ def diagnose(src_id, gen_id):
         flags.append(f"grid-fixed-cells: 등폭 FIXED 셀 잔존 {stats['grid_fixed'][:3]} — 행 재편+FILL 필요")
     if strike_src[0] > stats['strike_gen']:
         flags.append(f"strikethrough-lost: 취소선 원본 {strike_src[0]}건 → 변환본 {stats['strike_gen']}건")
+    if stats.get('raw_buttons'):
+        flags.append(f"raw-button: DS 미스왑 raw Button 잔존 {stats['raw_buttons'][:4]} — Action Button 인스턴스로 교체")
     return flags
 
 
