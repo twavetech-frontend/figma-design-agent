@@ -527,6 +527,15 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
           var fill = { type: f.type, visible: f.visible };
           if (f.color) fill.color = { r: f.color.r, g: f.color.g, b: f.color.b };
           if (f.opacity !== undefined) fill.opacity = f.opacity;
+          // 🔴 2026-08-14: gradient stop 직렬화 — DS gradient 토큰 바인딩 검증/재바인딩용
+          if (f.gradientStops) {
+            fill.gradientStops = f.gradientStops.map(function(st) {
+              var so = { position: st.position,
+                         color: { r: st.color.r, g: st.color.g, b: st.color.b, a: st.color.a } };
+              if (st.boundVariables && st.boundVariables.color) so.bound = true;
+              return so;
+            });
+          }
           return fill;
         });
       }
@@ -5477,6 +5486,25 @@ async function setBoundVariables(params) {
     }
 
     try {
+      // 🔴 2026-08-14: gradient stop 바인딩 — field "fills/0/stops/1" 형식.
+      // setBoundVariableForPaint 는 SOLID 전용이라, gradientStops[i].boundVariables.color 에
+      // VARIABLE_ALIAS 를 직접 심는다 (DS Gradient/Brand 스텝 = utility-brand-400/500/600).
+      var stopMatch = field.match(/^(fills|strokes)\/(\d+)\/stops\/(\d+)$/);
+      if (stopMatch) {
+        var spField = stopMatch[1];
+        var spIdx = parseInt(stopMatch[2], 10);
+        var stIdx = parseInt(stopMatch[3], 10);
+        var spaints = JSON.parse(JSON.stringify(node[spField]));
+        if (!spaints || !spaints[spIdx] || !spaints[spIdx].gradientStops || !spaints[spIdx].gradientStops[stIdx]) {
+          throw new Error("No gradient stop " + stIdx + " at " + spField + "/" + spIdx);
+        }
+        spaints[spIdx].gradientStops[stIdx].boundVariables = {
+          color: { type: "VARIABLE_ALIAS", id: variable.id }
+        };
+        node[spField] = spaints;
+        applied.push({ field: field, variableName: variable.name, variableId: variable.id });
+        continue;
+      }
       // Check if field is a paint field (fills/0, strokes/0) — must use setBoundVariableForPaint
       var paintMatch = field.match(/^(fills|strokes)\/(\d+)$/);
       if (paintMatch) {
