@@ -57,6 +57,37 @@ def _palette(prefix):
 PAL = {'Text': _palette('Colors/Text/'), 'Background': _palette('Colors/Background/'),
        'Foreground': _palette('Colors/Foreground/'), 'Border': _palette('Colors/Border/')}
 
+# 🔴 정확값 우선 인덱스 (2026-08-14 라운지_검색 뱃지 실측 — bg-primary-solid/bg-error-solid/
+# utility-error-200 처럼 클래스 팔레트 필터(solid 제외·prefix 밖)에 걸려 못 찾던 정확 일치
+# 토큰을 최근접 스냅보다 먼저 조회). state 변형(_hover 등)은 제외.
+EXACT_BY_HEX = {}
+for _v in TM.values():
+    _p = _v.get('figmaPath') or ''
+    _val = _v.get('value')
+    if not (isinstance(_val, str) and _val.startswith('#') and len(_val) == 7 and _p in KM):
+        continue
+    if any(t in _p.lower() for t in ('_hover', '_pressed', 'hover', 'disabled', '_alt', 'focus')):
+        continue
+    EXACT_BY_HEX.setdefault(_val.lower(), []).append(_p)
+
+_PREF = {('fill', 'TEXT'): ('Colors/Text/', 'Colors/Foreground/'),
+         ('fill', '*'): ('Colors/Background/', 'Colors/Foreground/', 'Component colors/Utility/'),
+         ('stroke', '*'): ('Colors/Border/', 'Colors/Foreground/', 'Colors/Background/',
+                           'Component colors/Utility/')}
+
+def exact_token(hexv, slot, node_type):
+    paths = EXACT_BY_HEX.get(hexv) or []
+    prefs = _PREF.get((slot, 'TEXT' if node_type == 'TEXT' else '*')) or _PREF[(slot, '*')]         if slot == 'fill' else _PREF[('stroke', '*')]
+    if slot == 'fill' and node_type == 'TEXT':
+        prefs = _PREF[('fill', 'TEXT')]
+    elif slot == 'fill':
+        prefs = _PREF[('fill', '*')]
+    for pref in prefs:
+        for p in paths:
+            if p.startswith(pref):
+                return p
+    return None
+
 def _rgb(h):
     return int(h[1:3], 16), int(h[3:5], 16), int(h[5:7], 16)
 
@@ -413,7 +444,7 @@ def sweep_unbound(root_id, allow):
                         call('rename_node', {'nodeId': nid2, 'name': SOFT_TINT_RESTORE[hx]})
                         bound += 1
                     else:
-                        path = nearest(hx, cls)
+                        path = exact_token(hx, 'fill', t) or nearest(hx, cls)
                         if path:
                             call('set_bound_variables', {'nodeId': nid2, 'bindings': {'fills/0': 'K:' + KM[path]}})
                             bound += 1
@@ -427,7 +458,8 @@ def sweep_unbound(root_id, allow):
                 hx = to_hex(strokes[0].get('color', {}))
                 if hx not in ('#ffffff', '#000000'):
                     cls = 'Border' if t in ('FRAME', 'RECTANGLE') else 'Foreground'
-                    path = nearest(hx, cls) or nearest(hx, 'Foreground') or nearest(hx, 'Background')
+                    path = exact_token(hx, 'stroke', t) or nearest(hx, cls) \
+                        or nearest(hx, 'Foreground') or nearest(hx, 'Background')
                     if path:
                         call('set_bound_variables', {'nodeId': nid2, 'bindings': {'strokes/0': 'K:' + KM[path]}})
                         bound += 1
