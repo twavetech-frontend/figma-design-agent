@@ -123,7 +123,19 @@ def main():
                             # 정본 = DS color style(fillStyleId). 스타일 미확인 시그니처만
                             # stop 변수 바인딩 폴백 허용 (2026-08-14 사용자: "gradient 는
                             # DS 의 color style 로 정의되어 있어").
-                            if n.get('fillStyleId'):
+                            _CANON = {('#6a00e0', '#7700ff', '#9b55ff'):
+                                      '2d6d98a9c0279efe0b0eb1ea7ba3c46e7cae94d7'}
+                            _sid = n.get('fillStyleId') or ''
+                            _ck = _CANON.get(tuple(_hexes))
+                            if _ck:
+                                # 정본 키가 있는 시그니처: 그 키가 아니면 FAIL
+                                # (legacy 'Gradient-6~5~4_h' 등 잘못된 스타일 잔존 차단 —
+                                #  2026-08-14 사용자 재지적)
+                                if _ck not in _sid:
+                                    bad_paint.append((name, t, 'gradient-wrong-style',
+                                                      [_sid or 'unstyled']))
+                                continue
+                            if _sid:
                                 continue
                             _unbound = [h for _st, h in zip(_stops, _hexes) if not _st.get('bound')]
                             if _unbound:

@@ -345,10 +345,14 @@ def bind_brand_gradients(n, nid2):
             hexes = [to_hex(st.get('color', {})) for st in stops]
             if not hexes or not all(h in BRAND_STEP_TOKENS for h in hexes):
                 continue
-            if n.get('fillStyleId'):
-                continue  # 이미 DS color style 연결됨
             style_key = BRAND_GRADIENT_STYLES.get(tuple(hexes))
+            cur = n.get('fillStyleId') or ''
+            # 🔴 2026-08-14 사용자 재지적: 원본이 물고 온 legacy _h(hover) 스타일이
+            # "fillStyleId 있음"으로 통과되던 구멍 — 정본 키가 아니면 무조건 교체.
             if style_key and slot == 'fills':
+                canon_key = style_key.split(':')[1].split(',')[0]
+                if canon_key in cur:
+                    continue  # 이미 정본
                 # 🔴 정본: DS color style 적용 (2026-08-14 사용자 — stop 변수는 폴백일 뿐)
                 call('set_fill_style_id', {'nodeId': nid2, 'fillStyleId': style_key})
                 cnt += 1
