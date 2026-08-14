@@ -28,28 +28,45 @@ CANON = {
              '#df1634': 'text-error-primary', '#3bbf2e': 'text-success-primary',
              '#ffffff': 'text-white'},
     'bg':   {'#ffffff': 'bg-primary', '#f3f5f7': 'bg-secondary', '#f4ecff': 'bg-brand-primary'},
-    'border': {'#dce0e5': 'border-primary', '#eceef1': 'border-secondary'},
+    'border': {'#dce0e5': 'border-primary', '#eceef1': 'border-secondary', '#f4ecff': 'bg-brand-primary',
+             },
     'fg':   {'#2f3943': 'fg-primary', '#9aa6b3': 'fg-tertiary'},
 }
 def rgb(h):
     return (int(h[1:3],16), int(h[3:5],16), int(h[5:7],16))
+def _chroma(h):
+    r, g, b = rgb(h)
+    return max(r, g, b) - min(r, g, b)
+
 def pick(h, cls):
     table = CANON.get(cls) or {}
     if h in table:
         return table[h], 'exact'
     r0, g0, b0 = rgb(h)
+    src_c = _chroma(h)
     best, bd = None, 1e9
     for hh, name in table.items():
+        # 🔴 2026-08-14 사용자 지적(미세 퍼플 3건): 유채 소스(#faf7ff 틴트 등)를 무채 토큰
+        # (bg-primary/border-secondary)으로 스냅 금지 — 색상 정보가 뭉개진다.
+        if src_c >= 5 and _chroma(hh) < 3:
+            continue
         r1, g1, b1 = rgb(hh)
         d = (r0-r1)**2 + (g0-g1)**2 + (b0-b1)**2
         if d < bd:
             bd, best = d, name
+    if best is None:
+        return None, 'no-chromatic-candidate'
+    # 유채→유채 근사는 Δ≤10 만 허용 (#faf7ff→#f4ecff Δ12.7 은 스킵해 원값 유지)
+    if src_c >= 5 and bd ** 0.5 > 10:
+        return None, f'chromatic-far({int(bd**0.5)})'
     return best, f'near({int(bd**0.5)})'
 
 stats = collections.Counter()
 
 def bind_paint(nid, slot, i, col, cls, inst, stroke_weight=None):
     tgt, how = pick(to_hex(col), cls)
+    if tgt is None:
+        stats[f'유채 스냅 스킵({cls})'] += 1; return
     # 🔴 원거리 근사 스냅 금지 — #7700ff(브랜드 링)가 border-primary(#dce0e5, Δ≈247)로
     # 오스냅돼 restore 원복→strokeWeight 평탄화 연쇄를 유발 (2026-08-13 라디오 active 회귀).
     # 근사는 실측 근사 케이스(#e8e9ec→border-secondary, Δ≈8) 수준만 허용.

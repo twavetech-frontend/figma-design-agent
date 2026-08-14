@@ -62,20 +62,33 @@ def _rgb(h):
 
 # 라운지 배너 장식 블롭 등 — 시맨틱 대응 없는 에셋 고유색 (2026-08-14 5개 배치 반복 실측).
 # sweep 미해결/verify 오탐에서 제외하고 verify 호출에 자동 --allow 로 전달할 노드 이름들.
-ASSET_ALLOW_DEFAULT = {'Ellipse'}
+ASSET_ALLOW_DEFAULT = {'Ellipse', 'BrandTint25'}
+SOFT_TINT_RESTORE = {'#faf7ff': 'BrandTint25'}  # 게시 변수 없는 미세 틴트 — 원값 유지+개명
 ASSET_HEXES = {'#f795ae', '#8f95fa', '#55c8c0'}
+
+def _chroma(h):
+    r, g, b = _rgb(h)
+    return max(r, g, b) - min(r, g, b)
 
 def nearest(hexv, cls, max_d=60):
     table = PAL[cls]
     if hexv in table:
         return table[hexv]
     r0, g0, b0 = _rgb(hexv)
+    src_c = _chroma(hexv)
     best, bd = None, 1e9
     for hh, path in table.items():
+        # 🔴 2026-08-14 사용자 지적: 유채 소스를 무채 토큰으로 스냅 금지 (미세 퍼플 뭉개짐)
+        if src_c >= 5 and _chroma(hh) < 3:
+            continue
         r1, g1, b1 = _rgb(hh)
         d = ((r0 - r1) ** 2 + (g0 - g1) ** 2 + (b0 - b1) ** 2) ** 0.5
         if d < bd:
             bd, best = d, path
+    if best is None:
+        return None
+    if src_c >= 5 and bd > 10:   # 유채→유채 근사는 Δ≤10 만
+        return None
     return best if bd <= max_d else None
 
 # ── 트리 유틸 ────────────────────────────────────────────────────────────────
@@ -324,12 +337,16 @@ def sweep_unbound(root_id, allow):
                 hx = to_hex(fills[0].get('color', {}))
                 if hx not in ('#ffffff', '#000000') and (fills[0].get('opacity', 1)) >= 0.999:
                     cls = 'Text' if t == 'TEXT' else ('Background' if t in ('FRAME', 'RECTANGLE') else 'Foreground')
-                    path = nearest(hx, cls)
-                    if path:
-                        call('set_bound_variables', {'nodeId': nid2, 'bindings': {'fills/0': 'K:' + KM[path]}})
+                    if hx in SOFT_TINT_RESTORE:
+                        call('rename_node', {'nodeId': nid2, 'name': SOFT_TINT_RESTORE[hx]})
                         bound += 1
-                    elif hx not in ASSET_HEXES:
-                        left.append((name, t, 'fill', hx))
+                    else:
+                        path = nearest(hx, cls)
+                        if path:
+                            call('set_bound_variables', {'nodeId': nid2, 'bindings': {'fills/0': 'K:' + KM[path]}})
+                            bound += 1
+                        elif hx not in ASSET_HEXES:
+                            left.append((name, t, 'fill', hx))
             # stroke 는 len==1 제약 없이 첫 SOLID 페인트 기준 (라디오 링 등 멀티페인트가
             # len==1 조건에 걸려 3건씩 남던 실측 — 2026-08-14)
             strokes = [s for s in (n.get('strokes') or []) if isinstance(s, dict)
@@ -338,7 +355,7 @@ def sweep_unbound(root_id, allow):
                 hx = to_hex(strokes[0].get('color', {}))
                 if hx not in ('#ffffff', '#000000'):
                     cls = 'Border' if t in ('FRAME', 'RECTANGLE') else 'Foreground'
-                    path = nearest(hx, cls) or nearest(hx, 'Foreground')
+                    path = nearest(hx, cls) or nearest(hx, 'Foreground') or nearest(hx, 'Background')
                     if path:
                         call('set_bound_variables', {'nodeId': nid2, 'bindings': {'strokes/0': 'K:' + KM[path]}})
                         bound += 1
