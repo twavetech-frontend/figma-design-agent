@@ -88,6 +88,9 @@ def main():
                     for s in (n.get('strokes') or []):
                         if not (isinstance(s, dict) and s.get('type') == 'SOLID'):
                             continue
+                        # visible:False 페인트는 렌더 무관 — 오탐 제외 (2026-08-14 Oval 링 실측)
+                        if s.get('visible') is False:
+                            continue
                         eff = s.get('opacity', 1) * (s.get('color') or {}).get('a', 1)
                         hx = to_hex(s.get('color', {}))
                         if eff >= 0.999:
