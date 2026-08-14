@@ -993,7 +993,23 @@ async function setFillColor(params) {
 
   console.log("paintStyle", paintStyle);
 
+  // 🔴 2026-08-14 실측: TEXT 에 fills 대입 시 range 데코(취소선/밑줄)가 통째로 리셋된다
+  // (정가 취소선 유실의 진범). 대입 전 세그먼트 스냅샷 → 대입 후 복원.
+  var _decoSnap = null;
+  if (node.type === "TEXT") {
+    try { _decoSnap = node.getStyledTextSegments(["textDecoration"]); } catch (e) { /* ignore */ }
+  }
+
   node.fills = [paintStyle];
+
+  if (_decoSnap && _decoSnap.length) {
+    for (var _di = 0; _di < _decoSnap.length; _di++) {
+      var _sg = _decoSnap[_di];
+      if (_sg.textDecoration && _sg.textDecoration !== "NONE") {
+        try { node.setRangeTextDecoration(_sg.start, _sg.end, _sg.textDecoration); } catch (e) { /* ignore */ }
+      }
+    }
+  }
 
   return {
     id: node.id,
@@ -5554,7 +5570,20 @@ async function setBoundVariables(params) {
           throw new Error("No paint at index " + paintIdx + " in " + paintField);
         }
         paints[paintIdx] = figma.variables.setBoundVariableForPaint(paints[paintIdx], "color", variable);
+        // 🔴 TEXT fills 재대입 시 range 데코 리셋 방지 (setFillColor 와 동일 가드, 2026-08-14)
+        var _decoSnap2 = null;
+        if (node.type === "TEXT" && paintField === "fills") {
+          try { _decoSnap2 = node.getStyledTextSegments(["textDecoration"]); } catch (e) { /* ignore */ }
+        }
         node[paintField] = paints;
+        if (_decoSnap2 && _decoSnap2.length) {
+          for (var _dj = 0; _dj < _decoSnap2.length; _dj++) {
+            var _sg2 = _decoSnap2[_dj];
+            if (_sg2.textDecoration && _sg2.textDecoration !== "NONE") {
+              try { node.setRangeTextDecoration(_sg2.start, _sg2.end, _sg2.textDecoration); } catch (e) { /* ignore */ }
+            }
+          }
+        }
       } else {
         node.setBoundVariable(field, variable);
       }

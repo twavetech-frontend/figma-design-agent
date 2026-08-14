@@ -188,6 +188,12 @@ def swap_app_bar(root_tree):
     cands = find_all(root_tree, lambda n: 'app bar' in (n.get('name') or '').lower()
                      and n.get('type') == 'FRAME' and 40 <= round(n.get('height') or 0) <= 72)
     for ab in cands:
+        # 🔴 0-W: 검색바 내장 헤더는 Tool Bar 로 표현 불가 — raw 유지 (2026-08-14 라운지_검색
+        # 실측: 'Input' 프레임(서치 아이콘+텍스트+클리어)이 타이틀로 강등되던 회귀)
+        if find_all(ab, lambda n: (n.get('name') or '').strip().lower() in ('input', 'search', 'search bar', 'searchbar')
+                    or 'ic_search' in (n.get('name') or '').lower()):
+            print(f'  [skip] App bar {ab["id"]} — 검색바 내장 헤더(Tool Bar 표현 불가, raw 유지)')
+            continue
         has_back = bool(find_all(ab, lambda n: 'arrow_left' in (n.get('name') or '').lower()))
         has_close = bool(find_all(ab, lambda n: 'close' in (n.get('name') or '').lower()))
         tx = texts_in(ab)
@@ -296,6 +302,65 @@ def swap_sheet_headers(root_tree):
             if inner_i:
                 call('swap_instance_component', {'nodeId': inner_i[0], 'componentKey': XCLOSE})
         print(f'  [swap] Tool Bar(modal) 시트 헤더 "{title}" ← {hd.get("name")} ({hd["id"]})')
+
+
+def fix_grid_cells(root_id):
+    """393 확장 후 wrap 그리드 재편 (2026-08-14 라운지_검색 실측 — 3차 개정).
+    ① wrap HORIZONTAL 의 등폭 FIXED 셀들을 열 수(cols)로 판정 ② 셀 FIXED 재계산이 아니라
+    **행(Row) 구조로 재편 + 셀 FILL**(사용자: "그리드 아이템 width 가 fill 이 아니잖아")
+    ③ 셀 세로 HUG ④ Thumbnail 은 1:1 비율(높이=셀 폭) 재단언.
+    wrap 에서 FILL 은 4-up 붕괴하므로 반드시 행 분해가 선행되어야 한다(실측)."""
+    fixed = [0]
+    def walk(nid, d=0):
+        if d > 10:
+            return
+        n = call('get_node_info', {'nodeId': nid}) or {}
+        kids = [c for c in n.get('children', []) or [] if ';' not in (c.get('id') or '')]
+        if n.get('layoutMode') == 'HORIZONTAL':
+            cells = [c for c in kids if c.get('type') == 'FRAME']
+            ws = [round(c.get('width') or 0) for c in cells]
+            if len(cells) >= 2 and len(set(ws)) == 1 and 40 < ws[0]:
+                pw = n.get('width') or 0
+                pad_l = n.get('paddingLeft') or 0
+                pad_r = n.get('paddingRight') or 0
+                g = n.get('itemSpacing') or 0
+                cols = max(1, int((pw - pad_l - pad_r + g) // (ws[0] + g)))
+                cols = min(cols, len(cells))
+                if cols < len(cells):  # wrap 그리드 → 행 재편
+                    lid = n['id']
+                    call('set_auto_layout', {'nodeId': lid, 'layoutMode': 'VERTICAL',
+                         'itemSpacing': 16, 'paddingLeft': pad_l, 'paddingRight': pad_r,
+                         'paddingTop': n.get('paddingTop') or 0,
+                         'paddingBottom': n.get('paddingBottom') or 0})
+                    rows = []
+                    for _ in range((len(cells) + cols - 1) // cols):
+                        row = call('create_frame', {'x': 0, 'y': 0, 'width': 100, 'height': 100,
+                                                    'name': 'Row', 'parentId': lid})
+                        call('set_auto_layout', {'nodeId': row['id'], 'layoutMode': 'HORIZONTAL',
+                                                 'itemSpacing': g})
+                        call('set_layout_sizing', {'nodeId': row['id'],
+                                                   'horizontal': 'FILL', 'vertical': 'HUG'})
+                        call('set_fill_color', {'nodeId': row['id'], 'r': 0, 'g': 0, 'b': 0, 'a': 0})
+                        rows.append(row['id'])
+                    for i, c in enumerate(cells):
+                        call('insert_child', {'parentId': rows[i // cols],
+                                              'childId': c['id'], 'index': i % cols})
+                        call('set_layout_sizing', {'nodeId': c['id'],
+                                                   'horizontal': 'FILL', 'vertical': 'HUG'})
+                        ci = call('get_node_info', {'nodeId': c['id']}) or {}
+                        cw = round(ci.get('width') or ws[0])
+                        for gch in ci.get('children', []) or []:
+                            if (gch.get('name') or '') == 'Thumbnail':
+                                call('set_layout_sizing', {'nodeId': gch['id'], 'horizontal': 'FILL'})
+                                call('resize_node', {'nodeId': gch['id'],
+                                                     'width': round(gch.get('width') or cw),
+                                                     'height': cw})  # 1:1 비율
+                        fixed[0] += 1
+                    print(f'  [grid] {len(cells)}셀 → {len(rows)}행×{cols}열 재편(셀 FILL·썸네일 1:1)')
+                    return  # 재편한 서브트리는 재방문 불필요
+        for c in kids:
+            walk(c['id'], d + 1)
+    walk(root_id)
 
 
 def normalize_overlay(root_id):
@@ -514,11 +579,35 @@ def main():
         swap_cta(tree)
         w, h = L.normalize_screen(rid)
         normalize_overlay(rid)
+        fix_grid_cells(rid)
         print(f'  [normalize] {w}x{h}')
         n2 = call('get_node_info', {'nodeId': rid}) or {}
         for c in n2.get('children', []) or []:
             if (c.get('name') or '') == 'Contents':
                 call('set_layout_sizing', {'nodeId': c['id'], 'vertical': 'FILL'})
+        # 🔴 좌측 몰림 자가 점검 (2026-08-14): 콘텐츠 최우측 경계가 393-24 미만이면
+        # 360 잔재 의심 — WARN 을 강제 출력해 사람 QA 없이도 감지되게 한다.
+        rb = call('get_node_info', {'nodeId': rid}) or {}
+        rx0 = 0
+        try:
+            rx0 = (rb.get('absoluteBoundingBox') or {}).get('x') or 0
+        except Exception:
+            pass
+        maxx = [0]
+        def _mx(nid2, d2=0):
+            if d2 > 8:
+                return
+            nn = call('get_node_info', {'nodeId': nid2}) or {}
+            bb = nn.get('absoluteBoundingBox') or {}
+            if bb.get('x') is not None:
+                maxx[0] = max(maxx[0], (bb.get('x') or 0) + (bb.get('width') or 0) - rx0)
+            for cc in nn.get('children', []) or []:
+                if ';' not in (cc.get('id') or ''):
+                    _mx(cc['id'], d2 + 1)
+        for cc in rb.get('children', []) or []:
+            _mx(cc['id'])
+        if 0 < maxx[0] < 369:
+            print(f'  ⚠️ [selfcheck] 콘텐츠 우측 경계 {round(maxx[0])} < 369 — 360 잔재/좌측 몰림 의심. 수동 교정 필요')
         # 토큰 바인딩 (스크립트 1회 — 색/spacing/radius/텍스트 스타일 일괄)
         r = subprocess.run([sys.executable, os.path.join(_HERE, 'bind_semantic_tokens.py'), rid],
                            capture_output=True, text=True)

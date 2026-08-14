@@ -210,6 +210,18 @@ for tnode in (sc.get('textNodes') if isinstance(sc, dict) else sc) or []:
     # ⚠️ 파라미터명은 textStyleId, 형식은 "S:{key},{아무값}" — 콤마 뒤가 비면 플러그인
     # 정규식(/^S:([^,]+),(.+)$/)을 못 타 로컬 조회로 떨어져 silent 실패한다 (2026-08-10 회귀).
     deco = info.get('textDecoration')
+    # 🔴 2026-08-14: 취소선이 range 단위면 node-level 은 None — 세그먼트로 실사해
+    # 균일 데코(STRIKETHROUGH/UNDERLINE)면 스타일 적용 후 node-level 로 재적용한다
+    # (2026-08-10 '정가 취소선 회귀' fix 가 serializer 미지원으로 무력화돼 있던 뿌리).
+    if not deco or deco == 'NONE':
+        try:
+            segs = (call('get_styled_text_segments',
+                         {'nodeId': nid, 'property': 'textDecoration'}) or {}).get('segments') or []
+            vals = {sg.get('textDecoration') for sg in segs}
+            if vals in ({'STRIKETHROUGH'}, {'UNDERLINE'}):
+                deco = vals.pop()
+        except Exception:
+            pass
     call('set_text_style_id', {'nodeId': nid, 'textStyleId': f"S:{e['key']},{nid}"})
     if deco and deco != 'NONE':
         # 스타일 적용이 취소선/밑줄을 리셋한다 — 원본 데코 재적용 (2026-08-10 정가 취소선 회귀)
