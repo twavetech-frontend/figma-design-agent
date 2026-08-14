@@ -167,6 +167,9 @@ def swap_app_bar(root_tree):
         if tit_id and title:
             call('set_text_content', {'nodeId': tit_id, 'text': title})
             call('set_font_size', {'nodeId': tit_id, 'fontSize': 20})  # 0-W 20px 재단언
+        elif not title:
+            # X-only 헤더 — 기본 타이틀('내 스케줄') 잔존 방지 (2026-08-14 라운지 초대 완료 실측)
+            call('set_instance_properties', {'nodeId': tb, 'properties': {'Title#17757:6': False}})
         if rb_id:
             if view == 'modal':
                 call('set_instance_properties', {'nodeId': rb_id, 'properties': {'Type': '1 button'}})
@@ -229,6 +232,8 @@ def swap_sheet_headers(root_tree):
         if tit_id and title:
             call('set_text_content', {'nodeId': tit_id, 'text': title})
             call('set_font_size', {'nodeId': tit_id, 'fontSize': 20})
+        elif not title:
+            call('set_instance_properties', {'nodeId': tb, 'properties': {'Title#17757:6': False}})
         if rb_id:
             call('set_instance_properties', {'nodeId': rb_id, 'properties': {'Type': '1 button'}})
             rn = call('get_node_info', {'nodeId': rb_id}) or {}
