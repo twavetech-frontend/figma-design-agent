@@ -13430,8 +13430,19 @@ def cmd_sync_paint_styles() -> None:
         return
     path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                         "ds", "PAINT_STYLE_MAP.json")
+    # 🔴 병합 저장 (2026-08-14): 파일별 로컬 스타일이 흩어져 있어(예: Gradient/Brand 는
+    # 다른 DS 파일 소속) 덮어쓰면 기존 채집 키가 유실된다 — key 기준 merge.
+    prev = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            prev = json.load(f)
+    except Exception:
+        pass
+    seen = {e.get("key") for e in out}
+    merged = out + [e for e in prev if e.get("key") not in seen]
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, indent=2)
+        json.dump(merged, f, ensure_ascii=False, indent=2)
+    out = merged
     grads = [o["name"] for o in out if "gradient" in (o["name"] or "").lower()]
     print(f"✓ DS paint style {len(out)}개 추출 → {path}")
     if grads:
