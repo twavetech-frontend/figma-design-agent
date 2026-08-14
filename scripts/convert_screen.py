@@ -60,6 +60,11 @@ PAL = {'Text': _palette('Colors/Text/'), 'Background': _palette('Colors/Backgrou
 def _rgb(h):
     return int(h[1:3], 16), int(h[3:5], 16), int(h[5:7], 16)
 
+# 라운지 배너 장식 블롭 등 — 시맨틱 대응 없는 에셋 고유색 (2026-08-14 5개 배치 반복 실측).
+# sweep 미해결/verify 오탐에서 제외하고 verify 호출에 자동 --allow 로 전달할 노드 이름들.
+ASSET_ALLOW_DEFAULT = {'Ellipse'}
+ASSET_HEXES = {'#f795ae', '#8f95fa', '#55c8c0'}
+
 def nearest(hexv, cls, max_d=60):
     table = PAL[cls]
     if hexv in table:
@@ -323,7 +328,7 @@ def sweep_unbound(root_id, allow):
                     if path:
                         call('set_bound_variables', {'nodeId': nid2, 'bindings': {'fills/0': 'K:' + KM[path]}})
                         bound += 1
-                    else:
+                    elif hx not in ASSET_HEXES:
                         left.append((name, t, 'fill', hx))
             # stroke 는 len==1 제약 없이 첫 SOLID 페인트 기준 (라디오 링 등 멀티페인트가
             # len==1 조건에 걸려 3건씩 남던 실측 — 2026-08-14)
@@ -404,8 +409,9 @@ def main():
     if not no_verify:
         for rid in results:
             cmd = [sys.executable, os.path.join(_HERE, 'verify_bindings.py'), rid]
-            if allow:
-                cmd += ['--allow', ','.join(sorted(allow))]
+            eff_allow = set(allow) | ASSET_ALLOW_DEFAULT
+            if eff_allow:
+                cmd += ['--allow', ','.join(sorted(eff_allow))]
             r = subprocess.run(cmd, capture_output=True, text=True)
             tail = r.stdout.strip().splitlines()[-6:]
             print(f'-- verify {rid}')
