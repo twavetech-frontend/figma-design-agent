@@ -323,13 +323,34 @@ BRAND_STEP_TOKENS = {
     '#b685ff': 'Component colors/Utility/Brand/utility-brand-300',
     '#cfaeff': 'Component colors/Utility/Brand/utility-brand-200'}
 
-# DS gradient color style 키 (원본 실측 — Gradient/Brand/Gradient-6~5~4)
-BRAND_GRADIENT_STYLES = {
-    # 🔴 정본 = 현행 Imin DS 'Gradient/Brand/600 -> 500 -> 400' (2026-08-14 사용자 실측 키).
-    # 주의: 원본 앱 캡처들이 물고 있는 f262f3a4…('imin/Gradient/Gradient-6~5~4_h')는
-    # 구 라이브러리 hover 변형 — stop 값이 동일해 색으로 구분 불가, 키로만 구분됨.
-    ('#6a00e0', '#7700ff', '#9b55ff'): 'S:2d6d98a9c0279efe0b0eb1ea7ba3c46e7cae94d7,x',
-}
+# DS gradient color style 키 — ds/PAINT_STYLE_MAP.json 에서 자동 파생 (2026-08-14).
+# 이름 'Gradient/Brand/600 -> 500 -> 400' 의 스텝을 utility-brand 팔레트 hex 로 변환해
+# (stop 시그니처)→스타일키 맵을 만든다. sync-paint-styles 로 새 gradient 를 추출하면
+# 코드 수정 없이 자동 반영된다. ⚠️ 원본 앱 캡처의 f262f3a4…('…-6~5~4_h')는 구 라이브러리
+# hover 변형 — stop 값이 base 와 동일해 색으로 구분 불가, 정본 키 일치로만 판정.
+BRAND_STEP_HEX = {'700': '#5200b0', '600': '#6a00e0', '500': '#7700ff',
+                  '400': '#9b55ff', '300': '#b685ff', '200': '#cfaeff'}
+
+def _load_brand_gradient_styles():
+    out = {}
+    try:
+        entries = json.load(open(os.path.join(_HERE, '..', 'ds', 'PAINT_STYLE_MAP.json')))
+    except Exception:
+        entries = []
+    for e in entries:
+        nm = e.get('name') or ''
+        if not nm.startswith('Gradient/Brand/'):
+            continue
+        steps = [t.strip() for t in nm.split('/')[-1].split('->')]
+        hexes = tuple(BRAND_STEP_HEX.get(t) for t in steps)
+        if all(hexes):
+            out[hexes] = 'S:' + e['key'] + ',x'
+    # 정본 시드 백업 (맵 파일 유실 시에도 동작)
+    out.setdefault(('#6a00e0', '#7700ff', '#9b55ff'),
+                   'S:2d6d98a9c0279efe0b0eb1ea7ba3c46e7cae94d7,x')
+    return out
+
+BRAND_GRADIENT_STYLES = _load_brand_gradient_styles()
 
 def bind_brand_gradients(n, nid2):
     """DS Gradient/Brand 스텝과 전 stop 정확 일치하는 gradient → stop 별 변수 바인딩

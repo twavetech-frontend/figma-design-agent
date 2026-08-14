@@ -24,6 +24,34 @@ sys.path.insert(0, '/Users/julee/imin/figma-design-agent/scripts')
 import figma_mcp_client as fc
 
 
+_CANON_CACHE = None
+
+def _canon_gradients():
+    """PAINT_STYLE_MAP 의 Gradient/Brand 스타일에서 (stop hex 시그니처)→정본 키 맵 파생."""
+    global _CANON_CACHE
+    if _CANON_CACHE is not None:
+        return _CANON_CACHE
+    import json as _json, os as _os
+    step = {'700': '#5200b0', '600': '#6a00e0', '500': '#7700ff',
+            '400': '#9b55ff', '300': '#b685ff', '200': '#cfaeff'}
+    out = {}
+    try:
+        entries = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                                                '..', 'ds', 'PAINT_STYLE_MAP.json')))
+    except Exception:
+        entries = []
+    for e in entries:
+        nm = e.get('name') or ''
+        if nm.startswith('Gradient/Brand/'):
+            hexes = tuple(step.get(t.strip()) for t in nm.split('/')[-1].split('->'))
+            if all(hexes):
+                out[hexes] = e['key']
+    out.setdefault(('#6a00e0', '#7700ff', '#9b55ff'),
+                   '2d6d98a9c0279efe0b0eb1ea7ba3c46e7cae94d7')
+    _CANON_CACHE = out
+    return out
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     if not args:
@@ -123,8 +151,7 @@ def main():
                             # 정본 = DS color style(fillStyleId). 스타일 미확인 시그니처만
                             # stop 변수 바인딩 폴백 허용 (2026-08-14 사용자: "gradient 는
                             # DS 의 color style 로 정의되어 있어").
-                            _CANON = {('#6a00e0', '#7700ff', '#9b55ff'):
-                                      '2d6d98a9c0279efe0b0eb1ea7ba3c46e7cae94d7'}
+                            _CANON = _canon_gradients()
                             _sid = n.get('fillStyleId') or ''
                             _ck = _CANON.get(tuple(_hexes))
                             if _ck:
