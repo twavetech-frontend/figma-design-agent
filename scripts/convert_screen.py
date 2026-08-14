@@ -325,7 +325,10 @@ BRAND_STEP_TOKENS = {
 
 # DS gradient color style 키 (원본 실측 — Gradient/Brand/Gradient-6~5~4)
 BRAND_GRADIENT_STYLES = {
-    ('#6a00e0', '#7700ff', '#9b55ff'): 'S:f262f3a4634dc084c188fcd5d4248c74c58c5ebb,x',
+    # 🔴 정본 = 현행 Imin DS 'Gradient/Brand/600 -> 500 -> 400' (2026-08-14 사용자 실측 키).
+    # 주의: 원본 앱 캡처들이 물고 있는 f262f3a4…('imin/Gradient/Gradient-6~5~4_h')는
+    # 구 라이브러리 hover 변형 — stop 값이 동일해 색으로 구분 불가, 키로만 구분됨.
+    ('#6a00e0', '#7700ff', '#9b55ff'): 'S:2d6d98a9c0279efe0b0eb1ea7ba3c46e7cae94d7,x',
 }
 
 def bind_brand_gradients(n, nid2):
