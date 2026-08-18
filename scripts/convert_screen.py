@@ -70,7 +70,7 @@ for _v in TM.values():
         continue
     EXACT_BY_HEX.setdefault(_val.lower(), []).append(_p)
 
-_PREF = {('fill', 'TEXT'): ('Colors/Text/', 'Colors/Foreground/'),
+_PREF = {('fill', 'TEXT'): ('Colors/Text/', 'Colors/Foreground/', 'Component colors/Utility/'),
          ('fill', '*'): ('Colors/Background/', 'Colors/Foreground/', 'Component colors/Utility/'),
          ('stroke', '*'): ('Colors/Border/', 'Colors/Foreground/', 'Colors/Background/',
                            'Component colors/Utility/')}
