@@ -235,6 +235,10 @@ NAV_ICON_KEYS = {
     "settings-01":         "110d888816e9bb5ce620761786951ce6ad2cf459",
     "settings":            "110d888816e9bb5ce620761786951ce6ad2cf459",
     "dots-vertical":       "4701c3d1add2af0b2cacd0362c19a23c08a04773",
+    # trash/delete (2026-08-18 배송지 수정 상단 삭제 버튼 — search_design_system 확보)
+    "trash":               "768df4f8e834000ce1c6ca369cc76b3e1358c3fd",
+    "trash-01":            "768df4f8e834000ce1c6ca369cc76b3e1358c3fd",
+    "ic_trash_04":         "768df4f8e834000ce1c6ca369cc76b3e1358c3fd",
 }
 
 
