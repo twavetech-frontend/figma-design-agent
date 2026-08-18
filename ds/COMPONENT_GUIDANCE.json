@@ -363,6 +363,9 @@
       },
       "donts": [
         "'Action Button sm'(a8a4d7eb…) 키는 라벨 버튼이 아니라 Edit 링크형(텍스트+화살표+밑줄) 컴포넌트 — 행 내 소형 버튼도 md Outline(f00aebde…) + instanceProperties {Size:'sm', Icon leading/trailing:false} 로 쓸 것 (2026-07-16 실측)"
+      ],
+      "do": [
+        "위계 실물 매핑(2026-08-18 렌더 실측 — 이름으로 추측 금지): Primary=보라 면+흰 라벨 / Secondary=흰 면+보라 보더+보라 라벨(수정·주소검색·취소류) / Outline=흰 면+회색 보더+검정 라벨(계좌변경류). 변환 시 원본 fill·보더 채도를 실측해 판정"
       ]
     },
     {
