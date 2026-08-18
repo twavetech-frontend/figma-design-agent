@@ -346,10 +346,15 @@ def fix_grid_cells(root_id):
         n = call('get_node_info', {'nodeId': nid}) or {}
         kids = [c for c in n.get('children', []) or [] if ';' not in (c.get('id') or '')]
         if n.get('layoutMode') == 'HORIZONTAL':
-            cells = [c for c in kids if c.get('type') == 'FRAME']
+            pw0 = n.get('width') or 0
+            # 🔴 오버레이 레이어 오폭 가드 (2026-08-18 장바구니 모달 실측): ABSOLUTE 자식과
+            # 풀폭(부모의 60%+) 자식은 그리드 셀이 아니다 — 재편하면 852 레이어가 클립된다.
+            cells = [c for c in kids if c.get('type') == 'FRAME'
+                     and (c.get('layoutPositioning') or 'AUTO') != 'ABSOLUTE'
+                     and (c.get('width') or 0) < pw0 * 0.6]
             ws = [round(c.get('width') or 0) for c in cells]
             if len(cells) >= 2 and len(set(ws)) == 1 and 40 < ws[0]:
-                pw = n.get('width') or 0
+                pw = pw0
                 pad_l = n.get('paddingLeft') or 0
                 pad_r = n.get('paddingRight') or 0
                 g = n.get('itemSpacing') or 0
@@ -606,7 +611,7 @@ def diagnose(src_id, gen_id):
     gen = call('get_node_info', {'nodeId': gen_id}) or {}
     gx0 = (gen.get('absoluteBoundingBox') or {}).get('x') or 0
 
-    stats = {'maxx': 0, 'grid_fixed': [], 'strike_gen': 0, 'raw_buttons': []}
+    stats = {'maxx': 0, 'grid_fixed': [], 'strike_gen': 0, 'raw_buttons': [], 'clipped': []}
 
     def walk_gen(nid, d=0):
         if d > 10:
@@ -623,6 +628,13 @@ def diagnose(src_id, gen_id):
             ws = [round(c.get('width') or 0) for c in cells]
             if len(cells) >= 3 and len(set(ws)) == 1 and ws[0] > 40:
                 stats['grid_fixed'].append(n['id'])
+        # 클립 의심: 화면급 자식(h>=700)이 낮은 컨테이너에 들어가 잘림 (2026-08-18 모달 오폭 실측)
+        ph = n.get('height') or 0
+        for c in kids:
+            if c.get('type') == 'FRAME' and (c.get('height') or 0) >= 700 and 0 < ph < (c.get('height') or 0) - 50 \
+                    and (c.get('layoutPositioning') or 'AUTO') != 'ABSOLUTE':
+                stats['clipped'].append(n['id'])
+                break
         # raw Button 잔존 (스왑 커버리지 감시 — 2026-08-14 수정/주소검색 실측)
         if n.get('type') == 'FRAME' and (n.get('name') or '').strip().lower() == 'button' \
                 and 24 <= round(n.get('height') or 0) <= 64 and n.get('visible') is not False:
@@ -668,6 +680,8 @@ def diagnose(src_id, gen_id):
         flags.append(f"grid-fixed-cells: 등폭 FIXED 셀 잔존 {stats['grid_fixed'][:3]} — 행 재편+FILL 필요")
     if strike_src[0] > stats['strike_gen']:
         flags.append(f"strikethrough-lost: 취소선 원본 {strike_src[0]}건 → 변환본 {stats['strike_gen']}건")
+    if stats.get('clipped'):
+        flags.append(f"clipped-content: 자식이 부모보다 큰 클립 의심 {stats['clipped'][:3]} — 구조 밀림/오폭 점검")
     if stats.get('raw_buttons'):
         flags.append(f"raw-button: DS 미스왑 raw Button 잔존 {stats['raw_buttons'][:4]} — Action Button 인스턴스로 교체")
     return flags
