@@ -198,6 +198,22 @@ def swap_app_bar(root_tree):
         has_close = bool(find_all(ab, lambda n: 'close' in (n.get('name') or '').lower()))
         tx = texts_in(ab)
         title = tx[0]['characters'] if tx else ''
+        # 🔴 우측 아이콘 자동 이관 (2026-08-18 배송지 수정 휴지통 실측 — Right empty 고정이
+        # 원본 우측 액션을 지우던 구멍). ic_* 아이콘 이름을 NAV_ICON_KEYS 로 해석, 미해석은 flag.
+        from design_rules.ds_catalog import NAV_ICON_KEYS  # noqa: E402
+        right_icons = []
+        for ic in find_all(ab, lambda n: (n.get('name') or '').lower().startswith('ic_')
+                           and 'arrow_left' not in (n.get('name') or '').lower()
+                           and 'close' not in (n.get('name') or '').lower()
+                           and n.get('visible') is not False):
+            nm_ic = (ic.get('name') or '').lower()
+            key_ic = NAV_ICON_KEYS.get(nm_ic) or NAV_ICON_KEYS.get(nm_ic.replace('ic_', '').replace('_', '-'))
+            if not key_ic:
+                for kk, vv in NAV_ICON_KEYS.items():
+                    if kk.replace('-', '_') in nm_ic or kk in nm_ic:
+                        key_ic = vv
+                        break
+            right_icons.append((nm_ic, key_ic))
         info = call('get_node_info', {'nodeId': ab['id']}) or {}
         pid = info.get('parentId')
         idx = child_index(pid, ab['id'])
@@ -226,8 +242,9 @@ def swap_app_bar(root_tree):
             # X-only 헤더 — 기본 타이틀('내 스케줄') 잔존 방지 (2026-08-14 라운지 초대 완료 실측)
             call('set_instance_properties', {'nodeId': tb, 'properties': {'Title#17757:6': False}})
         if rb_id:
-            if view == 'modal':
-                call('set_instance_properties', {'nodeId': rb_id, 'properties': {'Type': '1 button'}})
+            def _fill_right(icon_keys):
+                call('set_instance_properties', {'nodeId': rb_id, 'properties':
+                     {'Type': '1 button' if len(icon_keys) == 1 else '2 button'}})
                 rn = call('get_node_info', {'nodeId': rb_id}) or {}
                 inner = []
                 def w2(x):
@@ -236,10 +253,22 @@ def swap_app_bar(root_tree):
                     for c in x.get('children', []) or []:
                         w2(c)
                 w2(rn)
-                if inner:
-                    call('swap_instance_component', {'nodeId': inner[0], 'componentKey': XCLOSE})
+                tops = [i for i in inner if i.count(';') <= 1] or inner
+                for slot_i, kk in enumerate(icon_keys[:2]):
+                    if slot_i < len(tops):
+                        call('swap_instance_component', {'nodeId': tops[slot_i], 'componentKey': kk})
+            resolved = [k for _, k in right_icons if k]
+            unresolved = [nm for nm, k in right_icons if not k]
+            if view == 'modal':
+                _fill_right([XCLOSE])
+            elif resolved:
+                _fill_right(resolved)
+                print(f'  [swap] NavBar 우측 아이콘 이관: {resolved}')
             else:
                 call('set_instance_properties', {'nodeId': rb_id, 'properties': {'Type': 'empty'}})
+            if unresolved:
+                print(f'  🚩 [detect] navbar-right-icon-unresolved: {unresolved} — '
+                      f'search_design_system 으로 키 확보 후 NAV_ICON_KEYS 등록 필요')
         print(f'  [swap] Tool Bar({view}) "{title}" ← App bar ({ab["id"]})')
         return tb
     return None
