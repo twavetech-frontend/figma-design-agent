@@ -393,14 +393,19 @@ def swap_cta(root_tree):
         # wallet-withdraw-user-baseline 룰 2). stroke+무채 fill → Outline, 유채 fill → Primary.
         if round(b.get('height') or 0) <= 42:
             info0 = call('get_node_info', {'nodeId': b['id']}) or {}
-            fills0 = [f for f in (info0.get('fills') or []) if isinstance(f, dict)
+            def _chr(paints):
+                ps = [f for f in (paints or []) if isinstance(f, dict)
                       and f.get('type') == 'SOLID' and f.get('visible') is not False]
-            chroma0 = 0
-            if fills0:
-                c0 = fills0[0].get('color', {})
+                if not ps:
+                    return 0
+                c0 = ps[0].get('color', {})
                 vs = [round(c0.get(k, 0) * 255) for k in 'rgb']
-                chroma0 = max(vs) - min(vs)
-            hier = 'Primary' if chroma0 >= 20 else 'Outline'
+                return max(vs) - min(vs)
+            fill_chr = _chr(info0.get('fills'))
+            stroke_chr = _chr(info0.get('strokes'))
+            # 🔴 위계 판정 (2026-08-18 사용자 교정 — 수정/주소검색 실측): 유채 fill → Primary,
+            # 유채(보라) 보더 → **Secondary**(흰 면+보라 보더+보라 라벨), 무채 보더 → Outline.
+            hier = 'Primary' if fill_chr >= 20 else ('Secondary' if stroke_chr >= 20 else 'Outline')
             label0 = tx[0]['characters']
             pid0 = info0.get('parentId')
             idx0 = child_index(pid0, b['id'])
