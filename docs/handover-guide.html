@@ -143,6 +143,7 @@ footer{border-top:1px solid var(--border-secondary);padding-top:20px;font-size:1
   <a href="#s6">6. 룰을 바꾸고 싶을 때</a>
   <a href="#s7">7. 문제가 생겼을 때</a>
   <a href="#s8">8. 관리 정책 & 문서 지도</a>
+  <a href="#s9">9. 새 규칙은 어디에 기록되는가</a>
 </nav>
 
 <main>
@@ -151,7 +152,7 @@ footer{border-top:1px solid var(--border-secondary);padding-top:20px;font-size:1
   <span class="eyebrow">HANDOVER GUIDE · 디자이너용</span>
   <h1>Figma Design Agent<br>이관 설명서</h1>
   <p>터미널에서 AI(Claude)에게 한국어로 지시하면, imin 기획 문서와 Imin Design System을 반영한 화면이 <strong>Figma 파일에 자동으로 생성</strong>되는 도구입니다. 이 문서 하나로 인수인계가 끝나도록 썼습니다.</p>
-  <div class="meta">최종 갱신 2026-08-04 · 저장소: <code>figma-design-agent</code></div>
+  <div class="meta">최종 갱신 2026-08-18 · 저장소: <code>figma-design-agent</code></div>
 </div>
 
 <!-- ─────────────────────────────── 1 ─────────────────────────────── -->
@@ -339,7 +340,56 @@ footer{border-top:1px solid var(--border-secondary);padding-top:20px;font-size:1
     <tr><td><code>docs/ds-architecture.md</code></td><td>DS 토큰·동기화 구조 (개발자용)</td></tr>
   </table></div>
 
-  <footer>Figma Design Agent 이관 설명서 · 2026-08-04 · 문의는 이 레포에서 Claude Code에게 직접 물어보는 것이 가장 빠릅니다 — 이 문서와 CLAUDE.md를 읽고 답합니다.</footer>
+</section>
+
+<!-- ─────────────────────────────── 9 ─────────────────────────────── -->
+<section id="s9">
+  <h2><span class="num">9</span>새 규칙은 어디에 기록되는가 (기록 체계)</h2>
+
+  <p>사용자가 규칙을 하나 가르치면(예: "이 버튼은 Secondary를 써야지"), AI는 그 규칙을 <strong>성격에 따라 최대 4곳</strong>에 나눠 기록합니다. 한 곳이 아니라 여러 층에 넣는 이유는, 각 층이 <strong>서로 다른 실패 경로를 막기 때문</strong>입니다.</p>
+
+  <div class="tbl-scroll"><table class="wide">
+    <tr><th>층</th><th>위치</th><th>특징 / 언제 효력이 생기나</th></tr>
+    <tr>
+      <td><strong>① 코드 (강제)</strong></td>
+      <td><code>scripts/convert_screen.py</code>, <code>scripts/verify_bindings.py</code>, <code>scripts/bind_semantic_tokens.py</code>, <code>src/figma-plugin/code.js</code> 등</td>
+      <td>규칙의 <mark>실행형</mark>. 스크립트가 돌 때마다 자동 적용되거나(스왑·판정 로직), 게이트가 위반을 FAIL로 차단. 사람이 잊어도 기계가 강제 — 가장 강한 층. git 커밋으로 영구.</td>
+    </tr>
+    <tr>
+      <td><strong>② 조회 가이드</strong></td>
+      <td><code>ds/COMPONENT_GUIDANCE.json</code>, <code>CLAUDE.md</code>, <code>docs/design-rules-detail.md</code></td>
+      <td>AI가 작업 전 <mark>조회하는 정본</mark>. <code>component "Action Button"</code>·<code>rule 0-W</code> 같은 명령으로 노출됨. CLAUDE.md는 매 세션 통째로 로드. 룰 개정 시 CLAUDE.md 인덱스 + 상세 원문 + 컴포넌트 가이드 <strong>세 곳 동기 갱신</strong>이 원칙.</td>
+    </tr>
+    <tr>
+      <td><strong>③ 메모리 (교훈)</strong></td>
+      <td><code>~/.claude/projects/…/memory/</code> 폴더의 개별 .md + <code>MEMORY.md</code> 인덱스</td>
+      <td>규칙의 <mark>"왜"와 실패 사례</mark>를 보존. 새 세션이 시작될 때 자동 로드되어 AI가 같은 실수를 반복하지 않게 함. 레포 밖(사용자 홈)에 있어 git과 무관하게 유지.</td>
+    </tr>
+    <tr>
+      <td><strong>④ 감지기 (재발 감시)</strong></td>
+      <td><code>convert_screen.py</code>의 <code>diagnose()</code> + <code>verify_bindings.py</code> 게이트</td>
+      <td>규칙 위반이 <mark>다시 발생하면 자동으로 flag/FAIL</mark>을 띄워 AI가 판단·수정하게 함(CONVERT-SUMMARY-JSON). "새 실패 클래스를 만나면 감지기 추가까지가 수정의 완료 조건"이 운영 원칙.</td>
+    </tr>
+  </table></div>
+
+  <h3>실제 예시 — "수정/주소검색 버튼 위계" 규칙 (2026-08-18)</h3>
+  <div class="tbl-scroll"><table>
+    <tr><th>층</th><th>실제로 들어간 내용</th></tr>
+    <tr><td>① 코드</td><td><code>convert_screen.py</code> 스왑 판정: 원본 fill·보더 <strong>채도를 실측</strong>해 유채 fill=Primary / 유채 보더=Secondary / 무채 보더=Outline 자동 분기</td></tr>
+    <tr><td>② 가이드</td><td><code>COMPONENT_GUIDANCE.json</code> Action Button 항목: "위계 실물 매핑 — Secondary=흰 면+보라 보더+보라 라벨… 이름으로 추측 금지"</td></tr>
+    <tr><td>③ 메모리</td><td><code>ds-swap-checklist…md</code>: "일괄 Outline은 오답, 과거 정본도 색 실측 없이 복사 금지" + 실패 경위</td></tr>
+    <tr><td>④ 감지기</td><td><code>diagnose()</code>의 raw-button flag — DS 미스왑 버튼이 남으면 자동 보고</td></tr>
+  </table></div>
+
+  <h3>층별 분담 원칙</h3>
+  <ul>
+    <li><strong>기계로 강제할 수 있으면 → 코드/게이트</strong> (사람과 AI 모두 잊어도 안전)</li>
+    <li><strong>작업 중 찾아봐야 하는 사실이면 → 조회 가이드</strong> (키·매핑·do/don't)</li>
+    <li><strong>판단·습관에 관한 교훈이면 → 메모리</strong> (새 세션의 AI에게 전달)</li>
+    <li>한 규칙이 여러 층에 있으면 <strong>코드가 최종 강제자</strong>, 메모리는 "왜"를 보존</li>
+  </ul>
+
+  <footer>Figma Design Agent 이관 설명서 · 2026-08-18 · 문의는 이 레포에서 Claude Code에게 직접 물어보는 것이 가장 빠릅니다 — 이 문서와 CLAUDE.md를 읽고 답합니다.</footer>
 </section>
 
 </main>
