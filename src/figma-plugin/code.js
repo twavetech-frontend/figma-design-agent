@@ -374,6 +374,8 @@ async function handleCommand(command, params) {
       return await renameNode(params);
     case "find_components_by_name":
       return await findComponentsByName(params);
+    case "find_nodes_by_name":
+      return await findNodesByName(params);
     case "get_component_key":
       return await getComponentKey(params);
     case "search_library_components":
@@ -1515,6 +1517,71 @@ async function searchLibraryComponents(params) {
         libraryName: c.libraryName || null
       };
     })
+  };
+}
+
+// find_nodes_by_name — 캔버스 노드 이름 검색 (2026-08-20).
+// get_node_info 의 MAX_CHILDREN=50 직렬화 한계로 대형 섹션(자식 100+)에서 기존 변환본을
+// 못 찾던 구멍의 정식 해결. scan_instances_for_swap BFS 우회의 대체.
+// params: name(필수), matchMode('contains'|'exact', 기본 contains, 대소문자 무시),
+//         scopeNodeId(기본 currentPage), types(노드 타입 배열 필터), limit(기본 50)
+async function findNodesByName(params) {
+  var query = (params && params.name) ? String(params.name) : "";
+  if (!query) {
+    throw new Error("Missing name parameter");
+  }
+  var mode = (params && params.matchMode === "exact") ? "exact" : "contains";
+  var limit = (params && typeof params.limit === "number" && params.limit > 0) ? params.limit : 50;
+  var typeFilter = (params && params.types && params.types.length) ? params.types : null;
+
+  var root = null;
+  if (params && params.scopeNodeId) {
+    root = await figma.getNodeByIdAsync(params.scopeNodeId);
+    if (!root) {
+      throw new Error("scopeNodeId not found: " + params.scopeNodeId);
+    }
+  } else {
+    root = figma.currentPage;
+  }
+
+  var q = query.toLowerCase();
+  var matches = [];
+  var queue = [];
+  if (root.children) {
+    for (var i = 0; i < root.children.length; i++) {
+      queue.push(root.children[i]);
+    }
+  }
+  var visited = 0;
+  while (queue.length > 0 && matches.length < limit) {
+    var node = queue.shift();
+    visited++;
+    var nm = (node.name || "").toLowerCase();
+    var hit = (mode === "exact") ? (nm === q) : (nm.indexOf(q) !== -1);
+    if (hit && (!typeFilter || typeFilter.indexOf(node.type) !== -1)) {
+      var m = { id: node.id, name: node.name, type: node.type };
+      if (node.parent) {
+        m.parentId = node.parent.id;
+        m.parentName = node.parent.name;
+      }
+      if ("x" in node) { m.x = node.x; m.y = node.y; }
+      if ("width" in node) { m.width = node.width; m.height = node.height; }
+      matches.push(m);
+    }
+    if (node.children) {
+      for (var c = 0; c < node.children.length; c++) {
+        queue.push(node.children[c]);
+      }
+    }
+  }
+  return {
+    query: query,
+    matchMode: mode,
+    scope: root.id,
+    visitedCount: visited,
+    matchCount: matches.length,
+    truncated: queue.length > 0 && matches.length >= limit,
+    matches: matches
   };
 }
 

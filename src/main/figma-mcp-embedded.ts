@@ -573,6 +573,18 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['nodeId']
   }, async (params) => cmd('scan_instances_for_swap', params));
 
+  reg('find_nodes_by_name', 'Find canvas nodes by name (case-insensitive). Solves the 50-children serialization blind spot of get_node_info on large sections. matchMode: contains(default)|exact. Scope defaults to current page; pass scopeNodeId to narrow.', {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      matchMode: { type: 'string', enum: ['contains', 'exact'] },
+      scopeNodeId: { type: 'string' },
+      types: { type: 'array', items: { type: 'string' } },
+      limit: { type: 'number' }
+    },
+    required: ['name']
+  }, async (params) => cmd('find_nodes_by_name', params));
+
   reg('swap_instance_component', 'Swap an instance (incl. nested instance inside another instance) to a different component by key', {
     type: 'object',
     properties: { nodeId: { type: 'string' }, componentKey: { type: 'string' } },
