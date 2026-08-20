@@ -1930,6 +1930,11 @@ function _tween(durationMs, ease, onStep) {
   });
 }
 
+// 비행 아크 모션 (2026-08-20 사용자 요청): 팬은 전체 duration 연속 진행,
+// 줌은 이동의 정확히 1/2 지점(eased 진행률 0.5)에서 25%(valley)까지 빠졌다가
+// 도착하며 fit 줌으로 복귀 — 지도앱식 zoom-out-and-in.
+// valley 는 기본 0.25, 단 출발/도착 줌이 이미 그보다 낮으면 그 값(줌인 딥 방지).
+// 전 구간 로그 보간(줌은 곱셈 공간), 종료 시 정확값 스냅.
 async function animateViewportTo(bbox, durationSec, easingName) {
   var FIT_MARGIN = 1.12; // scrollAndZoomIntoView 와 유사한 여백
   var c0 = { x: figma.viewport.center.x, y: figma.viewport.center.y };
@@ -1939,26 +1944,29 @@ async function animateViewportTo(bbox, durationSec, easingName) {
   var pxH = vb.height * z0;
   var z1 = Math.min(pxW / (bbox.width * FIT_MARGIN), pxH / (bbox.height * FIT_MARGIN));
   var c1 = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
+  var valley = Math.min(0.25, z0, z1);
 
   function easeInOutQuad(t) {
     return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   }
   function linear(t) { return t; }
   var ease = (easingName === "linear") ? linear : easeInOutQuad;
-  var totalMs = durationSec * 1000;
 
-  // 1단계 — 팬 (줌 고정)
-  await _tween(totalMs * 0.55, ease, function (e) {
+  await _tween(durationSec * 1000, ease, function (e) {
     figma.viewport.center = {
       x: c0.x + (c1.x - c0.x) * e,
       y: c0.y + (c1.y - c0.y) * e
     };
+    var z;
+    if (e < 0.5) {
+      z = z0 * Math.pow(valley / z0, e * 2);        // 전반: 현재 줌 → valley(25%)
+    } else {
+      z = valley * Math.pow(z1 / valley, (e - 0.5) * 2); // 후반: valley → fit 줌
+    }
+    figma.viewport.zoom = z;
   });
-  // 2단계 — fit 줌 (center 고정, 로그 보간)
-  await _tween(totalMs * 0.45, ease, function (e) {
-    figma.viewport.zoom = z0 * Math.pow(z1 / z0, e);
-    figma.viewport.center = c1; // 줌 중 center 유지
-  });
+  figma.viewport.center = c1;
+  figma.viewport.zoom = z1;
 }
 
 async function scanInstancesForSwap(params) {
