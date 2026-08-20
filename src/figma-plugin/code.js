@@ -376,6 +376,8 @@ async function handleCommand(command, params) {
       return await findComponentsByName(params);
     case "find_nodes_by_name":
       return await findNodesByName(params);
+    case "focus_node":
+      return await focusNode(params);
     case "get_component_key":
       return await getComponentKey(params);
     case "search_library_components":
@@ -1582,6 +1584,79 @@ async function findNodesByName(params) {
     matchCount: matches.length,
     truncated: queue.length > 0 && matches.length >= limit,
     matches: matches
+  };
+}
+
+// focus_node — 노드를 뷰포트 정중앙 + fit 줌으로 이동 (2026-08-20 사용자 요청:
+// "안심서비스지급동의서 찾아줘" → 그 화면이 화면 정중앙에 fit 되게).
+// params: nodeId(직접 지정) 또는 name(find_nodes_by_name 로직 재사용해 최적 1건 선택 —
+//         exact 일치 우선, 다음 contains. FRAME/SECTION 우선). select(기본 true)면 선택도 함께.
+async function focusNode(params) {
+  var target = null;
+  if (params && params.nodeId) {
+    target = await figma.getNodeByIdAsync(params.nodeId);
+    if (!target) {
+      throw new Error("Node not found: " + params.nodeId);
+    }
+  } else if (params && params.name) {
+    var found = await findNodesByName({
+      name: params.name,
+      matchMode: params.matchMode || "contains",
+      scopeNodeId: params.scopeNodeId || null,
+      limit: 50
+    });
+    var matches = found.matches || [];
+    if (matches.length === 0) {
+      throw new Error("No node matching name: " + params.name);
+    }
+    // 최적 1건: exact 이름 일치 우선 → FRAME/SECTION 타입 우선 → 첫 매칭
+    var q = String(params.name).toLowerCase();
+    var best = null;
+    for (var i = 0; i < matches.length; i++) {
+      var m = matches[i];
+      var isExact = (m.name || "").toLowerCase() === q;
+      var isScreen = (m.type === "FRAME" || m.type === "SECTION" || m.type === "COMPONENT");
+      var score = (isExact ? 2 : 0) + (isScreen ? 1 : 0);
+      if (!best || score > best._score) {
+        m._score = score;
+        best = m;
+      }
+    }
+    target = await figma.getNodeByIdAsync(best.id);
+    if (!target) {
+      throw new Error("Matched node vanished: " + best.id);
+    }
+  } else {
+    throw new Error("Missing nodeId or name parameter");
+  }
+
+  // 다른 페이지 노드면 그 페이지로 전환
+  var page = target;
+  while (page.parent && page.type !== "PAGE") {
+    page = page.parent;
+  }
+  if (page.type === "PAGE" && figma.currentPage.id !== page.id) {
+    await figma.setCurrentPageAsync(page);
+  }
+
+  var doSelect = !(params && params.select === false);
+  if (doSelect && target.type !== "PAGE" && target.type !== "DOCUMENT") {
+    try { figma.currentPage.selection = [target]; } catch (e) { /* non-selectable */ }
+  }
+  figma.viewport.scrollAndZoomIntoView([target]);
+
+  return {
+    focused: {
+      id: target.id,
+      name: target.name,
+      type: target.type,
+      width: ("width" in target) ? target.width : null,
+      height: ("height" in target) ? target.height : null
+    },
+    page: { id: page.id, name: page.name },
+    selected: doSelect,
+    zoom: figma.viewport.zoom,
+    center: figma.viewport.center
   };
 }
 

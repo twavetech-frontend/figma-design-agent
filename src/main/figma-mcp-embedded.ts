@@ -585,6 +585,17 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['name']
   }, async (params) => cmd('find_nodes_by_name', params));
 
+  reg('focus_node', 'Center a node in the Figma viewport at fit zoom (scrollAndZoomIntoView) and select it. Pass nodeId directly, or name to search the current page (exact match preferred, then contains; FRAME/SECTION preferred). Switches page if the node lives on another page. select:false skips selection.', {
+    type: 'object',
+    properties: {
+      nodeId: { type: 'string' },
+      name: { type: 'string' },
+      matchMode: { type: 'string', enum: ['contains', 'exact'] },
+      scopeNodeId: { type: 'string' },
+      select: { type: 'boolean' }
+    }
+  }, async (params) => cmd('focus_node', params));
+
   reg('swap_instance_component', 'Swap an instance (incl. nested instance inside another instance) to a different component by key', {
     type: 'object',
     properties: { nodeId: { type: 'string' }, componentKey: { type: 'string' } },
