@@ -1944,6 +1944,9 @@ async function animateViewportTo(bbox, durationSec, easingName) {
   var pxH = vb.height * z0;
   var z1 = Math.min(pxW / (bbox.width * FIT_MARGIN), pxH / (bbox.height * FIT_MARGIN));
   var c1 = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
+  // 25% valley 딥은 현재 줌이 50% 이상일 때만 (2026-08-20 사용자 룰 —
+  // 이미 멀리 보고 있으면 딥 없이 z0→z1 직접 보간)
+  var useValley = z0 >= 0.5;
   var valley = Math.min(0.25, z0, z1);
 
   function easeInOutQuad(t) {
@@ -1958,7 +1961,9 @@ async function animateViewportTo(bbox, durationSec, easingName) {
       y: c0.y + (c1.y - c0.y) * e
     };
     var z;
-    if (e < 0.5) {
+    if (!useValley) {
+      z = z0 * Math.pow(z1 / z0, e);                // 딥 없이 직접 보간
+    } else if (e < 0.5) {
       z = z0 * Math.pow(valley / z0, e * 2);        // 전반: 현재 줌 → valley(25%)
     } else {
       z = valley * Math.pow(z1 / valley, (e - 0.5) * 2); // 후반: valley → fit 줌
