@@ -118,6 +118,14 @@ setTimeout(() => {
   });
 }, 500);
 
+// 이름 인덱스 캐시 — 최초 실행 시 백그라운드 구축 + nodechange 증분 동기화 (2026-08-20)
+setTimeout(() => {
+  try {
+    buildNameIndex();
+    initNameIndexSync();
+  } catch (e) { /* 인덱스 실패해도 BFS 폴백으로 동작 */ }
+}, 1000);
+
 // Plugin commands from UI
 figma.ui.onmessage = async (msg) => {
   switch (msg.type) {
@@ -1522,9 +1530,107 @@ async function searchLibraryComponents(params) {
   };
 }
 
+// ── 이름 인덱스 캐시 (2026-08-20 사용자 설계: 최초 실행 시 전수 인덱싱 + 이후 변경
+//    이벤트로 증분 동기화) ─────────────────────────────────────────────
+// _nameIndex.byId: { id → {id, name, type} } — 현재 페이지 전용.
+// 최초: 플러그인 시작 시 chunked walk 로 백그라운드 구축(UI 블로킹 없음).
+// 증분: currentPage 'nodechange' — CREATE 는 서브트리 전체 add, DELETE 는 remove,
+//       PROPERTY_CHANGE(name) 는 갱신. 'currentpagechange' 시 새 페이지로 재구축.
+// 안전망: 인덱스 매칭 결과는 반환 직전 getNodeByIdAsync 라이브 검증(존재+이름 재확인) —
+//         이벤트가 놓친 stale 항목은 걸러지고 자동 교정된다.
+var _nameIndex = { pageId: null, byId: {}, ready: false, building: false };
+
+function _indexAddSubtree(node) {
+  var stack = [node];
+  while (stack.length > 0) {
+    var n = stack.pop();
+    if (n && n.id) {
+      _nameIndex.byId[n.id] = { id: n.id, name: n.name || "", type: n.type };
+      if (n.children) {
+        for (var i = 0; i < n.children.length; i++) stack.push(n.children[i]);
+      }
+    }
+  }
+}
+
+function buildNameIndex() {
+  if (_nameIndex.building) return;
+  _nameIndex.building = true;
+  _nameIndex.ready = false;
+  _nameIndex.byId = {};
+  _nameIndex.pageId = figma.currentPage.id;
+  var queue = [];
+  var pageChildren = figma.currentPage.children;
+  for (var i = 0; i < pageChildren.length; i++) queue.push(pageChildren[i]);
+  var CHUNK = 800;
+  function step() {
+    // 도중에 페이지가 바뀌었으면 이 빌드는 폐기 (currentpagechange 가 재시작)
+    if (_nameIndex.pageId !== figma.currentPage.id) {
+      _nameIndex.building = false;
+      return;
+    }
+    var processed = 0;
+    while (queue.length > 0 && processed < CHUNK) {
+      var n = queue.shift();
+      processed++;
+      if (n && n.id) {
+        _nameIndex.byId[n.id] = { id: n.id, name: n.name || "", type: n.type };
+        if (n.children) {
+          for (var c = 0; c < n.children.length; c++) queue.push(n.children[c]);
+        }
+      }
+    }
+    if (queue.length > 0) {
+      setTimeout(step, 0); // UI 양보
+    } else {
+      _nameIndex.ready = true;
+      _nameIndex.building = false;
+    }
+  }
+  step();
+}
+
+function _onNodeChange(event) {
+  if (!_nameIndex.ready && !_nameIndex.building) return;
+  var changes = event.nodeChanges || [];
+  for (var i = 0; i < changes.length; i++) {
+    var ch = changes[i];
+    if (ch.type === "DELETE") {
+      delete _nameIndex.byId[ch.id];
+    } else if (ch.type === "CREATE") {
+      if (ch.node && !ch.node.removed) _indexAddSubtree(ch.node);
+    } else if (ch.type === "PROPERTY_CHANGE") {
+      if (ch.properties && ch.properties.indexOf("name") !== -1 && ch.node && !ch.node.removed) {
+      _nameIndex.byId[ch.node.id] = { id: ch.node.id, name: ch.node.name || "", type: ch.node.type };
+      }
+    }
+  }
+}
+
+var _nodeChangeSubscribedPages = {};
+function _subscribeNodeChange() {
+  var pid = figma.currentPage.id;
+  if (_nodeChangeSubscribedPages[pid]) return;
+  try {
+    figma.currentPage.on("nodechange", _onNodeChange);
+    _nodeChangeSubscribedPages[pid] = true;
+  } catch (e) { /* 이벤트 미지원 — BFS 폴백으로 동작 */ }
+}
+
+function initNameIndexSync() {
+  _subscribeNodeChange();
+  try {
+    figma.on("currentpagechange", function () {
+      buildNameIndex();       // 새 페이지 기준 재구축
+      _subscribeNodeChange(); // 새 페이지 이벤트 구독 (페이지별 1회)
+    });
+  } catch (e) { /* ignore */ }
+}
+
 // find_nodes_by_name — 캔버스 노드 이름 검색 (2026-08-20).
 // get_node_info 의 MAX_CHILDREN=50 직렬화 한계로 대형 섹션(자식 100+)에서 기존 변환본을
 // 못 찾던 구멍의 정식 해결. scan_instances_for_swap BFS 우회의 대체.
+// 인덱스 캐시가 준비돼 있으면 인덱스 조회(0.1s급) + 라이브 검증, 아니면 BFS 폴백.
 // params: name(필수), matchMode('contains'|'exact', 기본 contains, 대소문자 무시),
 //         scopeNodeId(기본 currentPage), types(노드 타입 배열 필터), limit(기본 50)
 async function findNodesByName(params) {
@@ -1535,6 +1641,50 @@ async function findNodesByName(params) {
   var mode = (params && params.matchMode === "exact") ? "exact" : "contains";
   var limit = (params && typeof params.limit === "number" && params.limit > 0) ? params.limit : 50;
   var typeFilter = (params && params.types && params.types.length) ? params.types : null;
+  var q0 = query.toLowerCase();
+
+  // ── 인덱스 경로: 준비됨 + 현재 페이지 + scope 미지정일 때 (0.1s급) ──
+  if (!(params && params.scopeNodeId) && _nameIndex.ready && _nameIndex.pageId === figma.currentPage.id) {
+    var candidates = [];
+    for (var key in _nameIndex.byId) {
+      var e = _nameIndex.byId[key];
+      var enm = (e.name || "").toLowerCase();
+      var ehit = (mode === "exact") ? (enm === q0) : (enm.indexOf(q0) !== -1);
+      if (ehit && (!typeFilter || typeFilter.indexOf(e.type) !== -1)) {
+        candidates.push(e);
+        if (candidates.length >= limit) break;
+      }
+    }
+    if (candidates.length > 0) {
+      // 라이브 검증 (안전망): 존재 + 이름 재확인, 신선한 좌표/크기로 응답
+      var verified = [];
+      for (var vi = 0; vi < candidates.length; vi++) {
+        var live = await figma.getNodeByIdAsync(candidates[vi].id);
+        if (!live || live.removed) {
+          delete _nameIndex.byId[candidates[vi].id]; // stale 교정
+          continue;
+        }
+        var lnm = (live.name || "").toLowerCase();
+        _nameIndex.byId[live.id] = { id: live.id, name: live.name || "", type: live.type };
+        var lhit = (mode === "exact") ? (lnm === q0) : (lnm.indexOf(q0) !== -1);
+        if (!lhit || (typeFilter && typeFilter.indexOf(live.type) === -1)) continue;
+        var vm = { id: live.id, name: live.name, type: live.type };
+        if (live.parent) { vm.parentId = live.parent.id; vm.parentName = live.parent.name; }
+        if ("x" in live) { vm.x = live.x; vm.y = live.y; }
+        if ("width" in live) { vm.width = live.width; vm.height = live.height; }
+        verified.push(vm);
+      }
+      if (verified.length > 0) {
+        return {
+          query: query, matchMode: mode, scope: figma.currentPage.id,
+          indexUsed: true, matchCount: verified.length,
+          truncated: candidates.length >= limit, matches: verified
+        };
+      }
+      // 전부 stale 이면 BFS 폴백으로 진행
+    }
+    // 인덱스 0건 → BFS 폴백 (이벤트가 놓친 신규 노드 안전망)
+  }
 
   var root = null;
   if (params && params.scopeNodeId) {
@@ -1676,9 +1826,28 @@ async function focusNode(params) {
   };
 }
 
-// 뷰포트 트위닝 — center 는 eased 선형 보간, zoom 은 로그 보간(줌은 곱셈 공간이라
-// 선형 보간하면 초반에 튀고 후반에 느려짐). 종료 시 정확값 스냅.
-function animateViewportTo(bbox, durationSec, easingName) {
+// 뷰포트 트위닝 — 2단계 순차 모션 (2026-08-20 사용자 요청):
+//   1단계(전체 duration 의 55%): 현재 줌 유지한 채 center 만 타깃으로 팬 이동
+//   2단계(45%): 그 자리에서 fit 줌으로 줌 모션 (로그 보간 — 줌은 곱셈 공간)
+// 각 단계 easeInOutQuad, 종료 시 정확값 스냅.
+function _tween(durationMs, ease, onStep) {
+  return new Promise(function (resolve) {
+    if (durationMs <= 0) { onStep(1); resolve(null); return; }
+    var start = Date.now();
+    var timer = setInterval(function () {
+      var t = (Date.now() - start) / durationMs;
+      if (t >= 1) {
+        clearInterval(timer);
+        onStep(1);
+        resolve(null);
+        return;
+      }
+      onStep(ease(t));
+    }, 16);
+  });
+}
+
+async function animateViewportTo(bbox, durationSec, easingName) {
   var FIT_MARGIN = 1.12; // scrollAndZoomIntoView 와 유사한 여백
   var c0 = { x: figma.viewport.center.x, y: figma.viewport.center.y };
   var z0 = figma.viewport.zoom;
@@ -1693,26 +1862,19 @@ function animateViewportTo(bbox, durationSec, easingName) {
   }
   function linear(t) { return t; }
   var ease = (easingName === "linear") ? linear : easeInOutQuad;
+  var totalMs = durationSec * 1000;
 
-  return new Promise(function (resolve) {
-    var start = Date.now();
-    var totalMs = durationSec * 1000;
-    var timer = setInterval(function () {
-      var t = (Date.now() - start) / totalMs;
-      if (t >= 1) {
-        clearInterval(timer);
-        figma.viewport.center = c1;
-        figma.viewport.zoom = z1;
-        resolve(null);
-        return;
-      }
-      var e = ease(t);
-      figma.viewport.center = {
-        x: c0.x + (c1.x - c0.x) * e,
-        y: c0.y + (c1.y - c0.y) * e
-      };
-      figma.viewport.zoom = z0 * Math.pow(z1 / z0, e);
-    }, 16);
+  // 1단계 — 팬 (줌 고정)
+  await _tween(totalMs * 0.55, ease, function (e) {
+    figma.viewport.center = {
+      x: c0.x + (c1.x - c0.x) * e,
+      y: c0.y + (c1.y - c0.y) * e
+    };
+  });
+  // 2단계 — fit 줌 (center 고정, 로그 보간)
+  await _tween(totalMs * 0.45, ease, function (e) {
+    figma.viewport.zoom = z0 * Math.pow(z1 / z0, e);
+    figma.viewport.center = c1; // 줌 중 center 유지
   });
 }
 
