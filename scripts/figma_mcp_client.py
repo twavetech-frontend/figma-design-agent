@@ -5042,8 +5042,14 @@ def _normalize_text_font_weight(node: Any) -> int:
 def _position_new_root_to_right(root_id: str, gap: int = 200) -> None:
     """새 root frame 을 페이지의 다른 children 우측 빈 공간으로 이동 (2026-06-01 사용자 룰).
 
-    batch_build_screen 은 새 root 를 (0,0) 에 박아 기존 화면과 정확히 겹침을 유발한다.
-    이 함수는 다음을 수행:
+    🔴 2026-08-20 선택 노드 우선 배치: 사용자가 Figma 에서 노드를 선택한 채 빌드하면
+    ("선택 노드 분석해서 오른쪽에 생성" 표준 명령) — 새 root 를 **선택 노드와 같은 부모에
+    insert_child 한 뒤 부모 상대좌표로 선택 노드 바로 오른쪽(gap 50)** 에 나란히 배치한다.
+    페이지 전체 maxRight 배치는 페이지가 거대하면(섹션 폭 1.5만px+) 화면 밖 저 멀리 떨어지고,
+    선택 노드가 섹션 자식이면 좌표계(섹션 상대 vs 페이지 절대)가 달라 숫자만 맞춰도 어긋난다 —
+    같은 부모로 넣으면 좌표계 문제가 소멸한다.
+
+    fallback (선택 없음/자기 자신/폭<200 소형 노드/조회 실패): 기존 페이지 maxRight + gap 배치.
       1. get_document_info 로 currentPage children + bounds(x,y,width) 수집
       2. 다른 children(= 새 root 제외) 의 maxRight = max(x + width) 계산
       3. maxRight + gap 위치로 새 root 를 move_node
@@ -5051,6 +5057,27 @@ def _position_new_root_to_right(root_id: str, gap: int = 200) -> None:
 
     silent fail safe — figma 측 직렬화 이슈 등으로 위치 파악 못 해도 빌드는 계속.
     """
+    # ── 선택 노드 우선 배치 (2026-08-20) ──────────────────────
+    try:
+        sel = parse_content(call_tool("get_selection", {})).get("json") or {}
+        sel_nodes = sel.get("selection") or []
+        if len(sel_nodes) == 1 and sel_nodes[0].get("id") != root_id:
+            sel_id = sel_nodes[0]["id"]
+            info = parse_content(call_tool("get_node_info", {"nodeId": sel_id})).get("json") or {}
+            sx, sy = info.get("x"), info.get("y")
+            sw = info.get("width") or (info.get("absoluteBoundingBox") or {}).get("width")
+            parent_id = info.get("parentId")
+            if sx is not None and sy is not None and sw and float(sw) >= 200:
+                if parent_id:
+                    call_tool("insert_child", {"parentId": parent_id, "childId": root_id})
+                target_x = int(float(sx) + float(sw) + 50)
+                call_tool("move_node", {"nodeId": root_id, "x": target_x, "y": int(float(sy))})
+                print(f"  [auto-position] ✓ 새 root → 선택 노드({sel_nodes[0].get('name')}) 우측 "
+                      f"동일 부모({parent_id}) x={target_x}, y={int(float(sy))} (gap=50)")
+                return
+    except Exception as e:
+        print(f"  [auto-position] 선택 노드 배치 실패({e}) — 페이지 maxRight 폴백")
+
     doc_content = call_tool("get_document_info", {})
     doc = parse_content(doc_content).get("json") or {}
     children = doc.get("children") or []

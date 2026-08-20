@@ -323,6 +323,16 @@
 > `batch_build_screen` 은 새로 만든 root frame 을 항상 **(0,0) 에 박는다.** 같은 페이지에
 > 이미 화면이 있으면 **정확히 겹쳐서** 사용자가 결과를 구분할 수 없다. 절대 금지.
 >
+> 🔴 **0-H-2 — 선택 노드 우선 배치 (2026-08-20 사용자 룰):** 사용자가 Figma 에서 노드를
+> 선택한 채 빌드하면("선택 노드 분석해서 오른쪽에 생성" 표준 명령) 새 root 는 페이지
+> maxRight 가 아니라 **선택 노드와 같은 부모에 insert_child 후 부모 상대좌표로 선택 노드
+> 바로 오른쪽(gap 50, 같은 y)** 에 배치한다. 이유 2가지: ① 페이지가 거대(섹션 폭 1.5만px+)하면
+> maxRight 배치는 화면 밖 저 멀리 떨어져 사용자가 결과를 못 찾는다. ② 선택 노드가 섹션
+> 자식이면 그 (x,y)는 섹션 상대좌표라, 페이지 직속 root 에 같은 숫자를 넣어도 다른 위치다 —
+> **같은 부모로 넣으면 좌표계 문제가 소멸.** `_position_new_root_to_right` 가 get_selection
+> 으로 자동 판별(단일 선택 + 폭≥200 화면형 노드일 때만), 아니면 기존 maxRight 폴백.
+> 성공 로그: `[auto-position] ✓ 새 root → 선택 노드(<이름>) 우측 동일 부모(...)`.
+>
 > **시스템 강제 (자동):**
 > - `figma_mcp_client.py cmd_build` Step D.5 → `_position_new_root_to_right(root_id, gap=200)`
 >   - batch_build_screen 직후, post-fix 전에 호출

@@ -358,7 +358,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **0** — 루트 프레임 fill = `$token(bg-primary)` 필수. 화면 배경이 회색이면 버그.
 - **1** — Status Bar 를 blueprint 에 넣지 말 것 — 빌드가 DS 인스턴스를 루트 첫 자식으로 자동 삽입.
 - **2-F/18** — 루트 minHeight 852, 높이는 콘텐츠 전체(852 로 줄여 하단 잘리게 금지). 하단 바 bottom-pin 자동.
-- **0-H** — 새 root 는 기존 화면 우측 빈 공간에 자동 배치(겹침 금지).
+- **0-H** — 새 root 는 기존 화면 우측 빈 공간에 자동 배치(겹침 금지). **0-H-2 (2026-08-20)** —
+  Figma 선택 노드가 있으면 **같은 부모에 insert 후 선택 노드 바로 오른쪽(gap 50)** 이 우선
+  (거대 페이지 maxRight 실종 + 섹션 상대/페이지 절대 좌표계 불일치 방지, 자동).
 - **0-D** — modal 기본형 = bottom-sheet: root `_screenType:"bottom-sheet"` → 852 FIXED + Dim Overlay +
   Modal Sheet(루트 풀폭·top radius 16·콘텐츠 가로 padding 20·상단 pad 8/하단 24 `_asymPad`) 자동.
 - **2-D** — full modal(`_screenType:"modal"`): 상단 X 닫기만, Footer/TabBar/상단탭 없음, root HUG,
