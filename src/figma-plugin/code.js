@@ -1643,7 +1643,21 @@ async function focusNode(params) {
   if (doSelect && target.type !== "PAGE" && target.type !== "DOCUMENT") {
     try { figma.currentPage.selection = [target]; } catch (e) { /* non-selectable */ }
   }
-  figma.viewport.scrollAndZoomIntoView([target]);
+
+  // 모션 이동 (2026-08-20 사용자 요청): 현재 위치/줌 → 타깃 정중앙/fit 줌으로
+  // duration 초(기본 2) 동안 easeInOutQuad 트위닝. duration:0 이면 즉시 점프.
+  var duration = 2;
+  if (params && typeof params.duration === "number" && params.duration >= 0) {
+    duration = params.duration;
+  }
+  var animated = false;
+  var bbox = ("absoluteBoundingBox" in target) ? target.absoluteBoundingBox : null;
+  if (duration > 0 && bbox && bbox.width > 0 && bbox.height > 0) {
+    animated = true;
+    await animateViewportTo(bbox, duration, (params && params.easing) || "easeInOutQuad");
+  } else {
+    figma.viewport.scrollAndZoomIntoView([target]);
+  }
 
   return {
     focused: {
@@ -1655,9 +1669,51 @@ async function focusNode(params) {
     },
     page: { id: page.id, name: page.name },
     selected: doSelect,
+    animated: animated,
+    durationSec: animated ? duration : 0,
     zoom: figma.viewport.zoom,
     center: figma.viewport.center
   };
+}
+
+// 뷰포트 트위닝 — center 는 eased 선형 보간, zoom 은 로그 보간(줌은 곱셈 공간이라
+// 선형 보간하면 초반에 튀고 후반에 느려짐). 종료 시 정확값 스냅.
+function animateViewportTo(bbox, durationSec, easingName) {
+  var FIT_MARGIN = 1.12; // scrollAndZoomIntoView 와 유사한 여백
+  var c0 = { x: figma.viewport.center.x, y: figma.viewport.center.y };
+  var z0 = figma.viewport.zoom;
+  var vb = figma.viewport.bounds; // 캔버스 좌표계 (px = bounds * zoom)
+  var pxW = vb.width * z0;
+  var pxH = vb.height * z0;
+  var z1 = Math.min(pxW / (bbox.width * FIT_MARGIN), pxH / (bbox.height * FIT_MARGIN));
+  var c1 = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
+
+  function easeInOutQuad(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+  function linear(t) { return t; }
+  var ease = (easingName === "linear") ? linear : easeInOutQuad;
+
+  return new Promise(function (resolve) {
+    var start = Date.now();
+    var totalMs = durationSec * 1000;
+    var timer = setInterval(function () {
+      var t = (Date.now() - start) / totalMs;
+      if (t >= 1) {
+        clearInterval(timer);
+        figma.viewport.center = c1;
+        figma.viewport.zoom = z1;
+        resolve(null);
+        return;
+      }
+      var e = ease(t);
+      figma.viewport.center = {
+        x: c0.x + (c1.x - c0.x) * e,
+        y: c0.y + (c1.y - c0.y) * e
+      };
+      figma.viewport.zoom = z0 * Math.pow(z1 / z0, e);
+    }, 16);
+  });
 }
 
 async function scanInstancesForSwap(params) {
