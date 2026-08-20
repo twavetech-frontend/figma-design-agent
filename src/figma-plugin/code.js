@@ -123,6 +123,7 @@ setTimeout(() => {
   try {
     buildNameIndex();
     initNameIndexSync();
+    initConnectorNav(); // 화살표 클릭 → 연결 화면 비행 (2026-08-20)
   } catch (e) { /* 인덱스 실패해도 BFS 폴백으로 동작 */ }
 }, 1000);
 
@@ -1623,6 +1624,88 @@ function initNameIndexSync() {
     figma.on("currentpagechange", function () {
       buildNameIndex();       // 새 페이지 기준 재구축
       _subscribeNodeChange(); // 새 페이지 이벤트 구독 (페이지별 1회)
+    });
+  } catch (e) { /* ignore */ }
+}
+
+// ── 화살표(CONNECTOR) 클릭 내비게이션 (2026-08-20 사용자 요청) ─────────────
+// FigJam 에서 복사해 온 flow_arrow 커넥터를 클릭(선택)하면, 화살촉(connectorEnd)이
+// 가리키는 화면으로 뷰포트를 2단계 모션(팬→fit 줌) 비행시킨다.
+// - 붙어있는 엔드포인트(endpointNodeId)면 그 노드의 화면 레벨 조상(부모가 SECTION/PAGE)으로.
+// - 자유 엔드포인트(position)면 그 좌표를 포함하는 형제 FRAME 을 찾아서(최소 bbox 우선),
+//   없으면 중심이 가장 가까운 FRAME 으로.
+// - 선택은 바꾸지 않는다(화살표 선택 유지) — 재클릭 연속 내비게이션 가능.
+var _connectorFlying = false;
+
+async function _screenAncestorOf(node) {
+  var cur = node;
+  while (cur.parent && cur.parent.type !== "PAGE" && cur.parent.type !== "SECTION") {
+    cur = cur.parent;
+  }
+  return cur;
+}
+
+function _absPoint(conn, pos) {
+  // position 엔드포인트는 커넥터 부모 좌표계 기준
+  var parent = conn.parent;
+  var base = (parent && parent.absoluteBoundingBox) ? parent.absoluteBoundingBox : { x: 0, y: 0 };
+  return { x: base.x + pos.x, y: base.y + pos.y };
+}
+
+function _findFrameAtPoint(conn, pt) {
+  var parent = conn.parent;
+  var siblings = (parent && parent.children) ? parent.children : figma.currentPage.children;
+  var best = null;
+  var bestArea = Infinity;
+  var nearest = null;
+  var nearestDist = Infinity;
+  for (var i = 0; i < siblings.length; i++) {
+    var s = siblings[i];
+    if (s.type === "CONNECTOR" || s.id === conn.id) continue;
+    var bb = s.absoluteBoundingBox;
+    if (!bb || !("width" in s)) continue;
+    var inside = pt.x >= bb.x && pt.x <= bb.x + bb.width && pt.y >= bb.y && pt.y <= bb.y + bb.height;
+    var area = bb.width * bb.height;
+    if (inside && area < bestArea) { best = s; bestArea = area; }
+    var dx = pt.x - (bb.x + bb.width / 2);
+    var dy = pt.y - (bb.y + bb.height / 2);
+    var dist = dx * dx + dy * dy;
+    if (dist < nearestDist) { nearest = s; nearestDist = dist; }
+  }
+  return best || nearest;
+}
+
+async function _flyToConnectorTarget(conn) {
+  if (_connectorFlying) return;
+  var end = conn.connectorEnd;
+  if (!end) return;
+  var target = null;
+  if (end.endpointNodeId) {
+    var endNode = await figma.getNodeByIdAsync(end.endpointNodeId);
+    if (endNode && !endNode.removed) {
+      target = await _screenAncestorOf(endNode);
+    }
+  } else if (end.position) {
+    target = _findFrameAtPoint(conn, _absPoint(conn, end.position));
+  }
+  if (!target) return;
+  var bbox = target.absoluteBoundingBox;
+  if (!bbox || bbox.width <= 0 || bbox.height <= 0) return;
+  _connectorFlying = true;
+  try {
+    await animateViewportTo(bbox, 1.5, "easeInOutQuad");
+  } finally {
+    _connectorFlying = false;
+  }
+}
+
+function initConnectorNav() {
+  try {
+    figma.on("selectionchange", function () {
+      var sel = figma.currentPage.selection;
+      if (sel.length === 1 && sel[0].type === "CONNECTOR") {
+        _flyToConnectorTarget(sel[0]);
+      }
     });
   } catch (e) { /* ignore */ }
 }
