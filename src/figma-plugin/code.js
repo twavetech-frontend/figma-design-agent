@@ -1564,6 +1564,13 @@ function buildNameIndex() {
   var pageChildren = figma.currentPage.children;
   for (var i = 0; i < pageChildren.length; i++) queue.push(pageChildren[i]);
   var CHUNK = 800;
+  var total = 0;
+  function _postIndexStatus(status) {
+    try {
+      figma.ui.postMessage({ type: "name-index", status: status, count: total });
+    } catch (e) { /* UI 없어도 인덱싱은 계속 */ }
+  }
+  _postIndexStatus("building");
   function step() {
     // 도중에 페이지가 바뀌었으면 이 빌드는 폐기 (currentpagechange 가 재시작)
     if (_nameIndex.pageId !== figma.currentPage.id) {
@@ -1576,16 +1583,19 @@ function buildNameIndex() {
       processed++;
       if (n && n.id) {
         _nameIndex.byId[n.id] = { id: n.id, name: n.name || "", type: n.type };
+        total++;
         if (n.children) {
           for (var c = 0; c < n.children.length; c++) queue.push(n.children[c]);
         }
       }
     }
     if (queue.length > 0) {
+      _postIndexStatus("building");
       setTimeout(step, 0); // UI 양보
     } else {
       _nameIndex.ready = true;
       _nameIndex.building = false;
+      _postIndexStatus("done");
     }
   }
   step();

@@ -110,6 +110,17 @@
       .ds-loading-text.done {
         color: #4ade80;
       }
+      .index-status {
+        display: none;
+        font-size: 12px;
+        color: #b0b0b0;
+      }
+      .index-status.visible {
+        display: block;
+      }
+      .index-status.done {
+        color: #4ade80;
+      }
     </style>
   </head>
   <body>
@@ -128,6 +139,7 @@
           <div id="ds-loading-fill" class="ds-loading-fill"></div>
         </div>
       </div>
+      <div id="index-status" class="index-status"></div>
     </div>
 
     <script>
@@ -523,6 +535,19 @@
         if (!message) return;
 
         switch (message.type) {
+          case "name-index": {
+            // 디자인 화면명 인덱싱 상태 (2026-08-20 사용자: DS 로딩 완료 다음 줄에 표시)
+            const el = document.getElementById("index-status");
+            el.classList.add("visible");
+            if (message.status === "building") {
+              el.classList.remove("done");
+              el.textContent = "디자인 화면명 인덱싱 중... (" + (message.count || 0) + "개)";
+            } else if (message.status === "done") {
+              el.classList.add("done");
+              el.textContent = "디자인 화면명 인덱싱 완료 (" + (message.count || 0) + "개 노드)";
+            }
+            break;
+          }
           case "auto-connect":
             // Received document info from code.js — initiate connection
             state.documentId = message.documentId || null;
