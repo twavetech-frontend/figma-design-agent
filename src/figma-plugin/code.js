@@ -107,7 +107,7 @@ function sendProgressUpdate(commandId, commandType, status, progress, totalItems
 }
 
 // Show UI
-figma.showUI(__html__, { width: 300, height: 200, visible: true });
+figma.showUI(__html__, { width: 300, height: 240, visible: true });
 
 // Auto-connect on plugin start
 setTimeout(() => {

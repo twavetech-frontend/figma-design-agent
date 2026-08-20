@@ -124,15 +124,40 @@
       .toggle-row {
         display: flex;
         align-items: center;
-        gap: 6px;
+        justify-content: space-between;
+        gap: 8px;
         font-size: 12px;
         color: #b0b0b0;
         cursor: pointer;
         user-select: none;
       }
-      .toggle-row input {
-        accent-color: #7c3aed;
-        cursor: pointer;
+      .toggle-input {
+        display: none;
+      }
+      .toggle-switch {
+        position: relative;
+        width: 34px;
+        height: 20px;
+        border-radius: 10px;
+        background: #444;
+        transition: background 0.2s ease;
+        flex-shrink: 0;
+      }
+      .toggle-knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        transition: left 0.2s ease;
+      }
+      .toggle-input:checked + .toggle-switch {
+        background: #7c3aed;
+      }
+      .toggle-input:checked + .toggle-switch .toggle-knob {
+        left: 16px;
       }
     </style>
   </head>
@@ -154,8 +179,9 @@
       </div>
       <div id="index-status" class="index-status"></div>
       <label class="toggle-row">
-        <input type="checkbox" id="connector-nav-toggle" checked />
-        <span>화살표 클릭 시 연결 화면으로 이동</span>
+        <span class="toggle-label">화살표 클릭 시 연결 화면으로 이동</span>
+        <input type="checkbox" id="connector-nav-toggle" class="toggle-input" checked />
+        <span class="toggle-switch"><span class="toggle-knob"></span></span>
       </label>
     </div>
 
