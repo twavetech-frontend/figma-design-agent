@@ -136,6 +136,9 @@ figma.ui.onmessage = async (msg) => {
     case "notify":
       figma.notify(msg.message);
       break;
+    case "toggle-connector-nav":
+      setConnectorNavEnabled(msg.enabled);
+      break;
     case "close-plugin":
       figma.closePlugin();
       break;
@@ -1646,6 +1649,7 @@ function initNameIndexSync() {
 //   없으면 중심이 가장 가까운 FRAME 으로.
 // - 선택은 바꾸지 않는다(화살표 선택 유지) — 재클릭 연속 내비게이션 가능.
 var _connectorFlying = false;
+var _connectorNavEnabled = true; // UI 토글 (2026-08-20) — clientStorage 로 영속
 
 async function _screenAncestorOf(node) {
   var cur = node;
@@ -1710,14 +1714,27 @@ async function _flyToConnectorTarget(conn) {
 }
 
 function initConnectorNav() {
+  // 저장된 토글 상태 복원 (기본 on)
+  figma.clientStorage.getAsync("connectorNavEnabled").then(function (v) {
+    if (v === false) _connectorNavEnabled = false;
+    try {
+      figma.ui.postMessage({ type: "connector-nav-state", enabled: _connectorNavEnabled });
+    } catch (e) { /* ignore */ }
+  }).catch(function () { /* ignore */ });
   try {
     figma.on("selectionchange", function () {
+      if (!_connectorNavEnabled) return;
       var sel = figma.currentPage.selection;
       if (sel.length === 1 && sel[0].type === "CONNECTOR") {
         _flyToConnectorTarget(sel[0]);
       }
     });
   } catch (e) { /* ignore */ }
+}
+
+function setConnectorNavEnabled(enabled) {
+  _connectorNavEnabled = !!enabled;
+  figma.clientStorage.setAsync("connectorNavEnabled", _connectorNavEnabled).catch(function () {});
 }
 
 // find_nodes_by_name — 캔버스 노드 이름 검색 (2026-08-20).
