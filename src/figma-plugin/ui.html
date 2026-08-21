@@ -389,7 +389,6 @@
         tabLayers.style.display = layers ? "flex" : "none";
         tabBtnMain.classList.toggle("active", !layers);
         tabBtnLayers.classList.toggle("active", layers);
-        parent.postMessage({ pluginMessage: { type: "ui-resize", height: layers ? 380 : 240 } }, "*");
         if (layers) {
           parent.postMessage({ pluginMessage: { type: "layers-query" } }, "*");
         }

@@ -107,7 +107,7 @@ function sendProgressUpdate(commandId, commandType, status, progress, totalItems
 }
 
 // Show UI
-figma.showUI(__html__, { width: 300, height: 240, visible: true });
+figma.showUI(__html__, { width: 300, height: 380, visible: true });
 
 // Auto-connect on plugin start
 setTimeout(() => {
@@ -138,9 +138,6 @@ figma.ui.onmessage = async (msg) => {
       break;
     case "toggle-connector-nav":
       setConnectorNavEnabled(msg.enabled);
-      break;
-    case "ui-resize":
-      figma.ui.resize(300, msg.height || 240);
       break;
     case "layers-ready":
       await layersInit();
