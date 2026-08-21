@@ -179,6 +179,17 @@ def main():
             if t == 'TEXT' and name not in allow and (n.get('characters') or '').strip() \
                     and not (n.get('textStyleId') or ''):
                 bad_style.append((name, (n.get('characters') or '')[:14]))
+            # 🔴 아이콘 자리 텍스트 글리프 화살표 감지 (2026-08-21 사용자: '자세히 보기 >' 재발 ×3) —
+            # 라벨 끝/앞의 >, ›, <, ‹, →, ← 글리프 = DS chevron/arrow 아이콘 인스턴스로 교체 대상.
+            # icon-crop-suspect(크롭)만 있고 글리프 감지기가 없어 verify PASS 로 새던 구멍.
+            if t == 'TEXT' and name not in allow:
+                _ch = (n.get('characters') or '').strip()
+                _GLYPHS = ('>', '›', '<', '‹', '→', '←', '➜', '❯', '❮')
+                if _ch and len(_ch) > 1 and (
+                        any(_ch.endswith(' ' + g) or _ch.endswith(g) and _ch[-2:-1] == ' ' for g in _GLYPHS)
+                        or any(_ch.startswith(g + ' ') for g in _GLYPHS)):
+                    bad_paint.append((name, t, 'icon-glyph-suspect',
+                                      [f'글리프 {_ch[-1] if _ch[-1] in _GLYPHS else _ch[0]!r} — DS 아이콘 인스턴스로 교체']))
             # 🔴 raw 모달/시트 X 헤더 감지 (2026-08-13 사용자: 바텀시트 타이틀도 Tool Bar) —
             # 룰 0-W(2026-08-04 개정): 모달 X 헤더 = Tool Bar 인스턴스(View=modal). raw close
             # 버튼 잔존(btn/close, ic_close 류 FRAME)은 헤더 미교체 신호 → FAIL.
