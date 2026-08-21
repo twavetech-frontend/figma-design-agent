@@ -294,6 +294,57 @@ def swap_app_bar(root_tree):
         return tb
     return None
 
+def normalize_text_button_header(root_tree):
+    """텍스트 버튼형 헤더(취소/올리기 등) Tool Bar 문법 정규화 (2026-08-20 사용자 지시 ×3).
+
+    Tool Bar 인스턴스 프롭으로 좌우 텍스트 버튼은 표현 불가 → raw 허용 유일 케이스지만,
+    raw 라도 정본 문법을 강제한다:
+      이름 'Tool Bar(텍스트 버튼형)' / 393x56 / Status Bar 아래 y62(부모 gap 0) /
+      좌우 padding 20 + SPACE_BETWEEN + 세로 CENTER / **fill = bg-primary 바인딩 필수**(0-O).
+    감지: h<=40 의 얇은 raw 헤더 frame 에 '취소'/'올리기'/'완료'/'등록' 류 텍스트 버튼 2개 이하.
+    swap_app_bar 가 'app bar' 이름·40~72h 필터 밖이라 놓치던 클래스('Top app bar' 80h 내부
+    'App bar' 24h — 2026-08-20 블로그 3장 실측)."""
+    _vk = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'ds', 'VARIABLE_KEY_MAP.json')))
+    _bg = [v for k, v in _vk.items() if k.endswith('Background/bg-primary')]
+    ACTION_WORDS = ('취소', '올리기', '완료', '등록', '저장', '다음', '확인')
+    cands = find_all(root_tree, lambda n: n.get('type') == 'FRAME'
+                     and 16 <= round(n.get('height') or 0) <= 40
+                     and (n.get('y') or 0) < 140)
+    for hd in cands:
+        tx = texts_in(hd)
+        labels = [t.get('characters', '') for t in tx]
+        if not labels or not all(any(w in l for w in ACTION_WORDS) for l in labels):
+            continue
+        hid = hd['id']
+        info = call('get_node_info', {'nodeId': hid}) or {}
+        pid = info.get('parentId')
+        # 부모(Navigation) 정규화: 118h + gap 0 → flow 상 Tool Bar y62
+        if pid:
+            call('rename_node', {'nodeId': pid, 'name': 'Navigation'})
+            call('set_auto_layout', {'nodeId': pid, 'layoutMode': 'VERTICAL', 'itemSpacing': 0})
+            call('set_layout_sizing', {'nodeId': pid, 'horizontal': 'FIXED', 'vertical': 'FIXED'})
+            call('resize_node', {'nodeId': pid, 'width': 393, 'height': 118})
+        call('rename_node', {'nodeId': hid, 'name': 'Tool Bar(텍스트 버튼형 — 인스턴스 미표현 케이스)'})
+        call('resize_node', {'nodeId': hid, 'width': 393, 'height': 56})
+        call('set_auto_layout', {'nodeId': hid, 'layoutMode': 'HORIZONTAL', 'paddingLeft': 20,
+                                 'paddingRight': 20, 'primaryAxisAlignItems': 'SPACE_BETWEEN',
+                                 'counterAxisAlignItems': 'CENTER'})
+        call('set_layout_sizing', {'nodeId': hid, 'horizontal': 'FIXED', 'vertical': 'FIXED'})
+        call('resize_node', {'nodeId': hid, 'width': 393, 'height': 56})
+        # 🔴 fill = bg-primary (0-O — fill 없는 투명 Tool Bar 금지, 2026-08-20 사용자 지적)
+        call('set_fill_color', {'nodeId': hid, 'color': {'r': 1, 'g': 1, 'b': 1, 'a': 1}})
+        if _bg:
+            call('set_bound_variables', {'nodeId': hid, 'bindings': {'fills/0': 'K:' + _bg[0]}})
+        # 실측 assert (룰 17: 호출 성공 ≠ 적용)
+        chk = call('get_node_info', {'nodeId': hid}) or {}
+        if round(chk.get('height') or 0) != 56 or not (chk.get('fills') or []):
+            print(f'  🚩 [detect] toolbar-normalize-failed: {hid} h={chk.get("height")} — 수동 확인 필요')
+        else:
+            print(f'  [swap] 텍스트 버튼 헤더 → Tool Bar 문법 정규화 ({hid}: {labels})')
+        return hid
+    return None
+
+
 def swap_sheet_headers(root_tree):
     """바텀시트 raw 타이틀+X 헤더 → Tool Bar(View=modal) (0-W, verify raw-modal-header 게이트 짝).
     2026-08-14 내 혜택 바텀시트 실측: /Bottom sheet/Title(h56, btn/close 포함) 통째 교체."""
@@ -764,6 +815,7 @@ def main():
         tree = deep(rid)
         swap_status_bar(tree)
         swap_app_bar(tree)
+        normalize_text_button_header(tree)
         swap_sheet_headers(tree)
         swap_cta(tree)
         w, h = L.normalize_screen(rid)

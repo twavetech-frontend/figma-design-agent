@@ -210,6 +210,23 @@ def main():
                     if _lbl and len(_lbl) <= 8 and not _lbl.isdigit():
                         bad_paint.append((name, t, 'raw-badge-suspect',
                                           [f'라벨 {_lbl!r} — DS Badge/Pill 인스턴스로 교체(Color prop)']))
+            # 🔴 raw Tool Bar 문법 감지 (2026-08-20 사용자 지적 ×2: fill 없는 투명 Tool Bar /
+            # 24h·y76 'App bar' 잔재). 텍스트 버튼형 헤더는 raw 허용이지만 정본 문법 강제:
+            # 이름에 'Tool Bar' 포함 raw FRAME 은 h=56 + 가시 fill(bg-primary 바인딩) 필수.
+            if t == 'FRAME' and ';' not in node_id and 'Tool Bar' in name and name not in allow:
+                _fills_tb = [f for f in (n.get('fills') or [])
+                             if isinstance(f, dict) and f.get('visible') is not False]
+                if not _fills_tb:
+                    bad_paint.append((name, t, 'toolbar-no-fill',
+                                      ['raw Tool Bar 에 가시 fill 없음 — bg-primary 바인딩 필수(0-O)']))
+                if round(n.get('height') or 0) != 56:
+                    bad_paint.append((name, t, 'toolbar-bad-height',
+                                      [f"h={round(n.get('height') or 0)} — Tool Bar 는 56 고정"]))
+            # 구 명명 'App bar' raw 잔존 자체를 차단 (Tool Bar 로 정규화 안 된 신호)
+            if t == 'FRAME' and ';' not in node_id and name.strip().lower() in ('app bar', 'top app bar') \
+                    and name not in allow:
+                bad_paint.append((name, t, 'appbar-legacy-name',
+                                  ['구 명명 App bar 잔존 — Tool Bar 문법 정규화 필요(0-W/0-O)']))
             # 🔴 raw 토스트 감지 (2026-08-20 사용자 지적: 토스트 3장 raw pill 조립 — DS Toast
             # SET:27655caa… 가 정본). 다크 반투명 pill + 흰 짧은 텍스트 = Toast 인스턴스 교체 대상.
             if t == 'FRAME' and ';' not in node_id and name not in allow:
