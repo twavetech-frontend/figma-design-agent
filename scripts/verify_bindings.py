@@ -190,6 +190,22 @@ def main():
                         or any(_ch.startswith(g + ' ') for g in _GLYPHS)):
                     bad_paint.append((name, t, 'icon-glyph-suspect',
                                       [f'글리프 {_ch[-1] if _ch[-1] in _GLYPHS else _ch[0]!r} — DS 아이콘 인스턴스로 교체']))
+            # 🔴 raw badge/pill 감지 (2026-08-21 사용자: '쿠폰' 칩을 raw 로 그림 — Badge 컴포넌트 써야) —
+            # R23 lint 는 blueprint 빌드 경로 전용이라 라이브 조립/변환 경로엔 게이트가 없던 구멍.
+            # pill 급 radius + 짧은 단일 TEXT 라벨 + 소형 FRAME(비 인스턴스) = DS Badge 교체 의심.
+            # bare 숫자 셀('1'~'13')·allow 는 제외 (ds_catalog badge 가드와 동일 기준).
+            if t == 'FRAME' and ';' not in node_id and name not in allow:
+                _h = n.get('height') or 0
+                _w = n.get('width') or 0
+                _rad = n.get('cornerRadius') or 0
+                _kids = [c for c in (n.get('children') or [])]
+                _txts = [c for c in _kids if c.get('type') == 'TEXT']
+                if 14 <= _h <= 34 and 0 < _w <= 130 and _rad >= max(10, _h / 2 - 2) \
+                        and len(_txts) == 1 and len(_kids) == 1:
+                    _lbl = (_txts[0].get('characters') or '').strip()
+                    if _lbl and len(_lbl) <= 8 and not _lbl.isdigit():
+                        bad_paint.append((name, t, 'raw-badge-suspect',
+                                          [f'라벨 {_lbl!r} — DS Badge/Pill 인스턴스로 교체(Color prop)']))
             # 🔴 raw 모달/시트 X 헤더 감지 (2026-08-13 사용자: 바텀시트 타이틀도 Tool Bar) —
             # 룰 0-W(2026-08-04 개정): 모달 X 헤더 = Tool Bar 인스턴스(View=modal). raw close
             # 버튼 잔존(btn/close, ic_close 류 FRAME)은 헤더 미교체 신호 → FAIL.
