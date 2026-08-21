@@ -87,6 +87,10 @@ def main():
         # allow 노드는 서브트리 전체 면제 (2026-08-14 — 브랜드 에셋 내부색은 검사 대상 아님)
         if name in allow:
             return
+        # 🔴 invisible 서브트리 면제 (2026-08-21 — 숨은 card_share 컴포넌트 잔재의 텍스트가
+        # FAIL 을 내던 구멍. 렌더에 안 보이는 노드는 바인딩 게이트 대상이 아니다.)
+        if n.get('visible') is False:
+            return
         # STAR/POLYGON 누락으로 별점 옐로 미바인딩이 게이트를 통과했음 (2026-08-12 사용자 지적)
         if ';' not in node_id and t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE', 'VECTOR', 'LINE',
                                         'BOOLEAN_OPERATION', 'STAR', 'POLYGON'):
