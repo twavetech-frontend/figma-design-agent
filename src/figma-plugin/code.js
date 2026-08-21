@@ -139,6 +139,50 @@ figma.ui.onmessage = async (msg) => {
     case "toggle-connector-nav":
       setConnectorNavEnabled(msg.enabled);
       break;
+    case "ui-resize":
+      figma.ui.resize(300, msg.height || 240);
+      break;
+    case "layers-ready":
+      await layersInit();
+      break;
+    case "layers-query":
+      layersSendStats();
+      break;
+    case "layers-add": {
+      var lname = (msg.name || "").trim();
+      if (!lname) break;
+      if (LAYER_NAMES.some(function (n) { return n.toLowerCase() === lname.toLowerCase(); })) {
+        figma.notify('"' + lname + '"은(는) 이미 등록되어 있어요');
+        break;
+      }
+      LAYER_NAMES.push(lname);
+      await layersSaveNames();
+      layersSendList();
+      layersSendStats();
+      break;
+    }
+    case "layers-remove":
+      LAYER_NAMES = LAYER_NAMES.filter(function (n) { return n !== (msg.name || ""); });
+      await layersSaveNames();
+      layersSendList();
+      layersSendStats();
+      break;
+    case "layers-toggle": {
+      var prefix = msg.prefix || "";
+      var candidates = layersGetCandidates();
+      var matches = layersMatchByPrefix(candidates, prefix);
+      if (matches.length === 0) {
+        figma.notify('"' + prefix + '"(으)로 시작하는 레이어가 없어요');
+        layersPostStats(candidates);
+        break;
+      }
+      var anyVisible = matches.some(function (n) { return n.visible; });
+      // 하나라도 보이면 전부 숨기고, 전부 숨겨져 있으면 전부 다시 표시
+      for (var li = 0; li < matches.length; li++) matches[li].visible = !anyVisible;
+      figma.notify('"' + prefix + '" ' + matches.length + '개 레이어를 ' + (anyVisible ? '숨겼어요' : '다시 표시했어요'));
+      layersPostStats(candidates);
+      break;
+    }
     case "close-plugin":
       figma.closePlugin();
       break;
@@ -1735,6 +1779,72 @@ function initConnectorNav() {
 function setConnectorNavEnabled(enabled) {
   _connectorNavEnabled = !!enabled;
   figma.clientStorage.setAsync("connectorNavEnabled", _connectorNavEnabled).catch(function () {});
+}
+
+// ── 레이어 토글 탭 (figma-plugin-layerselect 이식, 2026-08-21) ─────────────
+// 등록한 이름(prefix)으로 시작하는 노드를 한 번에 숨기고/보이게 하는 토글.
+// 성능 전략(원본 그대로): 트리를 깊이 내려가지 않고 페이지 직속 자식 + 섹션 1단계만
+// 훑는다 — 비용이 최상위 노드 수에만 비례. 이름 목록은 clientStorage 영속.
+var LAYERS_STORAGE_KEY = "toggle-names";
+var LAYER_NAMES = [];
+var LAYERS_DEFAULT_NAMES = ["description", "flow_arrow", "eventcode"];
+
+function layersGetCandidates() {
+  var out = [];
+  var stack = figma.currentPage.children.slice();
+  while (stack.length) {
+    var n = stack.pop();
+    out.push(n);
+    // 섹션(중첩 포함)만 펼친다 — 화면 내부로는 내려가지 않는다.
+    if (n.type === "SECTION" && n.children) {
+      for (var i = 0; i < n.children.length; i++) stack.push(n.children[i]);
+    }
+  }
+  return out;
+}
+
+function layersMatchByPrefix(candidates, prefix) {
+  if (!prefix) return [];
+  var lower = prefix.toLowerCase();
+  return candidates.filter(function (n) { return n.name.toLowerCase().indexOf(lower) === 0; });
+}
+
+function layersPostStats(candidates) {
+  var lowers = LAYER_NAMES.map(function (p) { return p.toLowerCase(); });
+  var total = new Array(LAYER_NAMES.length).fill(0);
+  var visible = new Array(LAYER_NAMES.length).fill(0);
+  for (var ci = 0; ci < candidates.length; ci++) {
+    var nm = candidates[ci].name.toLowerCase();
+    for (var i = 0; i < lowers.length; i++) {
+      if (nm.indexOf(lowers[i]) === 0) {
+        total[i]++;
+        if (candidates[ci].visible) visible[i]++;
+      }
+    }
+  }
+  var items = LAYER_NAMES.map(function (prefix, i) {
+    return { prefix: prefix, total: total[i], visible: visible[i], hidden: total[i] - visible[i] };
+  });
+  try { figma.ui.postMessage({ type: "layers-stats", items: items }); } catch (e) { /* ignore */ }
+}
+
+function layersSendStats() {
+  layersPostStats(layersGetCandidates());
+}
+
+function layersSendList() {
+  try { figma.ui.postMessage({ type: "layers-init", prefixes: LAYER_NAMES }); } catch (e) { /* ignore */ }
+}
+
+function layersSaveNames() {
+  return figma.clientStorage.setAsync(LAYERS_STORAGE_KEY, LAYER_NAMES);
+}
+
+async function layersInit() {
+  var stored = await figma.clientStorage.getAsync(LAYERS_STORAGE_KEY);
+  LAYER_NAMES = Array.isArray(stored) ? stored : LAYERS_DEFAULT_NAMES.slice();
+  layersSendList();
+  layersSendStats();
 }
 
 // find_nodes_by_name — 캔버스 노드 이름 검색 (2026-08-20).
