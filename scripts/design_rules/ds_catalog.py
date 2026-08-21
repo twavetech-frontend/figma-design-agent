@@ -19,6 +19,11 @@ COMPONENT_KEYS = {
     "Logo":                 "81efeddd245e95f31a2724aa370ee54d3caf93d0",
     "Logo (alt)":           "13b53a11b20a467ad465deb4cf2611cb3aa0c804",
 
+    # ── Toast (스낵바/토스트, 2026-08-20 search_design_system 확보 — 사용자 제공 DS 파일) ──
+    # 하단 어텐션 안내는 raw dark pill 금지 → DS 'Toast' 인스턴스(SET). Left icon#19189:0
+    # BOOLEAN(기본 초록 체크 — 실패/안내류는 off), 텍스트는 내부 TEXT override, 353x48 배치 관례.
+    "Toast":                              "SET:27655caa76f725b709d2807c893c3467beb6c0b7",
+
     # ── Pagination dot group (캐로셀 인디케이터, 2026-06-05 추출) ──────
     # 캐로셀/배너 인디케이터는 raw bullet/dot frame 금지 → 이 DS 컴포넌트 인스턴스 사용.
     # 기본 = lg, Style=Dot, Framed=False (사용자 선택). variant 키 전체 등록.
