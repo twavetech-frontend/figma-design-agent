@@ -210,6 +210,21 @@ def main():
                     if _lbl and len(_lbl) <= 8 and not _lbl.isdigit():
                         bad_paint.append((name, t, 'raw-badge-suspect',
                                           [f'라벨 {_lbl!r} — DS Badge/Pill 인스턴스로 교체(Color prop)']))
+            # 🔴 raw 토스트 감지 (2026-08-20 사용자 지적: 토스트 3장 raw pill 조립 — DS Toast
+            # SET:27655caa… 가 정본). 다크 반투명 pill + 흰 짧은 텍스트 = Toast 인스턴스 교체 대상.
+            if t == 'FRAME' and ';' not in node_id and name not in allow:
+                _h2 = n.get('height') or 0
+                _w2 = n.get('width') or 0
+                _rad2 = n.get('cornerRadius') or 0
+                _f = (n.get('fills') or [{}])[0] if (n.get('fills') or []) else {}
+                _col = _f.get('color') or {} if isinstance(_f, dict) else {}
+                _dark = all(_col.get(k, 1) < 0.35 for k in ('r', 'g', 'b')) and _col
+                _kids2 = n.get('children') or []
+                _tx2 = [c for c in _kids2 if c.get('type') == 'TEXT']
+                if _dark and _rad2 >= 12 and 40 <= _h2 <= 64 and _w2 >= 200 \
+                        and len(_tx2) >= 1 and len(_kids2) <= 2:
+                    bad_paint.append((name, t, 'raw-toast-suspect',
+                                      ["다크 pill 토스트 — DS 'Toast' 인스턴스(SET:27655caa…)로 교체"]))
             # 🔴 raw 모달/시트 X 헤더 감지 (2026-08-13 사용자: 바텀시트 타이틀도 Tool Bar) —
             # 룰 0-W(2026-08-04 개정): 모달 X 헤더 = Tool Bar 인스턴스(View=modal). raw close
             # 버튼 잔존(btn/close, ic_close 류 FRAME)은 헤더 미교체 신호 → FAIL.
