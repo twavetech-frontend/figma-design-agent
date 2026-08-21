@@ -194,8 +194,12 @@ def swap_app_bar(root_tree):
                     or 'ic_search' in (n.get('name') or '').lower()):
             print(f'  [skip] App bar {ab["id"]} — 검색바 내장 헤더(Tool Bar 표현 불가, raw 유지)')
             continue
-        has_back = bool(find_all(ab, lambda n: 'arrow_left' in (n.get('name') or '').lower()))
-        has_close = bool(find_all(ab, lambda n: 'close' in (n.get('name') or '').lower()))
+        # 🔴 2026-08-21 커뮤니티 실측: 숨김(back visible=False) 노드를 back 으로 오인해
+        # 메인탭 화면에 back 이 생기던 구멍 — visible 체크 추가.
+        has_back = bool(find_all(ab, lambda n: 'arrow_left' in (n.get('name') or '').lower()
+                                 and n.get('visible') is not False))
+        has_close = bool(find_all(ab, lambda n: 'close' in (n.get('name') or '').lower()
+                                  and n.get('visible') is not False))
         tx = texts_in(ab)
         title = tx[0]['characters'] if tx else ''
         # 🔴 우측 아이콘 자동 이관 (2026-08-18 배송지 수정 휴지통 실측 — Right empty 고정이
@@ -214,6 +218,23 @@ def swap_app_bar(root_tree):
                         key_ic = vv
                         break
             right_icons.append((nm_ic, key_ic))
+        # 🔴 2026-08-21 커뮤니티 실측: 우측 액션이 ic_* 명명이 아닌 경우(raw 'Button' 프레임에
+        # 벡터로 그린 검색 아이콘, 'btn/activity' 인스턴스 등) 이관 루프가 못 잡고 조용히
+        # empty 로 떨어지던 구멍 — 이름 fuzzy 해석 시도 + 미해석은 unresolved 로 승격.
+        if not right_icons:
+            for act in find_all(ab, lambda n: n.get('visible') is not False
+                                and n.get('type') in ('INSTANCE', 'FRAME')
+                                and (((n.get('name') or '').lower().startswith('btn/'))
+                                     or (n.get('name') or '').strip().lower() == 'button')
+                                and 'back' not in (n.get('name') or '').lower()
+                                and 'close' not in (n.get('name') or '').lower()):
+                nm_a = (act.get('name') or '').lower()
+                key_a = None
+                for kk, vv in NAV_ICON_KEYS.items():
+                    if kk.replace('-', '_') in nm_a or kk in nm_a:
+                        key_a = vv
+                        break
+                right_icons.append((nm_a, key_a))
         info = call('get_node_info', {'nodeId': ab['id']}) or {}
         pid = info.get('parentId')
         idx = child_index(pid, ab['id'])
@@ -611,7 +632,8 @@ def diagnose(src_id, gen_id):
     gen = call('get_node_info', {'nodeId': gen_id}) or {}
     gx0 = (gen.get('absoluteBoundingBox') or {}).get('x') or 0
 
-    stats = {'maxx': 0, 'grid_fixed': [], 'strike_gen': 0, 'raw_buttons': [], 'clipped': []}
+    stats = {'maxx': 0, 'grid_fixed': [], 'strike_gen': 0, 'raw_buttons': [], 'clipped': [],
+             'raw_tabbars': []}
 
     def walk_gen(nid, d=0):
         if d > 10:
@@ -639,6 +661,14 @@ def diagnose(src_id, gen_id):
         if n.get('type') == 'FRAME' and (n.get('name') or '').strip().lower() == 'button' \
                 and 24 <= round(n.get('height') or 0) <= 64 and n.get('visible') is not False:
             stats['raw_buttons'].append(n['id'])
+        # raw 하단 탭바/GNB 잔존 (2026-08-21 커뮤니티 실측 — Bar/GNB/Feed 가 무플래그 통과,
+        # DS 'Tab bar' 인스턴스(0-M)로 교체돼야 함)
+        _nm_l = (n.get('name') or '').lower()
+        if n.get('type') == 'FRAME' and n.get('visible') is not False \
+                and 56 <= round(n.get('height') or 0) <= 96 \
+                and ('gnb' in _nm_l or 'tab bar' in _nm_l or 'tabbar' in _nm_l
+                     or 'bottom nav' in _nm_l):
+            stats['raw_tabbars'].append(n['id'])
         # 취소선 카운트
         if n.get('type') == 'TEXT':
             try:
@@ -684,6 +714,9 @@ def diagnose(src_id, gen_id):
         flags.append(f"clipped-content: 자식이 부모보다 큰 클립 의심 {stats['clipped'][:3]} — 구조 밀림/오폭 점검")
     if stats.get('raw_buttons'):
         flags.append(f"raw-button: DS 미스왑 raw Button 잔존 {stats['raw_buttons'][:4]} — Action Button 인스턴스로 교체")
+    if stats.get('raw_tabbars'):
+        flags.append(f"raw-tabbar: raw 하단 탭바/GNB 잔존 {stats['raw_tabbars'][:3]} — "
+                     f"DS 'Tab bar' 인스턴스(0-M, active variant 키)로 교체 후 원본 삭제")
     return flags
 
 
