@@ -142,6 +142,10 @@ def main():
         # allow 노드는 서브트리 전체 면제 (2026-08-14 — 브랜드 에셋 내부색은 검사 대상 아님)
         if name in allow:
             return
+        # 'id:<nodeId>' allow = 해당 노드의 **페인트 검사만** 면제(서브트리 미면제) —
+        # 루트 커스텀 배경(그룹채팅 핑크 등) 원값 유지용. 이름 allow 로 루트를 면제하면
+        # 화면 전체 게이트가 꺼지는 구멍 방지 (2026-08-24 채팅 상세 실측).
+        _id_allowed = f'id:{node_id}' in allow
         # 🔴 invisible 서브트리 면제 (2026-08-21 — 숨은 card_share 컴포넌트 잔재의 텍스트가
         # FAIL 을 내던 구멍. 렌더에 안 보이는 노드는 바인딩 게이트 대상이 아니다.)
         if n.get('visible') is False:
@@ -190,6 +194,10 @@ def main():
                             sacols.append((hx, round(eff, 2)))
                 cols = [c for c in cols if c not in ('#ffffff', '#000000')]
                 scols = [c for c in scols if c not in ('#ffffff', '#000000')]
+                if cols and _id_allowed:
+                    cols = []
+                if scols and _id_allowed:
+                    scols = []
                 if cols and not bv.get('fills'):
                     # 근접 토큰이 아예 없는 유채 = 앱 에셋 색 의심 — 스냅 대신 allow 후보 제안
                     if _no_near_token(cols):

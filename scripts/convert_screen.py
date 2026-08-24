@@ -285,6 +285,11 @@ def swap_app_bar(root_tree):
                             nm_a = nm_d
                             break
                 right_icons.append((nm_a, key_a))
+        # 타이틀 옆 멤버 수 카운트(숫자-only TEXT, 그룹 채팅 '13' 등) → Tool Bar Num prop 이관
+        # (2026-08-24 채팅 상세 실측: Num 을 항상 False 로 꺼서 카운트가 유실되던 구멍)
+        num_count = next(((t.get('characters') or '').strip() for t in tx[1:]
+                          if (t.get('characters') or '').strip().isdigit()
+                          and t.get('visible') is not False), None)
         info = call('get_node_info', {'nodeId': ab['id']}) or {}
         pid = info.get('parentId')
         idx = child_index(pid, ab['id'])
@@ -292,20 +297,25 @@ def swap_app_bar(root_tree):
         call('delete_node', {'nodeId': ab['id']})
         call('set_layout_sizing', {'nodeId': tb, 'horizontal': 'FILL'})
         view = 'modal' if (has_close and not has_back) else 'Detail'
-        call('set_instance_properties', {'nodeId': tb, 'properties': {'View': view, 'Num#17757:3': False}})
+        call('set_instance_properties', {'nodeId': tb, 'properties': {'View': view, 'Num#17757:3': bool(num_count)}})
         n = call('get_node_info', {'nodeId': tb}) or {}
-        tit_id, rb_id = None, None
+        tit_id, rb_id, num_id = None, None, None
         def w(x):
-            nonlocal tit_id, rb_id
+            nonlocal tit_id, rb_id, num_id
             if x.get('name') == 'Title':
                 for c in x.get('children', []) or []:
                     if c.get('type') == 'TEXT' and c.get('name') != 'num':
                         tit_id = c['id']
+                    elif c.get('type') == 'TEXT' and c.get('name') == 'num':
+                        num_id = c['id']
             if x.get('name') == 'Right Buttons':
                 rb_id = x['id']
             for c in x.get('children', []) or []:
                 w(c)
         w(n)
+        if num_count and num_id:
+            call('set_text_content', {'nodeId': num_id, 'text': num_count})
+            print(f'  [swap] Tool Bar Num={num_count} (타이틀 옆 카운트 이관)')
         if tit_id and title:
             call('set_text_content', {'nodeId': tit_id, 'text': title})
             call('set_font_size', {'nodeId': tit_id, 'fontSize': 20})  # 0-W 20px 재단언
@@ -623,6 +633,10 @@ def swap_cta(root_tree):
             hier = 'Primary' if fill_chr >= 20 else ('Secondary' if stroke_chr >= 20 else 'Outline')
             label0 = tx[0]['characters']
             pid0 = info0.get('parentId')
+            # 원본이 부모 폭의 ≥85% 전폭 버튼(카드 안 '선물 받기' 등)이면 스왑 후 FILL
+            # (2026-08-24 실측: md HUG 로 좁아져 원본 충실도 깨짐)
+            _pinfo0 = call('get_node_info', {'nodeId': pid0}) or {}
+            _full_w = (b.get('width') or 0) >= (_pinfo0.get('width') or 9e9) * 0.85
             idx0 = child_index(pid0, b['id'])
             ab0 = new_instance(AB_SEC, pid0, idx0)
             call('delete_node', {'nodeId': b['id']})
@@ -630,7 +644,10 @@ def swap_cta(root_tree):
                 'Hierarchy': hier, 'Size': 'md', 'State': 'Default', 'Label#17537:16': label0,
                 '➡️ Icon trailing#3287:2338': False, '⬅️ Icon leading#3287:1577': False,
                 'Loading text#8994:0': False}})
-            print(f'  [swap] Action Button md {hier} "{label0}" ← 소형 raw Button ({b["id"]})')
+            if _full_w:
+                call('set_layout_sizing', {'nodeId': ab0, 'horizontal': 'FILL'})
+            print(f'  [swap] Action Button md {hier} "{label0}"'
+                  + (' (전폭 FILL)' if _full_w else '') + f' ← 소형 raw Button ({b["id"]})')
             done.append(ab0)
             continue
         label = tx[0]['characters']
