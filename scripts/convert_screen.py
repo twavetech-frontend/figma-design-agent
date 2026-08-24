@@ -214,7 +214,9 @@ def screen_is_dark(root_tree):
         for f in (h.get('fills') or []):
             if isinstance(f, dict) and f.get('type') == 'SOLID' and f.get('visible') is not False:
                 c = f.get('color') or {}
-                if max(c.get(k, 0) for k in 'rgb') < 0.35:
+                # 반투명 딤(#000@0.16 등)은 다크 화면이 아님 — 실효 불투명 ≥0.9 만 (2026-08-24)
+                eff = f.get('opacity', 1) * c.get('a', 1)
+                if max(c.get(k, 0) for k in 'rgb') < 0.35 and eff >= 0.9:
                     return True
     return False
 

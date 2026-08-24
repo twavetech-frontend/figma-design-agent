@@ -435,7 +435,9 @@ def main():
         for f in (n.get('fills') or []):
             if isinstance(f, dict) and f.get('type') == 'SOLID' and f.get('visible') is not False:
                 c = f.get('color') or {}
-                if max(c.get(k, 0) for k in 'rgb') < 0.35:
+                # 반투명 딤은 다크 화면이 아님 — 실효 불투명 ≥0.9 만 (2026-08-24)
+                if max(c.get(k, 0) for k in 'rgb') < 0.35 \
+                        and f.get('opacity', 1) * c.get('a', 1) >= 0.9:
                     _dark_fill = True
         # ① 다크 raw bars(스왑 전) ② 화면급 다크 면(이미지 뷰어 검정 배경 — bars 가 DS 로
         #    교체된 뒤에도 다크 화면으로 인식되도록, 2026-08-24)
