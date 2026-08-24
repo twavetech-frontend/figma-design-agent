@@ -700,6 +700,30 @@ def parse_content(content: List[dict]) -> dict:
     }
 
 
+def export_image(node_id: str, path: str, fmt: str = "PNG", scale: float = 1.5) -> str:
+    """export_node_as_image → 파일 저장 원스텝 (2026-08-24 신설).
+
+    ⚠️ parse_content 는 image 페이로드를 data_length 로 치환한다 — 이미지가 필요하면
+    이 헬퍼를 쓰거나 raw content 의 type=='image' 항목에서 data 를 직접 꺼낼 것.
+    (이 사양을 몰라 8장 export 를 3회 왕복한 실측 낭비가 신설 사유. QA 렌더 대조는
+    전부 이 함수로: fc.export_image('123:45', 'scripts/qa_screenshots/gen1.png'))"""
+    import base64
+    content = call_tool("export_node_as_image",
+                        {"nodeId": node_id, "format": fmt, "scale": scale})
+    b64 = next((it.get("data") for it in content
+                if isinstance(it, dict) and it.get("type") == "image" and it.get("data")), None)
+    if not b64:
+        texts = [it.get("text") for it in content
+                 if isinstance(it, dict) and it.get("type") == "text"]
+        raise RuntimeError(f"export_node_as_image 이미지 없음 (node {node_id}): {texts[:1]}")
+    d = os.path.dirname(os.path.abspath(path))
+    if d:
+        os.makedirs(d, exist_ok=True)
+    with open(path, "wb") as f:
+        f.write(base64.b64decode(b64))
+    return path
+
+
 def _ensure_bridge_server():
     """Bridge 서버가 안 떠있으면 자동으로 시작한다."""
     import subprocess

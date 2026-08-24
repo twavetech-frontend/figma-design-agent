@@ -52,6 +52,53 @@ def _canon_gradients():
     return out
 
 
+_TOKEN_HEXES = None
+
+def _no_near_token(hexes, max_delta=16):
+    """모든 hex 가 TOKEN_MAP 실값과 근접(채널 Δ≤16)하지 않으면 True — 앱 고유 에셋 색 의심.
+    (2026-08-24 채팅 stage 셀 실측: 판정을 수동 조사로 풀어 3분 낭비 → 게이트가 스스로
+    '--allow 후보' 를 제안하도록 신설. 유채→무채 스냅 금지 가드와 짝 — 스냅하지 말고 allow.)"""
+    global _TOKEN_HEXES
+    if _TOKEN_HEXES is None:
+        import json as _json, os as _os
+        try:
+            tm = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                                               '..', 'ds', 'TOKEN_MAP.json')))
+            _TOKEN_HEXES = [tuple(int(v['value'][i:i + 2], 16) for i in (1, 3, 5))
+                            for v in tm.values()
+                            if isinstance(v.get('value'), str) and v['value'].startswith('#')
+                            and len(v['value']) == 7]
+        except Exception:
+            _TOKEN_HEXES = []
+    if not _TOKEN_HEXES:
+        return False
+    for hx in hexes:
+        if not (isinstance(hx, str) and hx.startswith('#') and len(hx) == 7):
+            return False
+        r = tuple(int(hx[i:i + 2], 16) for i in (1, 3, 5))
+        if any(max(abs(a - b) for a, b in zip(r, t)) <= max_delta for t in _TOKEN_HEXES):
+            return False
+    return True
+
+
+def _overlaps_2d(kids):
+    """자식들이 2D 로 서로 겹치는 조합(아바타 스택 등) — 오토레이아웃 표현 불가라 plain
+    frame 이 정당. plain-frame-suspect 자동 면제 근거 (2026-08-24 채팅 Icon 스택 실측)."""
+    rects = [(k.get('x') or 0, k.get('y') or 0, k.get('width') or 0, k.get('height') or 0)
+             for k in kids]
+    for i in range(len(rects)):
+        for j in range(i + 1, len(rects)):
+            ax, ay, aw, ah = rects[i]
+            bx, by, bw, bh = rects[j]
+            ox = max(0, min(ax + aw, bx + bw) - max(ax, bx))
+            oy = max(0, min(ay + ah, by + bh) - max(ay, by))
+            # 실질 교차(>1px 양축)면 겹침 조합 — 일반 흐름형 배치는 자식이 겹치지 않으므로
+            # 오탐 없음. 대각 아바타 스택은 교차 면적이 작아(18%) 비율 임계는 못 잡는다.
+            if aw and ah and bw and bh and ox > 1 and oy > 1:
+                return True
+    return False
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     if not args:
@@ -74,6 +121,7 @@ def main():
 
     bad_paint = []
     bad_style = []
+    allow_candidates = set()  # 에셋 색 의심 노드명 — FAIL 시 --allow 후보로 제안
     checked = 0
 
     def walk(nid, d=0):
@@ -84,6 +132,8 @@ def main():
         node_id = n.get('id') or ''
         t = n.get('type')
         name = n.get('name') or ''
+        # FAIL 항목에 노드 id 병기 — 이름만 찍혀 트리 재조회를 강제하던 낭비 제거 (2026-08-24)
+        disp = f'{name} <{node_id}>'
         # allow 노드는 서브트리 전체 면제 (2026-08-14 — 브랜드 에셋 내부색은 검사 대상 아님)
         if name in allow:
             return
@@ -133,13 +183,20 @@ def main():
                 cols = [c for c in cols if c not in ('#ffffff', '#000000')]
                 scols = [c for c in scols if c not in ('#ffffff', '#000000')]
                 if cols and not bv.get('fills'):
-                    bad_paint.append((name, t, 'fill', cols))
+                    # 근접 토큰이 아예 없는 유채 = 앱 에셋 색 의심 — 스냅 대신 allow 후보 제안
+                    if _no_near_token(cols):
+                        allow_candidates.add(name)
+                        cols = cols + ['asset-color 의심(근접 토큰 없음) — --allow 후보']
+                    bad_paint.append((disp, t, 'fill', cols))
                 if scols and not bv.get('strokes'):
-                    bad_paint.append((name, t, 'stroke', scols))
+                    if _no_near_token([c for c in scols if isinstance(c, str)]):
+                        allow_candidates.add(name)
+                        scols = scols + ['asset-color 의심(근접 토큰 없음) — --allow 후보']
+                    bad_paint.append((disp, t, 'stroke', scols))
                 if acols and not bv.get('fills'):
-                    bad_paint.append((name, t, 'fill-alpha', acols))
+                    bad_paint.append((disp, t, 'fill-alpha', acols))
                 if sacols and not bv.get('strokes'):
-                    bad_paint.append((name, t, 'stroke-alpha', sacols))
+                    bad_paint.append((disp, t, 'stroke-alpha', sacols))
                 # 🔴 브랜드 gradient stop 미바인딩 감지 (2026-08-14 사용자: "gradient 값이
                 # ds 토큰이 아니야") — DS Gradient/Brand 스텝과 정확 일치하는 stop 인데
                 # 변수 바인딩이 없으면 FAIL. 비표준 스텝(앱 아이콘 에셋 등)은 검사 제외.
@@ -163,14 +220,14 @@ def main():
                                 # (legacy 'Gradient-6~5~4_h' 등 잘못된 스타일 잔존 차단 —
                                 #  2026-08-14 사용자 재지적)
                                 if _ck not in _sid:
-                                    bad_paint.append((name, t, 'gradient-wrong-style',
+                                    bad_paint.append((disp, t, 'gradient-wrong-style',
                                                       [_sid or 'unstyled']))
                                 continue
                             if _sid:
                                 continue
                             _unbound = [h for _st, h in zip(_stops, _hexes) if not _st.get('bound')]
                             if _unbound:
-                                bad_paint.append((name, t, 'gradient-unstyled', _unbound))
+                                bad_paint.append((disp, t, 'gradient-unstyled', _unbound))
                 # 🔴 아이콘 자리 이미지 크롭 감지 (2026-08-12 사용자: chevron 을 크롭으로 때움) —
                 # ≤36px 정사각급 노드의 IMAGE fill = DS 아이콘(type:'icon'/svg_icon/인스턴스)으로
                 # 교체해야 할 크롭 의심. 사진 썸네일은 이 크기 범위 밖이라 오탐 없음.
@@ -179,10 +236,10 @@ def main():
                 if w <= 36 and h <= 36 and any(
                         isinstance(f, dict) and f.get('type') == 'IMAGE' and f.get('visible') is not False
                         for f in (n.get('fills') or [])):
-                    bad_paint.append((name, t, 'icon-crop-suspect', [f'{round(w)}x{round(h)} IMAGE fill']))
+                    bad_paint.append((disp, t, 'icon-crop-suspect', [f'{round(w)}x{round(h)} IMAGE fill']))
             if t == 'TEXT' and name not in allow and (n.get('characters') or '').strip() \
                     and not (n.get('textStyleId') or ''):
-                bad_style.append((name, (n.get('characters') or '')[:14]))
+                bad_style.append((disp, (n.get('characters') or '')[:14]))
             # 🔴 아이콘 자리 텍스트 글리프 화살표 감지 (2026-08-21 사용자: '자세히 보기 >' 재발 ×3) —
             # 라벨 끝/앞의 >, ›, <, ‹, →, ← 글리프 = DS chevron/arrow 아이콘 인스턴스로 교체 대상.
             # icon-crop-suspect(크롭)만 있고 글리프 감지기가 없어 verify PASS 로 새던 구멍.
@@ -192,7 +249,7 @@ def main():
                 if _ch and len(_ch) > 1 and (
                         any(_ch.endswith(' ' + g) or _ch.endswith(g) and _ch[-2:-1] == ' ' for g in _GLYPHS)
                         or any(_ch.startswith(g + ' ') for g in _GLYPHS)):
-                    bad_paint.append((name, t, 'icon-glyph-suspect',
+                    bad_paint.append((disp, t, 'icon-glyph-suspect',
                                       [f'글리프 {_ch[-1] if _ch[-1] in _GLYPHS else _ch[0]!r} — DS 아이콘 인스턴스로 교체']))
             # 🔴 raw badge/pill 감지 (2026-08-21 사용자: '쿠폰' 칩을 raw 로 그림 — Badge 컴포넌트 써야) —
             # R23 lint 는 blueprint 빌드 경로 전용이라 라이브 조립/변환 경로엔 게이트가 없던 구멍.
@@ -208,7 +265,7 @@ def main():
                         and len(_txts) == 1 and len(_kids) == 1:
                     _lbl = (_txts[0].get('characters') or '').strip()
                     if _lbl and len(_lbl) <= 8 and not _lbl.isdigit():
-                        bad_paint.append((name, t, 'raw-badge-suspect',
+                        bad_paint.append((disp, t, 'raw-badge-suspect',
                                           [f'라벨 {_lbl!r} — DS Badge/Pill 인스턴스로 교체(Color prop)']))
             # 🔴 plain frame 감지 (2026-08-24 사용자 지적: "어느순간 일반 프레임을 많이 쓰고 있다")
             # 콘텐츠 컨테이너(흐름형 자식 ≥2)가 layoutMode NONE 이면 FAIL — 오토레이아웃 의무.
@@ -219,8 +276,9 @@ def main():
                               if c.get('type') in ('FRAME', 'TEXT', 'INSTANCE', 'RECTANGLE')
                               and c.get('layoutPositioning') != 'ABSOLUTE'
                               and c.get('visible') is not False]
-                if len(_flow_kids) >= 2:
-                    bad_paint.append((name, t, 'plain-frame-suspect',
+                # 2D 겹침 조합(아바타 스택 등)은 오토레이아웃 표현 불가 — 자동 면제 (2026-08-24)
+                if len(_flow_kids) >= 2 and not _overlaps_2d(_flow_kids):
+                    bad_paint.append((disp, t, 'plain-frame-suspect',
                                       [f'layoutMode NONE + 흐름형 자식 {len(_flow_kids)}개 — 오토레이아웃 전환 필요(규칙 8)']))
             # 🔴 시트/리스트 행 HUG 감지 (2026-08-24 사용자 지적: 바텀시트 메뉴 item 이 HUG 라
             # 텍스트 폭 75 로 좁아짐 — 규칙 8: 행/항목 FRAME 은 가로 FILL). 이름에 '시트'/'sheet'
@@ -235,7 +293,7 @@ def main():
                     _rh = _row.get('height') or 0
                     if 36 <= _rh <= 72 and _pw > 0 and _rw < _pw * 0.6 \
                             and _row.get('layoutSizingHorizontal') != 'FILL':
-                        bad_paint.append((_row.get('name') or '', 'FRAME', 'sheet-item-not-fill',
+                        bad_paint.append((f"{_row.get('name') or ''} <{_row.get('id')}>", 'FRAME', 'sheet-item-not-fill',
                                           [f'행 폭 {round(_rw)} < 부모 {round(_pw)} — 가로 FILL 필수(규칙 8)']))
             # 🔴 raw Tool Bar 문법 감지 (2026-08-20 사용자 지적 ×2: fill 없는 투명 Tool Bar /
             # 24h·y76 'App bar' 잔재). 텍스트 버튼형 헤더는 raw 허용이지만 정본 문법 강제:
@@ -244,15 +302,15 @@ def main():
                 _fills_tb = [f for f in (n.get('fills') or [])
                              if isinstance(f, dict) and f.get('visible') is not False]
                 if not _fills_tb:
-                    bad_paint.append((name, t, 'toolbar-no-fill',
+                    bad_paint.append((disp, t, 'toolbar-no-fill',
                                       ['raw Tool Bar 에 가시 fill 없음 — bg-primary 바인딩 필수(0-O)']))
                 if round(n.get('height') or 0) != 56:
-                    bad_paint.append((name, t, 'toolbar-bad-height',
+                    bad_paint.append((disp, t, 'toolbar-bad-height',
                                       [f"h={round(n.get('height') or 0)} — Tool Bar 는 56 고정"]))
             # 구 명명 'App bar' raw 잔존 자체를 차단 (Tool Bar 로 정규화 안 된 신호)
             if t == 'FRAME' and ';' not in node_id and name.strip().lower() in ('app bar', 'top app bar') \
                     and name not in allow:
-                bad_paint.append((name, t, 'appbar-legacy-name',
+                bad_paint.append((disp, t, 'appbar-legacy-name',
                                   ['구 명명 App bar 잔존 — Tool Bar 문법 정규화 필요(0-W/0-O)']))
             # 🔴 raw 토스트 감지 (2026-08-20 사용자 지적: 토스트 3장 raw pill 조립 — DS Toast
             # SET:27655caa… 가 정본). 다크 반투명 pill + 흰 짧은 텍스트 = Toast 인스턴스 교체 대상.
@@ -267,13 +325,13 @@ def main():
                 _tx2 = [c for c in _kids2 if c.get('type') == 'TEXT']
                 if _dark and _rad2 >= 12 and 40 <= _h2 <= 64 and _w2 >= 200 \
                         and len(_tx2) >= 1 and len(_kids2) <= 2:
-                    bad_paint.append((name, t, 'raw-toast-suspect',
+                    bad_paint.append((disp, t, 'raw-toast-suspect',
                                       ["다크 pill 토스트 — DS 'Toast' 인스턴스(SET:27655caa…)로 교체"]))
             # 🔴 raw 모달/시트 X 헤더 감지 (2026-08-13 사용자: 바텀시트 타이틀도 Tool Bar) —
             # 룰 0-W(2026-08-04 개정): 모달 X 헤더 = Tool Bar 인스턴스(View=modal). raw close
             # 버튼 잔존(btn/close, ic_close 류 FRAME)은 헤더 미교체 신호 → FAIL.
             if t == 'FRAME' and ';' not in node_id and name in ('btn/close', 'btn_close', 'ic_close'):
-                bad_paint.append((name, t, 'raw-modal-header',
+                bad_paint.append((disp, t, 'raw-modal-header',
                                   ['모달/시트 헤더는 Tool Bar(View=modal) 인스턴스로 교체']))
             # 🔴 Status/Tool Bar ABSOLUTE 금지 (2026-08-24 사용자: "왜 ignore autolayout 시킨거야?
             # 개발단에선 그렇게 안되있는데") — 시스템 바는 flow 상단 자식이 정본(규칙 8-C).
@@ -282,7 +340,7 @@ def main():
                 _cn = _c.get('name') or ''
                 if _c.get('layoutPositioning') == 'ABSOLUTE' and _cn not in allow \
                         and ('Status Bar' in _cn or 'Tool Bar' in _cn or _cn.strip() == 'Navigation'):
-                    bad_paint.append((_cn, _c.get('type') or '', 'bar-absolute-positioning',
+                    bad_paint.append((f"{_cn} <{_c.get('id')}>", _c.get('type') or '', 'bar-absolute-positioning',
                                       ['Status/Tool Bar 는 flow 상단 자식(개발 구현 동일) — ABSOLUTE 금지(8-C)']))
             # 🔴 TEXT 가로 FILL 의무 (2026-08-24 사용자: "텍스트 필드 width 는 특별한 경우 아니면
             # 기본 fill + parent frame 역시 fill") — VERTICAL 스택 안 TEXT 가 HUG 면 FAIL.
@@ -294,7 +352,7 @@ def main():
                             and _c.get('layoutPositioning') != 'ABSOLUTE' \
                             and _c.get('visible') is not False \
                             and (_c.get('name') or '') not in allow:
-                        bad_paint.append((_c.get('name') or '', 'TEXT', 'text-not-fill',
+                        bad_paint.append((f"{_c.get('name') or ''} <{_c.get('id')}>", 'TEXT', 'text-not-fill',
                                           [f"부모 {name!r}(VERTICAL) 안 TEXT 가 HUG — 가로 FILL 필수(규칙 8, 부모 랩도 FILL)"]))
         for c in n.get('children', []) or []:
             walk(c['id'], d + 1)
@@ -329,6 +387,8 @@ def main():
         print('  ✓ PASS — 색/텍스트 스타일 바인딩 전수 확인')
         return 0
     print('  → FAIL: 바인딩 완료 보고 금지. bind 재실행 후 재검증할 것.')
+    if allow_candidates:
+        print(f'  → allow 후보(에셋 색 의심 — 스냅 금지): --allow "{",".join(sorted(allow_candidates))}"')
     return 1
 
 

@@ -193,7 +193,20 @@ def normalize_screen(root_id, width=393, min_height=852):
     # 🔴 내부 행의 FIXED 300~360 잔재도 FILL 재단언 (2026-08-13 사용자: "총액 금액들이
     # 오른쪽에 딱 안붙어있다!" — 393 확장 시 우측 정렬 행이 원본 폭으로 굳어 우측 여백 생김).
     # 캐로셀 카드(172) 등 의도 FIXED 는 범위 밖이라 안전.
-    def _deep(nid, d=0):
+    def _overflow_shift_row(nn, parent):
+        """스와이프/오버플로 상태 행 감지 (2026-08-24 채팅 스와이프 3장 실측):
+        HORIZONTAL 부모 안 풀폭(≥350) FIXED 행 + 형제 합폭 > 부모 폭 = 의도된 시프트
+        뷰포트(행이 밀려 일부가 화면 밖으로 클립되는 상태). FILL 재맞춤이 이 시프트를
+        파괴한다 — 새 화면폭 FIXED 로 확장 + 부모 clipsContent 가 정답."""
+        if not parent or parent.get('layoutMode') != 'HORIZONTAL':
+            return False
+        if round(nn.get('width') or 0) < 350:
+            return False
+        kids = [k for k in (parent.get('children') or []) if k.get('visible') is not False]
+        total = sum((k.get('width') or 0) for k in kids)
+        return total > (parent.get('width') or 0) + 4
+
+    def _deep(nid, d=0, parent=None):
         if d > 9:
             return
         nn = call('get_node_info', {'nodeId': nid}) or {}
@@ -201,10 +214,18 @@ def normalize_screen(root_id, width=393, min_height=852):
         # 2026-08-13 사용자: "home indicator width가 fill이 아니네?"). 내부로는 안 내려감.
         if nn.get('type') in ('FRAME', 'INSTANCE') and nn.get('layoutSizingHorizontal') == 'FIXED' \
                 and 300 <= round(nn.get('width') or 0) <= 360:
-            call('set_layout_sizing', {'nodeId': nid, 'layoutSizingHorizontal': 'FILL'})
+            if _overflow_shift_row(nn, parent):
+                call('resize_node', {'nodeId': nid, 'width': width,
+                                     'height': nn.get('height') or 0})
+                call('set_auto_layout', {'nodeId': parent['id'], 'layoutMode': 'HORIZONTAL',
+                                         'clipsContent': True})
+                print(f'  [normalize] 오버플로 시프트 행 보존: {nid} → {width} FIXED '
+                      f'+ 부모 {parent["id"]} clip (FILL 재맞춤 제외)')
+            else:
+                call('set_layout_sizing', {'nodeId': nid, 'layoutSizingHorizontal': 'FILL'})
         for c in nn.get('children', []) or []:
             if c.get('type') != 'INSTANCE':
-                _deep(c['id'], d + 1)
+                _deep(c['id'], d + 1, nn)
     _deep(root_id)
     if h < min_height and n.get('layoutMode') in ('VERTICAL',) and not has_fill_v:
         print(f'  ⚠️ [normalize] {root_id}: h {round(h)}→{min_height} 확장했으나 세로 FILL 자식이 없어 '

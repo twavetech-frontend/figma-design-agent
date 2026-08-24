@@ -27,6 +27,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import figma_mcp_client as fc  # noqa: E402
 import ds_convert_lib as L      # noqa: E402
 
+# 🔴 스왑/정규화 단계가 감지한 문제 — 화면별 CONVERT-SUMMARY flags 로 승격 (2026-08-24:
+# navbar-right-icon-unresolved 🚩 가 print 로만 남아 flags:[] 로 나갔고, 로그 tail 필터에
+# 잘려 시각 QA 까지 발견이 밀린 실측 낭비 ~5분. 🚩 는 반드시 여기에도 append 할 것.)
+RUN_FLAGS = []
+
 SB_KEY = '13557b1ed59ce3f8c2dfbf9df46ec8fa7f772486'
 TB_DETAIL = 'SET:c9299ef0c3c7cc271850a048025a3c8d0e82b230:Type=Detail view'
 AB_SEC = '19c3ba6ad85401ae2427b178c20129d4260c62d0'
@@ -234,6 +239,23 @@ def swap_app_bar(root_tree):
                     if kk.replace('-', '_') in nm_a or kk in nm_a:
                         key_a = vv
                         break
+                # 🔴 컨테이너 이름('Button')이 안 풀리면 **자손 이름**으로 해석 (2026-08-24
+                # 채팅 실측: 'Button' 프레임 안 GROUP 'btn_top_make_chat' — 컨테이너만 보고
+                # unresolved 로 떨어지던 구멍)
+                if not key_a:
+                    for dn in find_all(act, lambda n: bool(n.get('name'))):
+                        nm_d = (dn.get('name') or '').lower()
+                        if nm_d == nm_a:
+                            continue
+                        key_a = NAV_ICON_KEYS.get(nm_d)
+                        if not key_a:
+                            for kk, vv in NAV_ICON_KEYS.items():
+                                if kk.replace('-', '_') in nm_d or kk in nm_d:
+                                    key_a = vv
+                                    break
+                        if key_a:
+                            nm_a = nm_d
+                            break
                 right_icons.append((nm_a, key_a))
         info = call('get_node_info', {'nodeId': ab['id']}) or {}
         pid = info.get('parentId')
@@ -290,6 +312,8 @@ def swap_app_bar(root_tree):
             if unresolved:
                 print(f'  🚩 [detect] navbar-right-icon-unresolved: {unresolved} — '
                       f'search_design_system 으로 키 확보 후 NAV_ICON_KEYS 등록 필요')
+                RUN_FLAGS.append(f'navbar-right-icon-unresolved: {unresolved} — Right Buttons 가 '
+                                 f'empty 로 떨어짐. search_design_system 키 확보→NAV_ICON_KEYS 등록→swap')
         print(f'  [swap] Tool Bar({view}) "{title}" ← App bar ({ab["id"]})')
         return tb
     return None
@@ -339,6 +363,7 @@ def normalize_text_button_header(root_tree):
         chk = call('get_node_info', {'nodeId': hid}) or {}
         if round(chk.get('height') or 0) != 56 or not (chk.get('fills') or []):
             print(f'  🚩 [detect] toolbar-normalize-failed: {hid} h={chk.get("height")} — 수동 확인 필요')
+            RUN_FLAGS.append(f'toolbar-normalize-failed: {hid} h={chk.get("height")} — 수동 확인 필요')
         else:
             print(f'  [swap] 텍스트 버튼 헤더 → Tool Bar 문법 정규화 ({hid}: {labels})')
         return hid
@@ -808,6 +833,7 @@ def main():
     for i, s in enumerate(srcs):
         sid = s['id']
         print(f'== [{i+1}/{len(srcs)}] {s.get("name")} ({sid})')
+        RUN_FLAGS.clear()  # 화면별 수집 — 스왑 단계 🚩 를 diagnose flags 와 합류
         cl = call('clone_node', {'nodeId': sid})
         rid = cl['id']
         call('insert_child', {'parentId': parent, 'childId': rid})
@@ -831,7 +857,7 @@ def main():
                            capture_output=True, text=True)
         print('  [bind]', ([ln for ln in r.stdout.splitlines() if ln.startswith('[색]')] or ['?'])[0])
         sweep_unbound(rid, allow)
-        flags = diagnose(sid, rid)
+        flags = list(RUN_FLAGS) + diagnose(sid, rid)
         for f in flags:
             print(f'  🚩 [detect] {f}')
         results.append({'src': sid, 'gen': rid, 'flags': flags})
