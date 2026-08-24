@@ -491,6 +491,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   아니라 **상하 패딩**으로. 상세: `rule 2-L`.
 - **19-B** — 세로 패딩 큰 비대칭은 디자인 의도로 존중(≤4px 만 교정, `_asymPad:true` 로 침묵).
 - **0-N/R63** — 다른 정보는 다른 시각 언어 — 인접 섹션이 동일 카드 구조면 WARN → 한쪽 재설계.
+- **2-M (2026-08-24 사용자 수정 학습)** — 비교/전후 2-up 카드는 **구조 문법 통일**(전폭 밴드
+  헤더·라벨 20 SemiBold·상단 정렬 대칭) + **색으로만 차등**(열세 gray / 우세 브랜드) — 열세 쪽
+  구조 격하(좁은 pill·처짐) 금지. 설명 문단 강조 = 키워드 부분 SemiBold(색 유지). 카드 안
+  서브 헤더 = 14 SemiBold text-primary. 상세: `rule 2-M`.
 
 ### 트러블슈팅/후처리 (필요 시 조회)
 
