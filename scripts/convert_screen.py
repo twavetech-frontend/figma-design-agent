@@ -199,11 +199,17 @@ def new_instance(key, parent_id, index):
 
 # ── DS 스왑 ──────────────────────────────────────────────────────────────────
 def screen_is_dark(root_tree):
-    """다크 시스템 바 화면 판정 (2026-08-24 이미지 뷰어 실측): 원본 bars(상태바) fill 이
-    다크(#000 급, max ch<0.35) = 다크 화면. DS Status/Tool Bar 인스턴스는 라이트 전용이라
-    스왑하면 흰 밴드가 위조됨 — 시스템 바 스왑 전체를 skip 하고 raw 보존한다."""
-    hits = find_all(root_tree, lambda n: (n.get('name') or '').lower() in ('bars', 'status bar', 'statusbar')
-                    and round(n.get('height') or 0) <= 40)
+    """다크 화면 판정 (2026-08-24 이미지 뷰어 실측): 원본 bars(상태바) fill 이 다크(#000 급,
+    max ch<0.35). 🔴 Status Bar 는 다크 화면에서도 **항상 DS 인스턴스로 교체** (2026-08-24
+    사용자: "status bar가 다르다. 내가 사용하는게 아니잖아" — DS 에 다크 변형 없음, 단일
+    컴포넌트가 정본). 이 판정은 **Tool Bar/X 헤더 스왑 생략에만** 사용 — 라이트 전용 Tool Bar
+    가 다크 뷰어에 흰 밴드를 위조하는 것만 막는다."""
+    rw = root_tree.get('width') or 0
+    rh = root_tree.get('height') or 0
+    hits = find_all(root_tree, lambda n: (
+        ((n.get('name') or '').lower() in ('bars', 'status bar', 'statusbar')
+         and round(n.get('height') or 0) <= 70)
+        or (rw and rh and (n.get('width') or 0) >= rw * 0.9 and (n.get('height') or 0) >= rh * 0.6)))
     for h in hits:
         for f in (h.get('fills') or []):
             if isinstance(f, dict) and f.get('type') == 'SOLID' and f.get('visible') is not False:
@@ -250,6 +256,12 @@ def swap_app_bar(root_tree):
         # 인스턴스는 흰 배경 고정 + 내부 색 변경 금지(0-K) → raw 유지 (2026-08-24 사이드바 실측:
         # 핑크 '채팅 상대'/'스테이지 바로가기' 밴드가 흰 Tool Bar 로 오스왑돼 테마 소실.
         # 핑크는 App bar 자체가 아니라 부모 fill 이고 헤더는 투명한 케이스까지 커버)
+        # 그라데이션 헤더(이미지 뷰어 딤 스크림 등)도 Tool Bar 표현 불가 — raw 유지 (2026-08-24)
+        if any(isinstance(f, dict) and str(f.get('type', '')).startswith('GRADIENT')
+               and f.get('visible') is not False for f in (ab.get('fills') or [])):
+            print(f'  [skip] App bar {ab["id"]} — 그라데이션 딤 헤더(Tool Bar 표현 불가, raw 유지)')
+            continue
+
         def _vis_solid(paints):
             return [f for f in (paints or []) if isinstance(f, dict)
                     and f.get('type') == 'SOLID' and f.get('visible') is not False]
@@ -1087,11 +1099,12 @@ def main():
         _lap('clone')
         tree = deep(rid)
         _lap('deep')
+        # Status Bar 는 항상 DS 인스턴스 (규칙 1 — 다크 화면도 예외 아님, 2026-08-24 사용자)
+        swap_status_bar(tree)
         if screen_is_dark(tree):
-            # 다크 시스템 바 화면(이미지 뷰어 등) — 라이트 전용 DS 바 스왑 금지, raw 보존
-            print('  [skip] 다크 시스템 바 화면 — Status/Tool Bar 스왑 생략(raw 보존)')
+            # 다크 화면 — 라이트 전용 Tool Bar/헤더 스왑만 생략(흰 밴드 위조 방지, raw 유지)
+            print('  [skip] 다크 화면 — Tool Bar/헤더 스왑 생략(raw 유지)')
         else:
-            swap_status_bar(tree)
             swap_app_bar(tree)
         normalize_text_button_header(tree)
         swap_sheet_headers(tree)

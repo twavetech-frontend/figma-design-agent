@@ -95,6 +95,10 @@ def _custom_theme_header(n, parent):
                 if max(vs) - min(vs) >= 20:
                     return True
         return False
+    # 그라데이션 헤더(이미지 뷰어 딤 스크림 등)도 Tool Bar 인스턴스로 표현 불가 (2026-08-24)
+    if any(isinstance(f, dict) and str(f.get('type', '')).startswith('GRADIENT')
+           and f.get('visible') is not False for f in (n.get('fills') or [])):
+        return True
     fills = [f for f in (n.get('fills') or []) if isinstance(f, dict)
              and f.get('type') == 'SOLID' and f.get('visible') is not False]
     if _chromatic(fills):
@@ -422,14 +426,24 @@ def main():
 
     # 다크 시스템 바 화면(이미지 뷰어 등 — bars fill 다크) 사전 판정: DS 바는 라이트 전용이라
     # raw 보존이 정본 → appbar-legacy-name/raw-modal-header 면제 (2026-08-24 실측)
+    _rw = (_tree or {}).get('width') or 0
+    _rh = (_tree or {}).get('height') or 0
+
     def _detect_dark(n):
         nm = (n.get('name') or '').lower()
-        if nm in ('bars', 'status bar', 'statusbar') and round(n.get('height') or 0) <= 40:
-            for f in (n.get('fills') or []):
-                if isinstance(f, dict) and f.get('type') == 'SOLID' and f.get('visible') is not False:
-                    c = f.get('color') or {}
-                    if max(c.get(k, 0) for k in 'rgb') < 0.35:
-                        return True
+        _dark_fill = False
+        for f in (n.get('fills') or []):
+            if isinstance(f, dict) and f.get('type') == 'SOLID' and f.get('visible') is not False:
+                c = f.get('color') or {}
+                if max(c.get(k, 0) for k in 'rgb') < 0.35:
+                    _dark_fill = True
+        # ① 다크 raw bars(스왑 전) ② 화면급 다크 면(이미지 뷰어 검정 배경 — bars 가 DS 로
+        #    교체된 뒤에도 다크 화면으로 인식되도록, 2026-08-24)
+        if _dark_fill and nm in ('bars', 'status bar', 'statusbar') and round(n.get('height') or 0) <= 70:
+            return True
+        if _dark_fill and _rw and _rh and (n.get('width') or 0) >= _rw * 0.9 \
+                and (n.get('height') or 0) >= _rh * 0.6:
+            return True
         if n.get('type') != 'INSTANCE':
             for c in n.get('children') or []:
                 if _detect_dark(c):
