@@ -210,6 +210,21 @@ def main():
                     if _lbl and len(_lbl) <= 8 and not _lbl.isdigit():
                         bad_paint.append((name, t, 'raw-badge-suspect',
                                           [f'라벨 {_lbl!r} — DS Badge/Pill 인스턴스로 교체(Color prop)']))
+            # 🔴 시트/리스트 행 HUG 감지 (2026-08-24 사용자 지적: 바텀시트 메뉴 item 이 HUG 라
+            # 텍스트 폭 75 로 좁아짐 — 규칙 8: 행/항목 FRAME 은 가로 FILL). 이름에 '시트'/'sheet'
+            # 포함 컨테이너의 직계 행 FRAME 이 FILL 아니고 부모 폭의 60% 미만이면 FAIL.
+            if t == 'FRAME' and ';' not in node_id and name not in allow \
+                    and ('시트' in name or 'sheet' in name.lower()):
+                _pw = n.get('width') or 0
+                for _row in (n.get('children') or []):
+                    if _row.get('type') != 'FRAME' or _row.get('layoutPositioning') == 'ABSOLUTE':
+                        continue
+                    _rw = _row.get('width') or 0
+                    _rh = _row.get('height') or 0
+                    if 36 <= _rh <= 72 and _pw > 0 and _rw < _pw * 0.6 \
+                            and _row.get('layoutSizingHorizontal') != 'FILL':
+                        bad_paint.append((_row.get('name') or '', 'FRAME', 'sheet-item-not-fill',
+                                          [f'행 폭 {round(_rw)} < 부모 {round(_pw)} — 가로 FILL 필수(규칙 8)']))
             # 🔴 raw Tool Bar 문법 감지 (2026-08-20 사용자 지적 ×2: fill 없는 투명 Tool Bar /
             # 24h·y76 'App bar' 잔재). 텍스트 버튼형 헤더는 raw 허용이지만 정본 문법 강제:
             # 이름에 'Tool Bar' 포함 raw FRAME 은 h=56 + 가시 fill(bg-primary 바인딩) 필수.
