@@ -310,7 +310,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
    반대로 콘텐츠/장식 frame 은 DS 로 오인되지 않게 **중립 이름**을 쓴다(0-L — 이름에
    Badge/Pill/Chip/Tag/Button/Dropdown 단어 금지).
 2. **규칙 8 / R10.1 (×21) — 모든 섹션·카드·리스트 FRAME 은 `layoutSizingHorizontal: "FILL"`.**
-   FRAME 에 HUG 금지 — 텍스트 노드·아이콘·태그/칩/뱃지(HUG 필수)만 예외. 의도된 HUG/FIXED 는
+   FRAME 에 HUG 금지 — 아이콘·태그/칩/뱃지(HUG 필수)만 예외. 🔴 **TEXT 노드도 가로 FILL 기본
+   + 부모 랩도 FILL (2026-08-24 사용자 룰 — HUG 허용은 칩/pill 라벨·HORIZONTAL 행 나란한 복수
+   세그먼트만, verify `text-not-fill` 차단)**. 의도된 HUG/FIXED 는
    `_keepSizing: true`(8-B).
 3. **R52 (×10, ERROR) — 이름에 lounge/product/shop/recommend/item 이 든 카드(≥100×100)는
    `imageQuery` 또는 시각 자식(icon/instance) 필수.** neutral bg + 텍스트만이면 회색 빈 박스라

@@ -1407,9 +1407,17 @@
 - **이 규칙은 가장 자주 위반된다. 반드시 지켜야 한다.**
 - Blueprint에서 모든 `FRAME` 타입 자식 노드에 `"layoutSizingHorizontal": "FILL"` 명시
 - 특히 **섹션 프레임, 카드 프레임, 리스트 아이템 프레임** — HUG로 두면 가로 너비가 텍스트 길이에 따라 들쭉날쭉
-- 텍스트 노드(`type: "text"`)만 HUG 가능 — FRAME은 HUG 금지
 - **빌드 후 검증**: `get_node_info`로 모든 섹션/카드의 `layoutSizingHorizontal` 확인, HUG인 것 발견 시 즉시 FILL로 수정
 - **Blueprint JSON 규칙**: root 직계 자식과 그 자식들은 모두 `layoutSizingHorizontal: "FILL"` 필수 (아이콘 등 고정 크기 요소 제외)
+- 🔴 **개정 (2026-08-24 사용자: "텍스트 필드의 width는 아주 특별한 경우가 아닌 이상 기본
+  fill이여야 한다!! 그리고 텍스트 필드 parent frame 역시 fill이여야 한다!"):**
+  **TEXT 노드도 가로 FILL 이 기본이다** — 구 "텍스트 노드만 HUG 가능" 문구 폐기. 타이틀/본문/
+  설명/서브텍스트 등 VERTICAL 스택 안의 텍스트는 전부 가로 FILL + 부모 랩도 FILL(랩이 HUG 면
+  텍스트 FILL 이 불가능해 연쇄 위반). 텍스트 HUG 허용 = **특별한 경우만**: ① HUG 컨테이너
+  (칩/뱃지/pill 헤더/그리드 셀) 안 라벨 ② HORIZONTAL 행에 나란히 놓인 복수 텍스트 세그먼트
+  (예: "365일"+"매일 시작!" — 각각 FILL 이면 배분이 깨짐). 좌측 정렬 텍스트의 FILL 전환은
+  시각 무손실(pixel-diff 0)이다. **시스템 강제:** verify `text-not-fill` — VERTICAL 오토레이아웃
+  부모(폭 HUG 아님)의 직계 TEXT 가 HUG 면 FAIL.
 
 > 🔵 **8-B. `_keepSizing` 마커 — author 가 의도한 HUG/FIXED 를 FILL enforcer 로부터 보호 (2026-06-10, intent 존중)**
 >

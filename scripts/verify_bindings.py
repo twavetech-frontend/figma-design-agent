@@ -284,6 +284,18 @@ def main():
                         and ('Status Bar' in _cn or 'Tool Bar' in _cn or _cn.strip() == 'Navigation'):
                     bad_paint.append((_cn, _c.get('type') or '', 'bar-absolute-positioning',
                                       ['Status/Tool Bar 는 flow 상단 자식(개발 구현 동일) — ABSOLUTE 금지(8-C)']))
+            # 🔴 TEXT 가로 FILL 의무 (2026-08-24 사용자: "텍스트 필드 width 는 특별한 경우 아니면
+            # 기본 fill + parent frame 역시 fill") — VERTICAL 스택 안 TEXT 가 HUG 면 FAIL.
+            # 예외: HUG 컨테이너(칩/pill/그리드 셀) 안 라벨 · HORIZONTAL 행 나란한 세그먼트 · allow.
+            if ';' not in node_id and n.get('layoutMode') == 'VERTICAL' \
+                    and n.get('layoutSizingHorizontal') != 'HUG' and name not in allow:
+                for _c in (n.get('children') or []):
+                    if _c.get('type') == 'TEXT' and _c.get('layoutSizingHorizontal') == 'HUG' \
+                            and _c.get('layoutPositioning') != 'ABSOLUTE' \
+                            and _c.get('visible') is not False \
+                            and (_c.get('name') or '') not in allow:
+                        bad_paint.append((_c.get('name') or '', 'TEXT', 'text-not-fill',
+                                          [f"부모 {name!r}(VERTICAL) 안 TEXT 가 HUG — 가로 FILL 필수(규칙 8, 부모 랩도 FILL)"]))
         for c in n.get('children', []) or []:
             walk(c['id'], d + 1)
 
