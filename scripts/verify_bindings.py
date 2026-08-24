@@ -452,7 +452,28 @@ def main():
                     return True
         return False
     dark_screen = bool(_tree) and _detect_dark(_tree)
+
+    # 문서형/콜라주 캡처(루트 NONE + 시스템 바 전무) — UI 게이트(텍스트 스타일·plain-frame·
+    # text-not-fill) 면제: 원본 타이포/자유 배치 실측 보존이 정본 (2026-08-24 블로그 상세)
+    def _is_doc(n):
+        if n.get('layoutMode'):
+            return False
+        SYS = ('bars', 'status bar', 'statusbar', 'app bar', 'homeindicator', 'home indicator')
+        found = []
+        def _w(x):
+            if (x.get('name') or '').strip().lower() in SYS:
+                found.append(1)
+            if x.get('type') != 'INSTANCE':
+                for c in x.get('children') or []:
+                    _w(c)
+        _w(n)
+        return not found
+    doc_capture = bool(_tree) and _is_doc(_tree)
     walk(_tree if _tree else root)
+    if doc_capture:
+        bad_style = []
+        bad_paint = [b for b in bad_paint
+                     if b[2] not in ('plain-frame-suspect', 'text-not-fill', 'sheet-item-not-fill')]
     # 규칙 1 강령: Status Bar 한 화면 1개 + 최상단 (2026-08-24 사용자 룰)
     if len(sb_nodes) > 1:
         _keep = min(sb_nodes, key=lambda s: (s[0] if s[0] is not None else 9e9))

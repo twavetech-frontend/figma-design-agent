@@ -51,9 +51,11 @@ def pick(h, cls):
         # (bg-primary/border-secondary)으로 스냅 금지 — 색상 정보가 뭉개진다.
         if src_c >= 5 and _chroma(hh) < 3:
             continue
-        # 🔴 역방향 가드 (2026-08-24 이미지 뷰어 X 실측): 무채 소스(순백 X stroke)를 유채
-        # 토큰(#f4ecff bg-brand-primary)으로 스냅 금지 — 흰 아이콘이 라벤더로 물든다.
-        if src_c < 5 and _chroma(hh) >= 5:
+        # 🔴 역방향 가드 (2026-08-24 이미지 뷰어 X 실측): **밝은** 무채 소스(순백급, min>200)를
+        # 유채 토큰(#f4ecff)으로 스냅 금지 — 흰 아이콘이 라벤더로 물든다. 다크 무채(#2d2d2d
+        # 본문)는 text-primary(#2f3943, chroma 20) 스냅이 정당 — 밝기 조건으로 구분
+        # (블로그 상세 실측: 전면 가드가 본문 다크 텍스트 바인딩까지 막던 부작용).
+        if src_c < 5 and min(r0, g0, b0) > 200 and _chroma(hh) >= 5:
             continue
         r1, g1, b1 = rgb(hh)
         d = (r0-r1)**2 + (g0-g1)**2 + (b0-b1)**2
@@ -283,6 +285,21 @@ def run(ROOT):
     print('DONE')
 
     print('⚠️ 완료 보고 전: python3 scripts/verify_bindings.py <rootId> 게이트 필수')
+    return dict(stats)
+
+
+def run_colors_only(ROOT):
+    """문서형/콜라주 캡처용 — 색 + spacing/radius 변수 바인딩만 (전부 값 동일 바인딩이라
+    시각 불변). 텍스트 스타일 스냅은 절대 하지 않는다 — 원본 타이포(명시 line-height 등)
+    실측 보존 (2026-08-24 블로그 상세 훼손 실측)."""
+    global stats
+    stats = collections.Counter()
+    fc.ensure_session()
+    tree = L.fetch_tree(ROOT, max_depth=13)
+    walk(tree if tree else ROOT)
+    print('[색]', dict(stats))
+    fc._bind_spacing_tokens_live(ROOT)
+    fc._bind_radius_tokens_live(ROOT)
     return dict(stats)
 
 

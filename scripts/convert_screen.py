@@ -198,6 +198,19 @@ def new_instance(key, parent_id, index):
     return inst['id']
 
 # ── DS 스왑 ──────────────────────────────────────────────────────────────────
+def is_document_capture(root_tree):
+    """문서형/콜라주 캡처 판별 (2026-08-24 블로그 상세 실측 — 사용자: "완전 엉망"):
+    스크린샷 조각+raw 텍스트를 절대 배치로 얹은 참고 문서. UI 정규화(393 강제·텍스트
+    스타일 스냅)를 적용하면 이미지 조각과 어긋나고 원본 타이포(명시된 line-height 등)가
+    훼손된다. 판별: 루트 layoutMode NONE + 시스템 바 계열(bars/Status Bar/App bar/
+    HomeIndicator) 전무. 이 모드에선 **색/spacing/radius 변수 바인딩만**(시각 불변) 수행."""
+    if root_tree.get('layoutMode'):
+        return False
+    SYS = ('bars', 'status bar', 'statusbar', 'app bar', 'homeindicator', 'home indicator')
+    hits = find_all(root_tree, lambda n: (n.get('name') or '').strip().lower() in SYS)
+    return not hits
+
+
 def screen_is_dark(root_tree):
     """다크 화면 판정 (2026-08-24 이미지 뷰어 실측): 원본 bars(상태바) fill 이 다크(#000 급,
     max ch<0.35). 🔴 Status Bar 는 다크 화면에서도 **항상 DS 인스턴스로 교체** (2026-08-24
@@ -1126,6 +1139,16 @@ def main():
         _lap('clone')
         tree = deep(rid)
         _lap('deep')
+        # 🔴 문서형/콜라주 캡처 — UI 정규화 전면 skip, 색/spacing/radius 바인딩만 (2026-08-24)
+        if is_document_capture(tree):
+            print('  [mode] 문서형 캡처 — 정규화/스왑/텍스트 스타일 스냅 생략, 색 바인딩만')
+            import bind_semantic_tokens as _bst
+            _bst.run_colors_only(rid)
+            _lap('bind')
+            flags = list(RUN_FLAGS)
+            print(f'  [⏱] {" ".join(f"{k}:{v}s" for k, v in _stage_t.items())}')
+            results.append({'src': sid, 'gen': rid, 'flags': flags, 'mode': 'document'})
+            continue
         # Status Bar 는 항상 DS 인스턴스 (규칙 1 — 다크 화면도 예외 아님, 2026-08-24 사용자)
         swap_status_bar(tree)
         if screen_is_dark(tree):
