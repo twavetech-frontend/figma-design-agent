@@ -409,6 +409,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   Badge 색 = `Color` prop 13종에서 선택(`set-badge-color`).
 - **0-U** — 상단바/헤더의 아이콘 버튼은 무chrome(fill 박스/radius/stroke 금지) — 아이콘만.
   스타일 버튼 의도 시 `_buttonChrome:true`.
+- **0-L-2 (2026-08-24)** — 레거시 아이콘 레이어명 `ico/...`(슬래시 경로) 금지 → `ic_` 스네이크로
+  정규화(`ico/empty/chat` → `ic_empty_chat`). 변환은 자동(clone 직후 rename_legacy_icon_layers),
+  잔존 시 verify `legacy-icon-name` FAIL.
 
 **토큰/타이포**
 - 색은 전부 `$token(...)` — RGBA 하드코딩 금지(순수 흰/검/투명만 예외). 클래스 일치 필수:

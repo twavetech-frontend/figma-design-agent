@@ -173,6 +173,58 @@ def verify_layout(gen_root, snap_by_gen_id, tol=2.0):
     return bad
 
 
+def normalize_icon_layer_name(name):
+    """레거시 아이콘 레이어명 정규화 (2026-08-24 사용자 룰 0-L-2).
+
+    'ico/empty/chat' → 'ic_empty_chat': ① 선두 'ico' 세그먼트('ico' 바로 뒤가 / _ - 또는
+    이름 끝) → 'ic' ② '/' 전부 '_'. 'icon/...' 처럼 ico 뒤에 글자가 이어지는 이름은
+    prefix 를 건드리지 않고 슬래시만 정규화한다. 대상 아니면 None."""
+    if not name or '/' not in name or not name.lower().startswith('ico'):
+        return None
+    out = name
+    if len(out) == 3 or out[3] in '/_-':
+        out = 'ic' + out[3:]
+    out = out.replace('/', '_')
+    return out if out != name else None
+
+
+def rename_legacy_icon_layers(root_id):
+    """서브트리의 레거시 아이콘 이름(ico/*) 전수 정규화 — 변환 파이프라인 clone 직후 호출.
+    인스턴스 내부(0-K)는 제외. 반환: 변경 건수."""
+    tree = fetch_tree(root_id)
+    jobs = []
+
+    def _walk_t(n):
+        nm = n.get('name') or ''
+        new = normalize_icon_layer_name(nm)
+        if new and ';' not in (n.get('id') or ''):
+            jobs.append((n['id'], nm, new))
+        if n.get('type') != 'INSTANCE':
+            for c in n.get('children') or []:
+                if ';' not in (c.get('id') or ''):
+                    _walk_t(c)
+
+    if tree:
+        _walk_t(tree)
+    else:
+        # 폴백: 노드 단위 (구버전 플러그인)
+        def _deep_r(nid, d=0):
+            if d > 10:
+                return
+            n = call('get_node_info', {'nodeId': nid}) or {}
+            nm = n.get('name') or ''
+            new = normalize_icon_layer_name(nm)
+            if new:
+                jobs.append((n['id'], nm, new))
+            for c in n.get('children') or []:
+                if c.get('type') != 'INSTANCE' and ';' not in (c.get('id') or ''):
+                    _deep_r(c['id'], d + 1)
+        _deep_r(root_id)
+    for nid, old, new in jobs:
+        call('rename_node', {'nodeId': nid, 'name': new})
+    return len(jobs)
+
+
 _TREE_OK = None  # None=미확인 / True=지원 / False=미지원(구버전 플러그인)
 
 

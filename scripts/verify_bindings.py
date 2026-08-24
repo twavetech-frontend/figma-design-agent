@@ -315,6 +315,14 @@ def main():
                 if round(n.get('height') or 0) != 56:
                     bad_paint.append((disp, t, 'toolbar-bad-height',
                                       [f"h={round(n.get('height') or 0)} — Tool Bar 는 56 고정"]))
+            # 🔴 레거시 아이콘 이름 게이트 (0-L-2, 2026-08-24 사용자 룰) — 'ico'+'/' 경로형
+            # 이름은 ic_스네이크로 정규화돼야 함 ('ico/empty/chat' → 'ic_empty_chat').
+            if ';' not in node_id and name not in allow:
+                _new_nm = L.normalize_icon_layer_name(name)
+                if _new_nm:
+                    bad_paint.append((disp, t, 'legacy-icon-name',
+                                      [f"'{name}' → '{_new_nm}' — ico/경로명 금지, "
+                                       f"ds_convert_lib.rename_legacy_icon_layers 로 정규화(0-L-2)"]))
             # 구 명명 'App bar' raw 잔존 자체를 차단 (Tool Bar 로 정규화 안 된 신호)
             if t == 'FRAME' and ';' not in node_id and name.strip().lower() in ('app bar', 'top app bar') \
                     and name not in allow:

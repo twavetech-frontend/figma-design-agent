@@ -307,6 +307,25 @@
 > (`Amount Box`·`Filter Opt`·`Filter Header` 등) 사용. 진짜 DS 컴포넌트가 필요하면
 > `type:instance` + componentKey 로 **직접** 작성한다(모양 의존 금지).
 
+> 🔴 **절대 규칙 0-L-2 — 레거시 아이콘 레이어명 정규화: `ico/...` → `ic_...` (2026-08-24 사용자 룰)**
+>
+> 사용자 명시: *"레이어 중에 'ico/empty/chat' 이런 이름 — ico 를 ic 로, / 를 _ 로 바꾸기.
+> 규칙화하고 코드로 박아줘."* — 원본 앱 캡처의 레거시 명명(`ico/` prefix + 슬래시 경로)이
+> 변환본에 그대로 남으면 DS 아이콘 명명(`ic_` 스네이크)과 어긋나고, NAV_ICON_KEYS 등
+> 이름 기반 해석도 어긋난다.
+>
+> **변환 규칙:** 이름이 `ico` 로 시작하고 `/` 를 포함하면
+> ① 선두 `ico` 세그먼트(바로 뒤가 `/`·`_`·`-` 또는 이름 끝) → `ic`
+> ② `/` 전부 → `_`
+> 예: `ico/empty/chat` → `ic_empty_chat`. 단 `icon/...` 처럼 `ico` 뒤에 글자가 이어지는
+> 이름은 prefix 를 건드리지 않고 슬래시만 `_` 로 정규화한다(오폭 방지).
+>
+> **시스템 강제 (코드 박힘, 2026-08-24):**
+> - `ds_convert_lib.normalize_icon_layer_name` / `rename_legacy_icon_layers` — 판정·일괄 정규화 헬퍼
+> - `convert_screen.py` 가 clone 직후(deep 전) 자동 실행 — 이후 이름 기반 로직이 정규화된 이름을 봄
+> - `verify_bindings.py` `legacy-icon-name` FAIL 게이트 — 잔존 시 완료 보고 차단
+> 라이브 조립/수동 작업에서도 `ico/` 이름을 새로 만들지 말 것 — 아이콘은 `ic_` 스네이크가 정본.
+
 > ⛔ **절대 규칙 0-I — 폐기 (2026-06-18 사용자 결정: 섹션 타이틀 좌측정렬 강제 삭제)**
 >
 > 구 규칙(2026-06-01): 섹션 타이틀 텍스트를 **항상 좌측 정렬**로 강제(R59 lint/inject/post-fix/verify).

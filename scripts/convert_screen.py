@@ -996,6 +996,11 @@ def main():
         rid = cl['id']
         call('insert_child', {'parentId': parent, 'childId': rid})
         call('move_node', {'nodeId': rid, 'x': right + gap + i * (393 + gap), 'y': y0})
+        # 레거시 아이콘 이름 정규화 (0-L-2, 2026-08-24 사용자 룰): ico/empty/chat → ic_empty_chat.
+        # deep() 전에 실행 — 이후 이름 기반 로직(NAV_ICON_KEYS 해석 등)이 정규화된 이름을 본다.
+        _rn = L.rename_legacy_icon_layers(rid)
+        if _rn:
+            print(f'  [rename] 레거시 아이콘 이름 정규화 {_rn}건 (ico/* → ic_*, 0-L-2)')
         _lap('clone')
         tree = deep(rid)
         _lap('deep')
