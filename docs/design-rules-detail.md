@@ -1803,3 +1803,13 @@
 > (Status Bar 핀/FAB/토스트/하단 CTA/HomeIndicator)는 오토레이아웃 루트 안에서 ABSOLUTE 로 공존
 > 가능하므로 "오버레이 때문에 루트는 plain" 은 잘못된 타협이다. 비균등 섹션 간격은 투명 랩
 > (paddingTop)으로 번역. 기존 변환본 루트는 소급하지 않는다(감지기의 393폭 루트 스킵 유지).
+
+> **8-C 개정 2 (2026-08-24 사용자: "status bar, tool bar를 왜 ignore autolayout 시킨거야?
+> 개발단에선 그렇게 안되있는데"):** **Status Bar·Tool Bar(Navigation 랩 포함)는 오버레이가
+> 아니다 — flow 상단 자식이 정본**(개발 구현과 동일 구조: Status Bar → Navigation/Tool Bar →
+> 콘텐츠 순의 flow). "루트를 오토레이아웃으로 만들며 시스템 바를 ABSOLUTE 로 빼는" 처리는 금지.
+> ABSOLUTE 허용 오버레이는 **화면 위에 떠 있는 것만**: FAB/토스트/딤+모달/하단 핀
+> CTA/HomeIndicator/장식(화살표 등). 콘텐츠 상단 여백은 루트 paddingTop 이 아니라 flow 상
+> Status Bar(62)+Tool Bar(56) 높이가 자연히 만든다 — 콘텐츠 랩 paddingTop 으로 흉내내지 말 것.
+> **시스템 강제:** verify `bar-absolute-positioning` — 이름에 Status Bar/Tool Bar 포함 또는
+> 'Navigation' 인 자식이 `layoutPositioning:ABSOLUTE` 면 FAIL.

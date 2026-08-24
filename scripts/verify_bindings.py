@@ -275,6 +275,15 @@ def main():
             if t == 'FRAME' and ';' not in node_id and name in ('btn/close', 'btn_close', 'ic_close'):
                 bad_paint.append((name, t, 'raw-modal-header',
                                   ['모달/시트 헤더는 Tool Bar(View=modal) 인스턴스로 교체']))
+            # 🔴 Status/Tool Bar ABSOLUTE 금지 (2026-08-24 사용자: "왜 ignore autolayout 시킨거야?
+            # 개발단에선 그렇게 안되있는데") — 시스템 바는 flow 상단 자식이 정본(규칙 8-C).
+            # ABSOLUTE 는 진짜 오버레이(FAB/토스트/딤/하단 핀 CTA/HomeIndicator)만 허용.
+            for _c in (n.get('children') or []):
+                _cn = _c.get('name') or ''
+                if _c.get('layoutPositioning') == 'ABSOLUTE' and _cn not in allow \
+                        and ('Status Bar' in _cn or 'Tool Bar' in _cn or _cn.strip() == 'Navigation'):
+                    bad_paint.append((_cn, _c.get('type') or '', 'bar-absolute-positioning',
+                                      ['Status/Tool Bar 는 flow 상단 자식(개발 구현 동일) — ABSOLUTE 금지(8-C)']))
         for c in n.get('children', []) or []:
             walk(c['id'], d + 1)
 
