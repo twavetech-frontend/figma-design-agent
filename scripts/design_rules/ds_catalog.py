@@ -244,6 +244,11 @@ NAV_ICON_KEYS = {
     "trash":               "768df4f8e834000ce1c6ca369cc76b3e1358c3fd",
     "trash-01":            "768df4f8e834000ce1c6ca369cc76b3e1358c3fd",
     "ic_trash_04":         "768df4f8e834000ce1c6ca369cc76b3e1358c3fd",
+    # 채팅 만들기 (2026-08-24 채팅 목록 변환 — 원본 앱 에셋 btn_top_make_chat,
+    # search_design_system 으로 ic_message_plus_circle(line) 확보)
+    "message-plus-circle": "8ed30fa4e9ea171c740a1d3a3954aab0a8f66bdc",
+    "make-chat":           "8ed30fa4e9ea171c740a1d3a3954aab0a8f66bdc",
+    "btn_top_make_chat":   "8ed30fa4e9ea171c740a1d3a3954aab0a8f66bdc",
 }
 
 
