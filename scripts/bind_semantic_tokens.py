@@ -288,20 +288,5 @@ def run(ROOT):
     return dict(stats)
 
 
-def run_colors_only(ROOT):
-    """문서형/콜라주 캡처용 — 색 + spacing/radius 변수 바인딩만 (전부 값 동일 바인딩이라
-    시각 불변). 텍스트 스타일 스냅은 절대 하지 않는다 — 원본 타이포(명시 line-height 등)
-    실측 보존 (2026-08-24 블로그 상세 훼손 실측)."""
-    global stats
-    stats = collections.Counter()
-    fc.ensure_session()
-    tree = L.fetch_tree(ROOT, max_depth=13)
-    walk(tree if tree else ROOT)
-    print('[색]', dict(stats))
-    fc._bind_spacing_tokens_live(ROOT)
-    fc._bind_radius_tokens_live(ROOT)
-    return dict(stats)
-
-
 if __name__ == '__main__':
     run(sys.argv[1])
