@@ -1078,6 +1078,7 @@ def main():
         w, h = L.normalize_screen(rid)
         normalize_overlay(rid)
         L.enforce_single_status_bar(rid)  # 규칙 1 강령: Status Bar/HI 한 화면 1개 (2026-08-24)
+        L.enforce_text_fill(rid)          # 규칙 8: VERTICAL 부모 안 TEXT HUG → FILL (2026-08-24)
         fix_grid_cells(rid)
         print(f'  [normalize] {w}x{h}')
         n2 = call('get_node_info', {'nodeId': rid}) or {}

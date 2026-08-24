@@ -254,6 +254,35 @@ def fetch_tree(nid, max_depth=25):
     return None
 
 
+def enforce_text_fill(root_id):
+    """VERTICAL 부모 안 HUG TEXT → 가로 FILL 자동 교정 (규칙 8 — verify `text-not-fill`
+    게이트와 짝인 enforcer, 2026-08-24 신설: 빈 상태 문구가 세 번 연속 수동 교정되던 반복 제거).
+    예외는 verify 와 동일 — HUG 부모(칩/pill 라벨)·ABSOLUTE·인스턴스 내부. 정렬은 노드
+    속성(textAlignHorizontal)이라 FILL 전환으로 변하지 않는다. 반환: 교정 건수."""
+    tree = fetch_tree(root_id)
+    if not tree:
+        return 0
+    jobs = []
+
+    def _walk(n):
+        if n.get('layoutMode') == 'VERTICAL' and n.get('layoutSizingHorizontal') != 'HUG':
+            for c in n.get('children') or []:
+                if c.get('type') == 'TEXT' and c.get('layoutSizingHorizontal') == 'HUG' \
+                        and c.get('layoutPositioning') != 'ABSOLUTE' \
+                        and c.get('visible') is not False and ';' not in (c.get('id') or ''):
+                    jobs.append(c['id'])
+        if n.get('type') != 'INSTANCE':
+            for c in n.get('children') or []:
+                if ';' not in (c.get('id') or ''):
+                    _walk(c)
+    _walk(tree)
+    for nid in jobs:
+        call('set_layout_sizing', {'nodeId': nid, 'horizontal': 'FILL'})
+    if jobs:
+        print(f'  [normalize] TEXT 가로 FILL 교정 {len(jobs)}건 (규칙 8 — text-not-fill enforcer)')
+    return len(jobs)
+
+
 def enforce_single_status_bar(root_id):
     """🔴 Status Bar 는 한 화면 최상단에 정확히 1개 (2026-08-24 사용자 룰 — 규칙 1 강령).
 
