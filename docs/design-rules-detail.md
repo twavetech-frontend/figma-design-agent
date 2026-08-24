@@ -1781,3 +1781,19 @@
 - **해법 (코드에 박힘 — 자동)**: `cmd_build` 가 `batch_build_screen` 을 try/except 로 감싸고, timeout/예외 시 `_recover_built_root_id(blueprint.name)` 로 plugin 이 끝낸 root 를 `get_document_info` 폴링으로 찾아 `root_id` 를 복구한 뒤 **후속 단계를 그대로 잇는다**. `original_blueprint`(token 보존 deep copy)는 batch_build 전에 떠 있어 색 바인딩이 정상 동작.
 - **수동 복구가 필요한 옛 빌드**: `auto-bind <rootId> <blueprint.json>`(색 변수) + `apply-text-styles <rootId>`(text style) + `post-fix <rootId>`.
 
+
+
+> 🔴 **8-C — 라이브 조립 오토레이아웃 의무 (2026-08-24 사용자 지적: "어느순간 일반 프레임을 많이 쓰고 있다")**
+>
+> **원인 3가지 (재발 구조):** ① `create_frame` 의 layoutMode 파라미터가 조용히 무시돼 오토레이아웃이
+> 항상 후적용 3연타(마찰) ② 캡처 실측 (x,y) 를 그대로 박는 좌표 복사 관성 ③ verify 에 레이아웃
+> 게이트 부재로 조용히 축적.
+>
+> **의무:** 라이브 조립(MCP 직접 생성)의 콘텐츠 컨테이너(카드/행/리스트/섹션)는 예외 없이
+> 오토레이아웃. 실측 좌표는 반드시 padding/gap 으로 번역한다. plain frame 허용 = 화면 루트(393폭)와
+> 오버레이 전용 컨테이너(자식 전부 ABSOLUTE)뿐.
+>
+> **시스템 강제:** ① `ds_convert_lib.new_auto_frame(call, parent, name, layout, gap, pad, ...)` —
+> create→set_auto_layout→sizing 원자화 헬퍼(생성은 이걸로) ② verify `plain-frame-suspect` —
+> layoutMode NONE + 흐름형 자식 ≥2 FRAME 은 FAIL. plain→오토레이아웃 무손실 전환 레시피: 자식
+> 절대좌표 사전 실측 → 비균등 gap 은 투명 래퍼 행으로 균등화 → 전환 후 절대좌표 assert.
