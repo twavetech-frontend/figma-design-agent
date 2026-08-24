@@ -128,8 +128,29 @@ def nearest(hexv, cls, max_d=60):
     return best if bd <= max_d else None
 
 # ── 트리 유틸 ────────────────────────────────────────────────────────────────
+def _adapt_tree(n):
+    """get_node_tree 결과를 deep() 반환 형태(_children)로 변환 — 인스턴스는 stub(0-K)."""
+    kids = []
+    for c in n.get('children') or []:
+        cid = c.get('id') or ''
+        if ';' in cid:
+            continue
+        if c.get('type') == 'INSTANCE':
+            kids.append({'id': cid, 'name': c.get('name'), 'type': 'INSTANCE',
+                         'width': c.get('width'), 'height': c.get('height'), '_children': []})
+        else:
+            kids.append(_adapt_tree(c))
+    n['_children'] = kids
+    return n
+
+
 def deep(nid, d=0, max_d=12, skip_inst=True):
-    """단일 프로세스 재귀 fetch — 인스턴스 내부는 내려가지 않음(0-K)."""
+    """서브트리 fetch — get_node_tree 1콜 우선 (2026-08-24 성능 수리), 구버전 플러그인이면
+    노드 단위 재귀 폴백. 인스턴스 내부는 내려가지 않음(0-K)."""
+    if d == 0:
+        t = L.fetch_tree(nid, max_depth=max_d)
+        if t:
+            return _adapt_tree(t)
     n = call('get_node_info', {'nodeId': nid}) or {}
     n['_children'] = []
     if d < max_d:
@@ -677,11 +698,15 @@ def bind_brand_gradients(n, nid2):
 def sweep_unbound(root_id, allow):
     bound = 0
     left = []
-    def walk(nid, d=0):
+    jobs = []  # (nodeId, field, 'K:key') — 끝에서 batch_bind_variables 1콜 (2026-08-24 배치화)
+    # 1콜 트리 우선 (2026-08-24 성능 수리) — 노드당 get_node_info+get_bound_variables 왕복 제거
+    _tree = L.fetch_tree(root_id)
+
+    def walk(src, d=0):
         nonlocal bound
         if d > 12:
             return
-        n = call('get_node_info', {'nodeId': nid}) or {}
+        n = src if isinstance(src, dict) else (call('get_node_info', {'nodeId': src}) or {})
         nid2 = n.get('id') or ''
         name = n.get('name') or ''
         if name in allow:
@@ -689,7 +714,10 @@ def sweep_unbound(root_id, allow):
         t = n.get('type')
         if ';' not in nid2 and t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE', 'VECTOR', 'LINE',
                                      'BOOLEAN_OPERATION', 'STAR', 'POLYGON'):
-            bv = (call('get_bound_variables', {'nodeId': nid2}) or {}).get('boundVariables') or {}
+            if isinstance(src, dict):
+                bv = n.get('boundVariables') or {}
+            else:
+                bv = (call('get_bound_variables', {'nodeId': nid2}) or {}).get('boundVariables') or {}
             bound += bind_brand_gradients(n, nid2)
             fills = [f for f in (n.get('fills') or []) if isinstance(f, dict)
                      and f.get('type') == 'SOLID' and f.get('visible') is not False]
@@ -703,8 +731,7 @@ def sweep_unbound(root_id, allow):
                     else:
                         path = exact_token(hx, 'fill', t) or nearest(hx, cls)
                         if path:
-                            call('set_bound_variables', {'nodeId': nid2, 'bindings': {'fills/0': 'K:' + KM[path]}})
-                            bound += 1
+                            jobs.append({'nodeId': nid2, 'bindings': {'fills/0': 'K:' + KM[path]}})
                         elif hx not in ASSET_HEXES:
                             left.append((name, t, 'fill', hx))
             # stroke 는 len==1 제약 없이 첫 SOLID 페인트 기준 (라디오 링 등 멀티페인트가
@@ -718,13 +745,32 @@ def sweep_unbound(root_id, allow):
                     path = exact_token(hx, 'stroke', t) or nearest(hx, cls) \
                         or nearest(hx, 'Foreground') or nearest(hx, 'Background')
                     if path:
-                        call('set_bound_variables', {'nodeId': nid2, 'bindings': {'strokes/0': 'K:' + KM[path]}})
-                        bound += 1
+                        jobs.append({'nodeId': nid2, 'bindings': {'strokes/0': 'K:' + KM[path]}})
                     else:
                         left.append((name, t, 'stroke', hx))
         for c in n.get('children', []) or []:
-            walk(c['id'], d + 1)
-    walk(root_id)
+            if isinstance(src, dict):
+                if c.get('type') != 'INSTANCE' and ';' not in (c.get('id') or ''):
+                    walk(c, d + 1)
+            else:
+                walk(c['id'], d + 1)
+    walk(_tree if _tree else root_id)
+    # batch 1콜 적용 (2026-08-24 — 123건 개별 콜 → 1콜. K: 키는 플러그인 배치 리졸버가 임포트)
+    if jobs:
+        br = call('batch_bind_variables', {'items': jobs}) or {}
+        ok_n = br.get('succeeded')
+        if ok_n is None:
+            # 구버전 플러그인(K: 미지원/batch items 형식 차이) 폴백 — 단건 순차
+            ok_n = 0
+            for j in jobs:
+                try:
+                    call('set_bound_variables', j)
+                    ok_n += 1
+                except Exception:
+                    pass
+        bound += int(ok_n or 0)
+        if br.get('failed'):
+            print(f"  [sweep] ⚠️ batch 실패 {br.get('failed')}건 — 수동 확인 필요")
     print(f'  [sweep] 잔여 스냅 바인딩 {bound}건' + (f' / 미해결 {len(left)}건: {left[:6]}' if left else ''))
     return left
 
@@ -741,10 +787,12 @@ def diagnose(src_id, gen_id):
     stats = {'maxx': 0, 'grid_fixed': [], 'strike_gen': 0, 'raw_buttons': [], 'clipped': [],
              'raw_tabbars': []}
 
-    def walk_gen(nid, d=0):
+    # 1콜 트리 우선 (2026-08-24 성능 수리) — dict 면 로컬 순회, str(id) 면 노드 단위 폴백
+    def walk_gen(src, d=0):
         if d > 10:
             return
-        n = call('get_node_info', {'nodeId': nid}) or {}
+        is_dict = isinstance(src, dict)
+        n = src if is_dict else (call('get_node_info', {'nodeId': src}) or {})
         bb = n.get('absoluteBoundingBox') or {}
         if bb.get('x') is not None:
             stats['maxx'] = max(stats['maxx'], (bb.get('x') or 0) + (bb.get('width') or 0) - gx0)
@@ -752,7 +800,8 @@ def diagnose(src_id, gen_id):
         # wrap 그리드 잔존: HORIZONTAL 에 등폭 FIXED 셀이 열수보다 많이 남음
         if n.get('layoutMode') == 'HORIZONTAL':
             cells = [c for c in kids if c.get('type') == 'FRAME'
-                     and (call('get_node_info', {'nodeId': c['id']}) or {}).get('layoutSizingHorizontal') == 'FIXED']
+                     and (c if is_dict else (call('get_node_info', {'nodeId': c['id']}) or {}))
+                     .get('layoutSizingHorizontal') == 'FIXED']
             ws = [round(c.get('width') or 0) for c in cells]
             if len(cells) >= 3 and len(set(ws)) == 1 and ws[0] > 40:
                 stats['grid_fixed'].append(n['id'])
@@ -776,24 +825,46 @@ def diagnose(src_id, gen_id):
                 and ('gnb' in _nm_l or 'tab bar' in _nm_l or 'tabbar' in _nm_l
                      or 'bottom nav' in _nm_l):
             stats['raw_tabbars'].append(n['id'])
-        # 취소선 카운트
+        # 취소선 카운트 (트리 모드: 플러그인이 계산한 hasStrikethrough 플래그 사용)
         if n.get('type') == 'TEXT':
-            try:
-                segs = (call('get_styled_text_segments',
-                             {'nodeId': n['id'], 'property': 'textDecoration'}) or {}).get('segments') or []
-                if any(sg.get('textDecoration') == 'STRIKETHROUGH' for sg in segs):
+            if is_dict:
+                if n.get('hasStrikethrough'):
                     stats['strike_gen'] += 1
-            except Exception:
-                pass
+            else:
+                try:
+                    segs = (call('get_styled_text_segments',
+                                 {'nodeId': n['id'], 'property': 'textDecoration'}) or {}).get('segments') or []
+                    if any(sg.get('textDecoration') == 'STRIKETHROUGH' for sg in segs):
+                        stats['strike_gen'] += 1
+                except Exception:
+                    pass
         for c in kids:
-            walk_gen(c['id'], d + 1)
+            if is_dict:
+                if c.get('type') != 'INSTANCE':
+                    walk_gen(c, d + 1)
+            else:
+                walk_gen(c['id'], d + 1)
 
-    for c in gen.get('children', []) or []:
-        if ';' not in (c.get('id') or ''):
-            walk_gen(c['id'])
+    _gen_tree = L.fetch_tree(gen_id)
+    if _gen_tree:
+        for c in _gen_tree.get('children', []) or []:
+            if ';' not in (c.get('id') or '') and c.get('type') != 'INSTANCE':
+                walk_gen(c)
+    else:
+        for c in gen.get('children', []) or []:
+            if ';' not in (c.get('id') or ''):
+                walk_gen(c['id'])
 
     # 원본 취소선 카운트
     strike_src = [0]
+
+    def _count_strike_tree(nn):
+        if nn.get('type') == 'TEXT' and nn.get('hasStrikethrough'):
+            strike_src[0] += 1
+        for c in nn.get('children') or []:
+            if ';' not in (c.get('id') or '') and c.get('type') != 'INSTANCE':
+                _count_strike_tree(c)
+
     def walk_src(nid, d=0):
         if d > 10:
             return
@@ -809,7 +880,12 @@ def diagnose(src_id, gen_id):
         for c in n.get('children', []) or []:
             if ';' not in (c.get('id') or ''):
                 walk_src(c['id'], d + 1)
-    walk_src(src_id)
+
+    _src_tree = L.fetch_tree(src_id)
+    if _src_tree:
+        _count_strike_tree(_src_tree)
+    else:
+        walk_src(src_id)
 
     if 0 < stats['maxx'] < 369:
         flags.append(f"left-pinned: 콘텐츠 우측 경계 {round(stats['maxx'])} < 369 — 360 잔재 의심")
@@ -865,16 +941,27 @@ def main():
         sid = s['id']
         print(f'== [{i+1}/{len(srcs)}] {s.get("name")} ({sid})')
         RUN_FLAGS.clear()  # 화면별 수집 — 스왑 단계 🚩 를 diagnose flags 와 합류
+        _ts = time.time()
+        _stage_t = {}
+
+        def _lap(k):
+            nonlocal _ts
+            _stage_t[k] = round(time.time() - _ts, 1)
+            _ts = time.time()
+
         cl = call('clone_node', {'nodeId': sid})
         rid = cl['id']
         call('insert_child', {'parentId': parent, 'childId': rid})
         call('move_node', {'nodeId': rid, 'x': right + gap + i * (393 + gap), 'y': y0})
+        _lap('clone')
         tree = deep(rid)
+        _lap('deep')
         swap_status_bar(tree)
         swap_app_bar(tree)
         normalize_text_button_header(tree)
         swap_sheet_headers(tree)
         swap_cta(tree)
+        _lap('swaps')
         w, h = L.normalize_screen(rid)
         normalize_overlay(rid)
         fix_grid_cells(rid)
@@ -883,12 +970,17 @@ def main():
         for c in n2.get('children', []) or []:
             if (c.get('name') or '') == 'Contents':
                 call('set_layout_sizing', {'nodeId': c['id'], 'vertical': 'FILL'})
-        # 토큰 바인딩 (스크립트 1회 — 색/spacing/radius/텍스트 스타일 일괄)
-        r = subprocess.run([sys.executable, os.path.join(_HERE, 'bind_semantic_tokens.py'), rid],
-                           capture_output=True, text=True)
-        print('  [bind]', ([ln for ln in r.stdout.splitlines() if ln.startswith('[색]')] or ['?'])[0])
+        _lap('normalize')
+        # 토큰 바인딩 — in-process 호출 (2026-08-24 성능 수리: subprocess 기동+세션 재초기화
+        # +노드당 왕복이 장당 30s 병목이었음. 읽기는 get_node_tree 1콜)
+        import bind_semantic_tokens as _bst
+        _bst.run(rid)
+        _lap('bind')
         sweep_unbound(rid, allow)
+        _lap('sweep')
         flags = list(RUN_FLAGS) + diagnose(sid, rid)
+        _lap('diagnose')
+        print(f'  [⏱] {" ".join(f"{k}:{v}s" for k, v in _stage_t.items())}')
         for f in flags:
             print(f'  🚩 [detect] {f}')
         results.append({'src': sid, 'gen': rid, 'flags': flags})

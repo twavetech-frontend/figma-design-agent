@@ -90,6 +90,16 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['nodeId']
   }, async (params) => cmd('get_node_info', params));
 
+  reg('get_node_tree', 'Serialize an entire subtree in ONE call (instance internals skipped by default — rule 0-K). Each node carries fills/strokes/boundVariables key summary/absoluteBoundingBox/clipsContent/text strike flag. Built for conversion/verify pipelines to remove per-node round-trips.', {
+    type: 'object',
+    properties: {
+      nodeId: { type: 'string', description: 'Subtree root node id' },
+      maxDepth: { type: 'number', description: 'Recursion depth limit (default 25)' },
+      skipInstanceChildren: { type: 'boolean', description: 'Do not descend into INSTANCE children (default true)' }
+    },
+    required: ['nodeId']
+  }, async (params) => cmd('get_node_tree', params));
+
   reg('get_nodes_info', 'Get information about multiple nodes', {
     type: 'object',
     properties: {

@@ -292,6 +292,11 @@ async function handleCommand(command, params) {
         throw new Error("Missing nodeId parameter");
       }
       return await getNodeInfo(params.nodeId, params.depth);
+    case "get_node_tree":
+      if (!params || !params.nodeId) {
+        throw new Error("Missing nodeId parameter");
+      }
+      return await getNodeTree(params);
     case "get_nodes_info":
       if (!params || !params.nodeIds || !Array.isArray(params.nodeIds)) {
         throw new Error("Missing or invalid nodeIds parameter");
@@ -534,6 +539,77 @@ async function getNodeInfo(nodeId, maxDepth) {
   var depth = (maxDepth !== undefined && maxDepth !== null) ? maxDepth : 2;
   if (depth > 5) depth = 5; // Hard cap to prevent huge payloads
   return collectNodeInfo(node, depth, 0);
+}
+
+// 🔴 서브트리 1콜 직렬화 (2026-08-24 성능 수리) — convert/verify 파이프라인이 노드당
+// get_node_info 왕복(장당 700+콜 ≈ 70s)하던 병목 제거. 인스턴스 내부는 기본 미포함(0-K).
+// collectNodeInfo 의 노드 필드에 + boundVariables 키 요약(verify 의 노드당
+// get_bound_variables 왕복 제거) + absoluteBoundingBox + clipsContent + TEXT 취소선 플래그.
+async function getNodeTree(params) {
+  var node = await figma.getNodeByIdAsync(params.nodeId);
+  if (!node) {
+    throw new Error("Node not found with ID: " + params.nodeId);
+  }
+  var maxDepth = (params.maxDepth !== undefined && params.maxDepth !== null) ? params.maxDepth : 25;
+  var skipInst = (params.skipInstanceChildren === undefined) ? true : !!params.skipInstanceChildren;
+  return collectNodeTree(node, maxDepth, 0, skipInst);
+}
+
+function collectNodeTree(node, maxDepth, depth, skipInst) {
+  var info = collectNodeInfo(node, 0, 0); // 노드 자체 필드 + (재귀 안 하면) 얕은 자식 요약(≤50)
+  if ("clipsContent" in node) info.clipsContent = node.clipsContent;
+  if ("absoluteBoundingBox" in node && node.absoluteBoundingBox) {
+    var ab = node.absoluteBoundingBox;
+    info.absoluteBoundingBox = { x: ab.x, y: ab.y, width: ab.width, height: ab.height };
+  }
+  try {
+    if (node.boundVariables) {
+      // get_bound_variables 와 동일한 인덱스 정렬 형태(경량 {id}) — 소비자가 arr[i] 로
+      // 페인트 인덱스별 바인딩 여부를 판정한다 (name 조회는 async 라 생략)
+      var bvOut = {};
+      var bvSrc = node.boundVariables;
+      for (var bk in bvSrc) {
+        var bvv = bvSrc[bk];
+        if (Array.isArray(bvv)) {
+          var bvArr = [];
+          for (var bi = 0; bi < bvv.length; bi++) {
+            bvArr.push(bvv[bi] ? { id: bvv[bi].id } : null);
+          }
+          bvOut[bk] = bvArr;
+        } else if (bvv) {
+          bvOut[bk] = { id: bvv.id };
+        }
+      }
+      info.boundVariables = bvOut;
+    }
+  } catch (e) { /* boundVariables 미지원 노드 */ }
+  if (node.type === "TEXT") {
+    try {
+      if (node.textDecoration === figma.mixed) {
+        var segs = node.getStyledTextSegments(["textDecoration"]);
+        var uniq = {};
+        for (var si = 0; si < segs.length; si++) {
+          uniq[segs[si].textDecoration] = true;
+          if (segs[si].textDecoration === "STRIKETHROUGH") info.hasStrikethrough = true;
+        }
+        var uk = Object.keys(uniq);
+        // range 데코가 전 구간 균일하면 노드 데코로 승격 (bind 텍스트 스타일 재적용용)
+        if (uk.length === 1 && uk[0] !== "NONE") info.uniformTextDecoration = uk[0];
+      } else if (node.textDecoration && node.textDecoration !== "NONE") {
+        info.uniformTextDecoration = node.textDecoration;
+        if (node.textDecoration === "STRIKETHROUGH") info.hasStrikethrough = true;
+      }
+    } catch (e) { /* mixed segments 실패 시 플래그 생략 */ }
+  }
+  if ("children" in node && node.children && depth < maxDepth
+      && !(skipInst && node.type === "INSTANCE")) {
+    var kids = [];
+    for (var i = 0; i < node.children.length; i++) {
+      kids.push(collectNodeTree(node.children[i], maxDepth, depth + 1, skipInst));
+    }
+    info.children = kids;
+  }
+  return info;
 }
 
 // Collect node properties with depth-limited recursion
@@ -6236,6 +6312,15 @@ async function batchBindVariables(params) {
   var nameList = Object.keys(neededNames);
   for (var ri = 0; ri < nameList.length; ri++) {
     var name = nameList[ri];
+    // 🔴 K:{variableKey} 명시 임포트 (2026-08-24 — sweep 배치화. Draft 파일에서 이름 검색이
+    // 끊겨도 키로 직접 임포트하는 단건 set_bound_variables 의 K: 문법과 동일)
+    if (name.indexOf("K:") === 0) {
+      try {
+        var kResolved = await figma.variables.importVariableByKeyAsync(name.slice(2));
+        if (kResolved) { resolvedVars[name] = kResolved; }
+      } catch (kErr) { /* per-binding 에러로 보고됨 */ }
+      continue;
+    }
     // Search local
     var resolved = varByName[name];
     if (!resolved) {

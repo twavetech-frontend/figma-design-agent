@@ -22,6 +22,7 @@ import sys
 
 sys.path.insert(0, '/Users/julee/imin/figma-design-agent/scripts')
 import figma_mcp_client as fc
+import ds_convert_lib as L  # fetch_tree (get_node_tree 1콜 — 2026-08-24 성능 수리)
 
 
 _CANON_CACHE = None
@@ -124,11 +125,15 @@ def main():
     allow_candidates = set()  # 에셋 색 의심 노드명 — FAIL 시 --allow 후보로 제안
     checked = 0
 
-    def walk(nid, d=0):
+    # 1콜 트리 우선 (2026-08-24 성능 수리 — 노드당 get_node_info+get_bound_variables 왕복이
+    # verify 시간의 대부분이었음). 트리 모드는 인스턴스 서브트리에 미진입(0-K — 내부는
+    # 마스터 제어라 검사 대상 아님. 얕은 요약을 검사하면 textStyleId 부재 오탐이 나므로 스킵).
+    def walk(src, d=0):
         nonlocal checked
         if d > 9:
             return
-        n = call('get_node_info', {'nodeId': nid}) or {}
+        is_dict = isinstance(src, dict)
+        n = src if is_dict else (call('get_node_info', {'nodeId': src}) or {})
         node_id = n.get('id') or ''
         t = n.get('type')
         name = n.get('name') or ''
@@ -145,7 +150,10 @@ def main():
         if ';' not in node_id and t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE', 'VECTOR', 'LINE',
                                         'BOOLEAN_OPERATION', 'STAR', 'POLYGON'):
             checked += 1
-            bv = (call('get_bound_variables', {'nodeId': node_id}) or {}).get('boundVariables') or {}
+            if is_dict:
+                bv = n.get('boundVariables') or {}
+            else:
+                bv = (call('get_bound_variables', {'nodeId': node_id}) or {}).get('boundVariables') or {}
             if name not in allow:
                 all_vis = [f for f in (n.get('fills') or []) if isinstance(f, dict) and f.get('visible') is not False]
                 cols = []
@@ -354,14 +362,21 @@ def main():
                             and (_c.get('name') or '') not in allow:
                         bad_paint.append((f"{_c.get('name') or ''} <{_c.get('id')}>", 'TEXT', 'text-not-fill',
                                           [f"부모 {name!r}(VERTICAL) 안 TEXT 가 HUG — 가로 FILL 필수(규칙 8, 부모 랩도 FILL)"]))
-        for c in n.get('children', []) or []:
-            walk(c['id'], d + 1)
+        if is_dict:
+            if n.get('type') != 'INSTANCE':
+                for c in n.get('children', []) or []:
+                    if ';' not in (c.get('id') or ''):
+                        walk(c, d + 1)
+        else:
+            for c in n.get('children', []) or []:
+                walk(c['id'], d + 1)
 
-    walk(root)
+    _tree = L.fetch_tree(root, max_depth=10)
+    walk(_tree if _tree else root)
     # 🔴 화면 최소 높이 852 (2026-08-13 사용자: "화면높이의 최소 사이즈는 852야!") —
     # root 가 화면 프레임(폭 393±1)인데 h<852 면 FAIL. 섹션/컴포넌트 단품(폭≠393)은 제외.
     bad_size = []
-    rn = call('get_node_info', {'nodeId': root}) or {}
+    rn = _tree if _tree else (call('get_node_info', {'nodeId': root}) or {})
     rw, rh = rn.get('width') or 0, rn.get('height') or 0
     if abs(rw - 393) <= 1 and rh < 852:
         bad_size.append((rn.get('name'), f'화면 높이 {round(rh)} < 최소 852'))

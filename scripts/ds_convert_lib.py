@@ -173,6 +173,35 @@ def verify_layout(gen_root, snap_by_gen_id, tol=2.0):
     return bad
 
 
+_TREE_OK = None  # None=미확인 / True=지원 / False=미지원(구버전 플러그인)
+
+
+def fetch_tree(nid, max_depth=25):
+    """서브트리 1콜 fetch — get_node_tree (2026-08-24 성능 수리: 노드당 get_node_info
+    직렬 왕복이 변환 시간의 대부분이던 병목 제거, 장당 ~70s→~10s 목표).
+    구버전 플러그인(명령 미지원)이면 None 반환 — 호출측은 노드 단위 폴백을 유지한다.
+    플러그인 재실행으로 활성화. 반환 트리: 노드마다 get_node_info 필드 + boundVariables
+    키 요약(dict, 키 존재=바인딩 있음) + absoluteBoundingBox + hasStrikethrough(TEXT).
+    인스턴스 내부는 미포함(0-K) — 인스턴스 노드의 children 은 얕은 요약."""
+    global _TREE_OK
+    if _TREE_OK is False:
+        return None
+    try:
+        t = call('get_node_tree', {'nodeId': nid, 'maxDepth': max_depth})
+        if isinstance(t, dict) and t.get('id'):
+            if _TREE_OK is None:
+                print('  [tree] get_node_tree 1콜 트리 경로 사용')
+            _TREE_OK = True
+            return t
+    except Exception:
+        pass
+    if _TREE_OK is None:
+        print('  [tree] get_node_tree 미지원(플러그인 구버전) — 노드 단위 폴백. '
+              'Figma 에서 플러그인 재실행하면 빨라짐')
+    _TREE_OK = False
+    return None
+
+
 def normalize_screen(root_id, width=393, min_height=852):
     """화면 root 표준화 — 변환/클론 파이프라인의 필수 단계 (2026-08-13 사용자 룰:
     "화면높이의 최소 사이즈는 852야!" — 원본이 780 이어도 852 로 확장).
@@ -206,12 +235,9 @@ def normalize_screen(root_id, width=393, min_height=852):
         total = sum((k.get('width') or 0) for k in kids)
         return total > (parent.get('width') or 0) + 4
 
-    def _deep(nid, d=0, parent=None):
-        if d > 9:
-            return
-        nn = call('get_node_info', {'nodeId': nid}) or {}
-        # INSTANCE 도 노드 자체 sizing 은 교정 대상 (HomeIndicator FIXED 360 잔재 — 0-X,
-        # 2026-08-13 사용자: "home indicator width가 fill이 아니네?"). 내부로는 안 내려감.
+    def _fix_node(nn, parent):
+        """FIXED 300~360 잔재 판정 + 교정 (트리/폴백 공용). nn 은 dict."""
+        nid = nn.get('id')
         if nn.get('type') in ('FRAME', 'INSTANCE') and nn.get('layoutSizingHorizontal') == 'FIXED' \
                 and 300 <= round(nn.get('width') or 0) <= 360:
             if _overflow_shift_row(nn, parent):
@@ -223,10 +249,33 @@ def normalize_screen(root_id, width=393, min_height=852):
                       f'+ 부모 {parent["id"]} clip (FILL 재맞춤 제외)')
             else:
                 call('set_layout_sizing', {'nodeId': nid, 'layoutSizingHorizontal': 'FILL'})
-        for c in nn.get('children', []) or []:
-            if c.get('type') != 'INSTANCE':
-                _deep(c['id'], d + 1, nn)
-    _deep(root_id)
+
+    tree = fetch_tree(root_id)
+    if tree:
+        # 1콜 트리 순회 (INSTANCE 노드 자체는 교정 대상, 내부로는 안 내려감 — 0-K)
+        def _walk_t(nn, parent, d=0):
+            if d > 9:
+                return
+            _fix_node(nn, parent)
+            if nn.get('type') == 'INSTANCE':
+                return
+            for c in nn.get('children') or []:
+                if ';' not in (c.get('id') or ''):
+                    _walk_t(c, nn, d + 1)
+        _walk_t(tree, None)
+    else:
+        # 폴백: 노드 단위 재귀 (구버전 플러그인)
+        def _deep(nid, d=0, parent=None):
+            if d > 9:
+                return
+            nn = call('get_node_info', {'nodeId': nid}) or {}
+            _fix_node(nn, parent)
+            for c in nn.get('children', []) or []:
+                if c.get('type') == 'INSTANCE':
+                    _fix_node(c, nn)  # 인스턴스 자체 sizing 만 교정, 내부 미진입(0-K)
+                else:
+                    _deep(c['id'], d + 1, nn)
+        _deep(root_id)
     if h < min_height and n.get('layoutMode') in ('VERTICAL',) and not has_fill_v:
         print(f'  ⚠️ [normalize] {root_id}: h {round(h)}→{min_height} 확장했으나 세로 FILL 자식이 없어 '
               f'하단 요소가 위에 붙을 수 있음 — 콘텐츠 영역을 FILL 로 지정할 것 (spacer 금지)')

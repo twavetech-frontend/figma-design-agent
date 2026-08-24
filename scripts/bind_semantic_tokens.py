@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """in-place 시맨틱 토큰 바인딩 (레포 영구판 — 스크래치패드 소실 재발 방지, 2026-08-10).
 색(최근접 시맨틱) + spacing/radius(fc live) + 텍스트 스타일(스냅 매칭).
-사용: bind_inplace.py <rootId>"""
+사용: CLI `bind_semantic_tokens.py <rootId>` 또는 in-process `import ...; run(rootId)`
+(2026-08-24 성능 수리 — 읽기는 get_node_tree 1콜, 쓰기/검증만 개별 콜.
+ subprocess 기동+노드당 왕복이 변환 시간의 68% 였던 병목 제거)."""
 import sys, json, collections
 sys.path.insert(0, '/Users/julee/imin/figma-design-agent/scripts')
 import figma_mcp_client as fc
+import ds_convert_lib as L  # fetch_tree
 
-ROOT = sys.argv[1]
-fc.ensure_session()
 def call(t, a, **kw):
     return fc.parse_content(fc.call_tool(t, a, **kw)).get('json')
 
@@ -64,6 +65,7 @@ def pick(h, cls):
 stats = collections.Counter()
 
 def bind_paint(nid, slot, i, col, cls, inst, stroke_weight=None):
+    global stats
     tgt, how = pick(to_hex(col), cls)
     if tgt is None:
         stats[f'유채 스냅 스킵({cls})'] += 1; return
@@ -101,14 +103,19 @@ def cls_of(node_type, slot):
         return 'border'
     return 'text' if node_type == 'TEXT' else 'bg'
 
-def walk(nid, inst=False, d=0):
+def walk(src, inst=False, d=0):
+    """src: 노드 dict(get_node_tree 트리 — boundVariables 포함) 또는 id(폴백)."""
     if d > 8:
         return
-    n = call('get_node_info', {'nodeId': nid}) or {}
+    is_dict = isinstance(src, dict)
+    n = src if is_dict else (call('get_node_info', {'nodeId': src}) or {})
     t = n.get('type')
     is_inst = inst or (t == 'INSTANCE')
     if t in ('FRAME', 'TEXT', 'RECTANGLE', 'ELLIPSE', 'VECTOR') and not is_inst:
-        bv = (call('get_bound_variables', {'nodeId': n['id']}) or {}).get('boundVariables') or {}
+        if is_dict:
+            bv = n.get('boundVariables') or {}
+        else:
+            bv = (call('get_bound_variables', {'nodeId': n['id']}) or {}).get('boundVariables') or {}
         for slot in ('fill', 'stroke'):
             # 🔴 mixed strokeWeight(개별 사이드 보더 — 탭 밑줄 등)는 set_stroke_color 가
             # uniform 으로 평탄화해 4면 박스가 된다 (2026-08-12 라운지 쇼핑홈 탭 회귀) — 스킵
@@ -166,29 +173,18 @@ def walk(nid, inst=False, d=0):
             bind_paint(n['id'], slot, i, col, cls_of(t, slot), False,
                        stroke_weight=(n.get('strokeWeight') if slot == 'stroke' else None))
     for c in n.get('children', []) or []:
-        walk(c['id'], is_inst, d + 1)
+        if is_dict:
+            if ';' not in (c.get('id') or ''):
+                walk(c, is_inst, d + 1)
+        else:
+            walk(c['id'], is_inst, d + 1)
 
-walk(ROOT)
-print('[색]', dict(stats))
 
-fc._bind_spacing_tokens_live(ROOT)
-fc._bind_radius_tokens_live(ROOT)
-
-# 텍스트 스타일 (스냅 매칭)
-smap = json.load(open('/Users/julee/imin/figma-design-agent/ds/TEXT_STYLE_MAP.json'))
-by_key = {}
-for e in smap:
-    by_key[(e.get('fontSize'), (e.get('style') or '').lower())] = e
-SNAP = {10: 12, 11: 12, 13: 12, 15: 14, 17: 16, 18: 16, 22: 24, 26: 24, 28: 24, 30: 32}
-sc = call('scan_text_nodes', {'nodeId': ROOT}) or {}
-ts = collections.Counter()
-for tnode in (sc.get('textNodes') if isinstance(sc, dict) else sc) or []:
-    nid = tnode.get('id') or ''
-    if ';' in nid:
-        continue
-    info = call('get_node_info', {'nodeId': nid}) or {}
+def _apply_text_style(nid, info, by_key, SNAP, ts, deco_hint=None):
+    """단일 TEXT 노드에 DS 텍스트 스타일 적용 (트리/폴백 공용). deco_hint 는 트리 모드의
+    uniformTextDecoration(세그먼트 실사 콜 대체)."""
     if not (info.get('characters') or '').strip():
-        continue
+        return
     size = info.get('fontSize')
     style = ((info.get('fontName') or {}).get('style') or 'Regular').lower()
     sid = info.get('textStyleId') or ''
@@ -201,19 +197,21 @@ for tnode in (sc.get('textNodes') if isinstance(sc, dict) else sc) or []:
             if e:
                 break
     if not e:
-        ts[f'미매칭 {size}px'] += 1; continue
+        ts[f'미매칭 {size}px'] += 1
+        return
     if sid and e['key'] in sid:
-        ts['이미 DS'] += 1; continue
+        ts['이미 DS'] += 1
+        return
     if tgt_size != size:
         call('set_font_size', {'nodeId': nid, 'fontSize': tgt_size})
         ts[f'스냅 {size}->{tgt_size}'] += 1
     # ⚠️ 파라미터명은 textStyleId, 형식은 "S:{key},{아무값}" — 콤마 뒤가 비면 플러그인
     # 정규식(/^S:([^,]+),(.+)$/)을 못 타 로컬 조회로 떨어져 silent 실패한다 (2026-08-10 회귀).
-    deco = info.get('textDecoration')
+    deco = info.get('textDecoration') or deco_hint
     # 🔴 2026-08-14: 취소선이 range 단위면 node-level 은 None — 세그먼트로 실사해
-    # 균일 데코(STRIKETHROUGH/UNDERLINE)면 스타일 적용 후 node-level 로 재적용한다
-    # (2026-08-10 '정가 취소선 회귀' fix 가 serializer 미지원으로 무력화돼 있던 뿌리).
-    if not deco or deco == 'NONE':
+    # 균일 데코(STRIKETHROUGH/UNDERLINE)면 스타일 적용 후 node-level 로 재적용한다.
+    # 트리 모드는 플러그인이 계산한 uniformTextDecoration(deco_hint)이 이 실사를 대체.
+    if (not deco or deco == 'NONE') and deco_hint is None:
         try:
             segs = (call('get_styled_text_segments',
                          {'nodeId': nid, 'property': 'textDecoration'}) or {}).get('segments') or []
@@ -231,7 +229,57 @@ for tnode in (sc.get('textNodes') if isinstance(sc, dict) else sc) or []:
         ts['스타일 적용(검증)'] += 1
     else:
         ts['스타일 실패'] += 1
-print('[텍스트]', dict(ts))
-print('DONE')
 
-print('⚠️ 완료 보고 전: python3 scripts/verify_bindings.py <rootId> 게이트 필수')
+
+def run(ROOT):
+    """색 + spacing/radius + 텍스트 스타일 바인딩 — 읽기는 get_node_tree 1콜(폴백: 노드 단위),
+    쓰기·적용 검증만 개별 콜. convert_screen 이 in-process 로 호출한다."""
+    global stats
+    stats = collections.Counter()
+    fc.ensure_session()
+    tree = L.fetch_tree(ROOT, max_depth=9)
+    walk(tree if tree else ROOT)
+    print('[색]', dict(stats))
+
+    fc._bind_spacing_tokens_live(ROOT)
+    fc._bind_radius_tokens_live(ROOT)
+
+    # 텍스트 스타일 (스냅 매칭)
+    smap = json.load(open('/Users/julee/imin/figma-design-agent/ds/TEXT_STYLE_MAP.json'))
+    by_key = {}
+    for e in smap:
+        by_key[(e.get('fontSize'), (e.get('style') or '').lower())] = e
+    SNAP = {10: 12, 11: 12, 13: 12, 15: 14, 17: 16, 18: 16, 22: 24, 26: 24, 28: 24, 30: 32}
+    ts = collections.Counter()
+    if tree:
+        # 트리에서 TEXT 직접 수집 — scan_text_nodes(콜드런 60s 이력) + 텍스트당 get_node_info 제거
+        texts = []
+
+        def _collect_texts(nn):
+            if nn.get('type') == 'TEXT' and ';' not in (nn.get('id') or ''):
+                texts.append(nn)
+            if nn.get('type') != 'INSTANCE':
+                for c in nn.get('children') or []:
+                    if ';' not in (c.get('id') or ''):
+                        _collect_texts(c)
+        _collect_texts(tree)
+        for info in texts:
+            _apply_text_style(info['id'], info, by_key, SNAP, ts,
+                              deco_hint=info.get('uniformTextDecoration') or 'NONE')
+    else:
+        sc = call('scan_text_nodes', {'nodeId': ROOT}) or {}
+        for tnode in (sc.get('textNodes') if isinstance(sc, dict) else sc) or []:
+            nid = tnode.get('id') or ''
+            if ';' in nid:
+                continue
+            info = call('get_node_info', {'nodeId': nid}) or {}
+            _apply_text_style(nid, info, by_key, SNAP, ts)
+    print('[텍스트]', dict(ts))
+    print('DONE')
+
+    print('⚠️ 완료 보고 전: python3 scripts/verify_bindings.py <rootId> 게이트 필수')
+    return dict(stats)
+
+
+if __name__ == '__main__':
+    run(sys.argv[1])
