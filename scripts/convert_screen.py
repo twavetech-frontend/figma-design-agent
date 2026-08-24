@@ -137,7 +137,9 @@ def _adapt_tree(n):
             continue
         if c.get('type') == 'INSTANCE':
             kids.append({'id': cid, 'name': c.get('name'), 'type': 'INSTANCE',
-                         'width': c.get('width'), 'height': c.get('height'), '_children': []})
+                         'width': c.get('width'), 'height': c.get('height'),
+                         'fills': c.get('fills'),  # 다크 화면 판정(screen_is_dark) 등에 필요
+                         '_children': []})
         else:
             kids.append(_adapt_tree(c))
     n['_children'] = kids
@@ -160,7 +162,8 @@ def deep(nid, d=0, max_d=12, skip_inst=True):
                 continue
             if skip_inst and c.get('type') == 'INSTANCE':
                 n['_children'].append({'id': cid, 'name': c.get('name'), 'type': 'INSTANCE',
-                                       'width': c.get('width'), 'height': c.get('height'), '_children': []})
+                                       'width': c.get('width'), 'height': c.get('height'),
+                                       'fills': c.get('fills'), '_children': []})
                 continue
             n['_children'].append(deep(cid, d + 1, max_d, skip_inst))
     return n
@@ -195,6 +198,21 @@ def new_instance(key, parent_id, index):
     return inst['id']
 
 # ── DS 스왑 ──────────────────────────────────────────────────────────────────
+def screen_is_dark(root_tree):
+    """다크 시스템 바 화면 판정 (2026-08-24 이미지 뷰어 실측): 원본 bars(상태바) fill 이
+    다크(#000 급, max ch<0.35) = 다크 화면. DS Status/Tool Bar 인스턴스는 라이트 전용이라
+    스왑하면 흰 밴드가 위조됨 — 시스템 바 스왑 전체를 skip 하고 raw 보존한다."""
+    hits = find_all(root_tree, lambda n: (n.get('name') or '').lower() in ('bars', 'status bar', 'statusbar')
+                    and round(n.get('height') or 0) <= 40)
+    for h in hits:
+        for f in (h.get('fills') or []):
+            if isinstance(f, dict) and f.get('type') == 'SOLID' and f.get('visible') is not False:
+                c = f.get('color') or {}
+                if max(c.get(k, 0) for k in 'rgb') < 0.35:
+                    return True
+    return False
+
+
 def swap_status_bar(root_tree):
     """🔴 Status Bar 는 한 화면 최상단에 **정확히 1개** (2026-08-24 사용자 룰 — 규칙 1 강령).
     첫 후보(최상단)만 DS 인스턴스로 스왑하고, 나머지(오버레이 딤 위 bars 등 캡처 중복)는
@@ -1069,8 +1087,12 @@ def main():
         _lap('clone')
         tree = deep(rid)
         _lap('deep')
-        swap_status_bar(tree)
-        swap_app_bar(tree)
+        if screen_is_dark(tree):
+            # 다크 시스템 바 화면(이미지 뷰어 등) — 라이트 전용 DS 바 스왑 금지, raw 보존
+            print('  [skip] 다크 시스템 바 화면 — Status/Tool Bar 스왑 생략(raw 보존)')
+        else:
+            swap_status_bar(tree)
+            swap_app_bar(tree)
         normalize_text_button_header(tree)
         swap_sheet_headers(tree)
         swap_cta(tree)

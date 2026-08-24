@@ -362,7 +362,8 @@ def main():
             # 구 명명 'App bar' raw 잔존 자체를 차단 (Tool Bar 로 정규화 안 된 신호).
             # 유채 커스텀 테마 헤더는 raw 유지가 정본 — 면제 (2026-08-24)
             if t == 'FRAME' and ';' not in node_id and name.strip().lower() in ('app bar', 'top app bar') \
-                    and name not in allow and not themed and not _custom_theme_header(n, parent):
+                    and name not in allow and not themed and not dark_screen \
+                    and not _custom_theme_header(n, parent):
                 bad_paint.append((disp, t, 'appbar-legacy-name',
                                   ['구 명명 App bar 잔존 — Tool Bar 문법 정규화 필요(0-W/0-O)']))
             # 🔴 raw 토스트 감지 (2026-08-20 사용자 지적: 토스트 3장 raw pill 조립 — DS Toast
@@ -384,7 +385,7 @@ def main():
             # 룰 0-W(2026-08-04 개정): 모달 X 헤더 = Tool Bar 인스턴스(View=modal). raw close
             # 버튼 잔존(btn/close, ic_close 류 FRAME)은 헤더 미교체 신호 → FAIL.
             if t == 'FRAME' and ';' not in node_id and name in ('btn/close', 'btn_close', 'ic_close') \
-                    and not themed:
+                    and not themed and not dark_screen:
                 bad_paint.append((disp, t, 'raw-modal-header',
                                   ['모달/시트 헤더는 Tool Bar(View=modal) 인스턴스로 교체']))
             # 🔴 Status/Tool Bar ABSOLUTE 금지 (2026-08-24 사용자: "왜 ignore autolayout 시킨거야?
@@ -418,6 +419,23 @@ def main():
                 walk(c['id'], d + 1, n, themed)
 
     _tree = L.fetch_tree(root, max_depth=10)
+
+    # 다크 시스템 바 화면(이미지 뷰어 등 — bars fill 다크) 사전 판정: DS 바는 라이트 전용이라
+    # raw 보존이 정본 → appbar-legacy-name/raw-modal-header 면제 (2026-08-24 실측)
+    def _detect_dark(n):
+        nm = (n.get('name') or '').lower()
+        if nm in ('bars', 'status bar', 'statusbar') and round(n.get('height') or 0) <= 40:
+            for f in (n.get('fills') or []):
+                if isinstance(f, dict) and f.get('type') == 'SOLID' and f.get('visible') is not False:
+                    c = f.get('color') or {}
+                    if max(c.get(k, 0) for k in 'rgb') < 0.35:
+                        return True
+        if n.get('type') != 'INSTANCE':
+            for c in n.get('children') or []:
+                if _detect_dark(c):
+                    return True
+        return False
+    dark_screen = bool(_tree) and _detect_dark(_tree)
     walk(_tree if _tree else root)
     # 규칙 1 강령: Status Bar 한 화면 1개 + 최상단 (2026-08-24 사용자 룰)
     if len(sb_nodes) > 1:

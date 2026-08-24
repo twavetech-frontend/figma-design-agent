@@ -51,6 +51,10 @@ def pick(h, cls):
         # (bg-primary/border-secondary)으로 스냅 금지 — 색상 정보가 뭉개진다.
         if src_c >= 5 and _chroma(hh) < 3:
             continue
+        # 🔴 역방향 가드 (2026-08-24 이미지 뷰어 X 실측): 무채 소스(순백 X stroke)를 유채
+        # 토큰(#f4ecff bg-brand-primary)으로 스냅 금지 — 흰 아이콘이 라벤더로 물든다.
+        if src_c < 5 and _chroma(hh) >= 5:
+            continue
         r1, g1, b1 = rgb(hh)
         d = (r0-r1)**2 + (g0-g1)**2 + (b0-b1)**2
         if d < bd:
@@ -166,9 +170,10 @@ def walk(src, inst=False, d=0):
             if i < len(arr) and arr[i]:
                 stats['이미 바인딩'] += 1; continue
             h = to_hex(col)
-            if h == '#000000':
-                # 순검정은 fill/stroke 모두 스킵 — 아이콘/백버튼 검정 stroke 가
-                # border-primary 로 스냅돼 연회색으로 훼손되던 회귀 (2026-08-10)
+            if h in ('#000000', '#ffffff'):
+                # 순검정/순백은 fill/stroke 모두 스킵 — 검정 stroke 가 border-primary 로
+                # (2026-08-10), 순백 X stroke 가 bg-brand-primary 라벤더로 (2026-08-24
+                # 이미지 뷰어) 오스냅되던 회귀
                 continue
             bind_paint(n['id'], slot, i, col, cls_of(t, slot), False,
                        stroke_weight=(n.get('strokeWeight') if slot == 'stroke' else None))
