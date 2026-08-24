@@ -1797,3 +1797,9 @@
 > create→set_auto_layout→sizing 원자화 헬퍼(생성은 이걸로) ② verify `plain-frame-suspect` —
 > layoutMode NONE + 흐름형 자식 ≥2 FRAME 은 FAIL. plain→오토레이아웃 무손실 전환 레시피: 자식
 > 절대좌표 사전 실측 → 비균등 gap 은 투명 래퍼 행으로 균등화 → 전환 후 절대좌표 assert.
+
+> **8-C 개정 (2026-08-24 사용자: "root 프레임은 일반 frame인데??"):** 화면 루트 예외 삭제 —
+> **루트도 VERTICAL 오토레이아웃이 정본**(blueprint 빌드 파이프라인 루트와 동일). 오버레이
+> (Status Bar 핀/FAB/토스트/하단 CTA/HomeIndicator)는 오토레이아웃 루트 안에서 ABSOLUTE 로 공존
+> 가능하므로 "오버레이 때문에 루트는 plain" 은 잘못된 타협이다. 비균등 섹션 간격은 투명 랩
+> (paddingTop)으로 번역. 기존 변환본 루트는 소급하지 않는다(감지기의 393폭 루트 스킵 유지).

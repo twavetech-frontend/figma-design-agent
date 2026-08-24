@@ -425,10 +425,12 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 
 **레이아웃**
 - **8** — 모든 섹션/카드/리스트 FRAME 가로 FILL(최다 위반 — 위 스포트라이트). 태그/칩/뱃지는 HUG.
-  의도 HUG/FIXED 는 `_keepSizing:true`(8-B). **8-C (2026-08-24)** — 라이브 조립(MCP 직접 생성)의
-  콘텐츠 컨테이너는 예외 없이 **오토레이아웃**(`ds_convert_lib.new_auto_frame` 헬퍼 사용, 실측
-  좌표는 padding/gap 으로 번역). plain frame 은 화면 루트·오버레이 전용만 — verify
-  `plain-frame-suspect` 가 차단.
+  의도 HUG/FIXED 는 `_keepSizing:true`(8-B). **8-C (2026-08-24, 개정: 루트 포함)** — 라이브 조립
+  (MCP 직접 생성)은 **화면 루트를 포함해** 콘텐츠 컨테이너 전부 오토레이아웃
+  (`ds_convert_lib.new_auto_frame` 헬퍼, 실측 좌표는 padding/gap 번역, 비균등 gap 은 투명 랩
+  패딩으로). 오버레이(FAB/토스트/핀 CTA/HI)는 오토레이아웃 루트 안에서 ABSOLUTE 로 공존.
+  plain frame 허용 = 오버레이 전용 컨테이너뿐 — verify `plain-frame-suspect` 가 차단
+  (기존 변환본 루트는 소급 제외).
 - **0-Q** — radius>0 frame 은 `clipsContent:true` 필수. radius 값은 DS 스케일(4/6/8/10/12/14/16/20/24/
   28/32, 완전원형 999)로 — post-fix 가 radius-* 토큰 자동 바인딩.
 - **3/6/7** — Tab Bar 아이템 FILL 균등 + 세로 FILL + 라벨 CENTER (자동 보정 있음 — 라벨 2줄 wrap 회귀 주의).
