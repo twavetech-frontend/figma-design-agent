@@ -228,6 +228,13 @@ def swap_app_bar(root_tree):
                                   and n.get('visible') is not False))
         tx = texts_in(ab)
         title = tx[0]['characters'] if tx else ''
+        # 🔴 텍스트 액션 버튼('확인/취소/완료' 등) 내장 헤더는 Tool Bar 인스턴스로 표현 불가 —
+        # raw 유지 후 normalize_text_button_header 가 정본 문법으로 정규화 (2026-08-24
+        # 채팅 상대 선택 실측 3장: 인스턴스 교체가 우측 '확인' 버튼을 삼켜 유실).
+        if any((t.get('characters') or '').strip() in TEXT_BTN_ACTION_WORDS
+               and t.get('visible') is not False for t in tx):
+            print(f'  [skip] App bar {ab["id"]} — 텍스트 액션 버튼 내장(raw 정본 문법으로 정규화)')
+            continue
         # 🔴 우측 아이콘 자동 이관 (2026-08-18 배송지 수정 휴지통 실측 — Right empty 고정이
         # 원본 우측 액션을 지우던 구멍). ic_* 아이콘 이름을 NAV_ICON_KEYS 로 해석, 미해석은 flag.
         from design_rules.ds_catalog import NAV_ICON_KEYS  # noqa: E402
@@ -351,20 +358,33 @@ def normalize_text_button_header(root_tree):
     'App bar' 24h — 2026-08-20 블로그 3장 실측)."""
     _vk = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'ds', 'VARIABLE_KEY_MAP.json')))
     _bg = [v for k, v in _vk.items() if k.endswith('Background/bg-primary')]
-    ACTION_WORDS = ('취소', '올리기', '완료', '등록', '저장', '다음', '확인')
+    ACTION_WORDS = TEXT_BTN_ACTION_WORDS
+    # 후보: 얇은 바(16~40h — 2026-08-20 블로그 클래스) + 타이틀 동반 56h App bar
+    # (2026-08-24 채팅 상대 선택 클래스). w≥200 로 개별 텍스트 버튼('확인' 36w) 오인 차단.
     cands = find_all(root_tree, lambda n: n.get('type') == 'FRAME'
-                     and 16 <= round(n.get('height') or 0) <= 40
+                     and 16 <= round(n.get('height') or 0) <= 64
+                     and round(n.get('width') or 0) >= 200
                      and (n.get('y') or 0) < 140)
     for hd in cands:
         tx = texts_in(hd)
-        labels = [t.get('characters', '') for t in tx]
-        if not labels or not all(any(w in l for w in ACTION_WORDS) for l in labels):
+        labels = [(t.get('characters') or '').strip() for t in tx]
+        if not labels:
+            continue
+        # 액션 정확 일치 라벨 ≥1 + 비액션(타이틀) 라벨 ≤1
+        action_labels = [l for l in labels if l in ACTION_WORDS]
+        title_labels = [l for l in labels if l not in ACTION_WORDS]
+        if not action_labels or len(title_labels) > 1:
             continue
         hid = hd['id']
         info = call('get_node_info', {'nodeId': hid}) or {}
+        if not info.get('id'):
+            continue  # stale (다른 스왑이 이미 삭제)
         pid = info.get('parentId')
-        # 부모(Navigation) 정규화: 118h + gap 0 → flow 상 Tool Bar y62
-        if pid:
+        # 부모(Navigation) 정규화: 118h + gap 0 → flow 상 Tool Bar y62.
+        # 🔴 자식 2개(bars+헤더) 구성일 때만 — Search bar 등 형제가 더 있으면 리사이즈 금지
+        # (2026-08-24: Navigation 174h 를 118 로 눌러 검색바가 잘리는 오폭 방지)
+        _pn = call('get_node_info', {'nodeId': pid}) or {} if pid else {}
+        if pid and len(_pn.get('children') or []) <= 2:
             call('rename_node', {'nodeId': pid, 'name': 'Navigation'})
             call('set_auto_layout', {'nodeId': pid, 'layoutMode': 'VERTICAL', 'itemSpacing': 0})
             call('set_layout_sizing', {'nodeId': pid, 'horizontal': 'FIXED', 'vertical': 'FIXED'})
@@ -380,6 +400,10 @@ def normalize_text_button_header(root_tree):
         call('set_fill_color', {'nodeId': hid, 'color': {'r': 1, 'g': 1, 'b': 1, 'a': 1}})
         if _bg:
             call('set_bound_variables', {'nodeId': hid, 'bindings': {'fills/0': 'K:' + _bg[0]}})
+        # 타이틀(비액션 라벨) 20px 재단언 (0-W — Body xl/SemiBold 가 정본)
+        for t in tx:
+            if (t.get('characters') or '').strip() in title_labels:
+                call('set_font_size', {'nodeId': t['id'], 'fontSize': 20})
         # 실측 assert (룰 17: 호출 성공 ≠ 적용)
         chk = call('get_node_info', {'nodeId': hid}) or {}
         if round(chk.get('height') or 0) != 56 or not (chk.get('fills') or []):
@@ -530,6 +554,10 @@ def normalize_overlay(root_id):
         print('  [overlay] 배경+Layer ABSOLUTE 393x%d 정규화' % h)
 
 
+# 내비/헤더 텍스트 액션 버튼 라벨 (swap_app_bar skip · normalize_text_button_header 공유)
+TEXT_BTN_ACTION_WORDS = ('취소', '올리기', '완료', '등록', '저장', '다음', '확인')
+
+
 def _is_dialog_action_row(n):
     """chrome 없는 다이얼로그 액션 행/텍스트 버튼 판별 (2026-08-24 채팅_Modals 실측 —
     모달 '알림끄기/나가기' 행이 Primary 2xl 보라 CTA 로 오스왑. 눌림 상태(연회색
@@ -571,6 +599,15 @@ def swap_cta(root_tree):
         # wallet-withdraw-user-baseline 룰 2). stroke+무채 fill → Outline, 유채 fill → Primary.
         if round(b.get('height') or 0) <= 42:
             info0 = call('get_node_info', {'nodeId': b['id']}) or {}
+            if not info0.get('id'):
+                print(f'  [skip] raw Button {b["id"]} — stale(이미 삭제됨)')
+                continue
+            # 내비/헤더 안 텍스트 버튼('확인' 등)은 raw 정본 문법 유지 — Action Button 스왑 금지
+            # (2026-08-24 채팅 상대 선택 실측: 헤더 '확인'이 md Outline 으로 오스왑)
+            _pn0 = (call('get_node_info', {'nodeId': info0.get('parentId')}) or {}).get('name') or ''
+            if 'tool bar' in _pn0.lower() or 'app bar' in _pn0.lower():
+                print(f'  [skip] raw Button {b["id"]} "{tx[0]["characters"]}" — 내비 텍스트 버튼(raw 유지)')
+                continue
             def _chr(paints):
                 ps = [f for f in (paints or []) if isinstance(f, dict)
                       and f.get('type') == 'SOLID' and f.get('visible') is not False]
@@ -602,6 +639,9 @@ def swap_cta(root_tree):
                   f'텍스트 버튼(눌림 하이라이트 포함), raw 유지')
             continue
         info = call('get_node_info', {'nodeId': b['id']}) or {}
+        if not info.get('id'):
+            print(f'  [skip] raw Button {b["id"]} — stale(이미 삭제됨)')
+            continue
         bf = [f for f in (info.get('fills') or []) if isinstance(f, dict) and f.get('type') == 'SOLID'
               and f.get('visible') is not False]
         # 원본 raw 버튼 fill 이 밝으면(연보라 등) Disabled 상태 (2026-08-14 리뷰작성 실측)
@@ -788,7 +828,7 @@ def diagnose(src_id, gen_id):
              'raw_tabbars': []}
 
     # 1콜 트리 우선 (2026-08-24 성능 수리) — dict 면 로컬 순회, str(id) 면 노드 단위 폴백
-    def walk_gen(src, d=0):
+    def walk_gen(src, d=0, pname=''):
         if d > 10:
             return
         is_dict = isinstance(src, dict)
@@ -813,9 +853,12 @@ def diagnose(src_id, gen_id):
                 stats['clipped'].append(n['id'])
                 break
         # raw Button 잔존 (스왑 커버리지 감시 — 2026-08-14 수정/주소검색 실측)
+        # 내비/헤더('Tool Bar'/'App bar' 부모) 안 텍스트 버튼은 raw 정본 문법 — 재고발 금지
+        # (2026-08-24: swap 이 의도적으로 skip 한 '확인'을 flag 로 되살리던 충돌)
+        _in_nav = 'tool bar' in pname.lower() or 'app bar' in pname.lower()
         if n.get('type') == 'FRAME' and (n.get('name') or '').strip().lower() == 'button' \
                 and 24 <= round(n.get('height') or 0) <= 64 and n.get('visible') is not False \
-                and not _is_dialog_action_row(n):
+                and not _is_dialog_action_row(n) and not _in_nav:
             stats['raw_buttons'].append(n['id'])
         # raw 하단 탭바/GNB 잔존 (2026-08-21 커뮤니티 실측 — Bar/GNB/Feed 가 무플래그 통과,
         # DS 'Tab bar' 인스턴스(0-M)로 교체돼야 함)
@@ -841,9 +884,9 @@ def diagnose(src_id, gen_id):
         for c in kids:
             if is_dict:
                 if c.get('type') != 'INSTANCE':
-                    walk_gen(c, d + 1)
+                    walk_gen(c, d + 1, n.get('name') or '')
             else:
-                walk_gen(c['id'], d + 1)
+                walk_gen(c['id'], d + 1, n.get('name') or '')
 
     _gen_tree = L.fetch_tree(gen_id)
     if _gen_tree:
