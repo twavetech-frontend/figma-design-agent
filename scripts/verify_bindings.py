@@ -210,6 +210,18 @@ def main():
                     if _lbl and len(_lbl) <= 8 and not _lbl.isdigit():
                         bad_paint.append((name, t, 'raw-badge-suspect',
                                           [f'라벨 {_lbl!r} — DS Badge/Pill 인스턴스로 교체(Color prop)']))
+            # 🔴 plain frame 감지 (2026-08-24 사용자 지적: "어느순간 일반 프레임을 많이 쓰고 있다")
+            # 콘텐츠 컨테이너(흐름형 자식 ≥2)가 layoutMode NONE 이면 FAIL — 오토레이아웃 의무.
+            # 예외: 화면 루트(폭 393±2)·오버레이 전용(자식 전부 ABSOLUTE)·allow.
+            if t == 'FRAME' and ';' not in node_id and name not in allow \
+                    and not n.get('layoutMode') and abs((n.get('width') or 0) - 393) > 2:
+                _flow_kids = [c for c in (n.get('children') or [])
+                              if c.get('type') in ('FRAME', 'TEXT', 'INSTANCE', 'RECTANGLE')
+                              and c.get('layoutPositioning') != 'ABSOLUTE'
+                              and c.get('visible') is not False]
+                if len(_flow_kids) >= 2:
+                    bad_paint.append((name, t, 'plain-frame-suspect',
+                                      [f'layoutMode NONE + 흐름형 자식 {len(_flow_kids)}개 — 오토레이아웃 전환 필요(규칙 8)']))
             # 🔴 시트/리스트 행 HUG 감지 (2026-08-24 사용자 지적: 바텀시트 메뉴 item 이 HUG 라
             # 텍스트 폭 75 로 좁아짐 — 규칙 8: 행/항목 FRAME 은 가로 FILL). 이름에 '시트'/'sheet'
             # 포함 컨테이너의 직계 행 FRAME 이 FILL 아니고 부모 폭의 60% 미만이면 FAIL.

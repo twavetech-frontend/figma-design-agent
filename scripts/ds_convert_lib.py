@@ -254,3 +254,33 @@ def region_compare(src_png, gen_png, out_dir, n_regions=5, overlap=0.06):
         canvas.save(p)
         outs.append(p)
     return outs
+
+
+# ── 오토레이아웃 조립 헬퍼 (2026-08-24 사용자 지적: plain frame 남발 방지) ──────────
+# create_frame 의 layoutMode 파라미터는 플러그인이 조용히 무시한다(2026-08-21 실측).
+# 라이브 조립에서 콘텐츠 컨테이너는 반드시 이 헬퍼로 생성할 것 — plain frame 은
+# 화면 루트·오버레이 전용만 허용 (verify plain-frame-suspect 게이트가 차단).
+def new_auto_frame(call, parent_id, name, layout='VERTICAL', gap=0, pad=None,
+                   w=None, h=None, fill_alpha0=True, x=0, y=0, **al_extra):
+    """오토레이아웃 프레임 생성 3연타(create→set_auto_layout→sizing)를 원자화.
+    pad: int(전방향) 또는 dict(paddingLeft 등). 반환: nodeId."""
+    import json as _j
+    r = call('create_frame', {'x': x, 'y': y, 'width': w or 100, 'height': h or 40,
+                              'name': name, 'parentId': parent_id,
+                              'fillColor': {'r': 1, 'g': 1, 'b': 1, 'a': 1}})
+    nid = (_j.loads(r[0]['text']) if isinstance(r, list) else r).get('id')
+    if fill_alpha0:
+        call('set_fill_color', {'nodeId': nid, 'color': {'r': 1, 'g': 1, 'b': 1, 'a': 0}})
+    al = {'nodeId': nid, 'layoutMode': layout, 'itemSpacing': gap}
+    if isinstance(pad, int):
+        al.update({'paddingLeft': pad, 'paddingRight': pad, 'paddingTop': pad, 'paddingBottom': pad})
+    elif isinstance(pad, dict):
+        al.update(pad)
+    al.update(al_extra)
+    call('set_auto_layout', al)
+    if w and h:
+        call('set_layout_sizing', {'nodeId': nid, 'horizontal': 'FIXED', 'vertical': 'FIXED'})
+        call('resize_node', {'nodeId': nid, 'width': w, 'height': h})
+    else:
+        call('set_layout_sizing', {'nodeId': nid, 'horizontal': 'HUG', 'vertical': 'HUG'})
+    return nid
