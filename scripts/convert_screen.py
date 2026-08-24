@@ -509,6 +509,32 @@ def normalize_overlay(root_id):
         print('  [overlay] 배경+Layer ABSOLUTE 393x%d 정규화' % h)
 
 
+def _is_dialog_action_row(n):
+    """chrome 없는 다이얼로그 액션 행/텍스트 버튼 판별 (2026-08-24 채팅_Modals 실측 —
+    모달 '알림끄기/나가기' 행이 Primary 2xl 보라 CTA 로 오스왑. 눌림 상태(연회색
+    하이라이트 fill #f3f5f7)까지 커버). 조건: 무채 연한 fill(투명/흰/≥0.9 연회색, 채도<0.05)
+    + 보더 없음 + 단일 **진한 라벨**(text-primary 급, max ch<0.4).
+    Disabled CTA 는 라벨이 밝은 회색/흰색이라 여기 안 걸린다. swap_cta 스킵과 diagnose
+    raw-button 감지기가 같은 판정을 공유한다(스킵한 행을 flag 로 재고발하는 충돌 방지)."""
+    fills = [f for f in (n.get('fills') or []) if isinstance(f, dict)
+             and f.get('type') == 'SOLID' and f.get('visible') is not False]
+    strokes = [s for s in (n.get('strokes') or []) if isinstance(s, dict)
+               and s.get('type') == 'SOLID' and s.get('visible') is not False]
+    if strokes:
+        return False
+    for f in fills:
+        c = f.get('color') or {}
+        vs = [c.get(k, 0) for k in 'rgb']
+        if min(vs) < 0.9 or (max(vs) - min(vs)) > 0.05:
+            return False
+    kids = n.get('_children') or n.get('children') or []
+    tx = [c for c in kids if c.get('type') == 'TEXT' and (c.get('characters') or '').strip()]
+    if len(tx) != 1:
+        return False
+    lc = ((tx[0].get('fills') or [{}])[0] or {}).get('color') or {}
+    return bool(lc) and max(lc.get(k, 1) for k in 'rgb') < 0.4
+
+
 def swap_cta(root_tree):
     done = []
     cands = find_all(root_tree, lambda n: (n.get('name') or '').strip().lower() == 'button'
@@ -550,11 +576,15 @@ def swap_cta(root_tree):
             done.append(ab0)
             continue
         label = tx[0]['characters']
+        if _is_dialog_action_row(b):
+            print(f'  [skip] raw Button {b["id"]} "{label}" — chrome 없는 다이얼로그 액션 행/'
+                  f'텍스트 버튼(눌림 하이라이트 포함), raw 유지')
+            continue
         info = call('get_node_info', {'nodeId': b['id']}) or {}
-        # 원본 raw 버튼 fill 이 밝으면(연보라 등) Disabled 상태 (2026-08-14 리뷰작성 실측)
-        state = 'Default'
         bf = [f for f in (info.get('fills') or []) if isinstance(f, dict) and f.get('type') == 'SOLID'
               and f.get('visible') is not False]
+        # 원본 raw 버튼 fill 이 밝으면(연보라 등) Disabled 상태 (2026-08-14 리뷰작성 실측)
+        state = 'Default'
         if bf:
             c = bf[0].get('color', {})
             if (c.get('r', 0) + c.get('g', 0) + c.get('b', 0)) / 3 > 0.72:
@@ -735,7 +765,8 @@ def diagnose(src_id, gen_id):
                 break
         # raw Button 잔존 (스왑 커버리지 감시 — 2026-08-14 수정/주소검색 실측)
         if n.get('type') == 'FRAME' and (n.get('name') or '').strip().lower() == 'button' \
-                and 24 <= round(n.get('height') or 0) <= 64 and n.get('visible') is not False:
+                and 24 <= round(n.get('height') or 0) <= 64 and n.get('visible') is not False \
+                and not _is_dialog_action_row(n):
             stats['raw_buttons'].append(n['id'])
         # raw 하단 탭바/GNB 잔존 (2026-08-21 커뮤니티 실측 — Bar/GNB/Feed 가 무플래그 통과,
         # DS 'Tab bar' 인스턴스(0-M)로 교체돼야 함)
