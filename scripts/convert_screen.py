@@ -1076,11 +1076,36 @@ def main():
     y0 = min(s.get('y') or 0 for s in srcs)
     parent = srcs[0].get('parentId')
 
+    # 🔴 같은 페이지 유사 DS본 사전 탐지 (0-G-2 clone-우선 — 2026-08-24 블로그 실측:
+    # 페이지에 신 DS 기준 화면이 이미 있는데 구 캡처를 기계 변환해 구 브랜드/구 라이브러리가
+    # 잔존한 회귀. 이름 접두 일치 + 393폭 프레임 발견 시 flag — 모델이 clone 트랙 여부 판단)
+    try:
+        _doc = call('get_document_info', {}) or {}
+        _page_frames = [c for c in (_doc.get('children') or []) if c.get('type') == 'FRAME']
+    except Exception:
+        _page_frames = []
+    _src_ids = {s['id'] for s in srcs}
+    _similar_warns = {}
+    for s in srcs:
+        _pfx = (s.get('name') or '').split('(')[0].split('_')[0].strip()
+        if len(_pfx) < 2:
+            continue
+        sim = [c for c in _page_frames
+               if c.get('id') not in _src_ids and (c.get('name') or '').startswith(_pfx)
+               and abs(round(c.get('width') or 0) - 393) <= 2]
+        if sim:
+            _similar_warns[s['id']] = [f"{c.get('id')}({c.get('name')})" for c in sim[:4]]
+    if _similar_warns:
+        print(f'  🚩 [detect] similar-ds-screen-exists: {_similar_warns} — 393폭 기존 본 존재. '
+              f'clone-우선(0-G-2) 트랙 검토: 기존 본 문법(신 DS 컴포넌트·브랜드 토큰)을 기준으로 생성할 것')
+
     results = []
     for i, s in enumerate(srcs):
         sid = s['id']
         print(f'== [{i+1}/{len(srcs)}] {s.get("name")} ({sid})')
         RUN_FLAGS.clear()  # 화면별 수집 — 스왑 단계 🚩 를 diagnose flags 와 합류
+        if sid in _similar_warns:
+            RUN_FLAGS.append(f'similar-ds-screen-exists: {_similar_warns[sid]} — clone-우선(0-G-2) 검토')
         _ts = time.time()
         _stage_t = {}
 
