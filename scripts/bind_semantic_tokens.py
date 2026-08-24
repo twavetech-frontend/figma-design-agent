@@ -105,7 +105,7 @@ def cls_of(node_type, slot):
 
 def walk(src, inst=False, d=0):
     """src: 노드 dict(get_node_tree 트리 — boundVariables 포함) 또는 id(폴백)."""
-    if d > 8:
+    if d > 12:  # 사이드바(오버레이 중첩) 깊은 노드가 d>8 에서 스킵되던 실측 (2026-08-24)
         return
     is_dict = isinstance(src, dict)
     n = src if is_dict else (call('get_node_info', {'nodeId': src}) or {})
@@ -237,7 +237,7 @@ def run(ROOT):
     global stats
     stats = collections.Counter()
     fc.ensure_session()
-    tree = L.fetch_tree(ROOT, max_depth=9)
+    tree = L.fetch_tree(ROOT, max_depth=13)
     walk(tree if tree else ROOT)
     print('[색]', dict(stats))
 

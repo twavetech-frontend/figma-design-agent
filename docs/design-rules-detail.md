@@ -948,6 +948,14 @@
 - **규칙: blueprint root.children에 status bar를 절대 포함하지 않는다.** 빌드가 알아서 DS 인스턴스를 넣는다.
 - **로고**: 🔴 NavBar 는 이제 DS 'Tool Bar' 인스턴스(절대 규칙 0-W) — **Type=Home variant 에 로고가 내장**되어 있어 Logo Placeholder 가 필요 없다. (`_customNavBar` raw frame 인 경우에만 기존 방식: `"Logo Placeholder"` 프레임(80×32)을 넣으면 `cmd_build`가 DS 로고 인스턴스로 자동 교체(Step G). 텍스트로 로고를 그리지 말 것.)
 - **빌드 후 검증**: 루트 첫 자식이 INSTANCE `"Status Bar"`인지 확인.
+- 🔴 **한 화면 최상단에 정확히 1개 (2026-08-24 사용자 룰 — 강령):** *"status bar는 한 화면
+  최상단에 하나만 존재해야한다."* 캡처 변환에서 배경+오버레이(딤/사이드바)가 각각 bars 를
+  가져 2개가 잔존하던 실측(채팅 상세_Side bar). HomeIndicator 도 같은 원리(최하단 1개).
+  **시스템 강제 (2026-08-24):**
+  - `convert_screen.swap_status_bar` — 첫(최상단) 후보만 DS 스왑, 나머지 중복은 삭제
+  - `ds_convert_lib.enforce_single_status_bar` — 정규화 단계에서 Status Bar(최상단 1개)·
+    HomeIndicator(최하단 1개) 단일화, convert 파이프라인 자동 호출
+  - `verify_bindings` `status-bar-duplicate` / `status-bar-not-top` FAIL 게이트
 - 참고: "Styles" 페이지(`276:1882`)에 마스터 인스턴스가 있다 — Status Bar `279:4758`, 로고 `279:4757`. 자동 삽입이 안 되는 특수 상황에서만 `clone_node`(인스턴스는 clone해도 인스턴스 유지) 후 `insert_child`로 수동 삽입.
 
 ### 2-H. ⚠️ 큰 면적 brand fill — 🔻 2026-06-12 advisory 강등 (룰 2계층 ② 참조: 의도된 컬러 히어로 허용, WARN만)

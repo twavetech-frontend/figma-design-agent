@@ -359,6 +359,8 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 **화면 골격**
 - **0** — 루트 프레임 fill = `$token(bg-primary)` 필수. 화면 배경이 회색이면 버그.
 - **1** — Status Bar 를 blueprint 에 넣지 말 것 — 빌드가 DS 인스턴스를 루트 첫 자식으로 자동 삽입.
+  🔴 **한 화면 최상단에 정확히 1개 (2026-08-24 사용자 룰)** — 변환 시 오버레이 중복 bars 자동
+  삭제(enforce_single_status_bar, HI 는 최하단 1개), verify `status-bar-duplicate`/`-not-top` FAIL.
 - **2-F/18** — 루트 minHeight 852, 높이는 콘텐츠 전체(852 로 줄여 하단 잘리게 금지). 하단 바 bottom-pin 자동.
 - **0-H** — 새 root 는 기존 화면 우측 빈 공간에 자동 배치(겹침 금지). **0-H-2 (2026-08-20)** —
   Figma 선택 노드가 있으면 **같은 부모에 insert 후 선택 노드 바로 오른쪽(gap 50)** 이 우선

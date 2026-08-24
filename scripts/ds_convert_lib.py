@@ -254,6 +254,54 @@ def fetch_tree(nid, max_depth=25):
     return None
 
 
+def enforce_single_status_bar(root_id):
+    """🔴 Status Bar 는 한 화면 최상단에 정확히 1개 (2026-08-24 사용자 룰 — 규칙 1 강령).
+
+    캡처가 배경+오버레이(딤/사이드바)에 각각 bars 를 갖는 중복 구조를 정규화:
+    Status Bar 류(이름 bars/status bar, h≤70)는 **화면에서 가장 위(abs y 최소)** 1개만
+    남기고 삭제. HomeIndicator 도 같은 원리(최하단, abs y 최대 1개)로 단일화 — 852 확장
+    시 오버레이 ABSOLUTE HI 가 화면 중간에 뜨던 실측 결함의 뿌리.
+    반환: (sb_removed, hi_removed)."""
+    tree = fetch_tree(root_id)
+    if not tree:
+        return (0, 0)
+    root_y = (tree.get('absoluteBoundingBox') or {}).get('y') or 0
+    sbs, his = [], []
+
+    def _walk(n):
+        nm = (n.get('name') or '').strip().lower()
+        ay = ((n.get('absoluteBoundingBox') or {}).get('y') or 0) - root_y
+        if nm in ('bars', 'status bar', 'statusbar') and round(n.get('height') or 0) <= 70 \
+                and ';' not in (n.get('id') or '') and n.get('visible') is not False:
+            sbs.append((ay, n['id']))
+        if nm in ('homeindicator', 'home indicator') and ';' not in (n.get('id') or '') \
+                and n.get('visible') is not False:
+            his.append((ay, n['id']))
+        if n.get('type') != 'INSTANCE':
+            for c in n.get('children') or []:
+                if ';' not in (c.get('id') or ''):
+                    _walk(c)
+    _walk(tree)
+
+    sb_removed = hi_removed = 0
+    if len(sbs) > 1:
+        keep = min(sbs)[1]  # 최상단 1개
+        for _, nid in sbs:
+            if nid != keep:
+                call('delete_node', {'nodeId': nid})
+                sb_removed += 1
+    if len(his) > 1:
+        keep = max(his)[1]  # 최하단 1개
+        for _, nid in his:
+            if nid != keep:
+                call('delete_node', {'nodeId': nid})
+                hi_removed += 1
+    if sb_removed or hi_removed:
+        print(f'  [normalize] Status Bar 중복 {sb_removed}건 / HomeIndicator 중복 {hi_removed}건 '
+              f'삭제 — 한 화면 1개(규칙 1)')
+    return (sb_removed, hi_removed)
+
+
 def normalize_screen(root_id, width=393, min_height=852):
     """화면 root 표준화 — 변환/클론 파이프라인의 필수 단계 (2026-08-13 사용자 룰:
     "화면높이의 최소 사이즈는 852야!" — 원본이 780 이어도 852 로 확장).

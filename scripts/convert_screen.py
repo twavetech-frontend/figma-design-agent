@@ -196,29 +196,57 @@ def new_instance(key, parent_id, index):
 
 # ── DS 스왑 ──────────────────────────────────────────────────────────────────
 def swap_status_bar(root_tree):
+    """🔴 Status Bar 는 한 화면 최상단에 **정확히 1개** (2026-08-24 사용자 룰 — 규칙 1 강령).
+    첫 후보(최상단)만 DS 인스턴스로 스왑하고, 나머지(오버레이 딤 위 bars 등 캡처 중복)는
+    삭제한다. 사이드바 실측: 배경+오버레이가 각각 bars 를 가져 2개가 잔존하던 구멍."""
     cands = find_all(root_tree, lambda n: (n.get('name') or '').lower() in ('bars', 'status bar', 'statusbar')
                      and round(n.get('height') or 0) <= 40)
+    sb = None
     for c in cands:
-        parent = call('get_node_info', {'nodeId': c['id']}) or {}
-        pid = parent.get('parentId')
-        idx = child_index(pid, c['id'])
-        sb = new_instance(SB_KEY, pid, idx)
-        call('delete_node', {'nodeId': c['id']})
-        call('resize_node', {'nodeId': sb, 'width': 393, 'height': 62})
-        call('set_layout_sizing', {'nodeId': sb, 'horizontal': 'FILL'})
-        print(f'  [swap] Status Bar ← {c.get("name")} ({c["id"]})')
-        return sb
-    return None
+        if sb is None:
+            parent = call('get_node_info', {'nodeId': c['id']}) or {}
+            pid = parent.get('parentId')
+            idx = child_index(pid, c['id'])
+            sb = new_instance(SB_KEY, pid, idx)
+            call('delete_node', {'nodeId': c['id']})
+            call('resize_node', {'nodeId': sb, 'width': 393, 'height': 62})
+            call('set_layout_sizing', {'nodeId': sb, 'horizontal': 'FILL'})
+            print(f'  [swap] Status Bar ← {c.get("name")} ({c["id"]})')
+        else:
+            call('delete_node', {'nodeId': c['id']})
+            print(f'  [swap] 중복 Status Bar 삭제 ({c["id"]}) — 한 화면 1개(규칙 1)')
+    return sb
 
 def swap_app_bar(root_tree):
     cands = find_all(root_tree, lambda n: 'app bar' in (n.get('name') or '').lower()
                      and n.get('type') == 'FRAME' and 40 <= round(n.get('height') or 0) <= 72)
+    done_tb = []
     for ab in cands:
         # 🔴 0-W: 검색바 내장 헤더는 Tool Bar 로 표현 불가 — raw 유지 (2026-08-14 라운지_검색
         # 실측: 'Input' 프레임(서치 아이콘+텍스트+클리어)이 타이틀로 강등되던 회귀)
         if find_all(ab, lambda n: (n.get('name') or '').strip().lower() in ('input', 'search', 'search bar', 'searchbar')
                     or 'ic_search' in (n.get('name') or '').lower()):
             print(f'  [skip] App bar {ab["id"]} — 검색바 내장 헤더(Tool Bar 표현 불가, raw 유지)')
+            continue
+        # 🔴 유채 배경 헤더(그룹 채팅 핑크 테마 등)는 Tool Bar 인스턴스로 표현 불가 —
+        # 인스턴스는 흰 배경 고정 + 내부 색 변경 금지(0-K) → raw 유지 (2026-08-24 사이드바 실측:
+        # 핑크 '채팅 상대'/'스테이지 바로가기' 밴드가 흰 Tool Bar 로 오스왑돼 테마 소실.
+        # 핑크는 App bar 자체가 아니라 부모 fill 이고 헤더는 투명한 케이스까지 커버)
+        def _vis_solid(paints):
+            return [f for f in (paints or []) if isinstance(f, dict)
+                    and f.get('type') == 'SOLID' and f.get('visible') is not False]
+
+        def _has_chromatic(paints):
+            for f in _vis_solid(paints):
+                vs = [round((f.get('color') or {}).get(k, 0) * 255) for k in 'rgb']
+                if max(vs) - min(vs) >= 20:
+                    return True
+            return False
+        _abf = _vis_solid(ab.get('fills'))
+        _parent_fills = (call('get_node_info', {'nodeId': ab.get('parentId')}) or {}).get('fills') \
+            if not _abf else None
+        if _has_chromatic(ab.get('fills')) or (not _abf and _has_chromatic(_parent_fills)):
+            print(f'  [skip] App bar {ab["id"]} — 유채 커스텀 배경(Tool Bar 표현 불가, raw 유지)')
             continue
         # 🔴 2026-08-21 커뮤니티 실측: 숨김(back visible=False) 노드를 back 으로 오인해
         # 메인탭 화면에 back 이 생기던 구멍 — visible 체크 추가.
@@ -353,8 +381,10 @@ def swap_app_bar(root_tree):
                 RUN_FLAGS.append(f'navbar-right-icon-unresolved: {unresolved} — Right Buttons 가 '
                                  f'empty 로 떨어짐. search_design_system 키 확보→NAV_ICON_KEYS 등록→swap')
         print(f'  [swap] Tool Bar({view}) "{title}" ← App bar ({ab["id"]})')
-        return tb
-    return None
+        done_tb.append(tb)
+        # 🔴 return 하지 않고 계속 — 오버레이(사이드바 등)의 두 번째 헤더도 처리 (2026-08-24
+        # 사이드바 실측: 첫 App bar 처리 후 종료해 X 헤더가 raw 잔존하던 구멍)
+    return done_tb[0] if done_tb else None
 
 def normalize_text_button_header(root_tree):
     """텍스트 버튼형 헤더(취소/올리기 등) Tool Bar 문법 정규화 (2026-08-20 사용자 지시 ×3).
@@ -618,6 +648,15 @@ def swap_cta(root_tree):
             if 'tool bar' in _pn0.lower() or 'app bar' in _pn0.lower():
                 print(f'  [skip] raw Button {b["id"]} "{tx[0]["characters"]}" — 내비 텍스트 버튼(raw 유지)')
                 continue
+            # 🔴 완전 무chrome(fill·stroke 모두 없음) 아이콘+텍스트 액션은 md 스왑 금지 —
+            # Outline 위계가 원본에 없던 보더를 만들어 시각 위조 (2026-08-24 사이드바 '나가기' 실측)
+            _bf0 = [f for f in (info0.get('fills') or []) if isinstance(f, dict)
+                    and f.get('type') == 'SOLID' and f.get('visible') is not False]
+            _bs0 = [s for s in (info0.get('strokes') or []) if isinstance(s, dict)
+                    and s.get('type') == 'SOLID' and s.get('visible') is not False]
+            if not _bf0 and not _bs0:
+                print(f'  [skip] raw Button {b["id"]} "{tx[0]["characters"]}" — 무chrome 텍스트/아이콘 액션(raw 유지)')
+                continue
             def _chr(paints):
                 ps = [f for f in (paints or []) if isinstance(f, dict)
                       and f.get('type') == 'SOLID' and f.get('visible') is not False]
@@ -875,8 +914,13 @@ def diagnose(src_id, gen_id):
         _in_nav = 'tool bar' in pname.lower() or 'app bar' in pname.lower()
         # 텍스트 라벨 없는 아이콘 버튼(btn_add/btn_send 등)도 Action Button 대상 아님 — 오탐 제외
         # (2026-08-24 채팅 상세 실측: 입력바 첨부/전송 아이콘 버튼이 raw-button 으로 고발됨)
+        # 무chrome(fill·stroke 없음) 아이콘+텍스트 액션('나가기')도 raw 정본 — swap skip 과 판정 공유
         _has_label = any((c.get('type') == 'TEXT' and (c.get('characters') or '').strip())
                          for c in (n.get('children') or []))
+        _has_chrome = any(isinstance(f, dict) and f.get('type') == 'SOLID'
+                          and f.get('visible') is not False
+                          for f in (n.get('fills') or []) + (n.get('strokes') or []))
+        _has_label = _has_label and _has_chrome
         if n.get('type') == 'FRAME' and (n.get('name') or '').strip().lower() == 'button' \
                 and 24 <= round(n.get('height') or 0) <= 64 and n.get('visible') is not False \
                 and _has_label and not _is_dialog_action_row(n) and not _in_nav:
@@ -1033,6 +1077,7 @@ def main():
         _lap('swaps')
         w, h = L.normalize_screen(rid)
         normalize_overlay(rid)
+        L.enforce_single_status_bar(rid)  # 규칙 1 강령: Status Bar/HI 한 화면 1개 (2026-08-24)
         fix_grid_cells(rid)
         print(f'  [normalize] {w}x{h}')
         n2 = call('get_node_info', {'nodeId': rid}) or {}

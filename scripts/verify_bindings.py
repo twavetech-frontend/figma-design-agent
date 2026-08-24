@@ -82,6 +82,26 @@ def _no_near_token(hexes, max_delta=16):
     return True
 
 
+def _custom_theme_header(n, parent):
+    """유채 커스텀 배경 헤더(그룹 채팅 핑크 테마 등) 판정 — Tool Bar 인스턴스는 흰 배경
+    고정+내부 색 변경 금지(0-K)라 이런 헤더는 raw 유지가 정본. appbar-legacy-name/
+    raw-modal-header 게이트 면제 근거 (2026-08-24 사이드바 실측). 자체 fill 유채,
+    또는 투명 + 부모 fill 유채."""
+    def _chromatic(paints):
+        for f in (paints or []):
+            if isinstance(f, dict) and f.get('type') == 'SOLID' and f.get('visible') is not False:
+                c = f.get('color') or {}
+                vs = [round(c.get(k, 0) * 255) for k in 'rgb']
+                if max(vs) - min(vs) >= 20:
+                    return True
+        return False
+    fills = [f for f in (n.get('fills') or []) if isinstance(f, dict)
+             and f.get('type') == 'SOLID' and f.get('visible') is not False]
+    if _chromatic(fills):
+        return True
+    return not fills and parent is not None and _chromatic(parent.get('fills'))
+
+
 def _overlaps_2d(kids):
     """자식들이 2D 로 서로 겹치는 조합(아바타 스택 등) — 오토레이아웃 표현 불가라 plain
     frame 이 정당. plain-frame-suspect 자동 면제 근거 (2026-08-24 채팅 Icon 스택 실측)."""
@@ -123,12 +143,13 @@ def main():
     bad_paint = []
     bad_style = []
     allow_candidates = set()  # 에셋 색 의심 노드명 — FAIL 시 --allow 후보로 제안
+    sb_nodes = []  # (absY, id) — Status Bar 류. 한 화면 최상단 1개 게이트 (2026-08-24 규칙 1 강령)
     checked = 0
 
     # 1콜 트리 우선 (2026-08-24 성능 수리 — 노드당 get_node_info+get_bound_variables 왕복이
     # verify 시간의 대부분이었음). 트리 모드는 인스턴스 서브트리에 미진입(0-K — 내부는
     # 마스터 제어라 검사 대상 아님. 얕은 요약을 검사하면 textStyleId 부재 오탐이 나므로 스킵).
-    def walk(src, d=0):
+    def walk(src, d=0, parent=None, themed=False):
         nonlocal checked
         if d > 9:
             return
@@ -137,8 +158,15 @@ def main():
         node_id = n.get('id') or ''
         t = n.get('type')
         name = n.get('name') or ''
+        # 유채 커스텀 테마 컨텍스트 — 조상 중 유채 배경 헤더가 있으면 서브트리에 전파
+        themed = themed or (t == 'FRAME' and _custom_theme_header(n, parent))
         # FAIL 항목에 노드 id 병기 — 이름만 찍혀 트리 재조회를 강제하던 낭비 제거 (2026-08-24)
         disp = f'{name} <{node_id}>'
+        # 🔴 Status Bar 는 한 화면 최상단 1개 (2026-08-24 사용자 룰 — 규칙 1 강령) — 수집 후
+        # walk 끝에서 중복/위치 판정. abs y 는 트리 모드에서만 존재(폴백은 개수만 검사).
+        if name.strip().lower() in ('bars', 'status bar', 'statusbar') \
+                and ';' not in node_id and round(n.get('height') or 0) <= 70:
+            sb_nodes.append((((n.get('absoluteBoundingBox') or {}).get('y')), node_id, disp))
         # allow 노드는 서브트리 전체 면제 (2026-08-14 — 브랜드 에셋 내부색은 검사 대상 아님)
         if name in allow:
             return
@@ -331,9 +359,10 @@ def main():
                     bad_paint.append((disp, t, 'legacy-icon-name',
                                       [f"'{name}' → '{_new_nm}' — ico/경로명 금지, "
                                        f"ds_convert_lib.rename_legacy_icon_layers 로 정규화(0-L-2)"]))
-            # 구 명명 'App bar' raw 잔존 자체를 차단 (Tool Bar 로 정규화 안 된 신호)
+            # 구 명명 'App bar' raw 잔존 자체를 차단 (Tool Bar 로 정규화 안 된 신호).
+            # 유채 커스텀 테마 헤더는 raw 유지가 정본 — 면제 (2026-08-24)
             if t == 'FRAME' and ';' not in node_id and name.strip().lower() in ('app bar', 'top app bar') \
-                    and name not in allow:
+                    and name not in allow and not themed and not _custom_theme_header(n, parent):
                 bad_paint.append((disp, t, 'appbar-legacy-name',
                                   ['구 명명 App bar 잔존 — Tool Bar 문법 정규화 필요(0-W/0-O)']))
             # 🔴 raw 토스트 감지 (2026-08-20 사용자 지적: 토스트 3장 raw pill 조립 — DS Toast
@@ -354,7 +383,8 @@ def main():
             # 🔴 raw 모달/시트 X 헤더 감지 (2026-08-13 사용자: 바텀시트 타이틀도 Tool Bar) —
             # 룰 0-W(2026-08-04 개정): 모달 X 헤더 = Tool Bar 인스턴스(View=modal). raw close
             # 버튼 잔존(btn/close, ic_close 류 FRAME)은 헤더 미교체 신호 → FAIL.
-            if t == 'FRAME' and ';' not in node_id and name in ('btn/close', 'btn_close', 'ic_close'):
+            if t == 'FRAME' and ';' not in node_id and name in ('btn/close', 'btn_close', 'ic_close') \
+                    and not themed:
                 bad_paint.append((disp, t, 'raw-modal-header',
                                   ['모달/시트 헤더는 Tool Bar(View=modal) 인스턴스로 교체']))
             # 🔴 Status/Tool Bar ABSOLUTE 금지 (2026-08-24 사용자: "왜 ignore autolayout 시킨거야?
@@ -382,13 +412,27 @@ def main():
             if n.get('type') != 'INSTANCE':
                 for c in n.get('children', []) or []:
                     if ';' not in (c.get('id') or ''):
-                        walk(c, d + 1)
+                        walk(c, d + 1, n, themed)
         else:
             for c in n.get('children', []) or []:
-                walk(c['id'], d + 1)
+                walk(c['id'], d + 1, n, themed)
 
     _tree = L.fetch_tree(root, max_depth=10)
     walk(_tree if _tree else root)
+    # 규칙 1 강령: Status Bar 한 화면 1개 + 최상단 (2026-08-24 사용자 룰)
+    if len(sb_nodes) > 1:
+        _keep = min(sb_nodes, key=lambda s: (s[0] if s[0] is not None else 9e9))
+        for s in sb_nodes:
+            if s[1] != _keep[1]:
+                bad_paint.append((s[2], 'FRAME', 'status-bar-duplicate',
+                                  ['Status Bar 는 한 화면 1개(규칙 1) — 중복 삭제 필요'
+                                   ' (enforce_single_status_bar)']))
+    if sb_nodes and _tree:
+        _ry = (_tree.get('absoluteBoundingBox') or {}).get('y')
+        _top = min(sb_nodes, key=lambda s: (s[0] if s[0] is not None else 9e9))
+        if _ry is not None and _top[0] is not None and (_top[0] - _ry) > 2:
+            bad_paint.append((_top[2], 'FRAME', 'status-bar-not-top',
+                              [f'Status Bar 가 최상단이 아님 (y offset {round(_top[0] - _ry)}) — 규칙 1']))
     # 🔴 화면 최소 높이 852 (2026-08-13 사용자: "화면높이의 최소 사이즈는 852야!") —
     # root 가 화면 프레임(폭 393±1)인데 h<852 면 FAIL. 섹션/컴포넌트 단품(폭≠393)은 제외.
     bad_size = []
