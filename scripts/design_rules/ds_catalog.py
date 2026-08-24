@@ -249,6 +249,9 @@ NAV_ICON_KEYS = {
     "message-plus-circle": "8ed30fa4e9ea171c740a1d3a3954aab0a8f66bdc",
     "make-chat":           "8ed30fa4e9ea171c740a1d3a3954aab0a8f66bdc",
     "btn_top_make_chat":   "8ed30fa4e9ea171c740a1d3a3954aab0a8f66bdc",
+    # 채팅 시트 메뉴 (2026-08-24 채팅 상세 실측 — 실물은 햄버거 3줄인데 이름 속 'chat' 이
+    # 말풍선으로 fuzzy 오매칭. 앱 에셋 이름은 정확 매핑으로 등록해 fuzzy 앞에서 잡는다)
+    "btn_top_chat_sheet":  "773e8ac3572b64c2031233074661490b45c43584",  # menu-01
 }
 
 

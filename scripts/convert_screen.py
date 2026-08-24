@@ -856,9 +856,13 @@ def diagnose(src_id, gen_id):
         # 내비/헤더('Tool Bar'/'App bar' 부모) 안 텍스트 버튼은 raw 정본 문법 — 재고발 금지
         # (2026-08-24: swap 이 의도적으로 skip 한 '확인'을 flag 로 되살리던 충돌)
         _in_nav = 'tool bar' in pname.lower() or 'app bar' in pname.lower()
+        # 텍스트 라벨 없는 아이콘 버튼(btn_add/btn_send 등)도 Action Button 대상 아님 — 오탐 제외
+        # (2026-08-24 채팅 상세 실측: 입력바 첨부/전송 아이콘 버튼이 raw-button 으로 고발됨)
+        _has_label = any((c.get('type') == 'TEXT' and (c.get('characters') or '').strip())
+                         for c in (n.get('children') or []))
         if n.get('type') == 'FRAME' and (n.get('name') or '').strip().lower() == 'button' \
                 and 24 <= round(n.get('height') or 0) <= 64 and n.get('visible') is not False \
-                and not _is_dialog_action_row(n) and not _in_nav:
+                and _has_label and not _is_dialog_action_row(n) and not _in_nav:
             stats['raw_buttons'].append(n['id'])
         # raw 하단 탭바/GNB 잔존 (2026-08-21 커뮤니티 실측 — Bar/GNB/Feed 가 무플래그 통과,
         # DS 'Tab bar' 인스턴스(0-M)로 교체돼야 함)
