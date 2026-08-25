@@ -184,7 +184,7 @@ COMPONENT_KEYS = {
     # Type=Input field component SETS — needs a careful pass.)
     "Checkbox md":           "bbd5c20958464e51295e73c3c90ef7d54c0b0b69",  # 20×20 Checked=False ✓
     "Checkbox md checked":   "73691ec35c62c70735d61722347dfd995b32c5ec",  # 20×20 Checked=True ✓
-    "Radio md":              "f743202ee1c1ac21c07e5347063230cd1f3aed76",  # 20×20 Selected=False ✓
+    "Radio md":              "f743202ee1c1ac21c07e5347063230cd1f3aed76",  # 20×20 Selected=False ✓ (= Checkbox SET 0ff8b200… Type=Radio/md — 2026-08-25 신고 모달 실측 동일)
     "Radio md selected":     "b0c3ae6338fa48cfd619e3c347a1d008b1d414c6",  # 20×20 Selected=True ✓
     "Input field":           "074f2839b4ce11d761931642b0305f277f811563",  # CS 'Input field' default member, 320×96 ✓
     "Slider":                "dda7a750676f41444425e6616d01f06fbcb3ff6c",  # CS 'Slider' Label=Top floating 0% 320×24 ✓
