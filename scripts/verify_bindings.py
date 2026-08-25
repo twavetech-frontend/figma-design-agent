@@ -224,7 +224,13 @@ def main():
                         elif eff > 0.005 and hx in ('#ffffff', '#000000'):
                             # 완전 투명(알파 0)은 시각 무의미 — 바인딩 대상 아님
                             sacols.append((hx, round(eff, 2)))
-                cols = [c for c in cols if c not in ('#ffffff', '#000000')]
+                # 🔴 fill 의 순백/순검은 검사 대상 (2026-08-25 사용자: "컬러 토큰 바인딩이
+                # 빠져있는 것들이 있다") — TEXT 순검=text-primary·순백=on-brand, 표면 순백=
+                # bg-primary 로 bind 가 확정 바인딩하므로 미바인딩 잔존은 FAIL. 예외: 불투명
+                # 순검 '면'(다크 앵커/에셋 모호)만 종전대로 제외. stroke 는 오스냅 회귀
+                # (2026-08-10/08-24) 탓에 종전대로 제외.
+                if t != 'TEXT':
+                    cols = [c for c in cols if c != '#000000']
                 scols = [c for c in scols if c not in ('#ffffff', '#000000')]
                 if cols and _id_allowed:
                     cols = []

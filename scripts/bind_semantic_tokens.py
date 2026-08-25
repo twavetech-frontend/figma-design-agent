@@ -173,9 +173,29 @@ def walk(src, inst=False, d=0):
                 stats['이미 바인딩'] += 1; continue
             h = to_hex(col)
             if h in ('#000000', '#ffffff'):
-                # 순검정/순백은 fill/stroke 모두 스킵 — 검정 stroke 가 border-primary 로
+                # stroke 는 순검정/순백 스킵 유지 — 검정 stroke 가 border-primary 로
                 # (2026-08-10), 순백 X stroke 가 bg-brand-primary 라벤더로 (2026-08-24
-                # 이미지 뷰어) 오스냅되던 회귀
+                # 이미지 뷰어) 오스냅되던 회귀.
+                # 🔴 fill 은 정확 토큰으로 명시 바인딩 (2026-08-25 사용자: "컬러 토큰 바인딩이
+                # 빠져있는 것들이 있다" — 순백/순검 무조건 스킵이 TEXT 검정(text-primary)·
+                # 루트/HI 흰 배경(bg-primary)·카드 위 흰 텍스트(text-primary_on-brand)를
+                # 리터럴로 남기던 구멍). 근사 pick 이 아니라 1:1 확정 토큰이라 오스냅 없음.
+                if slot == 'fill':
+                    if t == 'TEXT':
+                        sem = 'text-primary' if h == '#000000' else 'text-primary_on-brand'
+                    elif h == '#ffffff':
+                        sem = 'bg-primary'
+                    else:
+                        sem = None  # 불투명 순검정 면은 의미 모호(다크 앵커/에셋) — 스킵 유지
+                    fn3 = full_name(sem) if sem else None
+                    if fn3:
+                        call('set_bound_variables', {'nodeId': n['id'], 'bindings': {f'{slot}s/{i}': fn3}})
+                        chk3 = (call('get_bound_variables', {'nodeId': n['id']}) or {}).get('boundVariables') or {}
+                        arr3 = chk3.get(f'{slot}s') or []
+                        if i < len(arr3) and arr3[i]:
+                            stats[f'순색 바인딩({sem})'] += 1
+                        else:
+                            stats['순색 실패'] += 1
                 continue
             bind_paint(n['id'], slot, i, col, cls_of(t, slot), False,
                        stroke_weight=(n.get('strokeWeight') if slot == 'stroke' else None))
