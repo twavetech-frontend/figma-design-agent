@@ -312,6 +312,11 @@ def main():
                 if 14 <= _h <= 34 and 0 < _w <= 130 and _rad >= max(10, _h / 2 - 2) \
                         and len(_txts) == 1 and len(_kids) == 1:
                     _lbl = (_txts[0].get('characters') or '').strip()
+                    # 'n/N' 카운트 오버레이(피드 캐러셀 표준 — 2026-08-21 사용자 확정 룰 14)는
+                    # raw 가 정본 — Badge 교체 대상 아님
+                    import re as _re
+                    if _re.fullmatch(r'\d+\s*/\s*\d+', _lbl or ''):
+                        _lbl = ''
                     if _lbl and len(_lbl) <= 8 and not _lbl.isdigit():
                         bad_paint.append((disp, t, 'raw-badge-suspect',
                                           [f'라벨 {_lbl!r} — DS Badge/Pill 인스턴스로 교체(Color prop)']))
