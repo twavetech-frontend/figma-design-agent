@@ -740,9 +740,23 @@ def swap_cta(root_tree):
             continue
         bf = [f for f in (info.get('fills') or []) if isinstance(f, dict) and f.get('type') == 'SOLID'
               and f.get('visible') is not False]
-        # 원본 raw 버튼 fill 이 밝으면(연보라 등) Disabled 상태 (2026-08-14 리뷰작성 실측)
+        # 🔴 흰/무채 fill + 무채 보더 = Outline/Default (2026-08-25 프로필 관리/공유 실측 —
+        # 흰+보더 버튼이 '밝은 fill→Disabled Primary' 로 오판돼 연보라가 되던 구멍)
+        _bs2 = [s for s in (info.get('strokes') or []) if isinstance(s, dict)
+                and s.get('type') == 'SOLID' and s.get('visible') is not False]
+        def _chr2(paints):
+            if not paints:
+                return 0
+            c0 = paints[0].get('color', {})
+            vs = [round(c0.get(k, 0) * 255) for k in 'rgb']
+            return max(vs) - min(vs)
+        hier2 = 'Primary'
+        if _bs2 and _chr2(_bs2) < 20 and _chr2(bf) < 20:
+            hier2 = 'Outline'
+        # 원본 raw 버튼 fill 이 밝으면(연보라 등) Disabled 상태 (2026-08-14 리뷰작성 실측).
+        # Outline(흰+무채 보더)은 Disabled 판정 대상 아님 — Default 유지.
         state = 'Default'
-        if bf:
+        if bf and hier2 == 'Primary':
             c = bf[0].get('color', {})
             if (c.get('r', 0) + c.get('g', 0) + c.get('b', 0)) / 3 > 0.72:
                 state = 'Disabled'
@@ -751,11 +765,11 @@ def swap_cta(root_tree):
         ab = new_instance(AB_SEC, pid, idx)
         call('delete_node', {'nodeId': b['id']})
         call('set_instance_properties', {'nodeId': ab, 'properties': {
-            'Hierarchy': 'Primary', 'Size': '2xl', 'State': state, 'Label#17537:16': label,
+            'Hierarchy': hier2, 'Size': '2xl', 'State': state, 'Label#17537:16': label,
             '➡️ Icon trailing#3287:2338': False, '⬅️ Icon leading#3287:1577': False,
             'Loading text#8994:0': False}})
         call('set_layout_sizing', {'nodeId': ab, 'horizontal': 'FILL'})
-        print(f'  [swap] Action Button 2xl "{label}" ← raw Button ({b["id"]})')
+        print(f'  [swap] Action Button 2xl {hier2} "{label}" ← raw Button ({b["id"]})')
         done.append(ab)
     return done
 
