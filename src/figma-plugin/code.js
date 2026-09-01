@@ -2691,6 +2691,31 @@ async function setCornerRadius(params) {
     throw new Error("Missing nodeId parameter");
   }
 
+  // MCP 스키마의 topLeftRadius/... 개별 파라미터 지원 (2026-09-01 — 스키마-구현 불일치로
+  // 시트 상단 radius 가 조용히 소실되던 갭. per-corner 값 직접 대입, radius 불필요)
+  var perCorner = ["topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"]
+    .filter(function (k) { return params && params[k] !== undefined; });
+  if (perCorner.length > 0) {
+    const nodePC = await figma.getNodeByIdAsync(nodeId);
+    if (!nodePC) {
+      throw new Error(`Node not found with ID: ${nodeId}`);
+    }
+    if (!("topLeftRadius" in nodePC)) {
+      throw new Error(`Node does not support individual corner radii: ${nodeId}`);
+    }
+    for (var pi = 0; pi < perCorner.length; pi++) {
+      nodePC[perCorner[pi]] = params[perCorner[pi]];
+    }
+    if (radius !== undefined) {
+      // radius 가 함께 오면 나머지 미지정 코너에 적용
+      var all = ["topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"];
+      for (var ai = 0; ai < all.length; ai++) {
+        if (perCorner.indexOf(all[ai]) === -1) nodePC[all[ai]] = radius;
+      }
+    }
+    return { id: nodePC.id, name: nodePC.name, corners: perCorner };
+  }
+
   if (radius === undefined) {
     throw new Error("Missing radius parameter");
   }
