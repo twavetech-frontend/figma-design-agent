@@ -394,6 +394,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   ds_catalog.NAV_ICON_KEYS 등록이 정답, 2026-07-14 사용자 룰. edit-01 키 등록됨).
 - **0-X** — **HomeIndicator 인스턴스는 가로 FILL** (2026-08-04 사용자 룰 — FIXED 360 잔존 회귀
   금지). post-fix `_enforce_home_indicator_fill_live` 가 FILL/루트 폭 재단언.
+- **0-Y (2026-09-01 사용자 룰)** — 🔴 캡처/PRD/와이어에 **키보드가 보이면 raw 로 그리지 말 것**
+  — DS **'Keyboard'** 인스턴스(iOS HIG, DS 파일 마스터 18498:5352). 키는
+  `ds_catalog.COMPONENT_KEYS["Keyboard"]` 조회(미확보 시 파일 내 인스턴스 clone / 사용자에게
+  DS 복사 요청 후 키 채움). 상세: `rule 0-Y`.
 - **0-J-2** — 🔴 **생애주기 상태 나열(준비중/참여중/진행중/스테이지 완료 등)은 탭이 아니라
   진행 step 표시다 (2026-07-14 사용자)** — underline tabs 로 그리지 말고 step indicator
   (현재 단계 강조 + 단계 도트/체크 + 연결 흐름)로. 기획서 생애주기(모집→마감→진행→종료)와 대조해 판별.

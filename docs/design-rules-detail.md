@@ -322,6 +322,22 @@
 > - 캡처 위 기획 주석(스텝 마커·스펙 텍스트)은 GUI 산출물에서 제외
 > 과거 is_document_capture 모드는 이 규칙 위반으로 삭제됨 — 다시 만들지 말 것.
 
+> 🔴 **규칙 0-Y — 키보드 = DS 'Keyboard' 컴포넌트, raw 재구성 금지 (2026-09-01 사용자 룰)**
+>
+> 사용자 명시: *"PRD 나 PSD 그리고 와이어프레임 이미지에서 키보드가 있으면 키보드 UI 를
+> 그릴 필요 없어! 이 컴포넌트 키값 규칙과 코드에 저장해서 키보드는 이 컴포넌트를 쓰도록 해.
+> DS 시스템에 있는 거야."* — iOS 한글/영문 키보드를 raw 키 프레임으로 재구성하던 관행 폐기.
+>
+> **규칙:** 캡처/PRD/와이어에 온스크린 키보드가 보이면 키·글리프를 직접 그리지 말고
+> **DS 'Keyboard' 컴포넌트 인스턴스**를 넣는다 (iOS HIG 키보드).
+> - 위치: Imin Design System 파일(`SsgiLsXVMkf0wv8OhRGwks`) 마스터 `18498:5352`
+>   (인스턴스 예시 `19821:2076`). 프롭: `showAccessoryBar` / `showSuggestions` / `Type=Default`.
+> - 키 조회: `ds_catalog.COMPONENT_KEYS["Keyboard"]` — 게시 키 미확보 상태면 ① 작업 파일 내
+>   기존 Keyboard 인스턴스 clone ② 없으면 사용자에게 DS 파일에서 복사 요청 후
+>   `get_instance_properties` 로 componentKey 를 읽어 카탈로그에 채운다.
+> - 기존 관행이던 iOS 키패드/키보드 raw 조립(키 h46·gap6 재구성)은 숫자 키패드 등 DS 에
+>   대응 컴포넌트가 없는 경우에만 잔존 허용.
+
 > 🔴 **절대 규칙 0-L-2 — 레거시 아이콘 레이어명 정규화: `ico/...` → `ic_...` (2026-08-24 사용자 룰)**
 >
 > 사용자 명시: *"레이어 중에 'ico/empty/chat' 이런 이름 — ico 를 ic 로, / 를 _ 로 바꾸기.

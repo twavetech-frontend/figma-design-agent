@@ -38,6 +38,15 @@ COMPONENT_KEYS = {
     # 이 키로 instance 를 박아 ⚠ 에러 프레임이 되고 code.js 이름 기반 폴백까지 억제되던
     # 회귀. 신 키는 DS 파일(Imin Design System) 연결 상태에서 get_local_components 실측 추출.
     "Status Bar":           "13557b1ed59ce3f8c2dfbf9df46ec8fa7f772486",  # iPhone 9:41
+    # 🔴 iOS Keyboard (2026-09-01 사용자 룰): 캡처/PRD/와이어에 키보드가 보이면 raw 키
+    # 재구성 절대 금지 — DS 'Keyboard' 컴포넌트 인스턴스를 쓴다 (iOS HIG 키보드,
+    # Imin Design System 파일 SsgiLsXVMkf0wv8OhRGwks 마스터 18498:5352 / 인스턴스 예시
+    # 19821:2076, 프롭: showAccessoryBar / showSuggestions / Type=Default).
+    # ⚠️ 게시 componentKey 미확보(미게시 추정 — search_design_system 미노출, Code Connect
+    # 플랜 제한). 사용 경로: ① 작업 파일에 기존 Keyboard 인스턴스가 있으면 clone,
+    # ② 없으면 사용자에게 DS 파일에서 인스턴스 복사 요청 후 그 인스턴스에서
+    # get_instance_properties 로 componentKey 를 읽어 아래 값을 채울 것.
+    "Keyboard":             "",  # TODO: 인스턴스 확보 시 componentKey 기입
 
     # ── Bottom Tab Bar (DS 'Tab bar' set, 2026-06-02 추출) ──────
     # variant prop "Selected": 1.홈 / 2 커뮤니티 / 3 스테이지 / 4 라운지 / 5 나.

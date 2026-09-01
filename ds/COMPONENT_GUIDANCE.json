@@ -593,6 +593,38 @@
           "description": "다크 반투명 raw pill 로 직접 그리지 말 것 (2026-08-20 사용자 지적 — 화면 3장 raw 조립 회귀). 키가 카탈로그에 없으면 search_design_system 으로 확보해 등록이 정답."
         }
       ]
+    },
+    {
+      "name": "Keyboard",
+      "rule": "0-Y",
+      "aliases": [
+        "키보드",
+        "keyboard",
+        "온스크린 키보드"
+      ],
+      "keywords": [
+        "keyboard",
+        "키보드",
+        "자판",
+        "keypad"
+      ],
+      "catalogPrefixes": [
+        "Keyboard"
+      ],
+      "guidance": [
+        {
+          "do": true,
+          "description": "캡처/PRD/와이어에 온스크린 키보드가 보이면 DS 'Keyboard' 인스턴스(iOS HIG)를 사용 — Imin DS 파일(SsgiLsXVMkf0wv8OhRGwks) 마스터 18498:5352, 인스턴스 예시 19821:2076. 프롭: showAccessoryBar / showSuggestions / Type=Default. (2026-09-01 사용자 룰)"
+        },
+        {
+          "do": false,
+          "description": "키·글리프를 raw 프레임으로 재구성하지 말 것 — DS 대응이 없는 숫자 키패드 등만 raw 잔존 허용."
+        },
+        {
+          "do": true,
+          "description": "componentKey 미확보 상태(미게시 추정): 작업 파일 내 기존 Keyboard 인스턴스를 clone 하거나, 사용자에게 DS 파일에서 복사를 요청한 뒤 get_instance_properties 로 키를 읽어 ds_catalog.COMPONENT_KEYS['Keyboard'] 에 채울 것."
+        }
+      ]
     }
   ]
 }
