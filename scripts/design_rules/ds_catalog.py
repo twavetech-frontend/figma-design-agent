@@ -42,11 +42,11 @@ COMPONENT_KEYS = {
     # 재구성 절대 금지 — DS 'Keyboard' 컴포넌트 인스턴스를 쓴다 (iOS HIG 키보드,
     # Imin Design System 파일 SsgiLsXVMkf0wv8OhRGwks 마스터 18498:5352 / 인스턴스 예시
     # 19821:2076, 프롭: showAccessoryBar / showSuggestions / Type=Default).
-    # ⚠️ 게시 componentKey 미확보(미게시 추정 — search_design_system 미노출, Code Connect
-    # 플랜 제한). 사용 경로: ① 작업 파일에 기존 Keyboard 인스턴스가 있으면 clone,
-    # ② 없으면 사용자에게 DS 파일에서 인스턴스 복사 요청 후 그 인스턴스에서
-    # get_instance_properties 로 componentKey 를 읽어 아래 값을 채울 것.
-    "Keyboard":             "",  # TODO: 인스턴스 확보 시 componentKey 기입
+    # ⚠️ 미게시 컴포넌트 확정(2026-09-01 실측: getMainComponentAsync 로도 key resolve 불가)
+    # → key import 자체가 불가능. **정본 경로 = 파일 내 Keyboard 인스턴스 clone**
+    # (V2.16 파일엔 4096:70073 존재). 없으면 사용자에게 DS 파일에서 복사 요청.
+    # 프롭 정확명: 'Show accessory bar#6238:6' / 'Show suggestions#6238:0' / 'Type'(Default).
+    "Keyboard":             "",  # 미게시 — 빈 값 유지, clone 경로 사용
 
     # ── Bottom Tab Bar (DS 'Tab bar' set, 2026-06-02 추출) ──────
     # variant prop "Selected": 1.홈 / 2 커뮤니티 / 3 스테이지 / 4 라운지 / 5 나.
