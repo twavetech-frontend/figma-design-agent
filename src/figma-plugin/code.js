@@ -1806,46 +1806,6 @@ function _findFrameAtPoint(conn, pt) {
   return best || nearest;
 }
 
-function _magnetPoint(node, magnet) {
-  var bb = node.absoluteBoundingBox;
-  if (!bb) return null;
-  var cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
-  switch (magnet) {
-    case "TOP": return { x: cx, y: bb.y };
-    case "BOTTOM": return { x: cx, y: bb.y + bb.height };
-    case "LEFT": return { x: bb.x, y: cy };
-    case "RIGHT": return { x: bb.x + bb.width, y: cy };
-    default: return { x: cx, y: cy };
-  }
-}
-
-async function _connectorEndpointPoint(conn, ep) {
-  if (!ep) return null;
-  if (ep.endpointNodeId) {
-    var n = await figma.getNodeByIdAsync(ep.endpointNodeId);
-    if (n && !n.removed) return _magnetPoint(n, ep.magnet);
-    return null;
-  }
-  if (ep.position) return _absPoint(conn, ep.position);
-  return null;
-}
-
-// ELBOWED 커넥터의 직각 경로 근사 (2026-09-02 사용자 요청 — API 가 실제 꺾임점을
-// 노출하지 않아 시작 마그넷 방향 기반 ㄷ자 라우팅으로 근사). STRAIGHT 는 [].
-function _elbowWaypoints(a, aMagnet, b) {
-  if (!a || !b) return [];
-  var horizontal;
-  if (aMagnet === "LEFT" || aMagnet === "RIGHT") horizontal = true;
-  else if (aMagnet === "TOP" || aMagnet === "BOTTOM") horizontal = false;
-  else horizontal = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y);
-  if (horizontal) {
-    var midX = (a.x + b.x) / 2;
-    return [{ x: a.x, y: a.y }, { x: midX, y: a.y }, { x: midX, y: b.y }];
-  }
-  var midY = (a.y + b.y) / 2;
-  return [{ x: a.x, y: a.y }, { x: a.x, y: midY }, { x: b.x, y: midY }];
-}
-
 async function _flyToConnectorTarget(conn) {
   if (_connectorFlying) return;
   var end = conn.connectorEnd;
@@ -1862,18 +1822,9 @@ async function _flyToConnectorTarget(conn) {
   if (!target) return;
   var bbox = target.absoluteBoundingBox;
   if (!bbox || bbox.width <= 0 || bbox.height <= 0) return;
-  // 직각(ELBOWED) 화살표면 그 경로를 따라 팬 (2026-09-02 사용자 요청)
-  var waypoints = [];
-  try {
-    if (conn.connectorLineType === "ELBOWED") {
-      var aPt = await _connectorEndpointPoint(conn, conn.connectorStart);
-      var bPt = await _connectorEndpointPoint(conn, end);
-      waypoints = _elbowWaypoints(aPt, conn.connectorStart && conn.connectorStart.magnet, bPt);
-    }
-  } catch (e) { /* 경로 근사 실패 시 직선 폴백 */ }
   _connectorFlying = true;
   try {
-    await animateViewportTo(bbox, 1.5, "easeInOutQuad", waypoints);
+    await animateViewportTo(bbox, 1.5, "easeInOutQuad");
   } finally {
     _connectorFlying = false;
   }
@@ -2194,7 +2145,7 @@ function _tween(durationMs, ease, onStep) {
 // 도착하며 fit 줌으로 복귀 — 지도앱식 zoom-out-and-in.
 // valley 는 기본 0.25, 단 출발/도착 줌이 이미 그보다 낮으면 그 값(줌인 딥 방지).
 // 전 구간 로그 보간(줌은 곱셈 공간), 종료 시 정확값 스냅.
-async function animateViewportTo(bbox, durationSec, easingName, waypoints) {
+async function animateViewportTo(bbox, durationSec, easingName) {
   var FIT_MARGIN = 1.12; // scrollAndZoomIntoView 와 유사한 여백
   var c0 = { x: figma.viewport.center.x, y: figma.viewport.center.y };
   var z0 = figma.viewport.zoom;
@@ -2203,36 +2154,6 @@ async function animateViewportTo(bbox, durationSec, easingName, waypoints) {
   var pxH = vb.height * z0;
   var z1 = Math.min(pxW / (bbox.width * FIT_MARGIN), pxH / (bbox.height * FIT_MARGIN));
   var c1 = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
-
-  // 엘보 커넥터 경로 추종 (2026-09-02 사용자 요청): waypoints 가 있으면 팬을
-  // c0 → 웨이포인트들 → c1 폴리라인의 누적 길이 비례로 보간 — 직각 화살표를 따라 이동.
-  var path = [c0];
-  for (var wi = 0; waypoints && wi < waypoints.length; wi++) path.push(waypoints[wi]);
-  path.push(c1);
-  var segLen = [];
-  var totalLen = 0;
-  for (var si = 0; si < path.length - 1; si++) {
-    var dxs = path[si + 1].x - path[si].x;
-    var dys = path[si + 1].y - path[si].y;
-    var L = Math.sqrt(dxs * dxs + dys * dys);
-    segLen.push(L);
-    totalLen += L;
-  }
-  function pointAlongPath(e) {
-    if (totalLen <= 0) return c1;
-    var s = e * totalLen;
-    for (var pi = 0; pi < segLen.length; pi++) {
-      if (s <= segLen[pi] || pi === segLen.length - 1) {
-        var f = segLen[pi] > 0 ? Math.min(1, s / segLen[pi]) : 1;
-        return {
-          x: path[pi].x + (path[pi + 1].x - path[pi].x) * f,
-          y: path[pi].y + (path[pi + 1].y - path[pi].y) * f
-        };
-      }
-      s -= segLen[pi];
-    }
-    return c1;
-  }
   // 25% valley 딥은 현재 줌이 50% 미만일 때만 (2026-08-20 사용자 룰 개정 — "반대다":
   // 50% 이상으로 보고 있을 땐 딥 없이 z0→z1 직접 보간)
   var useValley = z0 < 0.5;
@@ -2245,7 +2166,10 @@ async function animateViewportTo(bbox, durationSec, easingName, waypoints) {
   var ease = (easingName === "linear") ? linear : easeInOutQuad;
 
   await _tween(durationSec * 1000, ease, function (e) {
-    figma.viewport.center = pointAlongPath(e);
+    figma.viewport.center = {
+      x: c0.x + (c1.x - c0.x) * e,
+      y: c0.y + (c1.y - c0.y) * e
+    };
     var z;
     if (!useValley) {
       z = z0 * Math.pow(z1 / z0, e);                // 딥 없이 직접 보간
