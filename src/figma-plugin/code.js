@@ -2154,10 +2154,11 @@ async function animateViewportTo(bbox, durationSec, easingName) {
   var pxH = vb.height * z0;
   var z1 = Math.min(pxW / (bbox.width * FIT_MARGIN), pxH / (bbox.height * FIT_MARGIN));
   var c1 = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
-  // 25% valley 딥은 현재 줌이 50% **이상**(확대 중)일 때만 (2026-09-02 사용자 재교정 —
-  // "조건이 반대": 확대해서 보고 있을 때 빠졌다 들어가는 게 자연스럽고, 이미 축소 상태면
-  // 딥 없이 z0→z1 직접 보간)
-  var useValley = z0 >= 0.5;
+  // 25% valley 딥 발동 조건 2가지 모두 충족 시 (2026-09-02 사용자 교정 2건):
+  // ① 현재 줌 z0 ≥ 50% (확대 중일 때만 — 축소 상태면 딥 없이 z0→z1 직접 보간)
+  // ② 이동 거리가 현재 뷰포트 폭의 1.2배 이상 (가까운 이동은 딥 없이 — 어지러움 방지)
+  var moveDist = Math.sqrt(Math.pow(c1.x - c0.x, 2) + Math.pow(c1.y - c0.y, 2));
+  var useValley = z0 >= 0.5 && moveDist >= vb.width * 1.2;
   var valley = Math.min(0.25, z0, z1);
 
   function easeInOutQuad(t) {
