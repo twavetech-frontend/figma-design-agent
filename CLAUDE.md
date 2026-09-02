@@ -48,6 +48,17 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
    ✅ **2~4단계 + DS 맵 + 통독 게이트 상태는 `python3 scripts/figma_mcp_client.py doctor` 한 번으로
    통합 진단** (2026-07-08 신설, Astryx doctor 패턴) — 항목별 ✓/⚠/✗ + fix 안내, FAIL≥1 → exit 1,
    `--json` 지원. 준비 절차 검증·문제 발생 시 원인 파악에 이걸 먼저 실행할 것.
+4.5. 🔴 **활성 페이지 인덱싱 (2026-09-02 사용자 룰 — 기존 본/에셋 탐색 가속)** — 플러그인이
+   연결되면 **플러그인이 실행된 그 페이지 하나**를 스캔해 인덱스를 만들어 둔다 (파일 전체 금지 —
+   너무 커짐). 절차: ① Figma MCP `get_metadata(fileKey)` 로 top-level 페이지 확인(⚠️ 노드의
+   parentId 는 페이지가 아니라 SECTION 일 수 있음) → ② 활성 페이지 id 로
+   `get_metadata(fileKey, nodeId=<pageId>)` XML 을 파일로 받아 →
+   ③ `python3 scripts/index_figma_page.py <xml파일> --tag <파일태그>` 로
+   `scripts/_figma_index_<tag>.json` 생성(화면/섹션/에셋/텍스트, gitignore 됨).
+   이후 **변환/생성 요청마다 blueprint·조립 전에
+   `python3 scripts/index_figma_page.py --grep <화면명·에셋 키워드> --tag <태그>` 가 기존 본
+   전수 확인의 1순위** — 플러그인 find_nodes_by_name(0건 오탐 실적)·scan_text_nodes(60s
+   타임아웃)보다 신뢰 경로. 벡터 에셋(ico_*/img_*)이 인덱스에 있으면 crop 이식 금지.
 5. 🔴 **기획 문서 전체 학습 (맥락 100% — 2026-06-04 사용자 필수 룰)** — 디자인 생성 전,
    `src/기획/` 폴더의 **모든 기획 HTML(유스케이스 스펙)을 읽어 imin 서비스 맥락을 완전히
    이해한 상태**로 만든다. 🔴 **목표: 준비가 끝나면 사용자가 곧바로 "메인화면 그려"라고만 해도
