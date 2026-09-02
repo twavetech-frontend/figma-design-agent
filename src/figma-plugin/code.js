@@ -1824,7 +1824,7 @@ async function _flyToConnectorTarget(conn) {
   if (!bbox || bbox.width <= 0 || bbox.height <= 0) return;
   _connectorFlying = true;
   try {
-    await animateViewportTo(bbox, 1.5, "easeInOutQuad");
+    await animateViewportTo(bbox, 1.5, "easeOutQuad");
   } finally {
     _connectorFlying = false;
   }
@@ -2097,7 +2097,7 @@ async function focusNode(params) {
   var bbox = ("absoluteBoundingBox" in target) ? target.absoluteBoundingBox : null;
   if (duration > 0 && bbox && bbox.width > 0 && bbox.height > 0) {
     animated = true;
-    await animateViewportTo(bbox, duration, (params && params.easing) || "easeInOutQuad");
+    await animateViewportTo(bbox, duration, (params && params.easing) || "easeOutQuad");
   } else {
     figma.viewport.scrollAndZoomIntoView([target]);
   }
@@ -2164,8 +2164,14 @@ async function animateViewportTo(bbox, durationSec, easingName) {
   function easeInOutQuad(t) {
     return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   }
+  // 기본 easing (2026-09-02 사용자: "멈출 때 아주 부드럽게") — 감속 곡선
+  function easeOutQuad(t) {
+    return 1 - (1 - t) * (1 - t);
+  }
   function linear(t) { return t; }
-  var ease = (easingName === "linear") ? linear : easeInOutQuad;
+  var ease = (easingName === "linear") ? linear
+    : (easingName === "easeInOutQuad") ? easeInOutQuad
+    : easeOutQuad;
 
   await _tween(durationSec * 1000, ease, function (e) {
     figma.viewport.center = {
