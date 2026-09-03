@@ -814,17 +814,26 @@ def assert_spec_applied(spec, node_map):
                                          'height': s.get('height') or n.get('height')})
                     fixed += 1
                     break
-            # 오토레이아웃 파라미터
+            # 오토레이아웃 파라미터 — layoutMode 자체도 검사 (2026-09-03 AI Body 실사고:
+            # batch_build 가 HORIZONTAL spec 을 VERTICAL 로 만들어 세로바 옆 행들이 아래로 쌓임)
             if s.get('layoutMode'):
                 al = {}
+                if (n.get('layoutMode') or '').upper() != s['layoutMode'].upper():
+                    al['layoutMode'] = s['layoutMode']
                 for k in ('paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom', 'itemSpacing'):
                     want = s.get(k)
                     if want is not None and abs((n.get(k) or 0) - want) > 1:
                         al[k] = want
                 if al:
-                    al.update({'nodeId': nid, 'layoutMode': s.get('layoutMode')})
+                    al.update({'nodeId': nid, 'layoutMode': s['layoutMode']})
                     call('set_auto_layout', al)
                     fixed += 1
+            # fills 명시 spec (빈 배열 = 투명 의도) — batch_build 기본 흰 fill 함정 백스톱
+            if s.get('fills') == [] and any(
+                    isinstance(pp, dict) and pp.get('visible') is not False
+                    for pp in n.get('fills') or []):
+                call('set_fill_color', {'nodeId': nid, 'r': 1, 'g': 1, 'b': 1, 'a': 0})
+                fixed += 1
             # sizing
             for axis, key in (('horizontal', 'layoutSizingHorizontal'), ('vertical', 'layoutSizingVertical')):
                 want = s.get(key)
