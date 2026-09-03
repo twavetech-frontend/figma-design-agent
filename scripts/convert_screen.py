@@ -1032,8 +1032,12 @@ def diagnose(src_id, gen_id):
         # 텍스트 라벨 없는 아이콘 버튼(btn_add/btn_send 등)도 Action Button 대상 아님 — 오탐 제외
         # (2026-08-24 채팅 상세 실측: 입력바 첨부/전송 아이콘 버튼이 raw-button 으로 고발됨)
         # 무chrome(fill·stroke 없음) 아이콘+텍스트 액션('나가기')도 raw 정본 — swap skip 과 판정 공유
-        _has_label = any((c.get('type') == 'TEXT' and (c.get('characters') or '').strip())
-                         for c in (n.get('children') or []))
+        # 리액션 칩(이모지/짧은 카운트 라벨만: '👏'+'2') = 콘텐츠 요소 — R23 역할 기반 오탐 제외
+        # (2026-09-03 05_stagedetail_1_1_4 검증런 실측: 박수 칩 2건이 raw-button 고발됨)
+        _labels = [(c.get('characters') or '').strip() for c in (n.get('children') or [])
+                   if c.get('type') == 'TEXT' and (c.get('characters') or '').strip()]
+        _reactionish = _labels and all(len(l) <= 2 and not l.isalpha() for l in _labels)
+        _has_label = bool(_labels) and not _reactionish
         _has_chrome = any(isinstance(f, dict) and f.get('type') == 'SOLID'
                           and f.get('visible') is not False
                           for f in (n.get('fills') or []) + (n.get('strokes') or []))
