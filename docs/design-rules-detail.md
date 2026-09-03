@@ -1961,5 +1961,10 @@
 > | INSTANCE `resize_node` | 내부가 스케일되지 않고 **크롭**됨 (도토리 40→18, Status Bar HUG 변형과 동일 클래스) | `ds_convert_lib.instance_as_image` (고배율 export→이미지 fill) 또는 detach 후 처리 |
 > | 벡터 clone 이식 | clone→insert→move 시 BOOLEAN/그룹 **내부 자식 좌표가 시프트**돼 불리언이 조각남 (스파클 별→삼각형 실사고). 판정 전에 **원본 단독 렌더와 비교**할 것 — 원본이 원래 그 모양일 수 있다(왕관 Badge 오판 사례) | `ds_convert_lib.clone_vector_safe` (이식 후 자식 좌표 병렬 복원). 아이콘은 벡터 정본 — 이미지 fill 우회 금지(사진 콘텐츠 전용) |
 >
-> **완료 게이트(변환/개조 트랙):** verify_bindings PASS + `region_diff` 전 구역 통과(초과 구역은
-> 크롭 Read + 색 진단 문장 해소/설명) 없이 완료 보고 금지. convert_screen 은 verify 후 자동 실행.
+> **완료 게이트(변환/개조 트랙) — `python3 scripts/qa_sweep.py <genId> <refId> [--allow ...]` 원커맨드:**
+> 검사 4차원(① verify_bindings 토큰 ② region_diff 면·색 ③ icon_sheet 아이콘 형태·크기
+> ④ TEXT 인벤토리 크기·색 팔레트)을 한 번에 실행한다. **완료 보고의 정의 = exit 0 +
+> requiredActions 의 이미지 전부 Read + CHECK 항목 전부 해소 또는 정당한 차이로 설명.**
+> 게이트 낱개 통과가 아니라 requiredActions 가 비어야 완료다 (2026-09-03 사용자 진단
+> "계속 수정해야 될 부분을 못 찾는다" — 기억나는 검사만 돌리는 구조 자체를 봉합).
+> 수리 1건 후에는 같은 원인 전수 스캔 + qa_sweep 재실행. convert_screen 은 verify+diff 를 자동 실행.
