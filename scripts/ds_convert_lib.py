@@ -674,3 +674,115 @@ def convert_struct_groups(root_id):
     if any(stats.values()):
         print(f'  [group→frame] 구조 GROUP 전환 {stats["frame"]} (스택 {stats["stacked"]} / overlay {stats["overlay"]})')
     return stats
+
+
+# ── 8-D: rebuild 트랙 판별·추출 (2026-09-03 사용자 채택) ─────────────────────
+# 소스가 이미지 캡처가 아닌 **기존 벡터 디자인**이면 "트리 변형"은 3좌표계 충돌로 취약하다.
+# 겹침/절대배치 블록이 많은 소스는 변형하지 말고: 캡처 Read(시각 참조) + 트리 실측(콘텐츠 1:1)
+# → DS 문법으로 새로 그리기 → 벡터/번역불가 블록만 원본 clone 이식.
+
+def _stackable(kids_boxes):
+    """convert_struct_groups 와 동일한 '스택 번역 가능' 판정 (자식 2~8, 한 축 비겹침)."""
+    if not (2 <= len(kids_boxes) <= 8):
+        return False
+    for axis, ln in (('y', 'height'), ('x', 'width')):
+        spans = sorted(((b.get(axis) or 0), (b.get(axis) or 0) + (b.get(ln) or 0))
+                       for b in kids_boxes)
+        if all(spans[i + 1][0] >= spans[i][1] - 1 for i in range(len(spans) - 1)):
+            return True
+    return False
+
+
+def list_transplant_blocks(root_id):
+    """이식(clone) 대상 블록 목록: 벡터-only 그룹 / 아이콘(is_iconish) / 스택 번역 불가
+    겹침 그룹. 반환: [{'id','name','kind','x','y','w','h'}] (x/y 는 루트 상대)."""
+    t = fetch_tree(root_id)
+    if not t:
+        return []
+    rb = t.get('absoluteBoundingBox') or {}
+    out = []
+
+    def w(n, d=0):
+        if d > 11 or (n.get('id') or '').startswith('I'):
+            return
+        kids = n.get('children') or []
+        if n.get('type') == 'GROUP':
+            bb = n.get('absoluteBoundingBox') or {}
+            vec_only = all(c.get('type') in ('VECTOR', 'BOOLEAN_OPERATION', 'ELLIPSE',
+                                             'LINE', 'SLICE') for c in kids) if kids else True
+            iconish = is_iconish(n.get('name'), bb.get('width'), bb.get('height'))
+            boxes = [c.get('absoluteBoundingBox') or {} for c in kids]
+            kind = ('vector' if vec_only else 'icon' if iconish
+                    else 'untranslatable' if not _stackable(boxes) else None)
+            if kind:
+                out.append({'id': n['id'], 'name': n.get('name'), 'kind': kind,
+                            'x': round((bb.get('x') or 0) - (rb.get('x') or 0)),
+                            'y': round((bb.get('y') or 0) - (rb.get('y') or 0)),
+                            'w': round(bb.get('width') or 0), 'h': round(bb.get('height') or 0)})
+                return  # 바깥 블록 통째 — 내부는 안 내려감
+        for c in kids:
+            w(c, d + 1)
+
+    w(t)
+    return out
+
+
+def assess_rebuild_track(root_id):
+    """변형 vs rebuild 트랙 판별. 스택 번역 불가 그룹 ≥3 또는 구조 그룹 대비 ≥40% 면
+    rebuild 권고 (2026-09-03 아람이상세 실측: untranslatable 4/14 로도 1시간 수리 루프).
+    반환: {'untranslatable','struct_groups','ratio','recommend_rebuild','transplants'}."""
+    blocks = list_transplant_blocks(root_id)
+    unt = [b for b in blocks if b['kind'] == 'untranslatable']
+    t = fetch_tree(root_id) or {}
+    n_struct = [0]
+
+    def w(n, d=0):
+        if d > 11 or (n.get('id') or '').startswith('I'):
+            return
+        kids = n.get('children') or []
+        if n.get('type') == 'GROUP' and kids and not all(
+                c.get('type') in ('VECTOR', 'BOOLEAN_OPERATION', 'ELLIPSE', 'LINE', 'SLICE')
+                for c in kids):
+            bb = n.get('absoluteBoundingBox') or {}
+            if not is_iconish(n.get('name'), bb.get('width'), bb.get('height')):
+                n_struct[0] += 1
+        for c in kids:
+            w(c, d + 1)
+
+    w(t)
+    ratio = (len(unt) / n_struct[0]) if n_struct[0] else 0.0
+    return {'untranslatable': len(unt), 'struct_groups': n_struct[0],
+            'ratio': round(ratio, 2),
+            'recommend_rebuild': len(unt) >= 3 or ratio >= 0.4,
+            'transplants': blocks}
+
+
+def extract_content_spec(root_id):
+    """rebuild 트랙의 콘텐츠 1:1 근거 — TEXT 전수 실측 (캡처 OCR 금지, 날조 금지 0-E-3).
+    반환: [{'id','chars','size','x','y','w','h','color'}] (x/y 루트 상대)."""
+    t = fetch_tree(root_id)
+    if not t:
+        return []
+    rb = t.get('absoluteBoundingBox') or {}
+    out = []
+
+    def w(n, d=0):
+        if d > 11:
+            return
+        if n.get('type') == 'TEXT':
+            bb = n.get('absoluteBoundingBox') or {}
+            fills = [to_hex(p.get('color', {})) for p in n.get('fills') or []
+                     if isinstance(p, dict) and p.get('type') == 'SOLID'
+                     and p.get('visible') is not False]
+            st = n.get('style') or {}
+            out.append({'id': n['id'], 'chars': n.get('characters') or '',
+                        'size': st.get('fontSize') or n.get('fontSize'),
+                        'x': round((bb.get('x') or 0) - (rb.get('x') or 0)),
+                        'y': round((bb.get('y') or 0) - (rb.get('y') or 0)),
+                        'w': round(bb.get('width') or 0), 'h': round(bb.get('height') or 0),
+                        'color': fills[0] if fills else None})
+        for c in n.get('children') or []:
+            w(c, d + 1)
+
+    w(t)
+    return out

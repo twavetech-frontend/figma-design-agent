@@ -463,6 +463,12 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   plain frame 허용 = 오버레이 전용 컨테이너뿐 — verify `plain-frame-suspect` 가 차단
   (기존 변환본 루트는 소급 제외). 🔴 **Status Bar·Tool Bar 는 오버레이가 아니다 — flow 상단
   자식이 정본(개발 구현 동일), ABSOLUTE 금지** — verify `bar-absolute-positioning` 이 차단.
+- **8-D (2026-09-03 사용자 채택)** — 🔴 소스가 **기존 벡터 디자인**(구형 트리)이고 스택 번역
+  불가(겹침/절대배치) 그룹이 많으면 트리 변형 금지 → **rebuild 트랙**: 캡처 Read(시각 참조)
+  + `extract_content_spec` 트리 실측(콘텐츠 1:1, OCR 금지) → blueprint 새로 작성(DS 문법) →
+  build → 벡터/번역불가 블록만 원본 clone 이식(`list_transplant_blocks`) → bind+verify+대조.
+  convert_screen 이 `assess_rebuild_track` 으로 자동 판별·차단(exit 2, bypass `--force-convert`).
+  상세: `rule 8-D`.
 - **0-Q** — radius>0 frame 은 `clipsContent:true` 필수. radius 값은 DS 스케일(4/6/8/10/12/14/16/20/24/
   28/32, 완전원형 999)로 — post-fix 가 radius-* 토큰 자동 바인딩.
 - **3/6/7** — Tab Bar 아이템 FILL 균등 + 세로 FILL + 라벨 CENTER (자동 보정 있음 — 라벨 2줄 wrap 회귀 주의).

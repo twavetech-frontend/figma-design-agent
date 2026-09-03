@@ -1161,6 +1161,33 @@ def main():
     y0 = min(s.get('y') or 0 for s in srcs)
     parent = srcs[0].get('parentId')
 
+    # 🔴 8-D rebuild 트랙 판별 (2026-09-03 사용자 채택 — 아람이상세 1시간 수리 루프 교훈):
+    # 소스가 기존 벡터 디자인이고 스택 번역 불가(겹침/절대배치) 그룹이 많으면 "트리 변형"은
+    # 3좌표계 충돌로 산산조각 난다. → 변환을 차단하고 rebuild 워크플로 안내:
+    #   ① 원본 export PNG Read(시각 참조) ② extract_content_spec 실측(콘텐츠 1:1, OCR 금지)
+    #   ③ list_transplant_blocks 목록화 ④ blueprint 새로 작성(DS 인스턴스+오토레이아웃)
+    #   ⑤ build ⑥ 이식 대상 원본 clone→위치 삽입 ⑦ bind+verify+region compare
+    # bypass: --force-convert (단순 리스트형 등 변형이 확실히 안전할 때만).
+    if '--force-convert' not in sys.argv:
+        _rebuild_hits = []
+        for s in srcs:
+            try:
+                a = L.assess_rebuild_track(s['id'])
+            except Exception:
+                continue
+            if a.get('recommend_rebuild'):
+                _rebuild_hits.append((s['id'], s.get('name'), a))
+        if _rebuild_hits:
+            print('🔴 [8-D] rebuild 트랙 권고 — 변형 트랙 차단 (bypass: --force-convert):')
+            for sid_r, nm_r, a in _rebuild_hits:
+                print(f'   {sid_r} "{nm_r}": 번역불가 그룹 {a["untranslatable"]}/{a["struct_groups"]} '
+                      f'(ratio {a["ratio"]}) — 이식 대상 {len(a["transplants"])}블록')
+                for b in a['transplants'][:8]:
+                    print(f'     · [{b["kind"]}] {b["name"]} ({b["id"]}) @({b["x"]},{b["y"]}) {b["w"]}x{b["h"]}')
+            print('   워크플로: 캡처 Read → extract_content_spec(콘텐츠 1:1) → blueprint 새로 작성'
+                  '(DS 문법) → build → transplant clone 이식 → bind+verify+region compare')
+            return 2
+
     # 🔴 같은 페이지 유사 DS본 사전 탐지 (0-G-2 clone-우선 — 2026-08-24 블로그 실측:
     # 페이지에 신 DS 기준 화면이 이미 있는데 구 캡처를 기계 변환해 구 브랜드/구 라이브러리가
     # 잔존한 회귀. 이름 접두 일치 + 393폭 프레임 발견 시 flag — 모델이 clone 트랙 여부 판단)
