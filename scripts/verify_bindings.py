@@ -313,6 +313,8 @@ def main():
                 _h = n.get('height') or 0
                 _w = n.get('width') or 0
                 _rad = n.get('cornerRadius') or 0
+                if not isinstance(_rad, (int, float)):
+                    _rad = 999  # 'mixed'(개별 코너) — pill 의심 판정은 크기/라벨 조건에 맡김
                 _kids = [c for c in (n.get('children') or [])]
                 _txts = [c for c in _kids if c.get('type') == 'TEXT']
                 if 14 <= _h <= 34 and 0 < _w <= 130 and _rad >= max(10, _h / 2 - 2) \
