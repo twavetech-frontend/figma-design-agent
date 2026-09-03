@@ -786,3 +786,110 @@ def extract_content_spec(root_id):
 
     w(t)
     return out
+
+
+# ── 재발 방지 유틸 2종 (2026-09-03 사용자: "재발 방지는 어떻게 할건데?") ──────────
+# 원칙: 메모리(다음에 조심)가 아니라 코드 강제. ① 빌드 spec 무시는 자동 재단언,
+# ② 눈대중 국소 확인은 픽셀 diff 리포트로 대체.
+
+def assert_spec_applied(spec, node_map):
+    """batch_build_screen 직후 spec 의 레이아웃 값(width/height/padding/itemSpacing)이
+    실물에 적용됐는지 대조하고, 무시된 값은 재단언한다 (batch_build 가 width/padding 을
+    조용히 무시하는 계약 구멍의 백스톱 — 2026-09-03 pill 풀폭 393·랩 padding 소실 실사고).
+    spec: batch_build 에 넘긴 blueprint dict / node_map: 결과의 nodeMap(name→id).
+    반환: 재단언 건수."""
+    fixed = 0
+
+    def w(s):
+        nonlocal fixed
+        nid = node_map.get(s.get('name'))
+        if nid:
+            n = call('get_node_info', {'nodeId': nid}) or {}
+            # width/height (FIXED 의도)
+            for k, cur in (('width', n.get('width')), ('height', n.get('height'))):
+                want = s.get(k)
+                if want is not None and cur is not None and abs(cur - want) > 1:
+                    call('resize_node', {'nodeId': nid,
+                                         'width': s.get('width') or n.get('width'),
+                                         'height': s.get('height') or n.get('height')})
+                    fixed += 1
+                    break
+            # 오토레이아웃 파라미터
+            if s.get('layoutMode'):
+                al = {}
+                for k in ('paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom', 'itemSpacing'):
+                    want = s.get(k)
+                    if want is not None and abs((n.get(k) or 0) - want) > 1:
+                        al[k] = want
+                if al:
+                    al.update({'nodeId': nid, 'layoutMode': s.get('layoutMode')})
+                    call('set_auto_layout', al)
+                    fixed += 1
+            # sizing
+            for axis, key in (('horizontal', 'layoutSizingHorizontal'), ('vertical', 'layoutSizingVertical')):
+                want = s.get(key)
+                if want and (n.get(key) or '').upper() != want.upper():
+                    call('set_layout_sizing', {'nodeId': nid, axis: want})
+                    fixed += 1
+        for c in s.get('children') or []:
+            w(c)
+
+    w(spec)
+    if fixed:
+        print(f'  [spec-assert] 빌드가 무시한 spec 값 {fixed}건 재단언')
+    return fixed
+
+
+def region_diff(gen_id, src_id, bands=6, out_dir='scripts/qa_screenshots', thresh=18.0):
+    """gen/src 를 export 해 세로 n 구역 픽셀 diff 스코어를 내고, 스코어 높은 구역의
+    side-by-side 크롭을 저장해 Read 대상으로 들이민다 (국소 크롭 눈대중 확인 대체 —
+    2026-09-03 카드 풀폭·색 흐림을 사용자가 먼저 발견한 실사고의 방지 게이트).
+    반환: [(band_idx, score, crop_path|None)] — score>thresh 구역만 크롭 저장.
+    완료 보고 전 실행 + 저장된 크롭 전부 Read 가 의무."""
+    import base64 as _b64
+    import os as _os
+    from PIL import Image as _Im
+
+    def _export(nid, tag):
+        r = fc.parse_content(fc.call_tool('export_node_as_image',
+                                          {'nodeId': nid, 'format': 'PNG', 'scale': 1}))
+        data = (r.get('raw') or [{}])[0].get('data')
+        p = _os.path.join(out_dir, f'rd_{tag}.png')
+        _os.makedirs(out_dir, exist_ok=True)
+        open(p, 'wb').write(_b64.b64decode(data))
+        return _Im.open(p).convert('RGB')
+
+    g = _export(gen_id, 'gen')
+    s = _export(src_id, 'src')
+    W = 393
+    g2 = g.resize((W, round(g.size[1] * W / g.size[0])))
+    s2 = s.resize((W, round(s.size[1] * W / s.size[0])))
+    H = min(g2.size[1], s2.size[1])
+    bh = H // bands
+    out = []
+    for i in range(bands):
+        y0, y1 = i * bh, min((i + 1) * bh, H)
+        gc = g2.crop((0, y0, W, y1))
+        sc = s2.crop((0, y0, W, y1))
+        gp, sp = gc.load(), sc.load()
+        total = n = 0
+        for yy in range(0, y1 - y0, 4):
+            for xx in range(0, W, 4):
+                a, b = gp[xx, yy], sp[xx, yy]
+                total += (abs(a[0]-b[0]) + abs(a[1]-b[1]) + abs(a[2]-b[2])) / 3
+                n += 1
+        score = round(total / max(n, 1), 1)
+        path = None
+        if score > thresh:
+            cv = _Im.new('RGB', (W * 2 + 10, y1 - y0), (245, 245, 245))
+            cv.paste(sc, (0, 0)); cv.paste(gc, (W + 10, 0))
+            path = _os.path.join(out_dir, f'rd_band{i}.png')
+            cv.save(path)
+        out.append((i, score, path))
+    flagged = [o for o in out if o[2]]
+    print(f'  [region-diff] {bands}구역 스코어: ' + ' '.join(f'{i}:{sc}' for i, sc, _ in out))
+    if flagged:
+        print(f'  [region-diff] 🔴 diff 초과 {len(flagged)}구역 — 크롭 전부 Read 후 해소/설명 의무:')
+        for i, sc, p in flagged:
+            print(f'     band{i} score {sc} → {p}')
+    return out

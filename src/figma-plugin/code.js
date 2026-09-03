@@ -7030,9 +7030,14 @@ async function batchBuildScreen(params) {
       try {
         node = figma.createNodeFromSvg(spec.svgData);
         node.name = spec.name || spec.ds1Name || "icon";
-        var iconW = spec.width || 24;
-        var iconH = spec.height || 24;
-        node.resize(iconW, iconH);
+        // 2026-09-03: spec 에 width/height 가 없으면 svg 원 크기를 유지한다.
+        // 구버전은 무조건 24x24 로 resize 해 12x9 svg 가 비율 왜곡(세로 뻥튀기)됐음
+        // (선납 화면 왕관 3회 재작업의 뿌리). 명시 크기도 한 축만 주면 비율 유지 스케일.
+        if (spec.width || spec.height) {
+          var iconW = spec.width || (spec.height * (node.width / node.height));
+          var iconH = spec.height || (spec.width * (node.height / node.width));
+          node.resize(iconW, iconH);
+        }
         // Apply icon color by changing all vector children's fills/strokes
         if (spec.iconColor) {
           var color = { r: spec.iconColor.r || 0, g: spec.iconColor.g || 0, b: spec.iconColor.b || 0 };
