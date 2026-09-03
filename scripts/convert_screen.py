@@ -1160,6 +1160,10 @@ def main():
         swap_cta(tree)
         _lap('swaps')
         w, h = L.normalize_screen(rid)
+        # 2026-09-03 스테이지 상세 사고 코드화: 절대배치 360 잔존 일괄 정규화 +
+        # 구조 GROUP → FRAME(8-C). 아이콘 프레임은 두 패스 모두 불가침(is_iconish).
+        L.normalize_absolute_360(rid)
+        L.convert_struct_groups(rid)
         normalize_overlay(rid)
         L.enforce_single_status_bar(rid)  # 규칙 1 강령: Status Bar/HI 한 화면 1개 (2026-08-24)
         L.enforce_text_fill(rid)          # 규칙 8: VERTICAL 부모 안 TEXT HUG → FILL (2026-08-24)

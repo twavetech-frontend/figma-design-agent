@@ -483,3 +483,175 @@ def new_auto_frame(call, parent_id, name, layout='VERTICAL', gap=0, pad=None,
     else:
         call('set_layout_sizing', {'nodeId': nid, 'horizontal': 'HUG', 'vertical': 'HUG'})
     return nid
+
+
+# ── 구형(360) 변환 정합 헬퍼 3종 (2026-09-03 스테이지 상세 사고 코드화) ──────────
+# 사고: normalize 가 헤더만 393 확장하고 절대배치 본문(게시글/순번/입력바)은 360 잔존
+# → 우변 기준 3종 혼재(우측 33px 갭·정렬 뒤죽박죽). GROUP 48개도 게이트 사각지대.
+# 아이콘 프레임은 오토레이아웃 전환 절대 금지(사용자 확정 ×2 — 내부 스택 재배열로 파괴됨).
+
+ICONISH_KEYS = ('ic_', 'ico_', 'gift', 'icon', 'daram', 'point', 'profile', 'crown',
+                'bubble', 'clap', 'arrow', 'bitmap', 'oval', 'mask')
+
+
+def is_iconish(name, w=None, h=None):
+    """아이콘/그래픽 원자 판정 — 오토레이아웃 전환·정규화 리사이즈 불가침 대상."""
+    nm = (name or '').lower()
+    if any(k in nm for k in ICONISH_KEYS):
+        return True
+    if w is not None and h is not None and w <= 56 and h <= 56:
+        return True
+    return False
+
+
+def normalize_absolute_360(root_id, width=393, old_width=360):
+    """절대배치 서브트리의 360 기준 잔존을 393 으로 일괄 정규화 (검증 규칙 3종):
+    ① 풀폭 배경(w≈old_width, x≈0, RECT/FRAME) → width 로 resize
+    ② 우측 앵커(우변 old_width-40..old_width-14, x>180) → x += delta (부모 abs 실시간 조회 —
+       스냅샷 좌표 오염 함정 방지)
+    ③ 좌측 시작 넓은 콘텐츠(x≤180, w≥150, TEXT/RECT/FRAME) → w += delta
+    아이콘(is_iconish)은 전부 불가침. 우측 앵커는 통째 이동 후 내부 재귀 중단."""
+    delta = width - old_width
+    t = fetch_tree(root_id)
+    if not t:
+        return {}
+    rb = t.get('absoluteBoundingBox') or {}
+    rx = rb.get('x') or 0
+    stats = {'full': 0, 'right': 0, 'widen': 0}
+
+    def walk(n, depth=0):
+        nid = n.get('id') or ''
+        if nid.startswith('I') or depth > 11:
+            return
+        nb = n.get('absoluteBoundingBox') or {}
+        ax = nb.get('x') or 0
+        w0, h0 = nb.get('width') or 0, nb.get('height') or 0
+        x0 = ax - rx
+        x1 = x0 + w0
+        iconish = is_iconish(n.get('name'), w0, h0)
+        if depth > 0 and not iconish and not n.get('layoutMode'):
+            if old_width - 5 <= w0 <= old_width + 2 and x0 <= 1 \
+                    and n.get('type') in ('RECTANGLE', 'FRAME'):
+                call('resize_node', {'nodeId': nid, 'width': width, 'height': h0})
+                stats['full'] += 1
+            elif old_width - 40 <= x1 <= old_width - 13 and x0 > 180 \
+                    and n.get('type') in ('FRAME', 'GROUP'):
+                # 부모 abs 실시간 조회 후 상대좌표로 이동 (get_node_info x/y 는 None 함정)
+                info = call('get_node_info', {'nodeId': nid}) or {}
+                pt = call('get_node_info', {'nodeId': info.get('parentId')}) or {}
+                pb = pt.get('absoluteBoundingBox') or pt
+                pax = pb.get('x') if isinstance(pb, dict) else None
+                pay = pb.get('y') if isinstance(pb, dict) else None
+                if pax is None:
+                    return
+                nb2 = (call('get_node_info', {'nodeId': nid}) or {}).get('absoluteBoundingBox') or nb
+                call('move_node', {'nodeId': nid,
+                                   'x': ((nb2.get('x') or ax) - pax) + delta,
+                                   'y': (nb2.get('y') or 0) - pay})
+                stats['right'] += 1
+                return
+            elif x0 <= 180 and w0 >= 150 and old_width - 40 <= x1 <= old_width - 13 \
+                    and n.get('type') in ('TEXT', 'RECTANGLE', 'FRAME'):
+                call('resize_node', {'nodeId': nid, 'width': w0 + delta, 'height': h0})
+                stats['widen'] += 1
+        for c in n.get('children') or []:
+            if ';' not in (c.get('id') or ''):
+                walk(c, depth + 1)
+
+    walk(t)
+    if any(stats.values()):
+        print(f'  [normalize-360] 절대배치 정규화 — 풀폭 {stats["full"]} / 우측앵커 {stats["right"]} / 확장 {stats["widen"]}')
+    return stats
+
+
+def convert_struct_groups(root_id):
+    """구조 GROUP → FRAME 전환 (8-C — 2026-09-03 사용자 확정). 안전 원칙:
+    - 벡터-only 그룹·아이콘(is_iconish)은 절대 전환 안 함 (그래픽 원자)
+    - 전환은 그룹 하나마다 fresh tree 로 좌표 재조회 (스냅샷 오염 방지)
+    - 오토레이아웃 부여는 '명백한 비겹침 스택(자식 2~8, 전 자식 서로 비겹침)'만,
+      그 외는 plain FRAME + '(overlay)' 표기 — 자동 스택화 과욕이 2차 피해의 뿌리였다.
+    반환: {'frame': n, 'stacked': n, 'overlay': n}"""
+    stats = {'frame': 0, 'stacked': 0, 'overlay': 0}
+
+    def find_next_group():
+        t = fetch_tree(root_id)
+        if not t:
+            return None
+        found = []
+
+        def w(n, depth=0):
+            nid = n.get('id') or ''
+            if nid.startswith('I') or depth > 11:
+                return
+            kids = n.get('children') or []
+            if n.get('type') == 'GROUP':
+                bb = n.get('absoluteBoundingBox') or {}
+                vec_only = all(c.get('type') in ('VECTOR', 'BOOLEAN_OPERATION', 'ELLIPSE',
+                                                 'LINE', 'SLICE') for c in kids) if kids else True
+                if not vec_only and not is_iconish(n.get('name'), bb.get('width'), bb.get('height')):
+                    found.append(n)
+                    return  # 바깥 그룹부터 (자식 그룹은 다음 라운드 fresh tree 에서)
+            for c in kids:
+                if ';' not in (c.get('id') or ''):
+                    w(c, depth + 1)
+
+        w(t)
+        return found[0] if found else None
+
+    for _ in range(60):  # 무한루프 가드
+        g = find_next_group()
+        if not g:
+            break
+        gid = g['id']
+        gb = g.get('absoluteBoundingBox') or {}
+        gx, gy = gb.get('x') or 0, gb.get('y') or 0
+        kids = g.get('children') or []
+        boxes = [(c, c.get('absoluteBoundingBox') or {}) for c in kids]
+        info = call('get_node_info', {'nodeId': gid}) or {}
+        par = info.get('parentId')
+        pinfo = call('get_node_info', {'nodeId': par}) or {}
+        pb = pinfo.get('absoluteBoundingBox') or {}
+        fr = call('create_frame', {'parentId': par, 'x': gx - (pb.get('x') or 0),
+                                   'y': gy - (pb.get('y') or 0),
+                                   'width': gb.get('width') or 1, 'height': gb.get('height') or 1,
+                                   'name': g.get('name')}) or {}
+        fid = fr.get('id')
+        if not fid:
+            break
+        call('set_fill_color', {'nodeId': fid, 'color': {'r': 1, 'g': 1, 'b': 1, 'a': 0}})
+        for c, b in boxes:
+            call('insert_child', {'parentId': fid, 'childId': c['id'], 'index': 99})
+            call('move_node', {'nodeId': c['id'], 'x': (b.get('x') or 0) - gx,
+                               'y': (b.get('y') or 0) - gy})
+        try:
+            call('delete_node', {'nodeId': gid})
+        except Exception:
+            pass
+        stats['frame'] += 1
+
+        def nonoverlap(axis):
+            ln = 'height' if axis == 'y' else 'width'
+            spans = sorted(((b.get(axis) or 0), (b.get(axis) or 0) + (b.get(ln) or 0))
+                           for _, b in boxes)
+            return all(spans[i + 1][0] >= spans[i][1] - 1 for i in range(len(spans) - 1))
+
+        if 2 <= len(kids) <= 8 and nonoverlap('y'):
+            axis, ln, mode = 'y', 'height', 'VERTICAL'
+        elif 2 <= len(kids) <= 8 and nonoverlap('x'):
+            axis, ln, mode = 'x', 'width', 'HORIZONTAL'
+        else:
+            call('rename_node', {'nodeId': fid, 'name': (g.get('name') or '') + ' (overlay)'})
+            stats['overlay'] += 1
+            continue
+        order = sorted(boxes, key=lambda cb: cb[1].get(axis) or 0)
+        for i, (c, b) in enumerate(order):
+            call('insert_child', {'parentId': fid, 'childId': c['id'], 'index': i})
+        gaps = [max(0, (order[i + 1][1].get(axis) or 0) -
+                    ((order[i][1].get(axis) or 0) + (order[i][1].get(ln) or 0)))
+                for i in range(len(order) - 1)]
+        gap = round(sum(gaps) / len(gaps)) if gaps else 0
+        call('set_auto_layout', {'nodeId': fid, 'layoutMode': mode, 'itemSpacing': gap})
+        stats['stacked'] += 1
+    if any(stats.values()):
+        print(f'  [group→frame] 구조 GROUP 전환 {stats["frame"]} (스택 {stats["stacked"]} / overlay {stats["overlay"]})')
+    return stats

@@ -328,10 +328,25 @@ def main():
                     if _lbl and len(_lbl) <= 8 and not _lbl.isdigit():
                         bad_paint.append((disp, t, 'raw-badge-suspect',
                                           [f'라벨 {_lbl!r} — DS Badge/Pill 인스턴스로 교체(Color prop)']))
+            # 🔴 구조 GROUP 감지 (2026-09-03 사용자 지적: "group 레이어들 왜 무시했지" —
+            # normalize·본 게이트 둘 다 GROUP 타입을 안 봐서 48개가 통과한 사각지대 봉합).
+            # 벡터-only 그룹·아이콘 크기(≤56)는 그래픽 원자라 면제(사용자 확정: 아이콘은 일반 프레임).
+            if t == 'GROUP' and ';' not in node_id and name not in allow:
+                _gk = n.get('children') or []
+                _gvec = all(c.get('type') in ('VECTOR', 'BOOLEAN_OPERATION', 'ELLIPSE', 'LINE', 'SLICE')
+                            for c in _gk) if _gk else True
+                _gw, _gh = n.get('width') or 0, n.get('height') or 0
+                if not _gvec and not (_gw <= 56 and _gh <= 56):
+                    bad_paint.append((disp, t, 'struct-group-suspect',
+                                      [f'구조 GROUP (자식 {len(_gk)}) — FRAME 전환 필요(8-C, ds_convert_lib.convert_struct_groups)']))
             # 🔴 plain frame 감지 (2026-08-24 사용자 지적: "어느순간 일반 프레임을 많이 쓰고 있다")
             # 콘텐츠 컨테이너(흐름형 자식 ≥2)가 layoutMode NONE 이면 FAIL — 오토레이아웃 의무.
-            # 예외: 화면 루트(폭 393±2)·오버레이 전용(자식 전부 ABSOLUTE)·allow.
-            if t == 'FRAME' and ';' not in node_id and name not in allow \
+            # 예외: 화면 루트(폭 393±2)·오버레이 전용(자식 전부 ABSOLUTE)·allow·아이콘 프레임
+            # (≤56×56 또는 아이콘성 이름 — 2026-09-03 사용자 확정: 아이콘은 일반 프레임 유지).
+            _npw, _nph = n.get('width') or 0, n.get('height') or 0
+            _iconish_pf = (_npw <= 56 and _nph <= 56) or any(
+                k in name.lower() for k in ('ic_', 'ico_', 'gift', 'icon', 'daram', 'crown', 'bubble'))
+            if t == 'FRAME' and ';' not in node_id and name not in allow and not _iconish_pf \
                     and not n.get('layoutMode') and abs((n.get('width') or 0) - 393) > 2:
                 _flow_kids = [c for c in (n.get('children') or [])
                               if c.get('type') in ('FRAME', 'TEXT', 'INSTANCE', 'RECTANGLE')
