@@ -471,8 +471,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   상세: `rule 8-D`.
 - **8-E (2026-09-03)** — 🔴 **MCP 도구 계약 함정 목록** — 수동 조립(변환/개조 트랙)은 post-fix 가
   없는 지대: batch_build 의 layoutMode/width/padding 무시·기본 흰 fill, resize 후 FILL 자식 stale,
-  오토레이아웃 자식 move 무시 등. batch_build 직후 `assert_spec_applied` 의무 + 완료 게이트 =
-  verify PASS + `region_diff` 전 구역 통과. 상세: `rule 8-E`.
+  오토레이아웃 자식 move 무시 등. batch_build 직후 `assert_spec_applied` 의무. 🔴 **완료 게이트 =
+  `python3 scripts/qa_sweep.py <genId> <refId>` 원커맨드**(토큰+면·색+아이콘+TEXT 인벤토리 4차원) —
+  requiredActions 의 이미지 전부 Read + CHECK 전 항목 해소/설명해야 완료 보고 가능. 상세: `rule 8-E`.
 - **0-Q** — radius>0 frame 은 `clipsContent:true` 필수. radius 값은 DS 스케일(4/6/8/10/12/14/16/20/24/
   28/32, 완전원형 999)로 — post-fix 가 radius-* 토큰 자동 바인딩.
 - **3/6/7** — Tab Bar 아이템 FILL 균등 + 세로 FILL + 라벨 CENTER (자동 보정 있음 — 라벨 2줄 wrap 회귀 주의).
