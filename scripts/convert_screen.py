@@ -1300,6 +1300,18 @@ def main():
             print('   ' + '\n   '.join(tail))
             entry['verify'] = 'PASS' if r.returncode == 0 else 'FAIL'
             ok = ok and (r.returncode == 0)
+        # 🔴 시각 diff 게이트 (2026-09-03 사용자 진단 "단 한번도 한번에 완성 안 됨" — 변환
+        # 트랙은 build 트랙과 달리 시각 검증이 모델 눈에만 의존하던 공백. region_diff 가
+        # 구역별 픽셀 스코어 + 색 성분 진단을 강제 출력 — 초과 구역은 크롭 Read 후
+        # 해소/설명 없이 완료 보고 금지)
+        for entry in results:
+            try:
+                bands = L.region_diff(entry['gen'], entry['src'])
+                entry['region_diff'] = [(i, sc) for i, sc, _p, _d in bands]
+                if any(p for _i, _s, p, _d in bands):
+                    entry['flags'].append('region-diff-exceeded: 초과 구역 크롭 Read 의무')
+            except Exception as e:
+                print(f'  [region-diff] 실패({entry["gen"]}): {str(e)[:80]}')
     gen_ids = [e['gen'] for e in results]
     n_flags = sum(len(e['flags']) for e in results)
     print(f'\n{"✓" if ok and not n_flags else "✗"} 변환 {len(results)}장 — {round(time.time()-t0, 1)}s → {gen_ids}')

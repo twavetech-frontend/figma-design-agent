@@ -1937,3 +1937,25 @@
 > bypass: `--force-convert` (단순 리스트형 등 변형이 확실히 안전할 때만). 판별을 통과한
 > 소스의 변형 트랙에서도: 겹침 그룹은 FRAME 전환 스킵(GROUP 보존+`(overlay)` 마커), 스택
 > 전환 시 counter 축 중앙 근사 감지→CENTER 승계, 위치 수리 검증은 export 픽셀 실측 피드백.
+
+> 🔴 **8-E. MCP 도구 계약 함정 목록 — 수동 조립 전 필독 (2026-09-03 실사고 전수)**
+>
+> **배경:** build 파이프라인은 post-fix 12종이 이 함정들을 재단언해 몇 달간 안정처럼 보였지만,
+> 변환/개조 트랙의 수동 MCP 조립은 게이트 없는 지대라 같은 함정이 사용자 앞에서 그대로 터졌다
+> (2026-09-03 하루 10커밋 전부 사고 대응). 수동 조립 시 아래 계약을 전제로 작성하고, batch_build
+> 직후 `ds_convert_lib.assert_spec_applied(spec, nodeMap)` 호출이 의무다.
+>
+> | 도구 | 함정 | 백스톱 |
+> |------|------|--------|
+> | `batch_build_screen` | spec 의 width/height/padding/**layoutMode** 를 조용히 무시할 수 있음 (HORIZONTAL→VERTICAL 실사고) | `assert_spec_applied` 재단언 |
+> | `batch_build_screen` | fills 미지정 frame 에 **기본 흰 fill** 삽입 — 투명 랩이 풀폭 흰 박스가 됨 | spec 에 `fills: []` 명시 → assert 가 투명 재단언 |
+> | `svg_icon` (spec) | (구버전) svg 를 24×24 로 강제 스케일 — 비율 왜곡. 462e4cf 에서 원 크기 유지로 수정(플러그인 재실행 필요) | spec width/height 명시 시 비율 유지 |
+> | `resize_node` | 오토레이아웃 부모 축소 시 **FILL 자식이 재계산 안 됨**(stale 폭 유지 → 우측 넘침) | resize 후 FILL 자식 `set_layout_sizing` 재단언 세트 |
+> | `move_node` | **오토레이아웃 자식에겐 조용히 무시**(반환값은 성공 형태) — 위치는 padding/정렬로 번역 | 같은 diff 가 반복되면 즉시 오토레이아웃 지배 의심 |
+> | `get_node_info` | x/y 가 None 가능·absoluteBoundingBox 부재 — 부모 abs 기준 계산에 쓰면 좌표 폭주 | abs 는 `get_nodes_info` document.absoluteBoundingBox |
+> | abs 좌표 전반 | move/resize 직후 abs 스냅샷 stale — local(x,y)과 렌더 픽셀이 진실 | 판정은 export 픽셀 실측(region_diff) |
+> | `set_stroke_color` | strokeWeight 미지정 시 1 로 강제 | 원본 weight 재단언 |
+> | `set_auto_layout` | layoutMode 미지정 시 no-op | 항상 layoutMode 포함 |
+>
+> **완료 게이트(변환/개조 트랙):** verify_bindings PASS + `region_diff` 전 구역 통과(초과 구역은
+> 크롭 Read + 색 진단 문장 해소/설명) 없이 완료 보고 금지. convert_screen 은 verify 후 자동 실행.
