@@ -922,3 +922,100 @@ def region_diff(gen_id, src_id, bands=6, out_dir='scripts/qa_screenshots', thres
         for i, sc, p, dg in flagged:
             print(f'     band{i} score {sc} → {p}' + (f'  [{dg}]' if dg else ''))
     return out
+
+
+# ── 2026-09-03 후반 실사고 3종 헬퍼 (즉석 스크립트 금지 — 이걸 쓸 것) ────────────
+
+WRAPPISH = ('wrap', 'body', 'rows', 'row', 'content', 'head', 'bottom', 'info',
+            'chip', 'cards', 'list', 'stats', 'stat', 'group')
+
+
+def bind_pure_whites(root_id, extra_skip=()):
+    """흰 순색(#ffffff) 안전 일괄 바인딩 — TEXT→text-primary_on-brand / 면→bg-primary.
+    🔴 반드시 이 헬퍼로 (2026-09-03 투명 fill 활성화 2회 재발 — 즉석 스크립트가
+    paint.opacity=0 흰 fill 을 수집해 바인딩하며 불투명 흰 박스로 활성화):
+    ① paint.opacity>0 AND color.a>0 이중 체크 ② 랩성 이름(WRAPPISH)·인스턴스 내부 제외.
+    반환: 바인딩 건수."""
+    import json as _json
+    import os as _os
+    vk = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                                       '..', 'ds', 'VARIABLE_KEY_MAP.json')))
+    def _key(suffix):
+        for k, v in vk.items():
+            if k.endswith(suffix):
+                return v
+    bg = _key('Background/bg-primary')
+    onb = _key('Text/text-primary_on-brand')
+    t = fetch_tree(root_id)
+    items = []
+
+    def w(n):
+        nid = n.get('id') or ''
+        if nid.startswith('I'):
+            return
+        nm = (n.get('name') or '').lower()
+        skippy = any(k in nm for k in WRAPPISH) or (n.get('name') in extra_skip)
+        if not skippy:
+            for i, p in enumerate(n.get('fills') or []):
+                if isinstance(p, dict) and p.get('type') == 'SOLID' \
+                        and p.get('visible') is not False \
+                        and not p.get('boundVariables') \
+                        and (p.get('opacity') is None or p.get('opacity') > 0) \
+                        and (p.get('color') or {}).get('a', 1) > 0 \
+                        and to_hex(p.get('color', {})) == '#ffffff':
+                    k = onb if n.get('type') == 'TEXT' else bg
+                    if k:
+                        items.append({'nodeId': nid, 'bindings': {f'fills/{i}': f'K:{k}'}})
+        for c in n.get('children', []) or []:
+            w(c)
+
+    if t:
+        w(t)
+    if items:
+        call('batch_bind_variables', {'items': items})
+        print(f'  [bind-whites] 흰 순색 {len(items)}건 바인딩 (랩/투명 제외)')
+    return len(items)
+
+
+def set_auto_layout_keep_size(nid, **al_params):
+    """기존 노드에 오토레이아웃 후부여 + 원 크기 FIXED 재단언.
+    🔴 set_auto_layout 후부여는 크기를 HUG 로 재계산해 붕괴시킨다 (2026-09-03 선물확인
+    thumb 60x60→43x60 실사고). 크기 스냅샷 → set_auto_layout → FIXED+resize 세트."""
+    n = call('get_node_info', {'nodeId': nid}) or {}
+    w0, h0 = n.get('width'), n.get('height')
+    al_params['nodeId'] = nid
+    call('set_auto_layout', al_params)
+    if w0 and h0:
+        call('set_layout_sizing', {'nodeId': nid, 'horizontal': 'FIXED', 'vertical': 'FIXED'})
+        call('resize_node', {'nodeId': nid, 'width': round(w0), 'height': round(h0)})
+    return (w0, h0)
+
+
+def instance_as_image(src_instance_id, parent_id, width, height, name='ic_from_instance',
+                      text_override=None, scale=4):
+    """인스턴스를 안전하게 소형으로 쓰기 — 고배율 export → 이미지 fill 프레임.
+    🔴 인스턴스 직접 resize 는 내부가 스케일되지 않고 크롭된다 (2026-09-03 도토리 뱃지
+    40→18 실사고, Status Bar HUG 변형과 동일 클래스). text_override: {내부경로suffix: 텍스트}
+    또는 str(모든 내부 TEXT 를 이 값으로). 반환: 새 프레임 id."""
+    import base64 as _b64
+    tmp = call('clone_node', {'nodeId': src_instance_id})
+    if text_override is not None:
+        def _walk_ids(nid, d=0):
+            if d > 6:
+                return
+            n = call('get_node_info', {'nodeId': nid}) or {}
+            for c in n.get('children', []) or []:
+                if c.get('type') == 'TEXT':
+                    tx = text_override if isinstance(text_override, str) else None
+                    if tx is not None:
+                        call('set_text_content', {'nodeId': c['id'], 'text': tx})
+                _walk_ids(c['id'], d + 1)
+        _walk_ids(tmp['id'])
+    r = fc.parse_content(fc.call_tool('export_node_as_image',
+                                      {'nodeId': tmp['id'], 'format': 'PNG', 'scale': scale}))
+    b64 = (r.get('raw') or [{}])[0].get('data')
+    call('delete_node', {'nodeId': tmp['id']})
+    fr = call('create_frame', {'parentId': parent_id, 'x': 0, 'y': 0,
+                               'width': width, 'height': height, 'name': name}) or {}
+    call('set_image_fill', {'nodeId': fr['id'], 'imageData': b64, 'scaleMode': 'FIT'})
+    return fr.get('id')

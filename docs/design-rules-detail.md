@@ -1956,6 +1956,9 @@
 > | abs 좌표 전반 | move/resize 직후 abs 스냅샷 stale — local(x,y)과 렌더 픽셀이 진실 | 판정은 export 픽셀 실측(region_diff) |
 > | `set_stroke_color` | strokeWeight 미지정 시 1 로 강제 | 원본 weight 재단언 |
 > | `set_auto_layout` | layoutMode 미지정 시 no-op | 항상 layoutMode 포함 |
+> | `set_auto_layout` 후부여 | 기존 노드 크기가 HUG 로 재계산돼 붕괴 (thumb 60→43 실사고) | `ds_convert_lib.set_auto_layout_keep_size` (크기 스냅샷→FIXED 재단언 세트) |
+> | 순색 일괄 바인딩 | paint.opacity=0 흰 fill 을 바인딩하면 **불투명 흰 박스로 활성화** (Stats·AI Wrap 2회 재발) | 즉석 스크립트 금지 — `ds_convert_lib.bind_pure_whites` (opacity·alpha 이중 체크 + 랩 이름 제외) |
+> | INSTANCE `resize_node` | 내부가 스케일되지 않고 **크롭**됨 (도토리 40→18, Status Bar HUG 변형과 동일 클래스) | `ds_convert_lib.instance_as_image` (고배율 export→이미지 fill) 또는 detach 후 처리 |
 >
 > **완료 게이트(변환/개조 트랙):** verify_bindings PASS + `region_diff` 전 구역 통과(초과 구역은
 > 크롭 Read + 색 진단 문장 해소/설명) 없이 완료 보고 금지. convert_screen 은 verify 후 자동 실행.

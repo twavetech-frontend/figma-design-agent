@@ -180,7 +180,9 @@ def main():
             if t in ('FRAME', 'TEXT'):
                 _sol = [p for p in (n.get('fills') or []) + (n.get('strokes') or [])
                         if isinstance(p, dict) and p.get('type') == 'SOLID'
-                        and p.get('visible') is not False and not p.get('boundVariables')]
+                        and p.get('visible') is not False and not p.get('boundVariables')
+                        and (p.get('opacity') is None or p.get('opacity') > 0)
+                        and (p.get('color') or {}).get('a', 1) > 0]
                 if _sol:
                     allow_flag_structural.append((name, node_id))
             return
