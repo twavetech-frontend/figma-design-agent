@@ -340,6 +340,8 @@ async function handleCommand(command, params) {
       return await exportNodeAsImage(params);
     case "set_corner_radius":
       return await setCornerRadius(params);
+    case "detach_instance":
+      return await detachInstanceCmd(params);
     case "set_node_visible":
       return await setNodeVisible(params);
     case "set_text_content":
@@ -7412,4 +7414,15 @@ async function batchExecute(params) {
   }
 
   return { results, refMap };
+}
+
+// ── detach_instance (2026-09-03 사용자 룰: 병합 인스턴스는 detach 해서 사용/변형) ──
+async function detachInstanceCmd(params) {
+  const { nodeId } = params || {};
+  if (!nodeId) throw new Error("Missing nodeId parameter");
+  const node = await figma.getNodeByIdAsync(nodeId);
+  if (!node) throw new Error(`Node not found with ID: ${nodeId}`);
+  if (node.type !== "INSTANCE") throw new Error(`Node is not an instance. Type: ${node.type}`);
+  const frame = node.detachInstance();
+  return { id: frame.id, name: frame.name, type: frame.type, childCount: (frame.children || []).length };
 }

@@ -229,6 +229,52 @@ def screen_is_dark(root_tree):
     return False
 
 
+def detach_merged_top_instances(root_id):
+    """🔴 병합 상단 인스턴스 자동 detach (2026-09-03 사용자 룰 ×2: "인스턴스는 필요에 따라
+    detach 해서 사용/변형" + "왜 자꾸 status bar 랑 tool bar 합쳐진 인스턴스를 그대로 쓰냐").
+    구형 화면의 상단 인스턴스(top/header/bars 병합 — 내부에 status bar 요소를 품은 h>44)는
+    내부 수정이 불가해 SB 스왑·헤더 분리가 전부 막힌다. → detach 로 plain frame 화하면
+    이후 swap_status_bar/swap_app_bar 가 정상 처리한다. DS 컴포넌트(카탈로그 키) 인스턴스는
+    건드리지 않는다."""
+    t = L.fetch_tree(root_id, max_depth=4)
+    if not t:
+        return 0
+    rb = t.get('absoluteBoundingBox') or {}
+    ry = rb.get('y') or 0
+    n_det = 0
+    cands = []
+
+    def w(n, d=0):
+        if d > 3:
+            return
+        nid = n.get('id') or ''
+        if nid.startswith('I'):
+            return
+        if n.get('type') == 'INSTANCE':
+            bb = n.get('absoluteBoundingBox') or {}
+            top = (bb.get('y') or 0) - ry
+            h = bb.get('height') or 0
+            nm = (n.get('name') or '').lower()
+            ds_names = ('status bar', 'tool bar', 'tab bar', 'homeindicator', 'keyboard')
+            if nm not in ds_names and top <= 50 and h > 44 \
+                    and any(k in nm for k in ('top', 'header', 'bars', 'app bar', 'nav')):
+                cands.append(n)
+            return  # 인스턴스 내부는 안 내려감
+        for c in n.get('children') or []:
+            w(c, d + 1)
+
+    w(t)
+    for c in cands:
+        try:
+            r = call('detach_instance', {'nodeId': c['id']})
+            if r and r.get('id'):
+                n_det += 1
+                print(f'  [detach] 병합 상단 인스턴스 분해: {c.get("name")} ({c["id"]} → {r["id"]})')
+        except Exception as e:
+            print(f'  [detach] 실패 {c["id"]}: {str(e)[:60]} — 플러그인 재실행 필요할 수 있음')
+    return n_det
+
+
 def swap_status_bar(root_tree):
     """🔴 Status Bar 는 한 화면 최상단에 **정확히 1개** (2026-08-24 사용자 룰 — 규칙 1 강령).
     첫 후보(최상단)만 DS 인스턴스로 스왑하고, 나머지(오버레이 딤 위 bars 등 캡처 중복)는
@@ -1146,6 +1192,10 @@ def main():
         if _rn:
             print(f'  [rename] 레거시 아이콘 이름 정규화 {_rn}건 (ico/* → ic_*, 0-L-2)')
         _lap('clone')
+        # 병합 상단 인스턴스(SB+헤더 결합) detach — deep() 전에 실행해야 이후
+        # swap_status_bar/swap_app_bar 가 분해된 내부를 본다 (2026-09-03 사용자 룰)
+        if detach_merged_top_instances(rid):
+            pass
         tree = deep(rid)
         _lap('deep')
         # Status Bar 는 항상 DS 인스턴스 (규칙 1 — 다크 화면도 예외 아님, 2026-08-24 사용자)
@@ -1162,7 +1212,11 @@ def main():
         w, h = L.normalize_screen(rid)
         # 2026-09-03 스테이지 상세 사고 코드화: 절대배치 360 잔존 일괄 정규화 +
         # 구조 GROUP → FRAME(8-C). 아이콘 프레임은 두 패스 모두 불가침(is_iconish).
-        L.normalize_absolute_360(rid)
+        # 원본 폭 자동 감지(360/375 등 구형 규격) — 393 미만이면 그 폭 기준으로 정규화
+        _src_info = call('get_node_info', {'nodeId': sid}) or {}
+        _src_w = round(_src_info.get('width') or ((_src_info.get('absoluteBoundingBox') or {}).get('width') or 360))
+        if _src_w < 390:
+            L.normalize_absolute_360(rid, old_width=_src_w)
         L.convert_struct_groups(rid)
         normalize_overlay(rid)
         L.enforce_single_status_bar(rid)  # 규칙 1 강령: Status Bar/HI 한 화면 1개 (2026-08-24)

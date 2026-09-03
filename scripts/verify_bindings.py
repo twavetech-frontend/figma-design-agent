@@ -346,7 +346,10 @@ def main():
             _npw, _nph = n.get('width') or 0, n.get('height') or 0
             _iconish_pf = (_npw <= 56 and _nph <= 56) or any(
                 k in name.lower() for k in ('ic_', 'ico_', 'gift', 'icon', 'daram', 'crown', 'bubble'))
+            # '(overlay)' 명시 프레임 = 겹침 구성 수동 선언 — 면제 (plain 부모의 자식은
+            # layoutPositioning 개념이 없어 ABSOLUTE 마킹으로는 면제 불가, 2026-09-03 실측)
             if t == 'FRAME' and ';' not in node_id and name not in allow and not _iconish_pf \
+                    and '(overlay)' not in name \
                     and not n.get('layoutMode') and abs((n.get('width') or 0) - 393) > 2:
                 _flow_kids = [c for c in (n.get('children') or [])
                               if c.get('type') in ('FRAME', 'TEXT', 'INSTANCE', 'RECTANGLE')

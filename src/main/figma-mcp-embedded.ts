@@ -288,6 +288,12 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['nodeId']
   }, async (params) => cmd('set_corner_radius', params));
 
+  reg('detach_instance', 'Detach a component instance into a plain frame (children become editable). Use for merged legacy instances (e.g. status-bar+header combos) that must be split/reworked.', {
+    type: 'object',
+    properties: { nodeId: { type: 'string' } },
+    required: ['nodeId']
+  }, async (params) => cmd('detach_instance', params));
+
   reg('set_node_visible', 'Show/hide a node (or array of nodes). Works on instance descendants — used to trim fixed-count component instances like DS Horizontal tabs.', {
     type: 'object',
     properties: {
