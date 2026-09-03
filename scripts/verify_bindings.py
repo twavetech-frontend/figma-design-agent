@@ -147,6 +147,7 @@ def main():
     bad_paint = []
     bad_style = []
     allow_candidates = set()  # 에셋 색 의심 노드명 — FAIL 시 --allow 후보로 제안
+    allow_flag_structural = []  # allow 남용(구조 FRAME/TEXT 면제) 감지 — 경고 출력
     sb_nodes = []  # (absY, id) — Status Bar 류. 한 화면 최상단 1개 게이트 (2026-08-24 규칙 1 강령)
     checked = 0
 
@@ -173,6 +174,15 @@ def main():
             sb_nodes.append((((n.get('absoluteBoundingBox') or {}).get('y')), node_id, disp))
         # allow 노드는 서브트리 전체 면제 (2026-08-14 — 브랜드 에셋 내부색은 검사 대상 아님)
         if name in allow:
+            # 🔴 allow 남용 감지 (2026-09-03 선물확인 thumb 실사고 — 구조 FRAME 을 allow 로
+            # 면제해 raw set_*_color 미바인딩 10건이 PASS 뒤에 숨음. 사용자 발견):
+            # allow 는 벡터/이미지 에셋용 — SOLID 페인트를 가진 FRAME/TEXT 를 면제하면 경고.
+            if t in ('FRAME', 'TEXT'):
+                _sol = [p for p in (n.get('fills') or []) + (n.get('strokes') or [])
+                        if isinstance(p, dict) and p.get('type') == 'SOLID'
+                        and p.get('visible') is not False and not p.get('boundVariables')]
+                if _sol:
+                    allow_flag_structural.append((name, node_id))
             return
         # 'id:<nodeId>' allow = 해당 노드의 **페인트 검사만** 면제(서브트리 미면제) —
         # 루트 커스텀 배경(그룹채팅 핑크 등) 원값 유지용. 이름 allow 로 루트를 면제하면
@@ -527,6 +537,10 @@ def main():
         print(f'  ✗ 텍스트 스타일 미적용 {len(bad_style)}건:')
         for b in bad_style[:15]:
             print('    ', b)
+    if allow_flag_structural:
+        _uniq = sorted({nm for nm, _ in allow_flag_structural})
+        print(f'  ⚠️ allow 남용 의심 {len(allow_flag_structural)}건 — 구조 FRAME/TEXT 의 미바인딩 SOLID 가 '
+              f'allow 로 숨겨짐: {_uniq[:6]} (allow 는 벡터/이미지 에셋 전용 — 구조 요소는 바인딩할 것)')
     if not bad_paint and not bad_style:
         print('  ✓ PASS — 색/텍스트 스타일 바인딩 전수 확인')
         return 0
