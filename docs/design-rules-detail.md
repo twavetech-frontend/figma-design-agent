@@ -322,6 +322,22 @@
 > - 캡처 위 기획 주석(스텝 마커·스펙 텍스트)은 GUI 산출물에서 제외
 > 과거 is_document_capture 모드는 이 규칙 위반으로 삭제됨 — 다시 만들지 말 것.
 
+> 🔴 **규칙 0-W-2 — 병합 인스턴스 detach: SB/Tool Bar 는 따로 (2026-09-03 사용자 룰 ×2)**
+>
+> 사용자 명시: *"선택된 노드 안에 인스턴스 컴포넌트가 있으면 필요에 따라 detach 시켜서
+> 사용하거나 변형하도록 해"* + *"왜 자꾸 status bar 랑 tool bar 를 따로따로 안 쓰고 합쳐져
+> 있는 인스턴스를 그대로 쓰냐!!"* — 구형 화면의 상단 인스턴스(안드SB+back/아이콘 병합 등)는
+> 내부 수정이 불가해 SB 스왑·헤더 분리가 전부 막히고, 커버 rect 겹치기 같은 임시방편이
+> 겹침 사고를 낳았다(스테이지 상세·아람이 상세 실사고).
+>
+> **규칙:**
+> - 변환/조립에서 병합 인스턴스(비-DS)는 **`detach_instance`(플러그인 커맨드)로 분해** 후
+>   구형 SB 부분 삭제 → DS Status Bar + Tool Bar(또는 raw 헤더)를 **별도 노드로** 구성한다.
+> - convert_screen 의 `detach_merged_top_instances` 가 루트 상단(≤50)에 걸친 h>44
+>   top/header/bars/nav 계열 비-DS 인스턴스를 자동 detach (deep() 전 실행).
+> - DS 카탈로그 인스턴스(Status Bar/Tool Bar/Tab bar/HomeIndicator/Keyboard)는 detach 금지.
+> - detach 는 마스터 연결이 끊기는 비가역 조작 — 병합 해체·내부 변형이 필요한 경우에만.
+
 > 🔴 **규칙 0-Y — 키보드 = DS 'Keyboard' 컴포넌트, raw 재구성 금지 (2026-09-01 사용자 룰)**
 >
 > 사용자 명시: *"PRD 나 PSD 그리고 와이어프레임 이미지에서 키보드가 있으면 키보드 UI 를

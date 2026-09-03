@@ -405,6 +405,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   ds_catalog.NAV_ICON_KEYS 등록이 정답, 2026-07-14 사용자 룰. edit-01 키 등록됨).
 - **0-X** — **HomeIndicator 인스턴스는 가로 FILL** (2026-08-04 사용자 룰 — FIXED 360 잔존 회귀
   금지). post-fix `_enforce_home_indicator_fill_live` 가 FILL/루트 폭 재단언.
+- **0-W-2 (2026-09-03 사용자 룰 ×2)** — 🔴 **병합 인스턴스(SB+Tool Bar 결합 등)를 그대로 쓰지
+  말 것** — 필요에 따라 `detach_instance` 로 분해해 DS Status Bar/Tool Bar 를 **따로** 구성.
+  convert_screen 의 `detach_merged_top_instances` 가 상단 병합 인스턴스를 자동 분해(플러그인
+  재실행 필요). 상세: `rule 0-W-2`.
 - **0-Y (2026-09-01 사용자 룰)** — 🔴 캡처/PRD/와이어에 **키보드가 보이면 raw 로 그리지 말 것**
   — DS **'Keyboard'** 인스턴스(iOS HIG, DS 파일 마스터 18498:5352). 키는
   `ds_catalog.COMPONENT_KEYS["Keyboard"]` 조회(미확보 시 파일 내 인스턴스 clone / 사용자에게
