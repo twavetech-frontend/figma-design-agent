@@ -880,16 +880,36 @@ def region_diff(gen_id, src_id, bands=6, out_dir='scripts/qa_screenshots', thres
                 n += 1
         score = round(total / max(n, 1), 1)
         path = None
+        diag = ''
         if score > thresh:
             cv = _Im.new('RGB', (W * 2 + 10, y1 - y0), (245, 245, 245))
             cv.paste(sc, (0, 0)); cv.paste(gc, (W + 10, 0))
             path = _os.path.join(out_dir, f'rd_band{i}.png')
             cv.save(path)
-        out.append((i, score, path))
+            # 🔴 색 성분 진단 (2026-09-03 AI Wrap 흰 fill 실사고 — 크롭을 '봤는데' 큰 면적
+            # 색 차이를 오독함. 눈 대신 히스토그램이 문장으로 말하게 한다): 32단계 양자화
+            # 히스토그램 차 top2 를 '한쪽에만 많은 색'으로 출력.
+            from collections import Counter as _Ct
+            hg, hs = _Ct(), _Ct()
+            for yy in range(0, y1 - y0, 3):
+                for xx in range(0, W, 3):
+                    a, b = gp[xx, yy], sp[xx, yy]
+                    hg[(a[0]//32, a[1]//32, a[2]//32)] += 1
+                    hs[(b[0]//32, b[1]//32, b[2]//32)] += 1
+            tot = sum(hg.values()) or 1
+            diffs = sorted(((hg[k] - hs.get(k, 0), k) for k in set(hg) | set(hs)), key=lambda x: -abs(x[0]))
+            parts = []
+            for d, k in diffs[:2]:
+                if abs(d) * 100 // tot < 3:
+                    continue
+                hx = '#%02x%02x%02x' % (k[0]*32+16, k[1]*32+16, k[2]*32+16)
+                parts.append(f"{'gen에만' if d > 0 else 'src에만'} {hx}계열 +{abs(d)*100//tot}%면적")
+            diag = ' / '.join(parts)
+        out.append((i, score, path, diag))
     flagged = [o for o in out if o[2]]
-    print(f'  [region-diff] {bands}구역 스코어: ' + ' '.join(f'{i}:{sc}' for i, sc, _ in out))
+    print(f'  [region-diff] {bands}구역 스코어: ' + ' '.join(f'{i}:{sc}' for i, sc, _, _ in out))
     if flagged:
-        print(f'  [region-diff] 🔴 diff 초과 {len(flagged)}구역 — 크롭 전부 Read 후 해소/설명 의무:')
-        for i, sc, p in flagged:
-            print(f'     band{i} score {sc} → {p}')
+        print(f'  [region-diff] 🔴 diff 초과 {len(flagged)}구역 — 크롭 전부 Read + 색 진단 해소/설명 의무:')
+        for i, sc, p, dg in flagged:
+            print(f'     band{i} score {sc} → {p}' + (f'  [{dg}]' if dg else ''))
     return out
