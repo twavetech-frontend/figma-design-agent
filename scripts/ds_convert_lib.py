@@ -538,11 +538,10 @@ def normalize_absolute_360(root_id, width=393, old_width=360):
                     and n.get('type') in ('FRAME', 'GROUP'):
                 # 부모 abs 실시간 조회 후 상대좌표로 이동 (get_node_info x/y 는 None 함정)
                 info = call('get_node_info', {'nodeId': nid}) or {}
-                pt = call('get_node_info', {'nodeId': info.get('parentId')}) or {}
-                pb = pt.get('absoluteBoundingBox') or pt
-                pax = pb.get('x') if isinstance(pb, dict) else None
-                pay = pb.get('y') if isinstance(pb, dict) else None
-                if pax is None:
+                _pn = fc.parse_content(fc.call_tool('get_nodes_info', {'nodeIds': [info.get('parentId')]})).get('json') or []
+                pb = ((_pn[0].get('document') if _pn else {}) or {}).get('absoluteBoundingBox') or {}
+                pax, pay = pb.get('x'), pb.get('y')
+                if pax is None or pay is None:
                     return
                 nb2 = (call('get_node_info', {'nodeId': nid}) or {}).get('absoluteBoundingBox') or nb
                 call('move_node', {'nodeId': nid,
@@ -607,6 +606,25 @@ def convert_struct_groups(root_id):
         gx, gy = gb.get('x') or 0, gb.get('y') or 0
         kids = g.get('children') or []
         boxes = [(c, c.get('absoluteBoundingBox') or {}) for c in kids]
+
+        def nonoverlap(axis):
+            ln = 'height' if axis == 'y' else 'width'
+            spans = sorted(((b.get(axis) or 0), (b.get(axis) or 0) + (b.get(ln) or 0))
+                           for _, b in boxes)
+            return all(spans[i + 1][0] >= spans[i][1] - 1 for i in range(len(spans) - 1))
+
+        # 🔴 2026-09-03 아람이상세 4장 실사고: 겹침/절대배치 그룹(데이터 테이블·고정열·벡터아트)을
+        # plain FRAME 으로 전환하며 자식 재이식 좌표가 산산조각 → 1시간 수리 루프. 스택으로
+        # 번역 불가능한 그룹은 **전환 자체를 하지 않는다** — GROUP 유지 + '(overlay)' 마커만.
+        # (GROUP 은 좌표계를 만들지 않아 자식 이식이 없고, 깨질 것도 없다.)
+        is_v = 2 <= len(kids) <= 8 and nonoverlap('y')
+        is_h = (not is_v) and 2 <= len(kids) <= 8 and nonoverlap('x')
+        if not (is_v or is_h):
+            if '(overlay)' not in (g.get('name') or ''):
+                call('rename_node', {'nodeId': gid, 'name': (g.get('name') or '') + ' (overlay)'})
+            stats['overlay'] += 1
+            continue
+
         info = call('get_node_info', {'nodeId': gid}) or {}
         par = info.get('parentId')
         # ⚠️ get_node_info 는 absoluteBoundingBox 를 안 줄 수 있음(x/y None 함정과 짝) —
@@ -634,20 +652,7 @@ def convert_struct_groups(root_id):
             pass
         stats['frame'] += 1
 
-        def nonoverlap(axis):
-            ln = 'height' if axis == 'y' else 'width'
-            spans = sorted(((b.get(axis) or 0), (b.get(axis) or 0) + (b.get(ln) or 0))
-                           for _, b in boxes)
-            return all(spans[i + 1][0] >= spans[i][1] - 1 for i in range(len(spans) - 1))
-
-        if 2 <= len(kids) <= 8 and nonoverlap('y'):
-            axis, ln, mode = 'y', 'height', 'VERTICAL'
-        elif 2 <= len(kids) <= 8 and nonoverlap('x'):
-            axis, ln, mode = 'x', 'width', 'HORIZONTAL'
-        else:
-            call('rename_node', {'nodeId': fid, 'name': (g.get('name') or '') + ' (overlay)'})
-            stats['overlay'] += 1
-            continue
+        axis, ln, mode = ('y', 'height', 'VERTICAL') if is_v else ('x', 'width', 'HORIZONTAL')
         order = sorted(boxes, key=lambda cb: cb[1].get(axis) or 0)
         for i, (c, b) in enumerate(order):
             call('insert_child', {'parentId': fid, 'childId': c['id'], 'index': i})
@@ -655,7 +660,16 @@ def convert_struct_groups(root_id):
                     ((order[i][1].get(axis) or 0) + (order[i][1].get(ln) or 0)))
                 for i in range(len(order) - 1)]
         gap = round(sum(gaps) / len(gaps)) if gaps else 0
-        call('set_auto_layout', {'nodeId': fid, 'layoutMode': mode, 'itemSpacing': gap})
+        # 🔴 counter 축 정렬 승계 (2026-09-03 순번 열 숫자 좌측 치우침 실사고): 자식들이
+        # 그룹 counter 축 중앙에 근사하면 CENTER — MIN 고정이 원본 중앙 배치를 좌측으로 몰았다.
+        c_axis, c_ln = ('x', 'width') if is_v else ('y', 'height')
+        g_len = gb.get(c_ln) or 0
+        centered = all(abs(((b.get(c_axis) or 0) - (gb.get(c_axis) or 0))
+                           - (g_len - (b.get(c_ln) or 0)) / 2) <= 3 for _, b in boxes)
+        al = {'nodeId': fid, 'layoutMode': mode, 'itemSpacing': gap}
+        if centered:
+            al['counterAxisAlignItems'] = 'CENTER'
+        call('set_auto_layout', al)
         stats['stacked'] += 1
     if any(stats.values()):
         print(f'  [group→frame] 구조 GROUP 전환 {stats["frame"]} (스택 {stats["stacked"]} / overlay {stats["overlay"]})')

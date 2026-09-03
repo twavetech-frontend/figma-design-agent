@@ -256,8 +256,7 @@ def detach_merged_top_instances(root_id):
             h = bb.get('height') or 0
             nm = (n.get('name') or '').lower()
             ds_names = ('status bar', 'tool bar', 'tab bar', 'homeindicator', 'keyboard')
-            if nm not in ds_names and top <= 50 and h > 44 \
-                    and any(k in nm for k in ('top', 'header', 'bars', 'app bar', 'nav')):
+            if nm not in ds_names and top <= 10 and 44 < h <= 130:  # 상단 걸침 병합 헤더 — 이름 무관(2026-09-03 'general' 미검출 보강)
                 cands.append(n)
             return  # 인스턴스 내부는 안 내려감
         for c in n.get('children') or []:
@@ -270,6 +269,23 @@ def detach_merged_top_instances(root_id):
             if r and r.get('id'):
                 n_det += 1
                 print(f'  [detach] 병합 상단 인스턴스 분해: {c.get("name")} ({c["id"]} → {r["id"]})')
+                # 🔴 X-모달 병합 헤더(bg+btn/close+legacy bars 복합, h~100) 감지 (2026-09-03
+                # 아람이상세 실사): swap_app_bar 는 'app bar' 이름·h40~72 필터 밖이라 못 잡는다.
+                # legacy bars 를 프레임 밖(루트 y0)으로 빼내 swap_status_bar 경로에 태우고,
+                # 잔여(bg/close/underline)는 표준 재구성 대상으로 플래그.
+                dt = L.fetch_tree(r['id'], max_depth=2) or {}
+                inner_bars = [k for k in dt.get('children') or []
+                              if (k.get('name') or '').lower() in ('bars', 'status bar')
+                              and (k.get('absoluteBoundingBox') or {}).get('height', 99) <= 48]
+                has_close = bool([k for k in dt.get('children') or []
+                                  if 'close' in (k.get('name') or '').lower()])
+                for ib in inner_bars:
+                    call('insert_child', {'parentId': root_id, 'childId': ib['id'], 'index': 99})
+                    call('move_node', {'nodeId': ib['id'], 'x': 0, 'y': 0})
+                if inner_bars and has_close:
+                    RUN_FLAGS.append(f'merged-modal-header: {r["id"]} — legacy SB 는 루트로 추출(자동 스왑), '
+                                     f'X 헤더는 Tool Bar(View=modal, Back/Title/Num off, Right 1 button '
+                                     f'ic_x_close) 재구성 + 콘텐츠 +18(SB 44→62) 시프트 필요')
         except Exception as e:
             print(f'  [detach] 실패 {c["id"]}: {str(e)[:60]} — 플러그인 재실행 필요할 수 있음')
     return n_det
@@ -279,8 +295,9 @@ def swap_status_bar(root_tree):
     """🔴 Status Bar 는 한 화면 최상단에 **정확히 1개** (2026-08-24 사용자 룰 — 규칙 1 강령).
     첫 후보(최상단)만 DS 인스턴스로 스왑하고, 나머지(오버레이 딤 위 bars 등 캡처 중복)는
     삭제한다. 사이드바 실측: 배경+오버레이가 각각 bars 를 가져 2개가 잔존하던 구멍."""
+    # h ≤48: legacy 'bars' SB 는 h44 — 구 조건(≤40)이 스왑을 놓치던 구멍 (2026-09-03 아람이상세 실사)
     cands = find_all(root_tree, lambda n: (n.get('name') or '').lower() in ('bars', 'status bar', 'statusbar')
-                     and round(n.get('height') or 0) <= 40)
+                     and round(n.get('height') or 0) <= 48)
     sb = None
     for c in cands:
         if sb is None:

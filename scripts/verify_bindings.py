@@ -331,7 +331,9 @@ def main():
             # 🔴 구조 GROUP 감지 (2026-09-03 사용자 지적: "group 레이어들 왜 무시했지" —
             # normalize·본 게이트 둘 다 GROUP 타입을 안 봐서 48개가 통과한 사각지대 봉합).
             # 벡터-only 그룹·아이콘 크기(≤56)는 그래픽 원자라 면제(사용자 확정: 아이콘은 일반 프레임).
-            if t == 'GROUP' and ';' not in node_id and name not in allow:
+            # '(overlay)' 마커 GROUP = 스택 번역 불가 겹침 구성(데이터 테이블·고정열 등) —
+            # 전환하면 좌표가 깨져서 GROUP 보존이 정본 (2026-09-03 아람이상세 실사고, convert_struct_groups 동일 기준)
+            if t == 'GROUP' and ';' not in node_id and name not in allow and '(overlay)' not in name:
                 _gk = n.get('children') or []
                 _gvec = all(c.get('type') in ('VECTOR', 'BOOLEAN_OPERATION', 'ELLIPSE', 'LINE', 'SLICE')
                             for c in _gk) if _gk else True
