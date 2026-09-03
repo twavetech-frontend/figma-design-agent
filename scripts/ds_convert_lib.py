@@ -1019,3 +1019,88 @@ def instance_as_image(src_instance_id, parent_id, width, height, name='ic_from_i
                                'width': width, 'height': height, 'name': name}) or {}
     call('set_image_fill', {'nodeId': fr['id'], 'imageData': b64, 'scaleMode': 'FIT'})
     return fr.get('id')
+
+
+def icon_sheet(root_id, out_path, max_icons=24, label_h=14):
+    """아이콘 검사 시트 — 트리의 아이콘성 노드(10~80px 그래픽)를 전부 export 해
+    이름·실측 크기 라벨과 함께 한 장의 그리드로 저장. gen/ref 두 장을 만들어 Read 하면
+    형태·크기 차이를 1회에 검사할 수 있다 (2026-09-03 사용자: "그래픽 아이콘 형태가
+    다르지 않아? 그런 건 검사를 못하니?" — region_diff 는 구역 평균이라 소형 아이콘
+    차이를 못 잡는 사각지대의 게이트).
+    반환: [(name, w, h, id)] 수집 목록."""
+    import base64 as _b64
+    from PIL import Image as _Im, ImageDraw as _Draw
+    t = fetch_tree(root_id)
+    if not t:
+        return []
+    icons = []
+
+    def w(n, path=''):
+        nm = (n.get('name') or '')
+        b = n.get('absoluteBoundingBox') or {}
+        wd, ht = round(b.get('width') or 0), round(b.get('height') or 0)
+        if 8 <= wd <= 80 and 8 <= ht <= 80 and n.get('type') in \
+                ('FRAME', 'GROUP', 'INSTANCE', 'BOOLEAN_OPERATION', 'VECTOR') \
+                and any(k in nm.lower() for k in
+                        ('icon', 'ico_', 'ic_', 'union', 'badge', 'crown', 'gift',
+                         'sparkle', 'spark', 'daram', 'acorn', 'coin', 'bill')):
+            icons.append((nm, wd, ht, n['id']))
+            return  # 바깥 아이콘 랩 우선 — 내부 벡터 중복 방지
+        for c in n.get('children', []) or []:
+            w(c, path)
+
+    w(t)
+    icons = icons[:max_icons]
+    if not icons:
+        return []
+    CELL = 88
+    cols = min(6, len(icons))
+    rows = (len(icons) + cols - 1) // cols
+    sheet = _Im.new('RGB', (cols * CELL, rows * (CELL + label_h)), (235, 235, 240))
+    draw = _Draw.Draw(sheet)
+    for idx, (nm, wd, ht, nid) in enumerate(icons):
+        try:
+            r = fc.parse_content(fc.call_tool('export_node_as_image',
+                                              {'nodeId': nid, 'format': 'PNG', 'scale': 2}))
+            data = (r.get('raw') or [{}])[0].get('data')
+            im = _Im.open(__import__('io').BytesIO(_b64.b64decode(data))).convert('RGBA')
+        except Exception:
+            continue
+        im.thumbnail((CELL - 8, CELL - 8))
+        cx, cy = (idx % cols) * CELL, (idx // cols) * (CELL + label_h)
+        bgc = _Im.new('RGBA', (CELL, CELL), (255, 255, 255, 255))
+        bgc.paste(im, ((CELL - im.size[0]) // 2, (CELL - im.size[1]) // 2), im)
+        sheet.paste(bgc.convert('RGB'), (cx, cy))
+        draw.text((cx + 3, cy + CELL + 1), f'{nm[:12]} {wd}x{ht}', fill=(40, 40, 50))
+    sheet.save(out_path)
+    print(f'  [icon-sheet] {len(icons)}개 → {out_path} (Read 로 형태·크기 대조)')
+    return icons
+
+
+def clone_vector_safe(src_id, parent_id, x=0, y=0, name=None):
+    """벡터 그래픽(BOOLEAN_OPERATION/GROUP 포함) 안전 clone 이식.
+    🔴 clone→insert→move 과정에서 BOOLEAN 내부 자식 좌표가 시프트돼 불리언 결과가
+    조각나는 함정 (2026-09-03 스파클 Union 실사고: 자식 y 7.2→3.2 어긋나 별이 삼각형 조각).
+    이식 후 원본과 자식 좌표를 병렬 대조·복원한다. 반환: clone id."""
+    cl = call('clone_node', {'nodeId': src_id})
+    call('insert_child', {'childId': cl['id'], 'parentId': parent_id})
+    call('move_node', {'nodeId': cl['id'], 'x': x, 'y': y})
+    if name:
+        call('rename_node', {'nodeId': cl['id'], 'name': name})
+
+    def _restore(oid, cid, d=0):
+        if d > 6:
+            return
+        o = call('get_node_info', {'nodeId': oid}) or {}
+        c = call('get_node_info', {'nodeId': cid}) or {}
+        for oc, cc in zip(o.get('children', []) or [], c.get('children', []) or []):
+            on = call('get_node_info', {'nodeId': oc['id']}) or {}
+            cn = call('get_node_info', {'nodeId': cc['id']}) or {}
+            ox, oy = on.get('x'), on.get('y')
+            if ox is not None and cn.get('x') is not None \
+                    and (abs(cn['x'] - ox) > 0.5 or abs((cn.get('y') or 0) - (oy or 0)) > 0.5):
+                call('move_node', {'nodeId': cc['id'], 'x': ox, 'y': oy})
+            _restore(oc['id'], cc['id'], d + 1)
+
+    _restore(src_id, cl['id'])
+    return cl['id']
