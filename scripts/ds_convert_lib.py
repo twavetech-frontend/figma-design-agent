@@ -609,8 +609,13 @@ def convert_struct_groups(root_id):
         boxes = [(c, c.get('absoluteBoundingBox') or {}) for c in kids]
         info = call('get_node_info', {'nodeId': gid}) or {}
         par = info.get('parentId')
-        pinfo = call('get_node_info', {'nodeId': par}) or {}
-        pb = pinfo.get('absoluteBoundingBox') or {}
+        # ⚠️ get_node_info 는 absoluteBoundingBox 를 안 줄 수 있음(x/y None 함정과 짝) —
+        # 부모 abs 는 get_nodes_info(document.absoluteBoundingBox)로 (2026-09-03 좌표 폭주 실사고)
+        _pn = fc.parse_content(fc.call_tool('get_nodes_info', {'nodeIds': [par]})).get('json') or []
+        pb = ((_pn[0].get('document') if _pn else {}) or {}).get('absoluteBoundingBox') or {}
+        if pb.get('x') is None:
+            print(f'  [group→frame] 부모 abs 미확보 — 스킵 {gid}')
+            break
         fr = call('create_frame', {'parentId': par, 'x': gx - (pb.get('x') or 0),
                                    'y': gy - (pb.get('y') or 0),
                                    'width': gb.get('width') or 1, 'height': gb.get('height') or 1,
