@@ -24,9 +24,16 @@ import figma_mcp_client as fc  # noqa: E402
 CALL_TIMEOUT = float(os.environ.get("CRAWL_CALL_TIMEOUT", "25"))
 
 
-def call(name, args, timeout=None):
+RECONNECT_WAIT = float(os.environ.get("CRAWL_RECONNECT_WAIT", "90"))
+FAILS = []  # (tool, nodeId, reason) — 조용히 삼키지 않고 끝에 요약 + exit 1
+
+
+def call(name, args, timeout=None, _retry=True):
     """fc.call_tool 과 동일하되 per-call timeout (기본 25s). 실패/타임아웃 시 None.
-    (2026-09-04: 거대 화면 1개의 get_node_tree 가 300s 를 물고 크롤 전체를 죽인 회귀 방지)"""
+    (2026-09-04: 거대 화면 1개의 get_node_tree 가 300s 를 물고 크롤 전체를 죽인 회귀 방지)
+    🔴 2026-09-04 회귀 수정: MCP error 응답(특히 플러그인 순간 단절 'Not connected to Figma
+    plugin')을 로그 없이 None 으로 삼켜 섹션 12개가 통째로 빠진 채 '성공'(95/921 화면)으로
+    보고됐다. 이제 에러를 출력·집계하고, 플러그인 단절이면 재접속을 기다렸다가 재시도한다."""
     payload = {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
                "params": {"name": name, "arguments": args}}
     headers = {"Content-Type": "application/json"}
@@ -38,10 +45,38 @@ def call(name, args, timeout=None):
         data = resp.json()
     except Exception as e:  # timeout 포함
         print(f"  ⚠ {name} {args.get('nodeId')} 실패: {type(e).__name__}", flush=True)
+        FAILS.append((name, args.get("nodeId"), type(e).__name__))
         return None
-    if "error" in data:
+    err = data.get("error")
+    content = (data.get("result") or {}).get("content")
+    # 도구 에러는 result.isError + content 텍스트로 오기도 한다
+    if not err and (data.get("result") or {}).get("isError"):
+        err = _txt(content)
+    if err:
+        msg = err.get("message") if isinstance(err, dict) else str(err)
+        if _retry and "Not connected" in msg:
+            if _wait_plugin_reconnect():
+                return call(name, args, timeout, _retry=False)
+        print(f"  ⚠ {name} {args.get('nodeId')} MCP error: {msg[:120]}", flush=True)
+        FAILS.append((name, args.get("nodeId"), msg[:120]))
         return None
-    return (data.get("result") or {}).get("content")
+    return content
+
+
+def _wait_plugin_reconnect():
+    """플러그인 단절(1001 등) 시 RECONNECT_WAIT 초까지 get_document_info 폴링으로 재접속 대기."""
+    print(f"  ⏳ 플러그인 단절 감지 — 최대 {int(RECONNECT_WAIT)}s 재접속 대기…", flush=True)
+    t0 = time.time()
+    while time.time() - t0 < RECONNECT_WAIT:
+        time.sleep(2)
+        n_before = len(FAILS)
+        r = call("get_document_info", {}, timeout=10, _retry=False)
+        del FAILS[n_before:]
+        if r is not None:
+            print(f"  ✓ 플러그인 재접속 ({round(time.time() - t0)}s)", flush=True)
+            return True
+    print("  ✗ 플러그인 재접속 실패 — 남은 노드는 건너뜀", flush=True)
+    return False
 
 
 def _txt(r):
@@ -84,16 +119,19 @@ def crawl(page_id="0:1", min_w=360, max_w=430, log=print):
     out, stats = [], {"info": 0, "tree": 0, "screens": 0, "empty_tree": 0}
     t0 = time.time()
 
-    def rec(node_id, depth):
+    def rec(node_id, depth, stub=None):
         n = _node(call("get_node_info", {"nodeId": node_id}))
         stats["info"] += 1
         if not n:
+            stats["failed"] = stats.get("failed", 0) + 1
+            if stub is not None:
+                out.append(_line(stub, depth).replace(">", ' crawl="failed">', 1))
             return
         out.append(_line(n, depth))
         for c in n.get("children") or []:
             ctype, w = c.get("type"), c.get("width") or 0
             if ctype in ("SECTION", "PAGE") or (ctype in ("FRAME", "GROUP", "COMPONENT", "INSTANCE") and w > max_w):
-                rec(c["id"], depth + 1)
+                rec(c["id"], depth + 1, stub=c)
             elif ctype in ("FRAME", "COMPONENT", "INSTANCE", "GROUP") and min_w <= w <= max_w:
                 t = _node(call("get_node_tree", {"nodeId": c["id"], "maxDepth": 14}))
                 stats["tree"] += 1
@@ -135,13 +173,22 @@ def crawl(page_id="0:1", min_w=360, max_w=430, log=print):
 
 def main():
     args = sys.argv[1:]
+    if "-h" in args or "--help" in args:
+        print(__doc__)
+        return 0
     page = args[args.index("--page") + 1] if "--page" in args else "0:1"
     outp = args[args.index("--out") + 1] if "--out" in args else os.path.join(HERE, "_figma_page.xml")
     xml, stats = crawl(page)
+    stats["failed"] = len(FAILS)
     with open(outp, "w", encoding="utf-8") as f:
         f.write(xml)
     print(f"✓ XML → {outp}  {json.dumps(stats)}")
+    if FAILS:
+        print(f"✗ 크롤 불완전 — 실패 {len(FAILS)}건 (섹션/화면이 통째로 빠졌을 수 있음). "
+              f"플러그인 연결 확인 후 재실행할 것. 예: {FAILS[:3]}")
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
