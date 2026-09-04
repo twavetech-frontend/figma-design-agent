@@ -248,6 +248,14 @@ def main():
                     cols = []
                 if scols and _id_allowed:
                     scols = []
+                # 🔴 DS 페인트 스타일(fillStyleId/strokeStyleId — stage old color 등)로 묶인 페인트는
+                # 바인딩 정본으로 인정 (2026-09-04: 스타일 바인딩을 미바인딩으로 고발해 allow 남발 유발)
+                _fsid = n.get('fillStyleId') or ''
+                _ssid = n.get('strokeStyleId') or ''
+                if cols and _fsid and _fsid != 'mixed':
+                    cols = []
+                if scols and _ssid and _ssid != 'mixed':
+                    scols = []
                 if cols and not bv.get('fills'):
                     # 근접 토큰이 아예 없는 유채 = 앱 에셋 색 의심 — 스냅 대신 allow 후보 제안
                     if _no_near_token(cols):

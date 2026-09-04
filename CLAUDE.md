@@ -467,8 +467,11 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   불가(겹침/절대배치) 그룹이 많으면 트리 변형 금지 → **rebuild 트랙**: 캡처 Read(시각 참조)
   + `extract_content_spec` 트리 실측(콘텐츠 1:1, OCR 금지) → blueprint 새로 작성(DS 문법) →
   build → 벡터/번역불가 블록만 원본 clone 이식(`list_transplant_blocks`) → bind+verify+대조.
-  convert_screen 이 `assess_rebuild_track` 으로 자동 판별·차단(exit 2, bypass `--force-convert`).
-  상세: `rule 8-D`.
+  🔴 **2026-09-04 개정(사용자: "차단되면 원커맨드가 소용없다"): convert_screen 이 판별 후 멈추지
+  않고 `scripts/rebuild_track.py` 로 rebuild 트랙을 끝까지 자동 수행**(트리 실측 → blueprint 자동
+  생성 → build → 벡터 이식(placeholder 래퍼) → 이식 페인트 토큰/스타일 바인딩 → bind·verify·
+  region_diff). 스테이지 색은 DS 페인트 스타일(`set_fill_style_id`/`set_stroke_style_id`)로.
+  bypass `--force-convert`(변형 트랙). 상세: `rule 8-D`.
 - **8-E (2026-09-03)** — 🔴 **MCP 도구 계약 함정 목록** — 수동 조립(변환/개조 트랙)은 post-fix 가
   없는 지대: batch_build 의 layoutMode/width/padding 무시·기본 흰 fill, resize 후 FILL 자식 stale,
   오토레이아웃 자식 move 무시 등. batch_build 직후 `assert_spec_applied` 의무. 🔴 **완료 게이트 =

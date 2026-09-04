@@ -1932,8 +1932,19 @@
 > ⑥ 이식 대상 원본 clone → 루트 상대 위치로 삽입 (개별 path 수리 절대 금지 — 통째 재클론)
 > ⑦ bind + verify PASS + region compare (기존 게이트 동일)
 >
-> **시스템 강제:** `convert_screen.py` 시작 시 `assess_rebuild_track()` — 스택 번역 불가 그룹
-> ≥3 또는 구조 그룹 대비 ≥40% 면 변형 트랙 **차단(exit 2)** + 이식 대상·워크플로 출력.
+> **시스템 강제 (2026-09-04 개정 — 사용자: "원커맨드가 8-D 에 걸려 차단되면 소용이 없다"):**
+> `convert_screen.py` 시작 시 `assess_rebuild_track()` — 스택 번역 불가 그룹 ≥3 또는 구조 그룹
+> 대비 ≥40% 면 **차단하지 않고 `scripts/rebuild_track.py` 의 rebuild 트랙을 원커맨드가 끝까지
+> 자동 수행**한다: ① 트리 실측(인스턴스 내부 포함, fontName 은 figma.mixed 시 생략되므로
+> `get_styled_text_segments(fontWeight)` 로 굵기 복원) ② 좌표→오토레이아웃 번역(y 겹침 행 클러스터,
+> 최대 x 갭 좌/우 SPACE_BETWEEN, 단계 라벨 k 등분 세그먼트, 흰 풀폭 rect 는 배경으로 제외, 도형이
+> 블록을 감싸면 컨테이너 승격, 큰 공백 뒤 바닥 블록은 Footer, 바닥 풀폭 도형+짧은 텍스트는 Action
+> Button) ③ 색: 팔레트 최근접 $token, 구 브랜드 보라(hue 235~300)는 브랜드 토큰 승계, 근접 토큰 없는
+> 유채(스테이지 색 등)는 DS 페인트 스타일 hex 일치 시 `set_fill_style_id`/`set_stroke_style_id`
+> ④ build(lint R21.1 자동 보정 1회 재빌드) ⑤ 이식: placeholder plain FRAME(FIXED) 안에 원본
+> clone_vector_safe + get_nodes_info 차분으로 좌표 보정 ⑥ 이식 벡터 페인트까지 토큰/스타일
+> 바인딩(allow 통째 면제 금지) ⑦ Action Button 프롭 off·h56·원본 폭 비율, Action Bar flow 복귀,
+> Content FILL, 루트 높이 ≥852, HomeIndicator clone → 공용 bind·verify·region_diff.
 > bypass: `--force-convert` (단순 리스트형 등 변형이 확실히 안전할 때만). 판별을 통과한
 > 소스의 변형 트랙에서도: 겹침 그룹은 FRAME 전환 스킵(GROUP 보존+`(overlay)` 마커), 스택
 > 전환 시 counter 축 중앙 근사 감지→CENTER 승계, 위치 수리 검증은 export 픽셀 실측 피드백.
@@ -1959,6 +1970,7 @@
 > | `set_auto_layout` 후부여 | 기존 노드 크기가 HUG 로 재계산돼 붕괴 (thumb 60→43 실사고) | `ds_convert_lib.set_auto_layout_keep_size` (크기 스냅샷→FIXED 재단언 세트) |
 > | 순색 일괄 바인딩 | paint.opacity=0 흰 fill 을 바인딩하면 **불투명 흰 박스로 활성화** (Stats·AI Wrap 2회 재발) | 즉석 스크립트 금지 — `ds_convert_lib.bind_pure_whites` (opacity·alpha 이중 체크 + 랩 이름 제외) |
 > | INSTANCE `resize_node` | 내부가 스케일되지 않고 **크롭**됨 (도토리 40→18, Status Bar HUG 변형과 동일 클래스) | `ds_convert_lib.instance_as_image` (고배율 export→이미지 fill) 또는 detach 후 처리 |
+> | 페인트 스타일 바인딩 | stroke 에 스타일을 걸 도구가 없어 스테이지 색 아이콘 stroke/보더가 원값 잔존 → allow 로 숨겨져 "컬러 바인딩 안 됨" (2026-09-04) | `set_stroke_style_id` 신설(플러그인+브리지) + verify 가 fillStyleId/strokeStyleId 를 바인딩 정본으로 인정. **allow 는 벡터 에셋 통째 면제 금지 — 이식 벡터도 `rebuild_track.bind_asset_paints` 로 fg-*/스타일 바인딩** |
 > | 벡터 clone 이식 | clone→insert→move 시 BOOLEAN/그룹 **내부 자식 좌표가 시프트**돼 불리언이 조각남 (스파클 별→삼각형 실사고). 판정 전에 **원본 단독 렌더와 비교**할 것 — 원본이 원래 그 모양일 수 있다(왕관 Badge 오판 사례) | `ds_convert_lib.clone_vector_safe` (이식 후 자식 좌표 병렬 복원). 아이콘은 벡터 정본 — 이미지 fill 우회 금지(사진 콘텐츠 전용) |
 >
 > **완료 게이트(변환/개조 트랙) — `python3 scripts/qa_sweep.py <genId> <refId> [--allow ...]` 원커맨드:**

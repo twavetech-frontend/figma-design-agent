@@ -335,6 +335,12 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['nodeId', 'fillStyleId']
   }, async (params) => cmd('set_fill_style_id', params));
 
+  reg('set_stroke_style_id', 'Apply a paint style to a node\'s stroke — "S:key,x" imports library style (stage old color 등 DS 페인트 스타일을 아이콘 stroke/보더에)', {
+    type: 'object',
+    properties: { nodeId: { type: 'string' }, strokeStyleId: { type: 'string' } },
+    required: ['nodeId', 'strokeStyleId']
+  }, async (params) => cmd('set_stroke_style_id', params));
+
   reg('set_effect_style_id', 'Set effect style ID on a node', {
     type: 'object',
     properties: {

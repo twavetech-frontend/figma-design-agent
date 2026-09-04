@@ -1172,6 +1172,7 @@ def main():
     #   ③ list_transplant_blocks 목록화 ④ blueprint 새로 작성(DS 인스턴스+오토레이아웃)
     #   ⑤ build ⑥ 이식 대상 원본 clone→위치 삽입 ⑦ bind+verify+region compare
     # bypass: --force-convert (단순 리스트형 등 변형이 확실히 안전할 때만).
+    rebuild_ids = set()
     if '--force-convert' not in sys.argv:
         _rebuild_hits = []
         for s in srcs:
@@ -1182,15 +1183,13 @@ def main():
             if a.get('recommend_rebuild'):
                 _rebuild_hits.append((s['id'], s.get('name'), a))
         if _rebuild_hits:
-            print('🔴 [8-D] rebuild 트랙 권고 — 변형 트랙 차단 (bypass: --force-convert):')
+            # 🔴 2026-09-04 사용자: "차단되면 원커맨드가 소용 없어진 거잖아" → 판정 후 멈추지 않고
+            # rebuild 트랙(rebuild_track.run_rebuild)을 이 원커맨드가 끝까지 수행한다.
+            print('🔴 [8-D] rebuild 트랙 자동 실행 (변형 대신 blueprint 재생성 + 벡터 이식; bypass: --force-convert):')
             for sid_r, nm_r, a in _rebuild_hits:
+                rebuild_ids.add(sid_r)
                 print(f'   {sid_r} "{nm_r}": 번역불가 그룹 {a["untranslatable"]}/{a["struct_groups"]} '
                       f'(ratio {a["ratio"]}) — 이식 대상 {len(a["transplants"])}블록')
-                for b in a['transplants'][:8]:
-                    print(f'     · [{b["kind"]}] {b["name"]} ({b["id"]}) @({b["x"]},{b["y"]}) {b["w"]}x{b["h"]}')
-            print('   워크플로: 캡처 Read → extract_content_spec(콘텐츠 1:1) → blueprint 새로 작성'
-                  '(DS 문법) → build → transplant clone 이식 → bind+verify+region compare')
-            return 2
 
     # 🔴 같은 페이지 유사 DS본 사전 탐지 (0-G-2 clone-우선 — 2026-08-24 블로그 실측:
     # 페이지에 신 DS 기준 화면이 이미 있는데 구 캡처를 기계 변환해 구 브랜드/구 라이브러리가
@@ -1230,6 +1229,29 @@ def main():
             _stage_t[k] = round(time.time() - _ts, 1)
             _ts = time.time()
 
+        if sid in rebuild_ids:
+            import rebuild_track as RT
+            try:
+                rid, rflags, rallow = RT.run_rebuild(s, parent, right + gap + i * (393 + gap), y0, gap)
+            except Exception as e:
+                print(f'  ✗ rebuild 실패: {str(e)[:200]}')
+                results.append({'src': sid, 'gen': None, 'flags': [f'rebuild-failed: {str(e)[:120]}']})
+                continue
+            allow |= {a for a in rallow if a}
+            RUN_FLAGS.extend(rflags)
+            _lap('rebuild')
+            import bind_semantic_tokens as _bst
+            _bst.run(rid)
+            _lap('bind')
+            sweep_unbound(rid, allow)
+            _lap('sweep')
+            flags = list(RUN_FLAGS) + diagnose(sid, rid)
+            _lap('diagnose')
+            print(f'  [⏱] {" ".join(f"{k}:{v}s" for k, v in _stage_t.items())}')
+            for f in flags:
+                print(f'  🚩 [detect] {f}')
+            results.append({'src': sid, 'gen': rid, 'flags': flags, 'track': 'rebuild'})
+            continue
         cl = call('clone_node', {'nodeId': sid})
         rid = cl['id']
         call('insert_child', {'parentId': parent, 'childId': rid})
@@ -1294,6 +1316,9 @@ def main():
     if not no_verify:
         for entry in results:
             rid = entry['gen']
+            if not rid:
+                ok = False
+                continue
             cmd = [sys.executable, os.path.join(_HERE, 'verify_bindings.py'), rid]
             eff_allow = set(allow) | ASSET_ALLOW_DEFAULT
             if eff_allow:
@@ -1309,6 +1334,8 @@ def main():
         # 구역별 픽셀 스코어 + 색 성분 진단을 강제 출력 — 초과 구역은 크롭 Read 후
         # 해소/설명 없이 완료 보고 금지)
         for entry in results:
+            if not entry.get('gen'):
+                continue
             try:
                 bands = L.region_diff(entry['gen'], entry['src'])
                 entry['region_diff'] = [(i, sc) for i, sc, _p, _d in bands]

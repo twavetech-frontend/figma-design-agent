@@ -396,6 +396,8 @@ async function handleCommand(command, params) {
       return await setEffectStyleId(params);
     case "set_fill_style_id":
       return await setFillStyleId(params);
+    case "set_stroke_style_id":
+      return await setStrokeStyleId(params);
     case "set_text_style_id":
       return await setTextStyleId(params);
     case "group_nodes":
@@ -677,6 +679,9 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
         });
       }
       // 🔴 2026-08-14: fill 스타일 연결 직렬화 — gradient 가 DS color style 인지 검증용
+      if ("strokeStyleId" in node) {
+        info.strokeStyleId = (node.strokeStyleId === figma.mixed) ? "mixed" : node.strokeStyleId;
+      }
       if ("fillStyleId" in node) {
         info.fillStyleId = (node.fillStyleId === figma.mixed) ? "mixed" : node.fillStyleId;
       }
@@ -4753,6 +4758,37 @@ async function setFillStyleId(params) {
     node.fillStyleId = styleObj.id;
   }
   return { id: node.id, name: node.name, fillStyleId: node.fillStyleId, styleName: styleObj.name };
+}
+
+// 2026-09-04: stroke 에 페인트 스타일 적용 (setFillStyleId 미러) — 스테이지 색(stage old color/N)
+// 을 아이콘 stroke/pill 보더에 바인딩할 도구가 없어 원값 잔존 → verify 미바인딩 (사용자: "컬러
+// 바인딩 또 제대로 안 되어 있다").
+async function setStrokeStyleId(params) {
+  const { nodeId, strokeStyleId } = params || {};
+  if (!nodeId) throw new Error("Missing nodeId parameter");
+  if (!strokeStyleId) throw new Error("Missing strokeStyleId parameter");
+  const node = await figma.getNodeByIdAsync(nodeId);
+  if (!node) throw new Error(`Node not found with ID: ${nodeId}`);
+  if (!("strokeStyleId" in node)) throw new Error(`Node ${nodeId} does not support stroke styles`);
+  var remoteMatch = strokeStyleId.match(/^S:([^,]+),(.+)$/);
+  var styleObj = null;
+  if (remoteMatch) {
+    styleObj = await figma.importStyleByKeyAsync(remoteMatch[1]);
+    if (!styleObj) throw new Error("Failed to import remote paint style key: " + remoteMatch[1]);
+  } else {
+    var paintStyles = await figma.getLocalPaintStylesAsync();
+    styleObj = paintStyles.find(function(st) { return st.id === strokeStyleId || st.key === strokeStyleId; });
+    if (!styleObj) {
+      try { styleObj = await figma.importStyleByKeyAsync(strokeStyleId); } catch (e) { /* fallthrough */ }
+    }
+    if (!styleObj) throw new Error("Paint style not found: " + strokeStyleId);
+  }
+  if (typeof node.setStrokeStyleIdAsync === "function") {
+    await node.setStrokeStyleIdAsync(styleObj.id);
+  } else {
+    node.strokeStyleId = styleObj.id;
+  }
+  return { id: node.id, name: node.name, strokeStyleId: node.strokeStyleId, styleName: styleObj.name };
 }
 
 async function setEffectStyleId(params) {
