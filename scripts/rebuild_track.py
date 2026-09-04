@@ -763,7 +763,7 @@ def postprocess(rid, ctx, flags):
         if part == 'stroke':
             if sid:
                 call('set_stroke_style_id', {'nodeId': nid, 'strokeStyleId': sid})
-                flags.append(f'chroma-style: {base} stroke ← 페인트 스타일 {hx}')
+                print(f'  [chroma-style] {base} stroke ← 페인트 스타일 {hx}')
             else:
                 rgb = L._rgb(hx)
                 call('set_stroke_color', {'nodeId': nid, 'color': {'r': rgb[0] / 255, 'g': rgb[1] / 255, 'b': rgb[2] / 255, 'a': 1},
@@ -773,7 +773,7 @@ def postprocess(rid, ctx, flags):
             continue
         if sid:
             call('set_fill_style_id', {'nodeId': nid, 'fillStyleId': sid})
-            flags.append(f'chroma-style: {base} ← 페인트 스타일 {hx}')
+            print(f'  [chroma-style] {base} ← 페인트 스타일 {hx}')
         else:
             rgb = L._rgb(hx)
             call('set_fill_color', {'nodeId': nid, 'color': {'r': rgb[0] / 255, 'g': rgb[1] / 255, 'b': rgb[2] / 255, 'a': 1}})
