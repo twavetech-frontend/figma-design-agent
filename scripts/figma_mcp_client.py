@@ -1328,15 +1328,35 @@ def cmd_learn_planning(out_rel: str = "scripts/_planning_digest.txt", force: boo
         _notify_plugin("planning-docs", status="done", count=0)
         return
 
-    # 🔴 2026-06-05 사용자 룰 — digest 재사용 금지, **매번 새로 작성**.
-    #   ("digest 재사용하지말고 매번 새로 작성해") 변경 감지로 스킵하던 분기를 제거하고
-    #   항상 build_digest 로 재생성한다. 이래야 (1) digest 생성 progress("기획 문서 학습 중
-    #   n/총 + 문서명", syncing)가 매 준비마다 플러그인 UI 에 또렷이 표시되고 (2) 내용도 항상
-    #   최신이다. 새로 쓰면 아래에서 이전 ack 를 무효화 → 매 세션 재통독 강제와도 일관.
     changed, _fp2, digest_exists = _planning_changed(out_rel)
 
+    # 🔴 2026-09-04 사용자 지적("통독 ack 가 매 세션 무효화 — 원인 찾아 해결"):
+    #   2026-06-05 "매번 새로 작성" 룰이 변경 감지 스킵을 없애고 ack 를 **무조건** 삭제해,
+    #   2026-08-14 승인 룰(ack 는 fingerprint 기준 영속 — 문서 안 바뀌면 재통독 없이 통과)을
+    #   코드가 뒤집고 있었다(CLAUDE.md 서술과도 불일치). 이제:
+    #   - fingerprint 동일 + digest/ack 유효 → 재생성 스킵(플러그인엔 done 알림), ack 유지.
+    #   - fingerprint 동일 + ack 없음 → 재생성 없이 통독 안내만.
+    #   - 변경 or --force → 재생성. read_token 은 본문 sha1 이라 내용이 같으면 토큰도 같으므로
+    #     ack 는 **토큰이 바뀐 경우에만** 무효화한다.
+    if digest_exists and not changed and not force:
+        ok, reason = _planning_read_ok(out_rel)
+        _notify_plugin("planning-docs", status="done", count=fp["count"])
+        if ok:
+            print(f"[기획] ✓ 기획 문서 변경 없음(fingerprint 일치) — digest 재사용, 통독 ack 유효 ({reason})")
+            print(f"[기획]    재통독 불필요. 강제 재학습: learn-planning --force")
+            return
+        try:
+            with open(meta_path, encoding="utf-8") as fh:
+                _tok = json.load(fh).get("read_token", "")
+        except Exception:
+            _tok = ""
+        print(f"[기획] 기획 문서 변경 없음 — digest 재사용 ({reason})")
+        print(f"[기획] 👉 {out_path} 를 Read 도구로 **끝까지** 통독 → "
+              f"`python3 scripts/figma_mcp_client.py ack-planning {_tok}`")
+        return
+
     total = fp["count"]
-    why = "최초 학습" if not digest_exists else ("강제 재학습" if force else "재학습 (매번 새로 작성)")
+    why = "최초 학습" if not digest_exists else ("강제 재학습" if force else "재학습 (기획 문서 변경 감지)")
     print(f"[기획] {total}개 유스케이스 문서 학습 시작 ({why})...")
     # 🔴 디자인 시스템 로딩 완료 후 통독 시작 (2026-06-05 사용자 룰). 플러그인 연결 직후
     #    브리지가 DS 문서를 동기화하는 동안 대기 → 완료되면 통독 progress 를 UI 에 띄운다.
@@ -1357,16 +1377,27 @@ def cmd_learn_planning(out_rel: str = "scripts/_planning_digest.txt", force: boo
     meta["read_token"] = read_token
     with open(meta_path, "w", encoding="utf-8") as fh:
         json.dump(meta, fh, ensure_ascii=False)
-    # digest 가 새로 생성됐으므로 이전 통독 ack 무효화 (다시 통독해야 함)
+    # 이전 통독 ack 무효화 — 단, 토큰(본문 sha1)이 그대로면 내용이 동일하므로 ack 유지
+    # (--force 재학습이나 mtime 만 바뀐 경우에 재통독을 강요하지 않기 위해, 2026-09-04)
+    ack_kept = False
     try:
         _ack = _planning_read_ack_path(out_rel)
         if os.path.exists(_ack):
-            os.remove(_ack)
+            with open(_ack, encoding="utf-8") as fh:
+                _prev_tok = json.load(fh).get("read_token")
+            if _prev_tok != read_token:
+                os.remove(_ack)
+                print("[기획] 이전 통독 ack 무효화 (digest 내용 변경) — 재통독 필요")
+            else:
+                ack_kept = True
     except Exception:
         pass
 
     _notify_plugin("planning-docs", status="done", count=count)
     print(f"[기획] ✓ {count}개 유스케이스 학습 digest 생성 → {out_path} ({len(digest):,}자)")
+    if ack_kept:
+        print("[기획] ✓ digest 내용 동일(토큰 일치) — 기존 통독 ack 유지, 재통독 불필요")
+        return
     print(f"[기획] 👉 다음(필수): 이 파일을 Read 도구로 **끝까지** 통독 → 맨 끝 토큰으로")
     print(f"[기획]    `python3 scripts/figma_mcp_client.py ack-planning {read_token}` 실행")
     print(f"[기획]    (통독+ack 해야 디자인 빌드가 통과됨 — 시스템 강제)")

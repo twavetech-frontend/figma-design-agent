@@ -50,3 +50,4 @@ scripts/.python-path
 # vibe-tests 이터레이션 산출물 (리포트만 선택 커밋)
 scripts/vibe_tests/results/
 scripts/_figma_index_*.json
+scripts/_figma_page*.xml

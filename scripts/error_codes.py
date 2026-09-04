@@ -30,6 +30,7 @@ ERROR_CODES = {
     "ERR_CONCEPT_MISSING": "root._concept 선언 누락/공허 (S24 컨셉 게이트)",
     "ERR_DESIGN_DIRECTION_MISSING": "root._designDirection 선언 누락/불충분 (S25 디자인 방향 게이트)",
     "ERR_WIREFRAME_DIVERGENCE_MISSING": "root._wireframeDivergence 선언 누락 (S26 와이어 트레이싱 차단)",
+    "ERR_RESTRUCTURE_MAP_MISSING": "root._restructureMap 선언 누락/불충분 (S27 재구성 맵 게이트)",
     "ERR_NOVELTY_DUPLICATE": "직전 빌드와 비주얼 시그니처/방향 동일 (novelty 게이트)",
     "ERR_MODAL_HOME_SECTIONS": "modal 에 홈 대시보드 섹션 유입 (R58)",
     "ERR_RULE_LINT": "design_rules L2 lint ERROR (개별 코드 미부여 룰)",
@@ -44,6 +45,7 @@ GATE_TAG_TO_CODE = {
     "S24": "ERR_CONCEPT_MISSING",
     "S25": "ERR_DESIGN_DIRECTION_MISSING",
     "S26": "ERR_WIREFRAME_DIVERGENCE_MISSING",
+    "S27": "ERR_RESTRUCTURE_MAP_MISSING",
     "novelty-gate": "ERR_NOVELTY_DUPLICATE",
     "R58": "ERR_MODAL_HOME_SECTIONS",
 }

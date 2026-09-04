@@ -55,6 +55,15 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
    `get_metadata(fileKey, nodeId=<pageId>)` XML 을 파일로 받아 →
    ③ `python3 scripts/index_figma_page.py <xml파일> --tag <파일태그>` 로
    `scripts/_figma_index_<tag>.json` 생성(화면/섹션/에셋/텍스트, gitignore 됨).
+   ✅ **공식 Figma MCP 가 세션에 없으면(보통) 브리지 크롤러 원커맨드 (2026-09-04 영구화) —
+   반드시 `run_in_background` 로 돌리고 5~6단계와 병렬 진행** (약 90~100s, 921화면 실측.
+   포그라운드로 기다리지 말 것 — 준비 11분 회귀의 절반이 이것):
+   ```bash
+   python3 scripts/crawl_figma_page.py --out scripts/_figma_page_v216.xml && \
+   python3 scripts/index_figma_page.py scripts/_figma_page_v216.xml --tag v216
+   ```
+   (콜별 25s 타임아웃 + 얕은 폴백 내장 — 거대 화면 1개가 300s 를 물고 전체를 죽이던 회귀 방지.
+   페이지 이름이 바뀌면 `--page <pageId>`·태그를 맞출 것.)
    이후 **변환/생성 요청마다 blueprint·조립 전에
    `python3 scripts/index_figma_page.py --grep <화면명·에셋 키워드> --tag <태그>` 가 기존 본
    전수 확인의 1순위** — 플러그인 find_nodes_by_name(0건 오탐 실적)·scan_text_nodes(60s
@@ -68,6 +77,10 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
    # ① 학습 digest 생성 (플러그인 UI 에 '기획 문서 학습 중 (n/총)' progress 표시)
    python3 scripts/figma_mcp_client.py learn-planning
    ```
+   🔴 **① 의 출력이 `통독 ack 유효 … 재통독 불필요` 면 ②③ 을 건너뛴다 (2026-09-04 수정).**
+   기획 문서 fingerprint 가 그대로면 digest 를 재생성하지 않고 과거 ack 를 그대로 인정한다
+   (8만 자 재통독 = 준비 시간 3~4분의 주범이었음). ②③ 은 `learn-planning` 이 "재통독 필요"
+   라고 할 때만(문서 변경·최초).
    → ② 생성된 `scripts/_planning_digest.txt` 를 **Read 도구로 처음부터 끝까지 통독**한다
    (HTML 태그 제거된 깨끗한 텍스트, ~8만 자 = Read 가 한 번에 안 읽히므로 **여러 번 offset 으로
    끝까지**. 36개 UC 의 메타정보·정상/예외 플로우·비즈니스 룰·**연결 화면(SCR-*)**·수용 기준·
@@ -92,7 +105,10 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
    - 🔴 **변경 감지 + ack 무효화:** `learn-planning` 은 `src/기획/` fingerprint(파일+mtime+size)를
      `_planning_digest.txt.meta.json` 에 저장. **변경 없으면 재생성 스킵**(단 ack 안 됐으면 통독 안내),
      **변경되면 자동 재학습 + 이전 ack 무효화**(`_planning_digest.txt.read.json` 삭제) → 다시 통독+ack
-     해야 빌드 통과. 강제 재학습: `learn-planning --force`. 세션 도중 문서가 바뀌어도 빌드 게이트가
+     해야 빌드 통과. 강제 재학습: `learn-planning --force`. ⚠️ **2026-09-04 회귀 수정:** 2026-06-05
+     "매번 새로 작성" 룰이 코드에서 스킵 분기를 없애고 ack 를 무조건 삭제해 매 세션 재통독을
+     강제하고 있었다(이 서술과 불일치). 지금은 서술대로 동작하며, 재생성 시에도 read_token(본문
+     sha1)이 같으면 ack 를 유지한다. 세션 도중 문서가 바뀌어도 빌드 게이트가
      stale 을 잡아 재통독을 강제한다.
 6. **완료 보고** — 준비 완료(기획 문서 통독+ack 포함)를 알리고, 디자인할 화면의 PRD/요구사항을 요청한다.
 
