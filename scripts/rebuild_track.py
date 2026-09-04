@@ -153,6 +153,7 @@ def collect_blocks(tree):
     rb = tree.get('absoluteBoundingBox') or {}
     rw, rh = rb.get('width') or 0, rb.get('height') or 0
     fonts = tree.get('_fonts') or {}
+    weights = tree.setdefault('_weights', {})  # id → segments fontWeight 최대값 (fixture 재생 가능)
     blocks = []
 
     def emit(kind, n, b, **extra):
@@ -181,9 +182,13 @@ def collect_blocks(tree):
             if not fn:
                 # 플러그인은 fontName 이 figma.mixed 면 필드를 생략한다(code.js 725) — 세그먼트
                 # fontWeight 최대값으로 굵기 복원 (구형 소스는 라틴/한글 폰트 혼합이 흔함)
-                segs = (call('get_styled_text_segments', {'nodeId': n['id'], 'property': 'fontWeight'}) or {}).get('segments') or []
-                ws = [sg.get('fontWeight') for sg in segs if isinstance(sg.get('fontWeight'), (int, float))]
-                wght = max(ws) if ws else None
+                if n['id'] in weights:
+                    wght = weights[n['id']]
+                else:
+                    segs = (call('get_styled_text_segments', {'nodeId': n['id'], 'property': 'fontWeight'}) or {}).get('segments') or []
+                    ws = [sg.get('fontWeight') for sg in segs if isinstance(sg.get('fontWeight'), (int, float))]
+                    wght = max(ws) if ws else None
+                    weights[n['id']] = wght
             st = str(fn.get('style') or ('Bold' if (wght or 0) >= 700 else 'SemiBold' if (wght or 0) >= 600
                                           else 'Medium' if (wght or 0) >= 500 else 'Regular'))
             emit('text', n, b, chars=chars, size=n.get('fontSize') or 16, style=st, color=_hex(_paint(n) or {}) if _paint(n) else None,
@@ -270,6 +275,8 @@ class Ctx:
         self.n = 0
         self.texts = {}
         self.button_w = {}
+        self.wrappers = []     # (placeholder id, clone id) — selfcheck 용
+        self.src_weights = {}  # 굵기 히스토그램 (Bold/SemiBold/Medium/Regular → n)
 
     def uid(self, base):
         self.n += 1
@@ -281,6 +288,7 @@ def text_node(b, ctx, fill=True, align=None):
     st = b['style'].lower()
     weight = 'Bold' if ('bold' in st and 'semi' not in st) or 'black' in st else \
         'SemiBold' if 'semi' in st else 'Medium' if 'medium' in st else 'Regular'
+    ctx.src_weights[weight] = ctx.src_weights.get(weight, 0) + 1
     tok, _d = nearest_token(b['color'], 'text') if b.get('color') else ('text-primary', 0)
     name = ctx.uid('T ' + b['chars'][:10].replace('\n', ' '))
     if tok is None:
@@ -742,6 +750,7 @@ def postprocess(rid, ctx, flags):
         call('rename_node', {'nodeId': n['id'], 'name': aname})
         call('set_layout_sizing', {'nodeId': n['id'], 'layoutSizingHorizontal': 'FIXED', 'layoutSizingVertical': 'FIXED'})
         allow |= bind_asset_paints(n['id'], style_cache, flags)
+        ctx.wrappers.append((n['id'], cl))
     # 유채 스타일/원값 후적용
     for name, hx in ctx.chroma.items():
         base, _, part = name.partition('#')
@@ -838,6 +847,51 @@ def postprocess(rid, ctx, flags):
     return allow
 
 
+def selfcheck(rid, ctx, flags):
+    """렌더 Read 없이 트리 값으로 완성도 판정 (2026-09-04 사용자: "다시 생성 20분" — 눈 왕복 5회의
+    대체). ① 굵기 히스토그램 원본=생성 ② 이식 래퍼↔clone 절대 bbox 일치 ③ allow 없는 verify PASS.
+    불일치는 flags 로 승격 — CONVERT-SUMMARY 에서 바로 보인다."""
+    # ① 굵기
+    gen_w = {}
+    t = L.fetch_tree(rid) or {}
+
+    def w(n):
+        if n.get('type') == 'TEXT' and not (n.get('id') or '').startswith('I'):
+            fn = n.get('fontName') or {}
+            st = str(fn.get('style') or '')
+            if not st:
+                segs = (call('get_styled_text_segments', {'nodeId': n['id'], 'property': 'fontWeight'}) or {}).get('segments') or []
+                ws = [sg.get('fontWeight') for sg in segs if isinstance(sg.get('fontWeight'), (int, float))]
+                mx = max(ws) if ws else 400
+                st = 'Bold' if mx >= 700 else 'SemiBold' if mx >= 600 else 'Medium' if mx >= 500 else 'Regular'
+            k = 'Bold' if 'bold' in st.lower() and 'semi' not in st.lower() else 'SemiBold' if 'semi' in st.lower() \
+                else 'Medium' if 'medium' in st.lower() else 'Regular'
+            gen_w[k] = gen_w.get(k, 0) + 1
+        for c in n.get('children') or []:
+            w(c)
+    w(t)
+    for k in ('Bold', 'SemiBold'):
+        if ctx.src_weights.get(k, 0) != gen_w.get(k, 0):
+            flags.append(f'selfcheck-weight: {k} 원본 {ctx.src_weights.get(k, 0)} ≠ 생성 {gen_w.get(k, 0)} — 굵기 소실/과잉')
+    # ② 이식 bbox
+    for wid, cid in ctx.wrappers:
+        info = call('get_nodes_info', {'nodeIds': [wid, cid]}) or []
+        boxes = {}
+        for it in (info if isinstance(info, list) else []):
+            doc = it.get('document') or {}
+            boxes[it.get('nodeId') or doc.get('id')] = doc.get('absoluteBoundingBox') or {}
+        wb, cb = boxes.get(wid) or {}, boxes.get(cid) or {}
+        if wb and cb and (abs((wb.get('x') or 0) - (cb.get('x') or 0)) > 1 or abs((wb.get('y') or 0) - (cb.get('y') or 0)) > 1
+                          or abs((wb.get('width') or 0) - (cb.get('width') or 0)) > 2):
+            flags.append(f'selfcheck-transplant: {wid} 래퍼↔clone bbox 불일치 {wb} vs {cb}')
+    # ③ allow 없는 verify
+    r = subprocess.run([sys.executable, os.path.join(_HERE, 'verify_bindings.py'), rid], capture_output=True, text=True)
+    if r.returncode != 0:
+        bad = [ln.strip() for ln in r.stdout.splitlines() if ln.strip().startswith('(')][:6]
+        flags.append(f'selfcheck-verify: allow 없는 verify FAIL {len(bad)}건+ — {bad[:3]}')
+    return flags
+
+
 def run_rebuild(src, parent, x, y, gap=40):
     """convert_screen 에서 호출. 반환 (rid, flags, allow)."""
     flags = []
@@ -854,4 +908,4 @@ def run_rebuild(src, parent, x, y, gap=40):
     call('insert_child', {'parentId': parent, 'childId': rid})
     call('move_node', {'nodeId': rid, 'x': x, 'y': y})
     allow = postprocess(rid, ctx, flags)
-    return rid, flags, allow
+    return rid, flags, allow, ctx  # selfcheck 는 convert_screen 이 bind/sweep 뒤에 호출 (순백 바인딩 이후)

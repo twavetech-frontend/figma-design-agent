@@ -1970,6 +1970,10 @@
 > | `set_auto_layout` 후부여 | 기존 노드 크기가 HUG 로 재계산돼 붕괴 (thumb 60→43 실사고) | `ds_convert_lib.set_auto_layout_keep_size` (크기 스냅샷→FIXED 재단언 세트) |
 > | 순색 일괄 바인딩 | paint.opacity=0 흰 fill 을 바인딩하면 **불투명 흰 박스로 활성화** (Stats·AI Wrap 2회 재발) | 즉석 스크립트 금지 — `ds_convert_lib.bind_pure_whites` (opacity·alpha 이중 체크 + 랩 이름 제외) |
 > | INSTANCE `resize_node` | 내부가 스케일되지 않고 **크롭**됨 (도토리 40→18, Status Bar HUG 변형과 동일 클래스) | `ds_convert_lib.instance_as_image` (고배율 export→이미지 fill) 또는 detach 후 처리 |
+> | `get_node_tree`/`get_node_info` TEXT | **fontName 이 figma.mixed 면 필드 자체가 생략**(code.js 725) — 구형 소스(한글+라틴 혼합)는 대부분 굵기 정보 없음 → 전부 Regular 로 빌드된 실사고 | `get_styled_text_segments(property:fontWeight)` 최대값 (rebuild_track 자동, fixture 캐시 `_weights`) |
+> | GROUP 을 오토레이아웃 부모에 삽입 | GROUP 은 사이징이 없어 **부모 규칙대로 늘어남**(36→656) | placeholder plain FRAME(FIXED w×h) 안에 clone 삽입 (`rebuild_track.postprocess`) |
+> | `clone_vector_safe` 자식 좌표 복원 | 복원 좌표가 **원본 조상 프레임 기준**이라 새 래퍼 밖으로 벗어남(정보 아이콘 y=643) | `get_nodes_info` 래퍼↔clone 절대 bbox 차분으로 move 2회 보정 + selfcheck bbox 일치 |
+> | `get_nodes_info` 반환형 | dict 가 아니라 **list** `[{nodeId, document:{absoluteBoundingBox…}}]` — `.get` 호출 시 AttributeError | list 순회 (`rebuild_track` 참고 구현) |
 > | 페인트 스타일 바인딩 | stroke 에 스타일을 걸 도구가 없어 스테이지 색 아이콘 stroke/보더가 원값 잔존 → allow 로 숨겨져 "컬러 바인딩 안 됨" (2026-09-04) | `set_stroke_style_id` 신설(플러그인+브리지) + verify 가 fillStyleId/strokeStyleId 를 바인딩 정본으로 인정. **allow 는 벡터 에셋 통째 면제 금지 — 이식 벡터도 `rebuild_track.bind_asset_paints` 로 fg-*/스타일 바인딩** |
 > | 벡터 clone 이식 | clone→insert→move 시 BOOLEAN/그룹 **내부 자식 좌표가 시프트**돼 불리언이 조각남 (스파클 별→삼각형 실사고). 판정 전에 **원본 단독 렌더와 비교**할 것 — 원본이 원래 그 모양일 수 있다(왕관 Badge 오판 사례) | `ds_convert_lib.clone_vector_safe` (이식 후 자식 좌표 병렬 복원). 아이콘은 벡터 정본 — 이미지 fill 우회 금지(사진 콘텐츠 전용) |
 >

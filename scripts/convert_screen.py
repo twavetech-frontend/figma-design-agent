@@ -1232,7 +1232,7 @@ def main():
         if sid in rebuild_ids:
             import rebuild_track as RT
             try:
-                rid, rflags, rallow = RT.run_rebuild(s, parent, right + gap + i * (393 + gap), y0, gap)
+                rid, rflags, rallow, rctx = RT.run_rebuild(s, parent, right + gap + i * (393 + gap), y0, gap)
             except Exception as e:
                 print(f'  ✗ rebuild 실패: {str(e)[:200]}')
                 results.append({'src': sid, 'gen': None, 'flags': [f'rebuild-failed: {str(e)[:120]}']})
@@ -1245,6 +1245,8 @@ def main():
             _lap('bind')
             sweep_unbound(rid, allow)
             _lap('sweep')
+            RT.selfcheck(rid, rctx, RUN_FLAGS)  # 굵기 히스토그램·이식 bbox·allow 없는 verify (렌더 Read 대체)
+            _lap('selfcheck')
             flags = list(RUN_FLAGS) + diagnose(sid, rid)
             _lap('diagnose')
             print(f'  [⏱] {" ".join(f"{k}:{v}s" for k, v in _stage_t.items())}')
@@ -1345,11 +1347,17 @@ def main():
                 print(f'  [region-diff] 실패({entry["gen"]}): {str(e)[:80]}')
     gen_ids = [e['gen'] for e in results]
     n_flags = sum(len(e['flags']) for e in results)
-    print(f'\n{"✓" if ok and not n_flags else "✗"} 변환 {len(results)}장 — {round(time.time()-t0, 1)}s → {gen_ids}')
+    _elapsed = round(time.time() - t0, 1)
+    print(f'\n{"✓" if ok and not n_flags else "✗"} 변환 {len(results)}장 — {_elapsed}s → {gen_ids}')
+    # 🔴 생성 SLA (2026-09-04 사용자: "다시 생성 20분은 용납 불가"): 장당 120s / 요청당 300s 초과는 경고로 남긴다.
+    _sla = 300 if len(results) <= 2 else 120 * len(results)
+    if _elapsed > _sla:
+        print(f'  ⏱ SLA 초과: {_elapsed}s > {_sla}s — 재실행 ≤2회 원칙, 3회째면 현 상태로 보고')
     # 🔴 기계 판독 요약 — flags 는 fable 이 항목별로 사고하며 수정해야 하는 목록 (BUILD-SUMMARY 패턴)
     print('\n📋 CONVERT-SUMMARY-JSON')
     print(json.dumps({'type': 'convert-summary',
                       'result': 'ok' if ok and not n_flags else 'needs-review',
+                      'elapsed_s': _elapsed, 'sla_s': _sla,
                       'screens': results,
                       'requiredActions': (
                           (['각 flags 항목을 fable 이 직접 판단·수정 후 해당 화면 재verify'] if n_flags else []) +

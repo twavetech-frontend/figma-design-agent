@@ -472,6 +472,12 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   생성 → build → 벡터 이식(placeholder 래퍼) → 이식 페인트 토큰/스타일 바인딩 → bind·verify·
   region_diff). 스테이지 색은 DS 페인트 스타일(`set_fill_style_id`/`set_stroke_style_id`)로.
   bypass `--force-convert`(변형 트랙). 상세: `rule 8-D`.
+  🔴 **생성 SLA (2026-09-04 사용자: "다시 생성 20분은 용납 불가")** — 생성 요청은 **5분 내 산출물**.
+  파이프라인이 막히면 가장 빠른 기존 경로(clone/`--force-convert`/수동 blueprint)로 화면부터 내고,
+  인프라 수정은 **별도 작업으로 선언 후** 진행. 같은 요청에서 파이프라인 재실행 ≤2회(3회째면 현 상태
+  보고). 휴리스틱 수정은 `scripts/tests/test_rebuild_track.py`(fixture 오프라인, 1초)로 먼저 검증 —
+  실물 export+Read 왕복으로 디버그하지 말 것. rebuild 트랙은 `selfcheck`(굵기 히스토그램·이식 bbox·
+  allow 없는 verify)를 자동 실행해 CONVERT-SUMMARY flags 로 노출하고, 총 소요가 `sla_s` 를 넘으면 경고.
 - **8-E (2026-09-03)** — 🔴 **MCP 도구 계약 함정 목록** — 수동 조립(변환/개조 트랙)은 post-fix 가
   없는 지대: batch_build 의 layoutMode/width/padding 무시·기본 흰 fill, resize 후 FILL 자식 stale,
   오토레이아웃 자식 move 무시 등. batch_build 직후 `assert_spec_applied` 의무. 🔴 **완료 게이트 =
