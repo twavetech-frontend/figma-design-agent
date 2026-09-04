@@ -624,7 +624,7 @@ def run_build(bp, _retry=True):
     safe = re.sub(r'[^0-9A-Za-z가-힣_]+', '_', bp['name'])[:60]
     path = os.path.join(_HERE, f'blueprint_rebuild_{safe}.json')
     json.dump(bp, open(path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    env = dict(os.environ, IMIN_SKIP_REFERENCE_GATE='1', IMIN_SKIP_SELFVERIFY_GATE='1')
+    env = dict(os.environ, IMIN_SKIP_REFERENCE_GATE='1', IMIN_SKIP_SELFVERIFY_GATE='1', IMIN_CONVERT_TRACK='1')
     r = subprocess.run([sys.executable, os.path.join(_HERE, 'figma_mcp_client.py'), 'build', path],
                        capture_output=True, text=True, env=env)
     out = r.stdout

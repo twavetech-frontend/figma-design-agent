@@ -1219,7 +1219,12 @@ def _pending_selfverify_path() -> str:
 
 def _record_pending_selfverify(root_id: str, exported: list, checklist_path: str) -> None:
     """빌드의 self-verify export 직후 — '미완료 self-verify' 마커 기록. 다음 build/cleanup-qa
-    시작 시 _enforce_selfverify_gate 가 검증한다."""
+    시작 시 _enforce_selfverify_gate 가 검증한다.
+    🔴 변환 트랙(convert_screen → rebuild_track 이 서브프로세스로 build 호출, IMIN_CONVERT_TRACK=1)은
+    기록하지 않는다 — 그 트랙은 rebuild_track.selfcheck + region_diff 가 0-F 를 대체하며, 마커가 남으면
+    이후 cleanup-qa/build 가 엉뚱한 재export 를 요구한다 (2026-09-04 사용자 "정리해")."""
+    if os.environ.get("IMIN_CONVERT_TRACK") == "1":
+        return
     try:
         os.makedirs(_planning_gate_dir(), exist_ok=True)
         with open(_pending_selfverify_path(), "w", encoding="utf-8") as fh:
