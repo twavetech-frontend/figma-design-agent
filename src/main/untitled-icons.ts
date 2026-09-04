@@ -7,7 +7,7 @@
  * Source: https://twavetech-frontend.github.io/design-system-docs/icons/
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import { join } from 'path';
 import https from 'https';
 
@@ -251,7 +251,8 @@ const ICON_ALIASES: Record<string, string> = {
  */
 export function resolveIconFile(name: string): string | null {
   loadIndexSync();
-  if (!iconNames || iconNames.size === 0) return null;
+  // 2026-09-04: GitHub 인덱스 캐시가 없으면(오프라인/미캐시) 번들 npm 패키지 이름으로 해석.
+  if (!iconNames || iconNames.size === 0) return resolvePackageIcon(name);
 
   const kebab = name.toLowerCase().replace(/[_ ]/g, '-');
 
@@ -402,4 +403,86 @@ export async function preCacheIcons(): Promise<number> {
 export function listIcons(): string[] {
   loadIndexSync();
   return iconNames ? Array.from(iconNames) : [];
+}
+
+
+// ── 오프라인 해석: 번들된 npm 패키지 @untitledui/icons 에서 path 추출 (2026-09-04) ──────
+// 배경: type:"icon" 이 GitHub Pages fetch + ds/.icon-cache 디스크 캐시에만 의존해, 미캐시
+// 아이콘(gift-01/info-circle)이 네트워크 실패 시 회색 placeholder 로 떨어졌다(변환 16분 회귀).
+// node_modules/@untitledui/icons/dist/<Pascal>.js 는 React createElement 로 path 를 담고
+// 있어 정규식으로 꺼내 SVG 를 조립할 수 있다 — 네트워크 0, 결정적.
+let pkgNames: Map<string, string> | null = null; // kebab → Pascal 파일 베이스명
+
+function pkgDistDir(): string {
+  return join(projectRoot, 'node_modules', '@untitledui', 'icons', 'dist');
+}
+
+export function pascalToKebab(p: string): string {
+  return p
+    .replace(/([a-z])([A-Z0-9])/g, '$1-$2')
+    .replace(/([0-9])([A-Za-z])/g, '$1-$2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
+    .toLowerCase();
+}
+
+function loadPkgNames(): Map<string, string> {
+  if (pkgNames) return pkgNames;
+  pkgNames = new Map();
+  const dir = pkgDistDir();
+  if (!existsSync(dir)) return pkgNames;
+  for (const f of readdirSync(dir)) {
+    const m = /^([A-Z][A-Za-z0-9]*)\.js$/.exec(f);
+    if (m) pkgNames.set(pascalToKebab(m[1]), m[1]);
+  }
+  return pkgNames;
+}
+
+/** 아이콘 이름(kebab/snake/space, alias 포함) → 패키지에 존재하는 kebab 이름. 없으면 null. */
+export function resolvePackageIcon(name: string): string | null {
+  const names = loadPkgNames();
+  if (!names.size) return null;
+  const kebab = name.toLowerCase().replace(/[_ ]/g, '-');
+  const aliased = ICON_ALIASES[kebab];
+  if (aliased && names.has(aliased)) return aliased;
+  if (names.has(kebab)) return kebab;
+  for (const suffix of ['-01', '-02', '-03', '-04']) {
+    if (names.has(kebab + suffix)) return kebab + suffix;
+  }
+  return null;
+}
+
+/** 패키지 JS 에서 SVG 조립 — 네트워크/캐시 불필요. 미존재 시 null. */
+export function getIconSvgFromPackage(
+  iconName: string,
+  size: number = 24,
+  color: string = 'currentColor',
+  strokeWidth: number = 2
+): string | null {
+  const kebab = resolvePackageIcon(iconName);
+  if (!kebab) return null;
+  const base = loadPkgNames().get(kebab);
+  if (!base) return null;
+  let src: string;
+  try {
+    src = readFileSync(join(pkgDistDir(), `${base}.js`), 'utf8');
+  } catch {
+    return null;
+  }
+  const els: string[] = [];
+  const re = /createElement\("(path|circle|rect|line|polyline|polygon|ellipse)",\{([^}]*)\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src))) {
+    const attrs = m[2].match(/([A-Za-z]+):"([^"]*)"/g) || [];
+    const parts = attrs.map((a) => {
+      const i = a.indexOf(':');
+      const k = a.slice(0, i).replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
+      const v = a.slice(i + 2, -1);
+      return `${k}="${v}"`;
+    });
+    els.push(`<${m[1]} ${parts.join(' ')}/>`);
+  }
+  if (!els.length) return null;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" ` +
+    `fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">` +
+    `${els.join('')}</svg>`;
 }

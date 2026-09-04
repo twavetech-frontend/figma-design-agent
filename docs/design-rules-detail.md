@@ -1361,6 +1361,8 @@
 > 스크린샷에서 캐로셀 반복 CTA 가 채움(Primary)이 아니라 약한 위계(Tertiary)이고 FAB 만 brand
 > 강조점인지 확인.
 
+> 🔧 **2026-09-04 높이 백스톱** — 하단 액션바의 Action Button 2xl 이 post-fix 뒤 174×24(세로 HUG → 내부 'Text padding' 24 로 붕괴)가 돼 라벨이 잘린 회귀(스테이지참여_확인_4순번 변환). `_enforce_action_button_height_live` 가 INSTANCE + Size/Hierarchy 프롭 노드를 FIXED + Size 별 마스터 높이(sm 24 / md 32 / lg 40 / xl 48 / 2xl 56, 2026-09-04 실측)로 재단언한다. 가로 FILL 은 resize 후 재단언.
+
 ### 2-I. ⚠️ 폼 컨트롤(체크박스/토글/라디오/인풋)은 DS 컴포넌트 인스턴스 — raw frame 금지 (2026-05-28 사용자 분노)
 - **체크박스를 raw 원형/사각 frame + check 아이콘으로 그리지 말 것.** DS 컴포넌트 인스턴스 사용:
   - `Checkbox md` (`bbd5c20958464e51295e73c3c90ef7d54c0b0b69`, 20×20, unchecked) / `Checkbox md checked` (`73691ec35c62c70735d61722347dfd995b32c5ec`)
@@ -1378,6 +1380,8 @@
 - 루트 프레임 **min height = 852** (iPhone 16 뷰포트). 콘텐츠가 늘어나면 그에 따라 같이 늘어남.
 - 콘텐츠 합이 852 보다 짧을 때, 화면에 고정된 하단 바(**Bottom Action Bar / Tab Bar / CTA Bar / FAB**) 는 **루트 하단(y = 852 - bar.height)에 bottom-align** — 콘텐츠 끝에 붙어 떠 있지 않게 한다.
 - **시스템 강제:** `cmd_post_fix` 의 `_enforce_root_min_height` (scripts/figma_mcp_client.py, 2026-05-24) — 루트 높이 < 852 시 852 로 늘리고, 이름에 `tab bar`/`tabbar`/`bottom action bar`/`action bar`/`cta bar`/`fab` 포함된 자식을 ABSOLUTE + bottom constraint MAX 로 새 루트 하단에 재배치. 콘텐츠가 852 보다 길면 손대지 않음 (콘텐츠 끝이 곧 바의 위치).
+
+> 🔧 **2026-09-04 A-flow 분기** — 루트 FIXED 852 안에 세로 FILL 콘텐츠 자식(캡처 변환의 'Content FILL + 안내 + 하단 바' 구조)이 있으면 A 케이스의 ABSOLUTE 핀이 flow 자식(안내 문구)을 덮는다. `_pick_root_height_mode(content_overflows, has_bars, has_fill_flow_child)` → 'A-flow' 면 바를 flow(AUTO)로 두고 루트만 FIXED 852 — FILL 자식이 바를 하단에 붙인다. 테스트 `scripts/tests/test_convert_track_fixes.py`.
 
 ### 2-E-5. ⚠️ 행 셀 그룹 세로 사이징 통일 — baseline 어긋남 차단 (2026-06-02 사용자)
 - **사례**: 회차 셀렉터 "Round Cell 1~13" 중 **2자리(10~13)만 빌드가 FIXED h=36 으로 키워**(1~9 는 HUG h=23), 더 높은 셀 안 숫자가 ~6px 아래로 내려가 정렬이 틀어짐. ⚠️ **blueprint 는 13개 전부 HUG 로 올발랐다 — 빌드 단계가 일부 셀만 키운 회귀**(그래서 blueprint 만 고쳐선 못 막음 → post-fix 가드 필수).
@@ -1984,3 +1988,5 @@
 > 게이트 낱개 통과가 아니라 requiredActions 가 비어야 완료다 (2026-09-03 사용자 진단
 > "계속 수정해야 될 부분을 못 찾는다" — 기억나는 검사만 돌리는 구조 자체를 봉합).
 > 수리 1건 후에는 같은 원인 전수 스캔 + qa_sweep 재실행. convert_screen 은 verify+diff 를 자동 실행.
+
+> 🔧 **2026-09-04 면제** — `IMIN_CONVERT_TRACK=1`(1:1 변환) 또는 root `_referencesSkipped:"<사유>"`(비어있지 않은 문자열, boolean 금지)면 Step A.0 검색과 Read 게이트를 건너뛴다(`_should_skip_reference_step`). 변환에서 FALLBACK 키워드 검색 결과(무관 화면)를 Read 하라고 빌드를 1회 차단하던 낭비 제거.

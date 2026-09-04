@@ -35,6 +35,7 @@ ERROR_CODES = {
     "ERR_MODAL_HOME_SECTIONS": "modal 에 홈 대시보드 섹션 유입 (R58)",
     "ERR_RULE_LINT": "design_rules L2 lint ERROR (개별 코드 미부여 룰)",
     "ERR_BUILD_FAILED": "batch_build_screen 실패 — root 노드 미생성",
+    "ERR_ICON_UNRESOLVED": "type:'icon' 해석 실패 — icon-missing:* placeholder 잔존 (svg_icon 교체 필요, 2026-09-04)",
 }
 
 # 게이트/룰 태그 → 코드. 이슈 문자열 "ERROR (<TAG>): ..." 의 <TAG> 를 매핑한다.

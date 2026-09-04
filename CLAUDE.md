@@ -400,6 +400,8 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   🔴 **한 화면 최상단에 정확히 1개 (2026-08-24 사용자 룰)** — 변환 시 오버레이 중복 bars 자동
   삭제(enforce_single_status_bar, HI 는 최하단 1개), verify `status-bar-duplicate`/`-not-top` FAIL.
 - **2-F/18** — 루트 minHeight 852, 높이는 콘텐츠 전체(852 로 줄여 하단 잘리게 금지). 하단 바 bottom-pin 자동.
+  **A-flow(2026-09-04)**: 루트 직계에 세로 FILL 콘텐츠 자식이 있으면 바를 ABSOLUTE 로 핀하지 않고
+  flow 유지(루트 FIXED 852) — 핀하면 flow 자식(안내 문구)과 겹침. `_pick_root_height_mode`.
 - **0-H** — 새 root 는 기존 화면 우측 빈 공간에 자동 배치(겹침 금지). **0-H-2 (2026-08-20)** —
   Figma 선택 노드가 있으면 **같은 부모에 insert 후 선택 노드 바로 오른쪽(gap 50)** 이 우선
   (거대 페이지 maxRight 실종 + 섹션 상대/페이지 절대 좌표계 불일치 방지, 자동).
@@ -427,6 +429,8 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   ds_catalog.NAV_ICON_KEYS 등록이 정답, 2026-07-14 사용자 룰. edit-01 키 등록됨).
 - **0-X** — **HomeIndicator 인스턴스는 가로 FILL** (2026-08-04 사용자 룰 — FIXED 360 잔존 회귀
   금지). post-fix `_enforce_home_indicator_fill_live` 가 FILL/루트 폭 재단언.
+  **변환 트랙 자동 삽입(2026-09-04)**: `IMIN_CONVERT_TRACK=1` 빌드는 루트에 HI 가 없으면 페이지 내
+  기존 인스턴스를 clone 해 flow 마지막 자식으로 넣는다(`_ensure_home_indicator_live`, 모달/시트 제외).
 - **0-W-2 (2026-09-03 사용자 룰 ×2)** — 🔴 **병합 인스턴스(SB+Tool Bar 결합 등)를 그대로 쓰지
   말 것** — 필요에 따라 `detach_instance` 로 분해해 DS Status Bar/Tool Bar 를 **따로** 구성.
   convert_screen 의 `detach_merged_top_instances` 가 상단 병합 인스턴스를 자동 분해(플러그인
@@ -445,6 +449,8 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **2-G** — 하단/전폭 CTA = DS **'Action Button'** 인스턴스. Size=2xl 기본(자동 강제 — 2026-08-04 사용자, 구 lg 개정), 라벨은
   `_instanceText`. ⚠️ md Primary 키는 import 깨짐 → Secondary 키 + `instanceProperties:{"Hierarchy":"Primary"}`
   flip(빌드 후 자동 적용). 버튼 높이는 padding(상하 16)으로 확보(규칙 20).
+  **높이 백스톱(2026-09-04)**: post-fix `_enforce_action_button_height_live` 가 Action Button 인스턴스의
+  세로 HUG/축소를 FIXED + Size 별 마스터 높이(sm24/md32/lg40/xl48/2xl56)로 복구 — 액션바 24px 붕괴 회귀.
 - **2-G-2~5** — 액션바 안 버튼 높이 통일(자동) · NavBar 우측 액션 = 아이콘 버튼(텍스트 금지, R62) ·
   세로 연속 전폭 Primary CTA 는 더 중요한 것에 `_ctaKeepPrimary:true` 명시(나머지 Outline 자동) ·
   FAB 화면의 수평 반복 동일 라벨 CTA 는 Tertiary(자동).
@@ -475,6 +481,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   secondary/tertiary). CTA 유도 caption(버튼 위 권유 문구)은 `text-secondary`.
 - **R61/R47** — 텍스트/아이콘 자리에 이모지 절대 금지 — DS 아이콘(`type:"icon"`). 스테퍼 값·카운트·
   배지 숫자는 반드시 `type:"text"`.
+  **아이콘 해석(2026-09-04)**: `type:"icon"` 은 번들 `@untitledui/icons` 패키지에서 오프라인 해석이
+  1순위(GitHub 캐시/fetch 는 폴백) — 회색 placeholder(`icon-missing:*`)가 남으면 빌드 요약 code
+  `ERR_ICON_UNRESOLVED` + `replace_icons` 액션, verify `icon-missing` FAIL.
 
 **레이아웃**
 - **8** — 모든 섹션/카드/리스트 FRAME 가로 FILL(최다 위반 — 위 스포트라이트). 태그/칩/뱃지는 HUG.
@@ -526,6 +535,8 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 **프로세스 (빌드 전후 의무 — 어기면 게이트 차단/신뢰 문제)**
 - **0-G** — 빌드 로그 `📌 SECTION-REFERENCE-PNG` 의 썸네일 PNG 를 **전부 Read** 후 본 내용을
   references 에 반영. 빌드 로그를 tail/grep 으로 필터하지 말 것. 날조 금지.
+  **면제(2026-09-04)**: `IMIN_CONVERT_TRACK=1` 또는 root `_referencesSkipped:"<사유>"` 면 Step A.0
+  검색과 Read 게이트를 건너뜀(`_should_skip_reference_step`) — 1:1 변환은 레퍼런스가 캡처 자체.
 - **0-G-2** — 같은 화면의 기존(특히 **사용자 수정**) 버전을 빌드 전 export+Read 학습 — 사용자 교정이
   최우선 레퍼런스. 컬러 시맨틱: **완료=success 계열, 브랜드 퍼플='나의 것' 한정**.
 - **0-F** — 빌드 로그 `📸 SECTION-QA-PNG` → 섹션별 재export+Read+checklist(C01~C12) 채운 뒤에만

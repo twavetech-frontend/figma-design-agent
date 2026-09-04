@@ -1175,6 +1175,37 @@ def _gate_session_set(prefix: str, key: str):
         return set()  # 세션은 있으나 아직 기록 없음
 
 
+def _find_unresolved_icons(root_id: str) -> list:
+    """빌드 트리에서 'icon-missing:*' placeholder 노드 수집 (2026-09-04)."""
+    try:
+        tr = parse_content(call_tool("get_node_tree", {"nodeId": root_id, "maxDepth": 12})).get("json") or {}
+    except Exception:
+        return []
+    out = []
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        if str(n.get("name") or "").startswith("icon-missing:"):
+            out.append({"id": n.get("id"), "name": n.get("name")})
+        for c in n.get("children") or []:
+            walk(c)
+    walk(tr.get("node", tr) if isinstance(tr, dict) else {})
+    return out
+
+
+def _should_skip_reference_step(blueprint: dict) -> Optional[str]:
+    """Step A.0 레퍼런스 검색 + 0-G Read 게이트를 건너뛸 사유 (없으면 None). 2026-09-04.
+    - IMIN_CONVERT_TRACK=1 : 1:1 변환 트랙 — 레퍼런스 = 원본 캡처, 외부 레퍼런스 무의미
+    - root._referencesSkipped 가 비어있지 않은 문자열 : 작성자가 사유를 명시한 bypass(S20)"""
+    if os.environ.get("IMIN_CONVERT_TRACK") == "1":
+        return "변환 트랙(IMIN_CONVERT_TRACK=1) — 레퍼런스는 원본 캡처"
+    rs = (blueprint or {}).get("_referencesSkipped") if isinstance(blueprint, dict) else None
+    if isinstance(rs, str) and rs.strip():
+        return f"_referencesSkipped: {rs.strip()[:60]}"
+    return None
+
+
 def _enforce_reference_read_gate() -> None:
     """🔴 레퍼런스 Read 하드 게이트 (절대 규칙 0-G) — Step A.0 가 검색한 썸네일을 이 세션에서
     Read 안 했으면 빌드 차단. 모델(fable 등)이 레퍼런스 시각학습을 조용히 건너뛰는 것 방지.
@@ -4262,6 +4293,117 @@ def _enforce_tool_bar_title_style_live(root_node_id: str) -> int:
     return fixed
 
 
+# ── Action Button Size → 마스터 높이 (2026-09-04 실측: Secondary 키 19c3ba… 인스턴스) ──
+AB_SIZE_HEIGHT = {"sm": 24, "md": 32, "lg": 40, "xl": 48, "2xl": 56}
+
+
+def _action_button_expected_height(size: Optional[str]) -> Optional[int]:
+    return AB_SIZE_HEIGHT.get((size or "").strip().lower()) if size else None
+
+
+def _enforce_action_button_height_live(root_id: str) -> int:
+    """DS Action Button 인스턴스 세로 HUG/축소 복구 — FIXED + Size 별 마스터 높이 (2026-09-04).
+
+    회귀: 하단 액션바의 Action Button 2xl 이 post-fix 뒤 174×24(HUG → 내부 'Text padding' 24 로
+    붕괴)가 돼 라벨이 잘렸다. 프롭(Size=2xl)은 정상이었으므로 높이만 재단언하면 된다.
+    대상: INSTANCE 이면서 Size+Hierarchy 프롭을 가진 노드(= Action Button 계열). 가로 FILL 은
+    resize 가 FIXED 로 바꾸므로 원래 값을 재단언한다."""
+    fixed = 0
+    try:
+        tree = parse_content(call_tool("get_node_tree", {"nodeId": root_id, "maxDepth": 6})).get("json") or {}
+    except Exception as e:
+        print(f"  [action-button-height] tree 조회 실패: {e}")
+        return 0
+    node = tree.get("node", tree) if isinstance(tree, dict) else {}
+    cands = []
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        nid = n.get("id") or ""
+        if n.get("type") == "INSTANCE" and ";" not in nid:
+            nm = (n.get("name") or "").lower()
+            if any(k in nm for k in ("button", "btn", "cta")):
+                cands.append(n)
+            return  # 인스턴스 내부는 내려가지 않음
+        for c in n.get("children") or []:
+            walk(c)
+    walk(node)
+    for n in cands:
+        nid = n["id"]
+        try:
+            props = (parse_content(call_tool("get_instance_properties", {"nodeId": nid})).get("json") or {}).get("properties") or {}
+        except Exception:
+            continue
+        if "Size" not in props or "Hierarchy" not in props:
+            continue
+        size = (props.get("Size") or {}).get("value")
+        expect = _action_button_expected_height(size)
+        if not expect:
+            continue
+        w, h = _node_wh(n)
+        vsz = (n.get("layoutSizingVertical") or "").upper()
+        if vsz != "HUG" and abs((h or 0) - expect) <= 1.5:
+            continue
+        hsz = (n.get("layoutSizingHorizontal") or "").upper()
+        try:
+            call_tool("set_layout_sizing", {"nodeId": nid, "vertical": "FIXED"})
+            call_tool("resize_node", {"nodeId": nid, "width": w or expect * 2, "height": expect})
+            if hsz == "FILL":
+                call_tool("set_layout_sizing", {"nodeId": nid, "horizontal": "FILL"})
+            fixed += 1
+            print(f"  [action-button-height] '{n.get('name')}' Size={size} {vsz or '-'}/{round(h or 0)} → FIXED {expect}")
+        except Exception as e:
+            print(f"  [action-button-height] '{n.get('name')}' 실패: {e}")
+    return fixed
+
+
+def _ensure_home_indicator_live(root_id: str, screen_type: Optional[str] = None) -> bool:
+    """변환 트랙(IMIN_CONVERT_TRACK=1) 전용 — 루트에 HomeIndicator 가 없으면 페이지 내 기존
+    인스턴스를 clone 해 flow 마지막 자식(가로 FILL)으로 삽입 (2026-09-04).
+    DS 게시 검색에 HomeIndicator 키가 없어(인덱스 한계) 파일 내 clone 이 정본 경로.
+    모달/바텀시트는 대상 아님. 페이지 전역 find 는 느리므로(≈14s) 같은 부모 섹션을 먼저 본다."""
+    if os.environ.get("IMIN_CONVERT_TRACK") != "1":
+        return False
+    if _is_hug_screen_type(screen_type) or _is_bottom_sheet_screen_type(screen_type):
+        return False
+    try:
+        info = parse_content(call_tool("get_node_info", {"nodeId": root_id})).get("json") or {}
+        root = info.get("node", info)
+    except Exception:
+        return False
+    kids = root.get("children") or []
+    if any("homeindicator" in (c.get("name") or "").lower().replace(" ", "") for c in kids):
+        return False
+    src = None
+    scopes = [root.get("parentId"), "0:1"]
+    for scope in [sc for sc in scopes if sc]:
+        try:
+            r = parse_content(call_tool("find_nodes_by_name", {"name": "HomeIndicator", "scopeNodeId": scope})).get("json") or {}
+        except Exception:
+            continue
+        for m in r.get("matches") or []:
+            if m.get("type") == "INSTANCE" and m.get("id") != root_id and (m.get("width") or 0) >= 300:
+                src = m["id"]
+                break
+        if src:
+            break
+    if not src:
+        print("  [home-indicator-ensure] ⚠️ 페이지에 HomeIndicator 인스턴스 없음 — 수동 삽입 필요")
+        return False
+    try:
+        cl = parse_content(call_tool("clone_node", {"nodeId": src})).get("json") or {}
+        cid = cl.get("id") or cl.get("nodeId")
+        call_tool("insert_child", {"parentId": root_id, "childId": cid})
+        call_tool("set_layout_positioning", {"nodeId": cid, "layoutPositioning": "AUTO"})
+        call_tool("set_layout_sizing", {"nodeId": cid, "horizontal": "FILL"})
+        print(f"  [home-indicator-ensure] ✓ HomeIndicator clone({src}) → 루트 마지막 자식(flow, FILL)")
+        return True
+    except Exception as e:
+        print(f"  [home-indicator-ensure] clone 실패: {e}")
+        return False
+
+
 def _enforce_home_indicator_fill_live(root_node_id: str) -> int:
     """🔴 HomeIndicator 인스턴스 = 가로 FILL 강제 (2026-08-04 사용자 룰 —
     "왜 자꾸 homeindicator instance 가 width 360 고정으로 들어와지는거야. width=fill 로").
@@ -5246,12 +5388,19 @@ def cmd_build(blueprint_file: str):
     # ⚠️ Step A.0 (2026-05-28 박힘 — 사용자: "레퍼런스 이미지 검색은 하냐?")
     # references/uibowl 의 1500+ PNG 를 archetype 별 검색 + thumbnail 자동 생성.
     # 빌드 진행 전 Claude 가 PNG Read 강제 (CLAUDE.md 절대 규칙 0-G).
-    _auto_search_uibowl_references(blueprint)
+    _skip_ref_reason = _should_skip_reference_step(blueprint)
+    if _skip_ref_reason:
+        # 🔴 2026-09-04: 1:1 변환 트랙(IMIN_CONVERT_TRACK=1) 또는 root._referencesSkipped(사유
+        # 문자열)가 있으면 Step A.0 검색 + 0-G Read 게이트를 건너뛴다 — 레퍼런스가 캡처 자체인
+        # 변환에서 FALLBACK 키워드 검색 결과(무관 화면) Read 를 강제해 빌드가 1회 차단되던 낭비.
+        print(f"  [Step A.0] skip — {_skip_ref_reason}")
+    else:
+        _auto_search_uibowl_references(blueprint)
 
-    # 🔴 레퍼런스 Read 하드 게이트 (2026-06-11 — 절대 규칙 0-G 코드 게이트화): Step A.0 가
-    # 검색해 출력한 썸네일을 이 세션에서 Read 안 했으면 빌드 차단. 모델(fable 등)이 레퍼런스
-    # 시각학습을 조용히 건너뛰는 것 방지. (검색은 코드 강제였으나 Read 는 모델 자율이었음.)
-    _enforce_reference_read_gate()
+        # 🔴 레퍼런스 Read 하드 게이트 (2026-06-11 — 절대 규칙 0-G 코드 게이트화): Step A.0 가
+        # 검색해 출력한 썸네일을 이 세션에서 Read 안 했으면 빌드 차단. 모델(fable 등)이 레퍼런스
+        # 시각학습을 조용히 건너뛰는 것 방지. (검색은 코드 강제였으나 Read 는 모델 자율이었음.)
+        _enforce_reference_read_gate()
 
     # ⚠️ Step A (2026-05-28 박힘): imin_home archetype → 사용자 결정형 polished
     # 디자인 (16941:51284) 자동 export + 로그. Claude 가 매번 새 세션에서 시각
@@ -5874,8 +6023,23 @@ def cmd_build(blueprint_file: str):
     # 에이전트가 로그를 tail/grep 으로 봐도 결과 + 필수 후속 액션(0-G Read / 0-F self-verify)
     # 을 기계 판독으로 받는다. prose 대신 code 로 분기할 것 (scripts/error_codes.py).
     if root_id:
-        _emit_build_summary("success", root_id=root_id, warnings=warns,
-                            required_actions=_post_build_required_actions())
+        _acts = _post_build_required_actions()
+        _codes = []
+        _missing_icons = _find_unresolved_icons(root_id)
+        if _missing_icons:
+            # 🔴 2026-09-04: 회색 placeholder 아이콘은 조용한 성공이 아니다 — 코드+필수 액션으로 승격.
+            _codes.append("ERR_ICON_UNRESOLVED")
+            print("\n❌ [ICON] 미해석 아이콘 placeholder 잔존 — svg_icon(batch_build_screen parentId + svgData) 로 교체 필요:")
+            for m in _missing_icons:
+                print(f"     - {m['name']} ({m['id']})")
+            _acts = list(_acts or []) + [{
+                "type": "replace_icons",
+                "why": "type:'icon' 해석 실패 → 회색 placeholder. svg_icon+svgData 로 교체 후 색 바인딩 (verify 가 icon-missing FAIL)",
+                "nodeIds": [m["id"] for m in _missing_icons],
+                "names": [m["name"] for m in _missing_icons],
+            }]
+        _emit_build_summary("success", root_id=root_id, warnings=warns, codes=_codes or None,
+                            required_actions=_acts)
     else:
         _emit_build_summary("failed", codes=["ERR_BUILD_FAILED"], warnings=warns,
                             note="batch_build_screen 실패 — 브리지/플러그인 상태 확인 "
@@ -9503,6 +9667,36 @@ def _resolve_screen_type(root_id: str, tree: Optional[dict],
     return ""
 
 
+def _pick_root_height_mode(content_overflows: bool, has_bars: bool, has_fill_flow_child: bool) -> str:
+    """_enforce_root_min_height 분기 (순수 함수 — 테스트 대상, 2026-09-04).
+    'B' = 긴 콘텐츠 → 바 flow + 루트 HUG / 'A-flow' = 세로 FILL 콘텐츠 자식 → 루트 FIXED 852 +
+    바 flow / 'A' = 짧은 콘텐츠 → 루트 852 + 바 ABSOLUTE 핀."""
+    if content_overflows and has_bars:
+        return "B"
+    if has_bars and has_fill_flow_child:
+        return "A-flow"
+    return "A"
+
+
+def _flow_fill_child_names(root_id: str) -> list:
+    """루트 직계 flow 자식 중 layoutSizingVertical == FILL 인 이름 목록(하단 바 제외)."""
+    try:
+        tr = parse_content(call_tool("get_node_tree", {"nodeId": root_id, "maxDepth": 1})).get("json") or {}
+    except Exception:
+        return []
+    node = tr.get("node", tr) if isinstance(tr, dict) else {}
+    out = []
+    for c in node.get("children") or []:
+        nm = (c.get("name") or "").lower()
+        if any(p in nm for p in _BOTTOM_BAR_PARTS):
+            continue
+        if c.get("layoutPositioning") == "ABSOLUTE":
+            continue
+        if (c.get("layoutSizingVertical") or "").upper() == "FILL":
+            out.append(c.get("name") or c.get("id"))
+    return out
+
+
 def _enforce_root_min_height(root_id: str, screen_type: Optional[str] = None) -> None:
     """루트 height 정책 — 콘텐츠 길이에 따라 두 가지 분기 (2026-05-24):
 
@@ -9612,7 +9806,25 @@ def _enforce_root_min_height(root_id: str, screen_type: Optional[str] = None) ->
             content_bottom, [b["height"] for b in tabish], ROOT_MIN_HEIGHT,
         )
 
-        if content_overflows and tabish:
+        fill_flow = _flow_fill_child_names(root_id)
+        mode = _pick_root_height_mode(content_overflows, bool(tabish), bool(fill_flow))
+        if mode == "A-flow":
+            # A-flow 케이스 (2026-09-04) — 루트 FIXED 852 안에 세로 FILL 콘텐츠 자식이 있는 화면
+            # (캡처 변환의 'Content FILL + 안내 + 하단 바' 구조). ABSOLUTE 핀은 flow 자식(안내
+            # 문구)과 겹치게 하므로(스테이지참여 4순번 회귀) 바를 flow 로 두면 FILL 자식이 알아서
+            # 바를 하단에 붙인다.
+            desired = max(int(root_h), ROOT_MIN_HEIGHT)
+            call_tool("set_layout_sizing", {"nodeId": root_id, "vertical": "FIXED"})
+            if int(root_h) != desired:
+                call_tool("resize_node", {"nodeId": root_id, "width": root_w, "height": desired})
+            for bar in tabish:
+                try:
+                    call_tool("set_layout_positioning", {"nodeId": bar["id"], "layoutPositioning": "AUTO"})
+                except Exception:
+                    pass
+            print(f"[규칙] 세로 FILL 콘텐츠({', '.join(fill_flow)}) — 루트 FIXED {desired} + 하단 바 {len(tabish)}개 flow 유지(ABSOLUTE 핀 생략)")
+            bottom_anchor_y = desired - sum(b["height"] for b in tabish)
+        elif content_overflows and tabish:
             # B 케이스 — 긴 콘텐츠 + 하단 바: BAB normal flow + root HUG.
             # ABSOLUTE pin 으로 두면 BAB 가 콘텐츠를 덮음(2026-05-24 v14 회귀).
             for bar in tabish:
@@ -10121,6 +10333,20 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _enforce_status_bar_size_live(root_node_id)
     except Exception as e:
         print(f"  [status-bar-size] 실패 (무시하고 계속): {e}")
+
+    # 🔴 2026-09-04: 액션바 Action Button 이 세로 HUG 로 24px 붕괴하던 회귀 백스톱
+    # (Status Bar 62→63.5 와 동일 함정 — DS 인스턴스 세로 HUG 금지). Size 별 마스터 높이 재단언.
+    try:
+        _enforce_action_button_height_live(root_node_id)
+    except Exception as e:
+        print(f"  [action-button-height] 실패 (무시하고 계속): {e}")
+
+    # 🔴 2026-09-04: 변환 트랙은 HomeIndicator 를 자동 삽입(페이지 내 기존 인스턴스 clone).
+    try:
+        _st = locals().get("_screen_type")
+        _ensure_home_indicator_live(root_node_id, screen_type=_st)
+    except Exception as e:
+        print(f"  [home-indicator-ensure] 실패 (무시하고 계속): {e}")
 
     try:
         _enforce_home_indicator_fill_live(root_node_id)

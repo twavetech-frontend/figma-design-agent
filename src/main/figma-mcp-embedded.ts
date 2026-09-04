@@ -11,7 +11,7 @@ import { FigmaWSServer } from './figma-ws-server';
 import type { ToolDefinition } from '../shared/types';
 import { getIcons, getVariants, syncTokensIfNeeded, type VariantEntry } from '../shared/ds-data';
 
-import { getIconSvg, getIconSvgAsync, resolveIconFile } from './untitled-icons';
+import { getIconSvg, getIconSvgAsync, resolveIconFile, getIconSvgFromPackage } from './untitled-icons';
 import { simulateLayout } from './yoga-simulator';
 
 // Re-export for convenience
@@ -1009,7 +1009,9 @@ export async function resolveBlueprint(node: Record<string, unknown>): Promise<R
     const hexColor = iconColor
       ? '#' + [iconColor.r, iconColor.g, iconColor.b].map(c => Math.round(c * 255).toString(16).padStart(2, '0')).join('')
       : '#000000';
-    const svgData = await getIconSvgAsync(iconName, iconSize, hexColor) || getIconSvg(iconName, iconSize, hexColor);
+    // 2026-09-04: 번들 패키지 우선(오프라인·결정적) → GitHub 캐시/fetch 는 폴백.
+    const svgData = getIconSvgFromPackage(iconName, iconSize, hexColor)
+      || await getIconSvgAsync(iconName, iconSize, hexColor) || getIconSvg(iconName, iconSize, hexColor);
     if (svgData) {
       resolved.type = 'svg_icon';
       resolved.svgData = svgData;

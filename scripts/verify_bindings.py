@@ -311,6 +311,9 @@ def main():
                         isinstance(f, dict) and f.get('type') == 'IMAGE' and f.get('visible') is not False
                         for f in (n.get('fills') or [])):
                     bad_paint.append((disp, t, 'icon-crop-suspect', [f'{round(w)}x{round(h)} IMAGE fill']))
+                # 🔴 미해석 아이콘 placeholder (2026-09-04) — 빌드 type:'icon' 실패 잔존은 FAIL.
+                if str(name or '').startswith('icon-missing:'):
+                    bad_paint.append((disp, t, 'icon-missing', ['회색 placeholder — svg_icon+svgData 로 교체']))
             if t == 'TEXT' and name not in allow and (n.get('characters') or '').strip() \
                     and not (n.get('textStyleId') or ''):
                 bad_style.append((disp, (n.get('characters') or '')[:14]))
