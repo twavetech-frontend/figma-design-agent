@@ -813,7 +813,15 @@ def postprocess(rid, ctx, flags):
             _rows(c)
     _rows(tree)
     # HomeIndicator: 페이지 내 기존 인스턴스 clone (DS 게시 검색 불가 — 파일 내 인스턴스가 정본)
-    if not idx.get('HomeIndicator'):
+    # 🔴 규칙 0-Y-2 (2026-09-07): 키보드가 있는 화면은 HomeIndicator 를 넣지 않는다(있으면 삭제).
+    _has_kb = any((k.get('name') or '').strip().lower() == 'keyboard'
+                  for k in ((call('get_node_info', {'nodeId': rid}) or {}).get('children') or []))
+    if _has_kb:
+        for _hn in ((call('get_node_info', {'nodeId': rid}) or {}).get('children') or []):
+            if (_hn.get('name') or '').strip().lower().replace(' ', '') == 'homeindicator':
+                call('delete_node', {'nodeId': _hn['id']})
+                flags.append('homeindicator-removed: 키보드 화면 — HomeIndicator 삭제(규칙 0-Y-2)')
+    elif not idx.get('HomeIndicator'):
         found = call('find_nodes_by_name', {'name': 'HomeIndicator', 'matchMode': 'exact'}) or {}
         cands = [m for m in (found.get('nodes') or found.get('matches') or found.get('results') or [])
                  if (m.get('type') or '').upper() == 'INSTANCE' and m.get('id') != rid]

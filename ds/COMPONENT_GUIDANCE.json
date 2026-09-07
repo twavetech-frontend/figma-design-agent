@@ -623,6 +623,14 @@
         {
           "do": true,
           "description": "componentKey 미확보 상태(미게시 추정): 작업 파일 내 기존 Keyboard 인스턴스를 clone 하거나, 사용자에게 DS 파일에서 복사를 요청한 뒤 get_instance_properties 로 키를 읽어 ds_catalog.COMPONENT_KEYS['Keyboard'] 에 채울 것."
+        },
+        {
+          "do": false,
+          "description": "키보드가 있는 화면엔 최하단 HomeIndicator 인스턴스를 넣지 말 것 — Keyboard 컴포넌트가 HI 영역까지 포함(규칙 0-Y-2, 2026-09-07 사용자 룰). 키보드가 flow 마지막 자식. post-fix/normalize/rebuild 가 자동 삭제, verify home-indicator-with-keyboard FAIL."
+        },
+        {
+          "do": true,
+          "description": "프롭 실측: 'Show suggestions#6238:0'(제안바) / 'Show accessory bar#6238:6' / Type=Default — 캡처에 제안바가 없으면 suggestions off. 자판은 영문 QWERTY 만 있어 한글 자판 소스는 편차로 보고."
         }
       ]
     }

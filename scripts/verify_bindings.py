@@ -149,6 +149,7 @@ def main():
     allow_candidates = set()  # 에셋 색 의심 노드명 — FAIL 시 --allow 후보로 제안
     allow_flag_structural = []  # allow 남용(구조 FRAME/TEXT 면제) 감지 — 경고 출력
     sb_nodes = []  # (absY, id) — Status Bar 류. 한 화면 최상단 1개 게이트 (2026-08-24 규칙 1 강령)
+    kb_nodes, hi_nodes = [], []  # 규칙 0-Y-2: 키보드 화면의 HomeIndicator 잔존 게이트 (2026-09-07)
     checked = 0
 
     # 1콜 트리 우선 (2026-08-24 성능 수리 — 노드당 get_node_info+get_bound_variables 왕복이
@@ -172,6 +173,13 @@ def main():
         if name.strip().lower() in ('bars', 'status bar', 'statusbar') \
                 and ';' not in node_id and round(n.get('height') or 0) <= 70:
             sb_nodes.append((((n.get('absoluteBoundingBox') or {}).get('y')), node_id, disp))
+        # 🔴 규칙 0-Y-2 (2026-09-07 사용자): 키보드 화면엔 HomeIndicator 불필요 — 둘 다 있으면 FAIL.
+        _nm_c = name.strip().lower().replace(' ', '')
+        if ';' not in node_id and n.get('visible') is not False:
+            if _nm_c == 'keyboard' or _nm_c.startswith('keyboard/'):
+                kb_nodes.append(disp)
+            if _nm_c == 'homeindicator' or _nm_c.startswith('homeindicator/') or 'bars/homeindicator' in _nm_c:
+                hi_nodes.append(disp)
         # allow 노드는 서브트리 전체 면제 (2026-08-14 — 브랜드 에셋 내부색은 검사 대상 아님)
         if name in allow:
             # 🔴 allow 남용 감지 (2026-09-03 선물확인 thumb 실사고 — 구조 FRAME 을 allow 로
@@ -525,6 +533,13 @@ def main():
         if _ry is not None and _top[0] is not None and (_top[0] - _ry) > 2:
             bad_paint.append((_top[2], 'FRAME', 'status-bar-not-top',
                               [f'Status Bar 가 최상단이 아님 (y offset {round(_top[0] - _ry)}) — 규칙 1']))
+    # 🔴 규칙 0-Y-2 (2026-09-07 사용자: "키보드가 있으면 제일 하단에 homeindicator 가 있을 필요가
+    # 없어") — 키보드 화면에 HomeIndicator 가 남아 있으면 FAIL.
+    if kb_nodes and hi_nodes:
+        for h in hi_nodes:
+            bad_paint.append((h, 'INSTANCE', 'home-indicator-with-keyboard',
+                              ['키보드 화면은 HomeIndicator 불필요 — 삭제(규칙 0-Y-2, '
+                               '_remove_home_indicator_when_keyboard_live)']))
     # 🔴 화면 최소 높이 852 (2026-08-13 사용자: "화면높이의 최소 사이즈는 852야!") —
     # root 가 화면 프레임(폭 393±1)인데 h<852 면 FAIL. 섹션/컴포넌트 단품(폭≠393)은 제외.
     bad_size = []

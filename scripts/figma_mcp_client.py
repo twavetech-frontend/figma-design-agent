@@ -4358,11 +4358,55 @@ def _enforce_action_button_height_live(root_id: str) -> int:
     return fixed
 
 
+def _is_keyboard_node(n: dict) -> bool:
+    """DS 'Keyboard' 인스턴스 판정(이름 기반, 직계 자식용). 소스 캡처의 raw 'keyboard' GROUP 도
+    같은 이름을 쓰므로 INSTANCE/FRAME/GROUP 모두 인정 — 규칙 0-Y-2 의 판정은 '키보드가 화면에
+    있는가'이지 DS 여부가 아니다."""
+    nm = (n.get("name") or "").strip().lower().replace(" ", "")
+    return nm == "keyboard" or nm.startswith("keyboard/") or nm.endswith("_keyboard")
+
+
+def _is_home_indicator_node(n: dict) -> bool:
+    nm = (n.get("name") or "").strip().lower().replace(" ", "")
+    return nm == "homeindicator" or nm.startswith("homeindicator/") or "bars/homeindicator" in nm
+
+
+def _home_indicators_to_remove_for_keyboard(kids: list) -> list:
+    """🔴 규칙 0-Y-2 (2026-09-07 사용자 룰): 화면에 키보드가 있으면 최하단 HomeIndicator 는 불필요
+    (iOS 키보드 컴포넌트가 HI 영역까지 포함). 루트 직계 자식 목록에서 키보드가 있을 때 삭제해야 할
+    HomeIndicator 노드 id 들을 반환(키보드 없으면 빈 리스트). 순수 함수 — 오프라인 테스트 대상."""
+    if not any(_is_keyboard_node(c) for c in kids):
+        return []
+    return [c["id"] for c in kids if _is_home_indicator_node(c) and c.get("id") and ";" not in c["id"]]
+
+
+def _remove_home_indicator_when_keyboard_live(root_id: str) -> int:
+    """post-fix 백스톱 — 루트 직계에 Keyboard 가 있으면 HomeIndicator 인스턴스를 삭제(규칙 0-Y-2).
+    반환: 삭제 건수."""
+    try:
+        info = parse_content(call_tool("get_node_info", {"nodeId": root_id})).get("json") or {}
+        root = info.get("node", info)
+    except Exception:
+        return 0
+    targets = _home_indicators_to_remove_for_keyboard(root.get("children") or [])
+    removed = 0
+    for nid in targets:
+        try:
+            call_tool("delete_node", {"nodeId": nid})
+            removed += 1
+        except Exception as e:
+            print(f"  [home-indicator-keyboard] 삭제 실패 {nid}: {e}")
+    if removed:
+        print(f"  [home-indicator-keyboard] ✓ 키보드 화면 — HomeIndicator {removed}개 삭제 (규칙 0-Y-2)")
+    return removed
+
+
 def _ensure_home_indicator_live(root_id: str, screen_type: Optional[str] = None) -> bool:
     """변환 트랙(IMIN_CONVERT_TRACK=1) 전용 — 루트에 HomeIndicator 가 없으면 페이지 내 기존
     인스턴스를 clone 해 flow 마지막 자식(가로 FILL)으로 삽입 (2026-09-04).
     DS 게시 검색에 HomeIndicator 키가 없어(인덱스 한계) 파일 내 clone 이 정본 경로.
-    모달/바텀시트는 대상 아님. 페이지 전역 find 는 느리므로(≈14s) 같은 부모 섹션을 먼저 본다."""
+    모달/바텀시트는 대상 아님. 페이지 전역 find 는 느리므로(≈14s) 같은 부모 섹션을 먼저 본다.
+    🔴 키보드가 있는 화면은 대상 아님 (규칙 0-Y-2, 2026-09-07)."""
     if os.environ.get("IMIN_CONVERT_TRACK") != "1":
         return False
     if _is_hug_screen_type(screen_type) or _is_bottom_sheet_screen_type(screen_type):
@@ -4373,6 +4417,9 @@ def _ensure_home_indicator_live(root_id: str, screen_type: Optional[str] = None)
     except Exception:
         return False
     kids = root.get("children") or []
+    if any(_is_keyboard_node(c) for c in kids):
+        print("  [home-indicator-ensure] 키보드 화면 — HomeIndicator 삽입 안 함 (규칙 0-Y-2)")
+        return False
     if any("homeindicator" in (c.get("name") or "").lower().replace(" ", "") for c in kids):
         return False
     src = None
@@ -10347,6 +10394,12 @@ def cmd_post_fix(root_node_id: str, pre_computed_layout: dict = None,
         _ensure_home_indicator_live(root_node_id, screen_type=_st)
     except Exception as e:
         print(f"  [home-indicator-ensure] 실패 (무시하고 계속): {e}")
+
+    # 🔴 2026-09-07 사용자 룰(0-Y-2): 키보드가 있는 화면은 최하단 HomeIndicator 불필요 — 삭제.
+    try:
+        _remove_home_indicator_when_keyboard_live(root_node_id)
+    except Exception as e:
+        print(f"  [home-indicator-keyboard] 실패 (무시하고 계속): {e}")
 
     try:
         _enforce_home_indicator_fill_live(root_node_id)

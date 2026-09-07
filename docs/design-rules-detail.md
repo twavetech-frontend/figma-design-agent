@@ -353,6 +353,29 @@
 >   `get_instance_properties` 로 componentKey 를 읽어 카탈로그에 채운다.
 > - 기존 관행이던 iOS 키패드/키보드 raw 조립(키 h46·gap6 재구성)은 숫자 키패드 등 DS 에
 >   대응 컴포넌트가 없는 경우에만 잔존 허용.
+> - 프롭 실측(2026-09-07): `Show suggestions#6238:0`(제안바) / `Show accessory bar#6238:6` /
+>   `Type=Default`. 캡처에 제안바가 없으면 suggestions off. 자판은 영문 QWERTY 만 존재 —
+>   소스가 한글 자판이어도 DS 인스턴스를 쓰고 편차로 보고.
+
+> 🔴 **규칙 0-Y-2 — 키보드 화면엔 최하단 HomeIndicator 불필요 (2026-09-07 사용자 룰)**
+>
+> 사용자 명시: *"방금 생성한 화면들에서 키보드가 있으면 제일 하단에 homeindicator 가 있을
+> 필요가 없어. 규칙에 추가하고 코드 수정해"* — 글쓰기 6장(키보드 + HI 동시 배치)에서 지적.
+> iOS 키보드 컴포넌트는 홈 인디케이터 영역까지 포함하므로 별도 HI 인스턴스는 중복이다.
+>
+> **규칙:** 루트 직계에 키보드(DS 'Keyboard' 인스턴스, 또는 소스 raw `keyboard` 그룹)가 있으면
+> HomeIndicator 인스턴스를 넣지 않는다. 키보드가 flow **마지막 자식**(가로 FILL)이고 루트 하단에
+> 밀착한다. 규칙 1(HI 최하단 1개)·0-X(HI FILL)는 키보드 없는 화면에만 적용.
+>
+> **시스템 강제 (코드 박힘, 2026-09-07):**
+> - `figma_mcp_client._home_indicators_to_remove_for_keyboard(kids)` 순수 판정 +
+>   `_remove_home_indicator_when_keyboard_live(root)` post-fix 백스톱(모든 트랙) —
+>   `_ensure_home_indicator_live`(변환 트랙 HI 자동 삽입)도 키보드 화면은 skip.
+> - `ds_convert_lib.has_keyboard(tree)` + `enforce_single_status_bar` 가 키보드 화면의 HI 전부 삭제
+>   (normalize_screen 경유 — convert_screen 트랙).
+> - `rebuild_track.py` — 키보드 화면은 HI clone 생략 + 잔존 HI 삭제(`homeindicator-removed` flag).
+> - `verify_bindings.py` — 키보드와 HomeIndicator 가 동시에 있으면 `home-indicator-with-keyboard` FAIL.
+> - 오프라인 테스트: `scripts/tests/test_convert_track_fixes.py::test_home_indicator_removed_when_keyboard`.
 
 > 🔴 **절대 규칙 0-L-2 — 레거시 아이콘 레이어명 정규화: `ico/...` → `ic_...` (2026-08-24 사용자 룰)**
 >

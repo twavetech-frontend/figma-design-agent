@@ -283,6 +283,18 @@ def enforce_text_fill(root_id):
     return len(jobs)
 
 
+def has_keyboard(tree):
+    """루트 직계 자식(오버레이 포함 1단계)에 키보드(DS 'Keyboard' 인스턴스 또는 소스 raw 'keyboard'
+    GROUP)가 있는지 — 규칙 0-Y-2 판정용 순수 함수."""
+    if not isinstance(tree, dict):
+        return False
+    for c in tree.get('children') or []:
+        nm = (c.get('name') or '').strip().lower().replace(' ', '')
+        if (nm == 'keyboard' or nm.startswith('keyboard/')) and c.get('visible') is not False:
+            return True
+    return False
+
+
 def enforce_single_status_bar(root_id):
     """🔴 Status Bar 는 한 화면 최상단에 정확히 1개 (2026-08-24 사용자 룰 — 규칙 1 강령).
 
@@ -319,6 +331,14 @@ def enforce_single_status_bar(root_id):
             if nid != keep:
                 call('delete_node', {'nodeId': nid})
                 sb_removed += 1
+    # 🔴 규칙 0-Y-2 (2026-09-07 사용자 룰): 키보드가 있는 화면은 HomeIndicator 전부 삭제
+    # (iOS 키보드 컴포넌트가 HI 영역까지 포함 — 최하단 HI 불필요).
+    if his and has_keyboard(tree):
+        for _, nid in his:
+            call('delete_node', {'nodeId': nid})
+            hi_removed += 1
+        print(f'  [normalize] 키보드 화면 — HomeIndicator {hi_removed}건 삭제 (규칙 0-Y-2)')
+        his = []
     if len(his) > 1:
         keep = max(his)[1]  # 최하단 1개
         for _, nid in his:
