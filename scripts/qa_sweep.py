@@ -11,6 +11,8 @@
   ② 면·색        — ds_convert_lib.region_diff (구역 픽셀 스코어 + 색 성분 진단)
   ③ 아이콘       — ds_convert_lib.icon_sheet gen/ref 병합 시트 (형태·크기 대조)
   ④ 요소 인벤토리 — TEXT 전수(내용·크기·색)와 fontSize/색 팔레트의 gen↔ref 차이 플래그
+  ⑤ 소형 요소 실측 — pixel_measure: 도트/아이콘/링/선(≤16px) 지름·굵기를 4x 픽셀 실측해 대조
+     (규칙 0-F-3 — 크기/굵기/간격은 눈으로 판독하지 않고 숫자로 잰다)
 
 사용:
   python3 scripts/qa_sweep.py <genId> <refId> [--allow "이름,..."]
@@ -134,6 +136,27 @@ def main():
     print(f'   색 gen 에만: {color_diff[:8]}' if color_diff else '   색 팔레트 ref 와 일치')
     checks.append(('inventory', 'CHECK' if (size_diff or color_diff) else 'PASS',
                    f'size {size_diff} color {color_diff[:6]}'))
+
+    # ⑤ 소형 요소 픽셀 실측 (규칙 0-F-3, 2026-09-08 사용자: "왜 자꾸 눈으로 보고 판단하지??")
+    #    도트/아이콘/링/선 같은 ≤16px 반복 요소의 지름·굵기를 4x export 에서 실측해 gen↔ref 대조.
+    #    gen 에 3회 이상 반복되는데 ref 에 ±1px 매칭이 없는 규격 → CHECK (숫자로 해소/설명 의무).
+    print('━━ ⑤ 소형 요소 실측 (pixel_measure)')
+    try:
+        import pixel_measure as pm
+        gp4 = os.path.join(OUT_DIR, 'sweep_pm_gen.png')
+        rp4 = os.path.join(OUT_DIR, 'sweep_pm_ref.png')
+        fc.export_image(gen, gp4, 'PNG', 4)
+        fc.export_image(ref, rp4, 'PNG', 4)
+        gw = float(((fc.parse_content(fc.call_tool('get_node_info', {'nodeId': gen})).get('json') or {}).get('node') or {}).get('width') or 393)
+        rw = float(((fc.parse_content(fc.call_tool('get_node_info', {'nodeId': ref})).get('json') or {}).get('node') or {}).get('width') or 393)
+        pmres = pm.run(gp4, gw, rp4, rw, max_size=16, tol=1.0, min_count=3)
+        mism = pmres['mismatches']
+        checks.append(('pixel-measure', 'CHECK' if mism else 'PASS',
+                       ('gen 에만 있는 반복 규격 ' + '; '.join(
+                           f"{m['kind']} {m['w']}×{m['h']}" + (f" s{m['stroke']}" if m['stroke'] is not None else '') + f" ×{m['count']}"
+                           for m in mism)) if mism else '소형 반복 요소 규격 ref 와 일치'))
+    except Exception as e:
+        checks.append(('pixel-measure', 'CHECK', f'실측 실패: {e}'))
 
     # 요약
     ok = all(s == 'PASS' for _, s, _ in checks)

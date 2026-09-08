@@ -545,6 +545,13 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   최우선 레퍼런스. 컬러 시맨틱: **완료=success 계열, 브랜드 퍼플='나의 것' 한정**.
 - **0-F** — 빌드 로그 `📸 SECTION-QA-PNG` → 섹션별 재export+Read+checklist(C01~C12) 채운 뒤에만
   보고. 1장 보고 "검증 ✅" 절대 금지. FAIL 있으면 fix 후 재검증 또는 솔직 보고.
+- **0-F-3 (2026-09-08 사용자 룰 — "왜 자꾸 눈으로 보고 판단하지??")** — 🔴 **크기·굵기·간격·정렬은
+  눈으로만 보고 판단하지 말 것 — 반드시 숫자로 잰다.** 스크린샷 배율 착각(2x 를 1x 로)으로 도트를
+  3회 연속 틀린 사고. 원본 대조·사용자 지적 대응·완료 보고에서 치수를 말할 땐 ① 노드 메트릭
+  (`get_node_info` width/height/strokeWeight/itemSpacing) 또는 ② 픽셀 실측
+  (`python3 scripts/pixel_measure.py <genId> <refId>` — 4x export 연결성분 지름·굵기 히스토그램 대조,
+  `--band y0:y1` 집중 측정) 결과를 **표로 병기**. "≈8px 로 보임" 류의 눈대중 서술 금지. qa_sweep ⑤
+  차원이 소형 반복 요소(≤16px) 규격 불일치를 CHECK 로 차단. 상세: `rule 0-F-3`.
 - **0-F-2 / 0-R** — 작업 종료 시 `cleanup-qa` 1회(스크린샷·썸네일 삭제). 빌드 성공 시 사용한
   blueprint json 은 자동 삭제(재빌드는 새로 작성 — 의도된 동작).
 - **19 / 22 / 22-B** — 스크린샷 QA 에서 PRD 전 섹션 1:1 확인(하나라도 누락 시 완료 선언 금지).
