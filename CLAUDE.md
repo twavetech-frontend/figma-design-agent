@@ -450,6 +450,11 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   styled frame**(`_underlineTabs:true`, active=text-primary+fg-primary bar / inactive=text-tertiary+투명)
   이 기본. **Segmented_control 은 `_forceSegmented:true` 컴팩트 토글(주/월/년 등)만.** 헷갈리면 underline.
 - **0-P** — Segmented_control 은 Size=md 기본(자동).
+  🔴 **0-P-2 (2026-09-08 사용자 룰)** — 캡처 1:1 변환에서 **공개/비공개 같은 pill 토글 칩은 Segmented_control 로
+  바꾸지 말고 캡처 디자인대로 raw pill** (선택=bg-brand-solid+text-white / 비선택=bg-primary+border-brand+
+  text-brand-primary, 14 Medium, h32). 부모 프레임 이름을 `… Options`(또는 Toggle/Selector)로 두면 verify
+  `raw-badge-suspect` 가 선택 토글 그룹(형제 ≥2)으로 인식해 면제. Segmented_control 인스턴스는 생성 시 opacity 0.2
+  로 들어오는 실측 결함도 있음(2026-09-08).
 - **2-G** — 하단/전폭 CTA = DS **'Action Button'** 인스턴스. Size=2xl 기본(자동 강제 — 2026-08-04 사용자, 구 lg 개정), 라벨은
   `_instanceText`. ⚠️ md Primary 키는 import 깨짐 → Secondary 키 + `instanceProperties:{"Hierarchy":"Primary"}`
   flip(빌드 후 자동 적용). 버튼 높이는 padding(상하 16)으로 확보(규칙 20).

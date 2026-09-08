@@ -348,8 +348,15 @@ def main():
                     _rad = 999  # 'mixed'(개별 코너) — pill 의심 판정은 크기/라벨 조건에 맡김
                 _kids = [c for c in (n.get('children') or [])]
                 _txts = [c for c in _kids if c.get('type') == 'TEXT']
+                # 🔴 선택 토글 칩 예외 (2026-09-08 사용자: "공개여부는 segmented control 쓰지 말고
+                # 선택된 이미지 디자인대로") — 부모가 '… Options/Toggle/Selector' 인 상호배타 pill
+                # 그룹(형제 ≥2)은 상태 badge 가 아니라 선택 컨트롤 → raw pill 이 정본.
+                import re as _re0
+                _pn = (parent or {}).get('name') or ''
+                _sibs = [c for c in ((parent or {}).get('children') or []) if c.get('type') == 'FRAME']
+                _toggle_group = bool(_re0.search(r'(Options|Toggle|Selector)$', _pn)) and len(_sibs) >= 2
                 if 14 <= _h <= 34 and 0 < _w <= 130 and _rad >= max(10, _h / 2 - 2) \
-                        and len(_txts) == 1 and len(_kids) == 1:
+                        and len(_txts) == 1 and len(_kids) == 1 and not _toggle_group:
                     _lbl = (_txts[0].get('characters') or '').strip()
                     # 'n/N' 카운트 오버레이(피드 캐러셀 표준 — 2026-08-21 사용자 확정 룰 14)는
                     # raw 가 정본 — Badge 교체 대상 아님

@@ -357,6 +357,22 @@
 >   `Type=Default`. 캡처에 제안바가 없으면 suggestions off. 자판은 영문 QWERTY 만 존재 —
 >   소스가 한글 자판이어도 DS 인스턴스를 쓰고 편차로 보고.
 
+> 🔴 **규칙 0-P-2 — 캡처의 pill 토글 칩은 Segmented_control 로 바꾸지 않는다 (2026-09-08 사용자 룰)**
+>
+> 사용자 명시: *"공개여부는 segmented control component 쓰지말고, 선택된 이미지의 디자인대로 그려줘"*
+> — 스테이지 수정 화면의 공개/비공개 토글을 0-J '컴팩트 토글 = Segmented_control' 로 해석해 교체했다가 반려.
+>
+> **규칙:** 캡처 1:1 변환에서 상호배타 선택 pill(공개/비공개, 카테고리 칩 등)은 **캡처 디자인대로 raw pill**
+> 로 그린다 — 선택 = `bg-brand-solid` + `text-white`, 비선택 = `bg-primary` + `border-brand` 1px +
+> `text-brand-primary`, 라벨 14 Medium, h32(캡처 실측), radius 999, 좌우 padding 20, gap 8.
+> 부모 컨테이너 이름은 `<필드> Options`(또는 `… Toggle` / `… Selector`)로 — 선택 컨트롤임을 이름으로 선언.
+> Segmented_control(0-J/5-B)은 캡처가 실제로 세그먼트 형태일 때만.
+>
+> **시스템 강제 (2026-09-08):** `verify_bindings.py` `raw-badge-suspect` 는 부모 이름이 Options/Toggle/Selector
+> 로 끝나고 pill 형제가 2개 이상이면 선택 토글 그룹으로 보고 면제한다(상태 badge 오인 방지).
+> 실측 결함: `create_component_instance` 로 만든 Segmented_control 은 opacity 0.2 로 들어왔고 Size 변형이
+> 바뀌지 않았다(2026-09-08) — 쓰더라도 opacity/Size 확인 필요.
+
 > 🔴 **규칙 0-Y-2 — 키보드 화면엔 최하단 HomeIndicator 불필요 (2026-09-07 사용자 룰)**
 >
 > 사용자 명시: *"방금 생성한 화면들에서 키보드가 있으면 제일 하단에 homeindicator 가 있을
