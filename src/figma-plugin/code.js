@@ -287,6 +287,18 @@ async function handleCommand(command, params) {
       return await getDocumentInfo();
     case "get_selection":
       return await getSelection();
+    case "get_viewport":
+      // 규칙 0-H-3 (2026-09-10 사용자 룰): 위치 미지정 생성은 현재 뷰포트 중앙에 — 페이지 좌표계의
+      // center/bounds/zoom 을 그대로 반환 (bounds 는 페이지 좌표, 섹션 상대 변환은 클라이언트가 수행).
+      return {
+        page: { id: figma.currentPage.id, name: figma.currentPage.name },
+        zoom: figma.viewport.zoom,
+        center: { x: figma.viewport.center.x, y: figma.viewport.center.y },
+        bounds: {
+          x: figma.viewport.bounds.x, y: figma.viewport.bounds.y,
+          width: figma.viewport.bounds.width, height: figma.viewport.bounds.height
+        }
+      };
     case "get_node_info":
       if (!params || !params.nodeId) {
         throw new Error("Missing nodeId parameter");

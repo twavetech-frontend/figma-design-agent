@@ -5288,6 +5288,78 @@ def _normalize_text_font_weight(node: Any) -> int:
     return count
 
 
+PLACEMENT_MODES = ("center", "right")
+
+
+def _placement_mode(blueprint: Optional[dict] = None, explicit: Optional[str] = None) -> str:
+    """🔴 규칙 0-H-3 (2026-09-10 사용자 룰): 사용자가 위치를 명시("오른쪽에 생성")하지 않는 한
+    새 root 는 **현재 보고 있는 뷰포트 중앙**에 생성한다. 우선순위: explicit 인자 > 환경변수
+    IMIN_PLACEMENT > blueprint `_placement` 마커 > 기본 'center'. 'right' 는 0-H-2(선택 노드 우측)."""
+    for v in (explicit, os.environ.get("IMIN_PLACEMENT"), (blueprint or {}).get("_placement") if isinstance(blueprint, dict) else None):
+        if isinstance(v, str) and v.strip().lower() in PLACEMENT_MODES:
+            return v.strip().lower()
+    return "center"
+
+
+def _viewport_center_position(center: dict, parent_abs: Optional[dict], width: float, height: float) -> "tuple[int, int]":
+    """뷰포트 중앙(페이지 좌표) → 부모 상대좌표로 변환한 새 root 의 (x, y). 순수 함수(테스트 대상).
+    parent_abs 가 None 이면 페이지 직속(페이지 좌표 그대로)."""
+    px = float((parent_abs or {}).get("x") or 0)
+    py = float((parent_abs or {}).get("y") or 0)
+    cx, cy = float(center.get("x") or 0), float(center.get("y") or 0)
+    return int(round(cx - px - float(width) / 2)), int(round(cy - py - float(height) / 2))
+
+
+def _position_new_root_to_viewport_center(root_id: str) -> bool:
+    """규칙 0-H-3 — 새 root 를 현재 뷰포트 중앙에 배치. 부모는 (단일 선택 노드가 있으면) 그 부모
+    섹션, 없으면 현재 페이지. `get_viewport` 가 없는 구버전 플러그인이면 False(호출자가 우측 폴백)."""
+    try:
+        vp = parse_content(call_tool("get_viewport", {})).get("json") or {}
+    except Exception as e:
+        print(f"  [auto-position] get_viewport 실패({e}) — 플러그인 재실행 필요, 우측 배치 폴백")
+        return False
+    center = vp.get("center")
+    if not isinstance(center, dict):
+        print("  [auto-position] get_viewport 응답 없음(구버전 플러그인) — 우측 배치 폴백")
+        return False
+    info = parse_content(call_tool("get_node_info", {"nodeId": root_id})).get("json") or {}
+    node = info.get("node", info)
+    w = float(node.get("width") or 393)
+    h = float(node.get("height") or 852)
+    parent_id, parent_abs = None, None
+    try:
+        sel = parse_content(call_tool("get_selection", {})).get("json") or {}
+        sel_nodes = [s for s in (sel.get("selection") or []) if s.get("id") != root_id]
+        if len(sel_nodes) == 1:
+            si = parse_content(call_tool("get_node_info", {"nodeId": sel_nodes[0]["id"]})).get("json") or {}
+            si = si.get("node", si)
+            pid = si.get("parentId")
+            if pid and pid != "0:1":
+                pi = parse_content(call_tool("get_node_info", {"nodeId": pid})).get("json") or {}
+                pi = pi.get("node", pi)
+                if (pi.get("type") or "").upper() == "SECTION":
+                    parent_id = pid
+                    parent_abs = pi.get("absoluteBoundingBox") or {"x": pi.get("x"), "y": pi.get("y")}
+    except Exception:
+        parent_id, parent_abs = None, None
+    x, y = _viewport_center_position(center, parent_abs, w, h)
+    if parent_id:
+        call_tool("insert_child", {"parentId": parent_id, "childId": root_id})
+    call_tool("move_node", {"nodeId": root_id, "x": x, "y": y})
+    print(f"  [auto-position] ✓ 새 root → 뷰포트 중앙 (center {int(center.get('x', 0))},{int(center.get('y', 0))}) "
+          f"parent={parent_id or 'page'} x={x}, y={y} (규칙 0-H-3)")
+    return True
+
+
+def position_new_root(root_id: str, mode: Optional[str] = None, blueprint: Optional[dict] = None, gap: int = 200) -> str:
+    """배치 디스패처 — 'center'(기본, 0-H-3) 또는 'right'(0-H-2 선택 노드 우측). center 실패 시 right 폴백."""
+    m = _placement_mode(blueprint, mode)
+    if m == "center" and _position_new_root_to_viewport_center(root_id):
+        return "center"
+    _position_new_root_to_right(root_id, gap=gap)
+    return "right"
+
+
 def _position_new_root_to_right(root_id: str, gap: int = 200) -> None:
     """새 root frame 을 페이지의 다른 children 우측 빈 공간으로 이동 (2026-06-01 사용자 룰).
 
@@ -5727,9 +5799,11 @@ def cmd_build(blueprint_file: str):
     # batch_build_screen 은 새 root 를 (0,0) 에 박는다 → 같은 페이지에 다른 화면이
     # 있으면 정확히 겹친다. 페이지의 다른 children 의 maxRight 를 구해 새 root 를
     # (maxRight + gap, 0) 로 이동해 겹침을 자동 차단.
+    # 🔴 2026-09-10 규칙 0-H-3: 위치 미지정이면 뷰포트 중앙(기본), "오른쪽에" 명시 시 IMIN_PLACEMENT=right
+    # 또는 blueprint `_placement:"right"` 로 선택 노드 우측(0-H-2).
     if root_id:
         try:
-            _position_new_root_to_right(root_id, gap=200)
+            position_new_root(root_id, blueprint=blueprint if isinstance(blueprint, dict) else None, gap=200)
         except Exception as e:
             print(f"  [auto-position] skipped (무시하고 계속): {e}")
 
@@ -15743,6 +15817,8 @@ CLI_COMMANDS = [
      "description": "컴포넌트 가이드 + ds_catalog 통합 랭킹 검색"},
     {"name": "rule", "usage": "rule <id>|--list",
      "description": "디자인 룰 상세 원문 조회 (CLAUDE.md 압축 인덱스의 retrieval — docs/design-rules-detail.md)"},
+    {"name": "place", "usage": "place <rootId> [--center|--right]",
+     "description": "새 root 배치 — 기본 뷰포트 중앙(규칙 0-H-3), --right 는 선택 노드 우측(0-H-2). 수동 조립/변환 트랙 공용"},
     {"name": "manifest", "usage": "manifest [--json]", "json": True,
      "description": "이 CLI 의 명령 표면 자기서술 (OpenAPI 처럼 — 에이전트 self-discovery)"},
     {"name": "learn-planning", "usage": "learn-planning [--force]",
@@ -15770,6 +15846,8 @@ CLI_COMMANDS = [
      "description": "ds/COMPONENT_KEY_MAP.json 추출 (DS 파일 연결 상태에서 1회)"},
     {"name": "sync-text-styles", "usage": "sync-text-styles",
      "description": "ds/TEXT_STYLE_MAP.json 추출 (DS 파일 연결 상태에서 1회)"},
+    {"name": "sync-paint-styles", "usage": "sync-paint-styles",
+     "description": "ds/PAINT_STYLE_MAP.json 추출 — gradient/color style 키 (DS 파일 연결 상태에서 1회)"},
     {"name": "sync-effect-styles", "usage": "sync-effect-styles",
      "description": "ds/EFFECT_STYLE_MAP.json 추출 (DS 파일 연결 상태에서 1회)"},
     {"name": "apply-text-styles", "usage": "apply-text-styles <rootId>",
@@ -15986,6 +16064,12 @@ def main():
             print("Usage: figma_mcp_client.py assemble <config.json>")
             sys.exit(1)
         cmd_assemble(sys.argv[2])
+    elif cmd == "place":
+        if len(sys.argv) < 3:
+            print("사용: place <rootId> [--center|--right]"); sys.exit(2)
+        _mode = "right" if "--right" in sys.argv else ("center" if "--center" in sys.argv else None)
+        _used = position_new_root(sys.argv[2], mode=_mode)
+        print(f"[place] {sys.argv[2]} → {_used}")
     elif cmd == "cleanup-qa":
         cmd_cleanup_qa()
     elif cmd == "interactive":

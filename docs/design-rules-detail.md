@@ -428,6 +428,27 @@
 > `batch_build_screen` 은 새로 만든 root frame 을 항상 **(0,0) 에 박는다.** 같은 페이지에
 > 이미 화면이 있으면 **정확히 겹쳐서** 사용자가 결과를 구분할 수 없다. 절대 금지.
 >
+> 🔴 **규칙 0-H-3 — 위치 미지정 생성은 현재 뷰포트 중앙 (2026-09-10 사용자 룰)**
+>
+> 사용자 명시: *"사용자가 특정 위치 예를들어 오른쪽에 생성해라고 하지 않는 이상, 생성될 디자인을
+> 현재 보고 있는 화면 viewport 중앙에 생성되도록 해."*
+>
+> **규칙:** 배치 모드 2종 — `center`(기본) / `right`(0-H-2 선택 노드 우측). 사용자 문장에
+> "오른쪽에/우측에" 같은 위치 지시가 있을 때만 `right`. 그 외(위치 언급 없음)는 **현재 뷰포트
+> 중앙**: 플러그인 `get_viewport` 의 center(페이지 좌표)를 받아, 단일 선택 노드가 있으면 그
+> 부모 SECTION 에 insert 한 뒤 섹션 absoluteBoundingBox 기준 상대좌표로 변환해 root 중심이
+> center 에 오도록 move. 선택이 없으면 페이지 직속 + 페이지 좌표 그대로.
+>
+> **시스템 강제 (2026-09-10):**
+> - 플러그인 `get_viewport` 명령(center/bounds/zoom/page) + 브리지 등록 — **플러그인 재실행 필요**.
+> - `figma_mcp_client._placement_mode(blueprint, explicit)`: explicit > `IMIN_PLACEMENT` > blueprint
+>   `_placement` > 기본 `center`. `position_new_root(root, mode)` 디스패처 — center 실패(구버전
+>   플러그인·응답 없음)는 `_position_new_root_to_right` 폴백. `_viewport_center_position` 순수 함수
+>   (`scripts/tests/test_placement.py`).
+> - build Step D.5, `convert_screen.py`(첫 장 중앙 + 이후 장 우측 연쇄), `rebuild_track.py` 가 동일 디스패처.
+> - CLI `place <rootId> [--center|--right]` — 수동 조립(MCP 직접 생성) 화면의 배치 표준 명령.
+> - 표준 명령 "…오른쪽에 디자인 생성해" 는 명시적 우측 요청이므로 `IMIN_PLACEMENT=right`(또는 `--right`).
+
 > 🔴 **0-H-2 — 선택 노드 우선 배치 (2026-08-20 사용자 룰):** 사용자가 Figma 에서 노드를
 > 선택한 채 빌드하면("선택 노드 분석해서 오른쪽에 생성" 표준 명령) 새 root 는 페이지
 > maxRight 가 아니라 **선택 노드와 같은 부모에 insert_child 후 부모 상대좌표로 선택 노드

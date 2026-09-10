@@ -82,6 +82,10 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     type: 'object', properties: {}
   }, async () => cmd('get_selection'));
 
+  reg('get_viewport', 'Get the current Figma viewport (page coords): center {x,y}, bounds {x,y,width,height}, zoom, page. Used by rule 0-H-3 to place new roots at the viewport center when no position was requested.', {
+    type: 'object', properties: {}
+  }, async () => cmd('get_viewport'));
+
   reg('get_node_info', 'Get detailed information about a specific node', {
     type: 'object',
     properties: {

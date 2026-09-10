@@ -914,6 +914,8 @@ def run_rebuild(src, parent, x, y, gap=40):
     print(f'  [rebuild] build ✓ {rid}')
     # 원본 오른쪽 배치 (build 의 선택 노드 기준 배치를 덮어씀 — 같은 부모 + 우측 gap)
     call('insert_child', {'parentId': parent, 'childId': rid})
-    call('move_node', {'nodeId': rid, 'x': x, 'y': y})
+    # 규칙 0-H-3 (2026-09-10): 기본 뷰포트 중앙, IMIN_PLACEMENT=right 면 원본 우측
+    if not (fc._placement_mode() == 'center' and fc._position_new_root_to_viewport_center(rid)):
+        call('move_node', {'nodeId': rid, 'x': x, 'y': y})
     allow = postprocess(rid, ctx, flags)
     return rid, flags, allow, ctx  # selfcheck 는 convert_screen 이 bind/sweep 뒤에 호출 (순백 바인딩 이후)

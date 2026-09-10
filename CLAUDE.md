@@ -405,6 +405,12 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **0-H** — 새 root 는 기존 화면 우측 빈 공간에 자동 배치(겹침 금지). **0-H-2 (2026-08-20)** —
   Figma 선택 노드가 있으면 **같은 부모에 insert 후 선택 노드 바로 오른쪽(gap 50)** 이 우선
   (거대 페이지 maxRight 실종 + 섹션 상대/페이지 절대 좌표계 불일치 방지, 자동).
+  🔴 **0-H-3 (2026-09-10 사용자 룰)** — **사용자가 위치를 명시하지 않으면("오른쪽에 생성" 등이
+  없으면) 새 root 는 현재 보고 있는 뷰포트 중앙에 생성**한다. 기본값 = center(`get_viewport`
+  center → 선택 노드의 부모 섹션 상대좌표로 변환, 없으면 페이지). "오른쪽에" 명시 시에만 0-H-2
+  우측 배치 — `IMIN_PLACEMENT=right` / blueprint `_placement:"right"` / `place <rootId> --right`.
+  build Step D.5·convert_screen·rebuild_track 이 `position_new_root` 로 통일, 수동 조립은
+  `python3 scripts/figma_mcp_client.py place <rootId>`. 구버전 플러그인(get_viewport 없음)은 우측 폴백.
 - **0-D** — modal 기본형 = bottom-sheet: root `_screenType:"bottom-sheet"` → 852 FIXED + Dim Overlay +
   Modal Sheet(루트 풀폭·top radius 16·콘텐츠 가로 padding 20·상단 pad 8/하단 24 `_asymPad`) 자동.
 - **2-D** — full modal(`_screenType:"modal"`): 상단 X 닫기만, Footer/TabBar/상단탭 없음, root HUG,

@@ -1257,7 +1257,15 @@ def main():
         cl = call('clone_node', {'nodeId': sid})
         rid = cl['id']
         call('insert_child', {'parentId': parent, 'childId': rid})
-        call('move_node', {'nodeId': rid, 'x': right + gap + i * (393 + gap), 'y': y0})
+        # 규칙 0-H-3 (2026-09-10): 위치 미지정이면 뷰포트 중앙(첫 장 기준, 이후 장은 우측 393+gap 연쇄),
+        # "오른쪽에" 명시(IMIN_PLACEMENT=right)면 원본 우측.
+        if fc._placement_mode() == 'center' and (i == 0 and fc._position_new_root_to_viewport_center(rid)):
+            _ci = call('get_node_info', {'nodeId': rid}) or {}
+            _cx0, _cy0 = _ci.get('x') or 0, _ci.get('y') or 0
+        elif fc._placement_mode() == 'center' and i > 0 and '_cx0' in dir():
+            call('move_node', {'nodeId': rid, 'x': _cx0 + i * (393 + gap), 'y': _cy0})
+        else:
+            call('move_node', {'nodeId': rid, 'x': right + gap + i * (393 + gap), 'y': y0})
         # 레거시 아이콘 이름 정규화 (0-L-2, 2026-08-24 사용자 룰): ico/empty/chat → ic_empty_chat.
         # deep() 전에 실행 — 이후 이름 기반 로직(NAV_ICON_KEYS 해석 등)이 정규화된 이름을 본다.
         _rn = L.rename_legacy_icon_layers(rid)
