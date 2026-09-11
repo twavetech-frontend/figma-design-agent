@@ -551,7 +551,11 @@
       // === WebSocket Connection ===
       function connectToServer() {
         try {
-          if (state.connected && state.socket) return;
+          // 🔴 2026-09-11: code.js 가 auto-connect 를 두 번 보내(figma.on('run') + 500ms
+          //    setTimeout) join 응답 전에 재진입하면 소켓이 2개 열리던 회귀. 연결 중/연결됨
+          //    소켓이 있으면 재진입하지 않는다.
+          if (state.socket && (state.socket.readyState === WebSocket.CONNECTING ||
+                               state.socket.readyState === WebSocket.OPEN)) return;
 
           updateUI("connecting", "yellow", "Connecting...", `Connecting to ws://localhost:${SERVER_PORT}`);
 

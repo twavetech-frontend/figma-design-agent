@@ -68,6 +68,13 @@ export class FigmaWSServer extends EventEmitter {
 
       this.wss.on('connection', (socket) => {
         console.log('[FigmaWS] Plugin WebSocket connected, waiting for join...');
+        // 이전 소켓이 아직 열려 있으면 새 소켓으로 교체하기 전에 정리 (중복 연결 방지)
+        const prev = this.pluginSocket;
+        if (prev && prev !== socket && prev.readyState === WebSocket.OPEN) {
+          console.log('[FigmaWS] Replacing previous plugin socket (duplicate connection)');
+          this.pluginSocket = socket; // close 핸들러가 stale 로 판정하도록 먼저 교체
+          try { prev.close(); } catch { /* ignore */ }
+        }
         this.pluginSocket = socket;
         this.emitConnectionState('connecting');
         this.startHeartbeat();
@@ -78,6 +85,13 @@ export class FigmaWSServer extends EventEmitter {
 
         socket.on('close', (code, reason) => {
           console.log(`[FigmaWS] Plugin disconnected: ${code} ${reason}`);
+          // 🔴 2026-09-11: 플러그인 UI 가 소켓을 2개 열던 회귀 — 구(舊) 소켓이 닫힐 때
+          //    현재 활성 소켓 상태까지 날려 "Plugin disconnected/Not connected" 오류가 났다.
+          //    닫힌 소켓이 현재 소켓이 아니면 아무것도 건드리지 않는다.
+          if (this.pluginSocket !== socket) {
+            console.log('[FigmaWS] (stale socket closed — active connection kept)');
+            return;
+          }
           this.stopHeartbeat();
           this.pluginSocket = null;
           this.currentChannel = null;

@@ -54,7 +54,10 @@ def call(name, args, timeout=None, _retry=True):
         err = _txt(content)
     if err:
         msg = err.get("message") if isinstance(err, dict) else str(err)
-        if _retry and "Not connected" in msg:
+        # 🔴 2026-09-11: 단절 순간 이미 날아가 있던 콜은 "Plugin disconnected" 로 돌아온다
+        #    ("Not connected" 만 잡으면 그 1건이 재시도 없이 실패 집계 → 크롤 불완전 오판)
+        if _retry and ("Not connected" in msg or "Plugin disconnected" in msg
+                       or "Must join a channel" in msg):
             if _wait_plugin_reconnect():
                 return call(name, args, timeout, _retry=False)
         print(f"  ⚠ {name} {args.get('nodeId')} MCP error: {msg[:120]}", flush=True)

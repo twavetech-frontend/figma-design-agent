@@ -19,6 +19,9 @@ if [ -z "$NODE" ]; then
   echo "[FAIL] node 를 찾을 수 없습니다 — setup-mac.sh 먼저 실행하세요." >&2
   exit 1
 fi
+# nvm 사용자: node 가 /opt/homebrew/bin 밖(~/.nvm/…)에 있으면 launchd PATH 에도 넣어야
+# 브리지 기동 시 sync-tokens-from-github.sh 의 `node` 호출이 "command not found" 로 안 죽는다 (2026-09-11)
+NODE_DIR="$(dirname "$NODE")"
 
 if [ ! -f "$REPO/out/bridge/index.js" ]; then
   echo "[FAIL] out/bridge/index.js 없음 — 'npm run build' 먼저 실행하세요." >&2
@@ -45,7 +48,7 @@ cat > "$PLIST" <<PLIST_EOF
   <key>StandardErrorPath</key><string>$LOG</string>
   <key>EnvironmentVariables</key>
   <dict>
-    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>PATH</key><string>$NODE_DIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
   </dict>
 </dict>
 </plist>
