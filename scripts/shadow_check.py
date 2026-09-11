@@ -395,11 +395,18 @@ def run(gen_id, ref_id, gen_png=None, ref_png=None, out_dir='scripts/qa_screensh
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import figma_mcp_client as fc  # noqa
     os.makedirs(out_dir, exist_ok=True)
-    gen_png = gen_png or os.path.join(out_dir, 'shadow_gen.png')
-    ref_png = ref_png or os.path.join(out_dir, 'shadow_ref.png')
-    if not os.path.exists(gen_png):
+    # 2026-09-11 회귀 수정: 노드 id 로 호출하면 항상 새로 export 한다. 예전엔 파일이 있으면 재사용해
+    # 이전 세션/이전 노드의 shadow_gen.png 를 측정 → 스타일 --apply 후에도 수치가 안 변하는 가짜 결과
+    # (Δ5.7 3회 연속). 명시 경로(gen_png/ref_png 인자)를 준 경우에만 기존 파일을 쓴다.
+    if gen_png is None:
+        gen_png = os.path.join(out_dir, 'shadow_gen.png')
         fc.export_image(gen_id, gen_png, 'PNG', 4)
-    if not os.path.exists(ref_png):
+    elif not os.path.exists(gen_png):
+        fc.export_image(gen_id, gen_png, 'PNG', 4)
+    if ref_png is None:
+        ref_png = os.path.join(out_dir, 'shadow_ref.png')
+        fc.export_image(ref_id, ref_png, 'PNG', 4)
+    elif not os.path.exists(ref_png):
         fc.export_image(ref_id, ref_png, 'PNG', 4)
     gw = float(((fc.parse_content(fc.call_tool('get_node_info', {'nodeId': gen_id})).get('json') or {}).get('node') or {}).get('width') or 393)
     rw = float(((fc.parse_content(fc.call_tool('get_node_info', {'nodeId': ref_id})).get('json') or {}).get('node') or {}).get('width') or 393)
