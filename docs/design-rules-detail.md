@@ -994,6 +994,17 @@
 > **함께 확정된 룰**: 생성 후 `focus_node` 로 뷰포트를 옮기지 않는다(0-H-3 의 반대 동작). 0-H-3 커밋은
 > 롤백 때 사라졌다가 cherry-pick 으로 복구(c0e8314).
 
+> 🔴 **규칙 2-N — 문단 내 부분 강조 = `set_text_range_style` 범위 스타일 (2026-09-11)**
+>
+> 캡처 '미납 및 연체 시, 서비스 이용제한 안내'(4544:87308 → 4544:87310) 1:1 변환에서 본문 문단 안
+> "강제 약정철회 시에는 … 위약금이 발생" 만 브랜드 보라+Bold 인 스팬을 표현할 도구가 없었다(blueprint
+> text 는 단일 스타일, rebuild_track 의 Segments 행은 한 줄짜리만). 줄바꿈이 있는 문단을 노드로 쪼개면
+> 흐름이 깨지므로 **플러그인 `set_text_range_style`** 을 신설: `{nodeId, start, end, fontStyle?, fontFamily?,
+> fillVariable?("K:{variableKey}" — setBoundVariableForPaint 로 DS 변수 바인딩), fillColor?, textDecoration?}`.
+> 범위는 JS 문자 인덱스([start,end), 한글 BMP 라 Python `str.index` 와 동일). 적용 후 verify_bindings PASS
+> 유지(mixed fill 도 변수 바인딩). 사용처: 캡처 1:1 변환의 인라인 강조, 설명 문단 키워드 SemiBold(2-M).
+> ⚠️ 플러그인 코드 변경이라 브리지 kickstart 후 플러그인이 재접속하면 즉시 사용 가능했다(2026-09-11 실측).
+
 > 🔴 **규칙 0-G-4 — clone 트랙은 `clone-variant` 원커맨드로, 스테이지 색은 인원수별 페인트 스타일 (2026-09-11)**
 >
 > 사용자: *"지금 이게 8분이나 걸렸어? 원인이 뭐야? 처음 생성해서 그런건가?"* — 스테이지 상세(참여 전)

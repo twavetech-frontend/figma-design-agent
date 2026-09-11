@@ -445,6 +445,18 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['nodeId', 'fontSize']
   }, async (params) => cmd('set_font_size', params));
 
+  reg('set_text_range_style', 'Style a character range [start,end) of ONE text node: fontStyle (e.g. "Bold"), fillVariable ("K:{variableKey}" DS token binding) or fillColor, textDecoration — for inline emphasis spans inside a paragraph (capture 1:1 conversion).', {
+    type: 'object',
+    properties: {
+      nodeId: { type: 'string' }, start: { type: 'number' }, end: { type: 'number' },
+      fontStyle: { type: 'string' }, fontFamily: { type: 'string' },
+      fillVariable: { type: 'string' }, fillColor: { type: 'object' },
+      textStyleId: { type: 'string', description: 'DS text style for the range — "S:{key}," remote key or local style id (keeps the rest of the node on its own style)' },
+      textDecoration: { type: 'string', enum: ['NONE', 'UNDERLINE', 'STRIKETHROUGH'] }
+    },
+    required: ['nodeId', 'start', 'end']
+  }, async (params) => cmd('set_text_range_style', params));
+
   reg('set_font_weight', 'Set font weight', {
     type: 'object',
     properties: { nodeId: { type: 'string' }, fontWeight: { type: 'number' } },

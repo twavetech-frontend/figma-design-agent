@@ -380,6 +380,8 @@ async function handleCommand(command, params) {
       return await setFontName(params);
     case "set_font_size":
       return await setFontSize(params);
+    case "set_text_range_style":
+      return await setTextRangeStyle(params);
     case "set_range_font_size":
       return await setRangeFontSize(params);
     case "set_font_weight":
@@ -748,6 +750,15 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
       // 2026-05-24 — textStyleId 응답에 포함 (post-fix 검증용)
       if (node.textStyleId !== undefined && node.textStyleId !== figma.mixed) {
         info.textStyleId = node.textStyleId || "";
+      } else if (node.textStyleId === figma.mixed) {
+        // 2026-09-11 — 범위 텍스트 스타일(set_text_range_style) 노드: 세그먼트 전부 바인딩이면 allBound
+        info.textStyleId = "mixed";
+        try {
+          var _tsegs = node.getStyledTextSegments(["textStyleId"]);
+          var _all = _tsegs.length > 0;
+          for (var _ti = 0; _ti < _tsegs.length; _ti++) { if (!_tsegs[_ti].textStyleId) { _all = false; break; } }
+          info.textStyleAllBound = _all;
+        } catch (e2) { info.textStyleAllBound = false; }
       }
     } catch (e) { /* mixed text props */ }
   }
@@ -4024,6 +4035,61 @@ async function setLayoutPositioning(params) {
 }
 
 // Nuevas funciones para propiedades de texto
+
+// set_text_range_style — 한 TEXT 노드의 [start,end) 문자 범위에만 굵기/색/장식 적용
+// (2026-09-11 신설: 캡처 1:1 변환에서 문단 안 부분 강조(브랜드 볼드 스팬)를 표현할 도구가 없었음).
+// fillVariable 은 "K:{variableKey}" (DS 변수 바인딩) 또는 fillColor {r,g,b,a} 원값.
+async function setTextRangeStyle(params) {
+  var nodeId = params && params.nodeId;
+  var start = Number(params && params.start);
+  var end = Number(params && params.end);
+  if (!nodeId || isNaN(start) || isNaN(end)) throw new Error("Missing nodeId/start/end");
+  var node = await figma.getNodeByIdAsync(nodeId);
+  if (!node || node.type !== "TEXT") throw new Error("Node is not a text node: " + nodeId);
+  if (start < 0 || end > node.characters.length || start >= end) {
+    throw new Error("range out of bounds: " + start + "-" + end + " / len " + node.characters.length);
+  }
+  var fonts = node.getRangeAllFontNames(0, node.characters.length);
+  for (var i = 0; i < fonts.length; i++) await loadFontWithTimeout(fonts[i]);
+  var applied = {};
+  if (params.textStyleId) {
+    // DS 텍스트 스타일을 범위에 적용 — "S:{key},…" 원격 키 또는 로컬 style id. 나머지 범위의 스타일은 유지되어
+    // 노드 textStyleId 는 mixed 가 되고, get_node_tree 가 textStyleId:"mixed"+textStyleAllBound 로 보고한다.
+    var sid = String(params.textStyleId);
+    var rm = sid.match(/^S:([^,]+),?(.*)$/);
+    if (rm) {
+      var imported = await figma.importStyleByKeyAsync(rm[1]);
+      sid = imported.id;
+    }
+    await node.setRangeTextStyleIdAsync(start, end, sid);
+    applied.textStyleId = sid;
+  }
+  if (!params.textStyleId && (params.fontStyle || params.fontFamily)) {
+    var cur = node.getRangeFontName(start, start + 1);
+    var fam = params.fontFamily || (cur !== figma.mixed ? cur.family : "Pretendard");
+    var sty = params.fontStyle || (cur !== figma.mixed ? cur.style : "Regular");
+    await loadFontWithTimeout({ family: fam, style: sty });
+    node.setRangeFontName(start, end, { family: fam, style: sty });
+    applied.fontName = { family: fam, style: sty };
+  }
+  if (params.fillVariable || params.fillColor) {
+    var color = params.fillColor || { r: 0, g: 0, b: 0 };
+    var paint = { type: "SOLID", color: { r: color.r || 0, g: color.g || 0, b: color.b || 0 }, opacity: (color.a === undefined ? 1 : color.a) };
+    if (params.fillVariable) {
+      var km = String(params.fillVariable).match(/^K:(.+)$/);
+      if (!km) throw new Error("fillVariable must be K:{variableKey}");
+      var variable = await figma.variables.importVariableByKeyAsync(km[1]);
+      paint = figma.variables.setBoundVariableForPaint(paint, "color", variable);
+      applied.fillVariable = variable.name;
+    }
+    node.setRangeFills(start, end, [paint]);
+  }
+  if (params.textDecoration) {
+    node.setRangeTextDecoration(start, end, params.textDecoration);
+    applied.textDecoration = params.textDecoration;
+  }
+  return { id: node.id, name: node.name, start: start, end: end, text: node.characters.slice(start, end), applied: applied };
+}
 
 async function setFontName(params) {
   const { nodeId, family, style } = params || {};

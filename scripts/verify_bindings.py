@@ -322,8 +322,10 @@ def main():
                 # 🔴 미해석 아이콘 placeholder (2026-09-04) — 빌드 type:'icon' 실패 잔존은 FAIL.
                 if str(name or '').startswith('icon-missing:'):
                     bad_paint.append((disp, t, 'icon-missing', ['회색 placeholder — svg_icon+svgData 로 교체']))
-            if t == 'TEXT' and name not in allow and (n.get('characters') or '').strip() \
-                    and not (n.get('textStyleId') or ''):
+            # 범위 텍스트 스타일(set_text_range_style, 규칙 2-N) 노드는 textStyleId:"mixed" — 세그먼트 전부 바인딩이면 통과
+            _ts = n.get('textStyleId') or ''
+            _ts_ok = bool(_ts) and (_ts != 'mixed' or bool(n.get('textStyleAllBound')))
+            if t == 'TEXT' and name not in allow and (n.get('characters') or '').strip() and not _ts_ok:
                 bad_style.append((disp, (n.get('characters') or '')[:14]))
             # 🔴 아이콘 자리 텍스트 글리프 화살표 감지 (2026-08-21 사용자: '자세히 보기 >' 재발 ×3) —
             # 라벨 끝/앞의 >, ›, <, ‹, →, ← 글리프 = DS chevron/arrow 아이콘 인스턴스로 교체 대상.

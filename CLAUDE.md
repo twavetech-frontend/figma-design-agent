@@ -497,6 +497,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   DS 텍스트 스타일 적용으로.
 - **11/11-B** — 흰 배경 위 `fg-quaternary`/`text-quaternary` 금지(거의 흰색이라 안 보임 — 흐린 회색은
   secondary/tertiary). CTA 유도 caption(버튼 위 권유 문구)은 `text-secondary`.
+- **2-N (2026-09-11 신설)** — 문단 안 부분 강조(브랜드 볼드 스팬·밑줄)는 텍스트를 쪼개지 말고 빌드 후
+  MCP `set_text_range_style {nodeId,start,end,fontStyle,fillVariable:"K:<key>",textDecoration}` 로 범위
+  스타일 적용(변수 바인딩 유지, verify PASS). 캡처 1:1 변환의 인라인 강조 정본.
 - **R61/R47** — 텍스트/아이콘 자리에 이모지 절대 금지 — DS 아이콘(`type:"icon"`). 스테퍼 값·카운트·
   배지 숫자는 반드시 `type:"text"`.
   **아이콘 해석(2026-09-04)**: `type:"icon"` 은 번들 `@untitledui/icons` 패키지에서 오프라인 해석이
