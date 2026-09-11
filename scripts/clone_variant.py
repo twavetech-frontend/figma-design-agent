@@ -26,6 +26,7 @@ spec.json 형식 (경로는 '/' 구분 이름 경로 — `이름[i]` 로 같은 
   "stageMembers": "auto",                        # 13|9|7|5|"auto"(텍스트 '총 입금 13회' 추정)|null
   "stageColorTargets": ["Status Bar", "Pink Header", "순번", "Num circle"],   # (선택) 기본값
   "bindAssets": ["Info Cards/Info card[0]/ic_shield_plus"],   # (선택) 벡터 래퍼 페인트 토큰화
+  "instanceProps": [{"path": "Member list/Member row[0]/Badge", "props": {"Label#17537:290": "남은 입금액 1,649,120원"}}],  # (선택) DS 인스턴스 prop(0-K)
   "allow": "Vector,Union",                       # (선택) verify --allow (일러스트 원값)
   "placement": "center"                          # center(0-H-3 기본) | right
 }
@@ -153,6 +154,10 @@ def build_plan(spec, tree):
         plan['stage'] = {'members': int(sm), 'style': st, 'targets': stage_targets(tree, names, deleted)}
     for p in spec.get('bindAssets') or []:
         plan['bindAssets'].append(resolve_path(tree, p)['id'])
+    plan['instanceProps'] = []
+    for ip in spec.get('instanceProps') or []:   # [{"path": "...", "props": {"Label#17537:290": "..."}}] — DS 인스턴스 prop(0-K: prop 만)
+        n = resolve_path(tree, ip['path'])
+        plan['instanceProps'].append({'path': ip['path'], 'id': n['id'], 'props': ip['props']})
     return plan
 
 
@@ -180,6 +185,12 @@ def run(spec, dry_run=False, log=print):
 
     def step(name, start):
         summary['steps'].append({'step': name, 's': round(time.time() - start, 1)})
+
+    # 0) 소스 트리로 계획 사전 검증 — 경로 오타면 clone 전에 실패(고아 clone 방지, 2026-09-11 실사고)
+    s = time.time()
+    src_tree = L.fetch_tree(spec['source']) or call('get_node_tree', {'nodeId': spec['source'], 'maxDepth': 25})
+    build_plan(spec, src_tree)
+    step('preflight', s)
 
     # 1) clone
     s = time.time()
@@ -218,6 +229,8 @@ def run(spec, dry_run=False, log=print):
     # 4) 삭제
     for d in plan['delete']:
         call('delete_node', {'nodeId': d['id']})
+    for ip in plan['instanceProps']:
+        call('set_instance_properties', {'nodeId': ip['id'], 'properties': ip['props']})
     step('texts+delete', s)
 
     # 5) viewport / pinBottom

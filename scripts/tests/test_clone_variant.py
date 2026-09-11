@@ -71,3 +71,9 @@ def test_stage_members_inference_and_unknown_count():
 def test_plan_without_stage_when_not_inferable():
     spec = dict(SPEC, stageMembers=None)
     assert CV.build_plan(spec, TREE)['stage'] is None
+
+
+def test_plan_instance_props_resolved():
+    spec = dict(SPEC, instanceProps=[{"path": "Member list/Member row[1]/Gift Pill", "props": {"Label#1:1": "x"}}])
+    plan = CV.build_plan(spec, TREE)
+    assert plan['instanceProps'][0]['id'] == '4366:128765' and plan['instanceProps'][0]['props'] == {"Label#1:1": "x"}
