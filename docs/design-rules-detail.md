@@ -975,6 +975,55 @@
 > 한계: DS 스타일 5종 중 최근접이지 픽셀 동일 재현이 아니다(raw 그림자는 2-E 로 금지·strip).
 > **플러그인**: get_node_info 가 `effectStyleId` 를 노출(2026-09-11) — 플러그인 재실행 후 반영.
 
+> 🔴 **규칙 0-G-3 — 같은 화면이 페이지에 있으면 검토·결정 없이 빌드 금지 (2026-09-11 사용자 지적)**
+>
+> 사용자: *"현재 페이지에 같은 디자인이 존재하는데 다른 디자인들을 검색하지 않고 처음부터 다시 디자인한거야.
+> 그것에서부터 잘못된거다! 왜 또 규칙을 어긴건지 원인 파악해"*
+>
+> **원인**: 4.5(인덱스 grep)·0-G-2(기존본 학습)는 코드 강제가 없는 재량 단계였고, 모델은 재량 단계를
+> 건너뛴다(0-G/0-F 게이트화와 같은 실패 유형). 내 스케줄·목돈지원금 쿠폰 시트를 이미지만 보고 새로 그림.
+>
+> **시스템 강제**: `_enforce_existing_design_gate` (cmd_build 통독 게이트 직후, prebuild 는 노출만) —
+> 검색 키 = NavBar `_navTitle` + `_wireframeContent.{nav,title,sheetTitle,screenTitle,header}` +
+> `_existingSearchKeys`. 최신 `scripts/_figma_index_*.json` 의 screens 이름 부분 일치(공백 무시) 또는
+> texts 정확 일치 → 그 화면. 매칭 ≥1 인데 root 선언이 없으면 `ERR_EXISTING_DESIGN_UNREVIEWED` + requiredActions
+> `export_and_read`(매칭 노드) 로 차단. 통과 조건: `_existingReviewed` 가 매칭 id 를 포함하고
+> `_existingDecision.mode ∈ {clone, redesign}` + reason ≥10자. 우회 `_existingReviewedSkipped` / `IMIN_SKIP_EXISTING_GATE=1`.
+> 테스트 `scripts/tests/test_existing_design_gate.py`. 인덱스가 오래됐으면 준비 4.5 크롤을 먼저 돌릴 것.
+>
+> **함께 확정된 룰**: 생성 후 `focus_node` 로 뷰포트를 옮기지 않는다(0-H-3 의 반대 동작). 0-H-3 커밋은
+> 롤백 때 사라졌다가 cherry-pick 으로 복구(c0e8314).
+
+> 🔴 **규칙 0-G-4 — clone 트랙은 `clone-variant` 원커맨드로, 스테이지 색은 인원수별 페인트 스타일 (2026-09-11)**
+>
+> 사용자: *"지금 이게 8분이나 걸렸어? 원인이 뭐야? 처음 생성해서 그런건가?"* — 스테이지 상세(참여 전)
+> 와이어를 기존 DS 본(4366:128696) clone 으로 만드는 데 8분. 브리지 로그 실측: MCP 호출 약 110회
+> (get_node_tree 22회, get_styles 13회), 모델 왕복 20회. 처음 생성이라서가 아니라 순서·루프 낭비였다.
+>
+> **원인 분해**: ① 색 재작업 ~2분 — 와이어 핑크를 '와이어 스타일'로 보고 브랜드 퍼플로 만든 뒤 verify 중
+> 인원수별 스타일을 발견해 11개 노드 재바인딩(4왕복). ② verify 6회 ~2분 — 매번 트리 전체 재조회 +
+> bind_asset_paints 가 hex 마다 get_styles 재호출(13회). "verify 1회 원칙"(conversion-speed-rules) 위반.
+> ③ 도구 탐색 ~1.5분 — 파라미터 이름 소스 뒤지기(insert_child 는 childId), 토큰맵 3회 분할 조회.
+> ④ 정당 비용 ~1분 — 기존 본 3장 export+Read, 원본 트리 조회(0-G-3).
+>
+> **코드화 3건**:
+> 1. `scripts/clone_variant.py` + CLI `clone-variant <spec.json>` — clone → fetch_tree **1회** → 경로 해석
+>    (이름 경로 `A/B[1]/TEXT[0]`, 슬래시 든 레이어명은 최장 일치) → 텍스트 치환(`styleFrom` 으로 다른
+>    TEXT 의 스타일·바인딩째 교체)/삭제 → `viewport`(FIXED+clip)·`pinBottom`(ABSOLUTE 하단 고정) →
+>    스테이지 색 → rename_legacy_icon_layers → bind_semantic_tokens 1회 → `bindAssets` 래퍼 페인트 →
+>    position_new_root(center) → **verify 1회** → `📋 CLONE-VARIANT-SUMMARY` JSON(steps 별 초). 실측 22초.
+>    `--dry-run` 은 계획만 출력하고 clone 을 지운다. 오프라인 테스트 `scripts/tests/test_clone_variant.py`.
+> 2. `ds_catalog.STAGE_COLOR_STYLES` — 파일 로컬 페인트 스타일 `stage old color/13 - pink(#f795ae)` ·
+>    `9 - mint(#55c8c0)` · `7 - purple(#9095f9)` · `5 - gray(#b9b6c7)`. 숫자 = 인원수(총 입금 n회 = n명).
+>    대상 = Status Bar·헤더 밴드(Pink Header)·'순번' 라벨·Num circle. 변수 토큰이 아니라 스타일이므로
+>    `set_fill_style_id`. `infer_stage_members(texts)` 는 정의된 인원수만 인정(12회 → None, 날조 금지).
+>    🔴 스테이지 상세 계열에서 **와이어/캡처의 색을 '무시하고 브랜드 퍼플' 로 바꾸지 말 것** — 색이 곧 인원수 정보다.
+> 3. `rebuild_track.get_styles_cached()` — get_styles 프로세스 내 1회 캐시(`find_style_by_hex` 가 사용).
+>
+> **워크플로(clone 트랙)**: 인덱스 grep → 기존 본 export+Read(0-G-3) → spec.json 작성 → `clone-variant` →
+> 결과 export+Read 1회 → 보고. 일러스트 벡터(실드/코인)는 DS 토큰이 없어 `allow` 로 원값 유지 —
+> 원본 DS 본과 동일 상태. 남은 수동 비용은 spec 작성뿐이라 목표 총 소요 ≤2분.
+
 > 🔴 **절대 규칙 0-W — 상단 툴바(NavBar) = DS 'Tool Bar' 컴포넌트 인스턴스 (2026-06-12 사용자 룰)**
 >
 > 사용자 명시: *"상단 tool bar(네비게이션바)를 매번 새로 그리는게 아니라, 컴포넌트 인스턴스를

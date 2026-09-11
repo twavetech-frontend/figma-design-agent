@@ -30,6 +30,7 @@ Usage:
 """
 
 import json
+import glob
 import sys
 import os
 import time
@@ -1241,6 +1242,126 @@ def _enforce_reference_read_gate() -> None:
                                       if os.path.basename(p) in missing],
                         }])
     sys.exit(2)
+
+
+def _existing_search_keys(blueprint: dict) -> list:
+    """기존 디자인 검색 키 — NavBar `_navTitle`, `_wireframeContent` 의 타이틀류(nav/title/sheetTitle/
+    screenTitle/header), root `_existingSearchKeys`(명시). 2자 이상만."""
+    keys = []
+
+    def walk(n):
+        if isinstance(n, dict):
+            t = n.get("_navTitle")
+            if isinstance(t, str):
+                keys.append(t)
+            for c in n.get("children") or []:
+                walk(c)
+    walk(blueprint or {})
+    wc = (blueprint or {}).get("_wireframeContent") or {}
+    if isinstance(wc, dict):
+        for k in ("nav", "title", "sheetTitle", "screenTitle", "header", "navTitle"):
+            v = wc.get(k)
+            if isinstance(v, str):
+                keys.append(v)
+    for k in (blueprint or {}).get("_existingSearchKeys") or []:
+        if isinstance(k, str):
+            keys.append(k)
+    out, seen = [], set()
+    for k in keys:
+        k2 = k.strip()
+        if len(k2) >= 2 and k2 not in seen:
+            seen.add(k2); out.append(k2)
+    return out
+
+
+def _latest_page_index_path() -> Optional[str]:
+    cands = sorted(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), "_figma_index_*.json")), key=os.path.getmtime)
+    return cands[-1] if cands else None
+
+
+def _existing_design_matches(blueprint: dict, index_file: Optional[str] = None, limit: int = 12) -> tuple:
+    """페이지 인덱스에서 같은 화면 후보를 찾는다 → (keys, matches[{id,name,section,via}]).
+    화면 이름에 키 포함(부분 일치, 공백 무시) 또는 TEXT 노드 문자열이 키와 정확히 같으면 그 화면."""
+    keys = _existing_search_keys(blueprint)
+    path = index_file or _latest_page_index_path()
+    if not keys or not path or not os.path.exists(path):
+        return keys, []
+    try:
+        with open(path, encoding="utf-8") as fh:
+            idx = json.load(fh)
+    except Exception:
+        return keys, []
+    norm = lambda x: re.sub(r"\s+", "", (x or "")).lower()
+    nkeys = [norm(k) for k in keys]
+    root_name = norm((blueprint or {}).get("name"))
+    by_name = {}
+    for s in idx.get("screens") or []:
+        by_name.setdefault(s.get("name"), s)
+    matches, seen = [], set()
+
+    def add(s, via):
+        if not s or s.get("id") in seen or norm(s.get("name")) == root_name:
+            return
+        seen.add(s["id"])
+        matches.append({"id": s["id"], "name": s.get("name"), "section": s.get("section"), "via": via})
+    for s in idx.get("screens") or []:
+        nm = norm(s.get("name"))
+        if any(k in nm for k in nkeys):
+            add(s, "name")
+    for t in idx.get("texts") or []:
+        if norm(t.get("chars")) in nkeys and t.get("screen") in by_name:
+            add(by_name[t["screen"]], "text")
+    return keys, matches[:limit]
+
+
+def _enforce_existing_design_gate(blueprint: dict, index_file: Optional[str] = None, exit_on_block: bool = True) -> bool:
+    """🔴 규칙 0-G-3 (2026-09-11 사용자: "현재 페이지에 같은 디자인이 존재하는데 검색하지 않고 처음부터
+    다시 디자인했다") — 페이지 인덱스에 같은 화면(이름/타이틀 텍스트 일치)이 있으면, root 가
+    `_existingReviewed:[id…]`(매칭 id 포함) + `_existingDecision:{mode:'clone'|'redesign', reason}` 을
+    선언하기 전엔 빌드 차단. 기존 본을 export+Read 하고 clone 할지/새로 그릴지를 결정한 흔적을 강제한다.
+    bypass: root `_existingReviewedSkipped:"<사유>"` / env IMIN_SKIP_EXISTING_GATE=1. 반환 True=통과."""
+    if os.environ.get("IMIN_SKIP_EXISTING_GATE") == "1":
+        print("⚠️ [기존본-게이트] 우회됨 (IMIN_SKIP_EXISTING_GATE=1)")
+        return True
+    if os.environ.get("IMIN_CONVERT_TRACK") == "1":
+        print("  [기존본-게이트] 변환 트랙(IMIN_CONVERT_TRACK=1) — 소스가 곧 기존 디자인이므로 통과")
+        return True
+    skip = (blueprint or {}).get("_existingReviewedSkipped")
+    if isinstance(skip, str) and skip.strip():
+        print(f"  [기존본-게이트] skip — {skip}")
+        return True
+    keys, matches = _existing_design_matches(blueprint, index_file)
+    if not keys:
+        print("  [기존본-게이트] 검색 키 없음(_navTitle/_wireframeContent 타이틀/_existingSearchKeys) — 확인 불가, 통과")
+        return True
+    if not matches:
+        print(f"  [기존본-게이트] ✓ 페이지 인덱스에 같은 화면 없음 (키 {keys})")
+        return True
+    reviewed = {str(x) for x in ((blueprint or {}).get("_existingReviewed") or [])}
+    decision = (blueprint or {}).get("_existingDecision") or {}
+    mids = {m["id"] for m in matches}
+    ok = bool(reviewed & mids) and isinstance(decision, dict) and decision.get("mode") in ("clone", "redesign") \
+        and len(str(decision.get("reason") or "").strip()) >= 10
+    if ok:
+        print(f"  [기존본-게이트] ✓ 기존 화면 {len(reviewed & mids)}개 검토 선언 — mode={decision.get('mode')}")
+        return True
+    print("\n" + "=" * 64)
+    print("❌ 빌드 차단 — 현재 페이지에 같은 화면이 이미 있습니다 (규칙 0-G-3). 먼저 기존 본을 보고 결정할 것.")
+    print(f"   검색 키: {keys}")
+    for m in matches:
+        print(f"     - {m['id']} {m['name']!r} (section: {m.get('section')}, via {m['via']})")
+    print("   → 위 노드를 export_node_as_image(scale=2)+Read 한 뒤 root 에 선언하고 다시 build:")
+    print("     \"_existingReviewed\": [\"<id>\", …], \"_existingDecision\": {\"mode\": \"clone\"|\"redesign\", \"reason\": \"<10자 이상>\"}")
+    print("     기존 DS 본이 있으면 clone(변환 트랙)이 기본. 우회: _existingReviewedSkipped:\"<사유>\" / IMIN_SKIP_EXISTING_GATE=1")
+    print("=" * 64)
+    if exit_on_block:
+        _emit_build_summary("blocked", codes=["ERR_EXISTING_DESIGN_UNREVIEWED"],
+                            required_actions=[
+                                {"type": "export_and_read", "why": "기존 같은 화면 학습 (규칙 0-G-3) 후 clone/redesign 결정",
+                                 "nodeIds": [m["id"] for m in matches]},
+                                {"type": "declare", "text": "root._existingReviewed + root._existingDecision 선언 후 다시 build"}])
+        sys.exit(2)
+    return False
 
 
 def _pending_selfverify_path() -> str:
@@ -5310,6 +5431,29 @@ def _viewport_center_position(center: dict, parent_abs: Optional[dict], width: f
     return int(round(cx - px - float(width) / 2)), int(round(cy - py - float(height) / 2))
 
 
+def _resolve_parent_abs(pi: dict, bbox: Optional[dict] = None) -> dict:
+    """섹션 절대 원점 — get_nodes_info 의 absoluteBoundingBox 우선(중첩 섹션도 절대값), 없으면
+    get_node_info 의 x/y(최상위 섹션은 페이지 상대 = 절대). 순수 함수(테스트 대상)."""
+    if isinstance(bbox, dict) and bbox.get("x") is not None:
+        return {"x": float(bbox.get("x") or 0), "y": float(bbox.get("y") or 0)}
+    ab = (pi or {}).get("absoluteBoundingBox")
+    if isinstance(ab, dict) and ab.get("x") is not None:
+        return {"x": float(ab.get("x") or 0), "y": float(ab.get("y") or 0)}
+    return {"x": float((pi or {}).get("x") or 0), "y": float((pi or {}).get("y") or 0)}
+
+
+def _section_abs_origin(pid: str, pi: Optional[dict] = None) -> dict:
+    bbox = None
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [pid]})).get("json")
+        if isinstance(items, list) and items:
+            doc = items[0].get("document") or items[0]
+            bbox = doc.get("absoluteBoundingBox")
+    except Exception:
+        bbox = None
+    return _resolve_parent_abs(pi or {}, bbox)
+
+
 def _position_new_root_to_viewport_center(root_id: str) -> bool:
     """규칙 0-H-3 — 새 root 를 현재 뷰포트 중앙에 배치. 부모는 (단일 선택 노드가 있으면) 그 부모
     섹션, 없으면 현재 페이지. `get_viewport` 가 없는 구버전 플러그인이면 False(호출자가 우측 폴백)."""
@@ -5342,8 +5486,22 @@ def _position_new_root_to_viewport_center(root_id: str) -> bool:
                     parent_abs = pi.get("absoluteBoundingBox") or {"x": pi.get("x"), "y": pi.get("y")}
     except Exception:
         parent_id, parent_abs = None, None
+    if not parent_id:
+        # 🔴 2026-09-11 회귀: 선택이 없을 때 '페이지 직속' 으로 가정했지만, clone/변환 산출물은 원본
+        #    섹션 안에 있다 → 페이지 좌표를 섹션 상대좌표로 적용해 화면 밖(-160715,-119074)으로 날아감.
+        #    노드의 실제 부모가 SECTION 이면 그 절대 원점을 빼서 상대좌표로 변환한다.
+        own_pid = node.get("parentId")
+        if own_pid and own_pid != "0:1":
+            try:
+                pi = parse_content(call_tool("get_node_info", {"nodeId": own_pid})).get("json") or {}
+                pi = pi.get("node", pi)
+                if (pi.get("type") or "").upper() == "SECTION":
+                    parent_id = own_pid
+                    parent_abs = _section_abs_origin(own_pid, pi)
+            except Exception:
+                pass
     x, y = _viewport_center_position(center, parent_abs, w, h)
-    if parent_id:
+    if parent_id and parent_id != node.get("parentId"):
         call_tool("insert_child", {"parentId": parent_id, "childId": root_id})
     call_tool("move_node", {"nodeId": root_id, "x": x, "y": y})
     print(f"  [auto-position] ✓ 새 root → 뷰포트 중앙 (center {int(center.get('x', 0))},{int(center.get('y', 0))}) "
@@ -5486,6 +5644,8 @@ def cmd_build(blueprint_file: str):
     # 생성 시 서비스 맥락을 충분히 이해한 상태 시스템 보장). references S20~S23 와 동일 철학.
     # 2026-08-14: root 이름을 넘겨 비 imin_*(변환 트랙)는 면제 — blueprint 로드를 게이트 앞으로 이동.
     _enforce_planning_read_gate(blueprint.get("name") or blueprint.get("archetype"))
+    # 🔴 규칙 0-G-3 (2026-09-11): 같은 화면이 페이지에 있으면 검토 선언 없이는 빌드 차단
+    _enforce_existing_design_gate(blueprint)
 
     # 🔴 직전 빌드 self-verify 미완료면 새 빌드 차단 (2026-06-11 — 절대 규칙 0-F 코드 게이트화).
     # 모델(fable 등)이 self-verify 를 조용히 건너뛰고 다음 화면으로 넘어가는 것 방지.
@@ -15759,6 +15919,8 @@ def cmd_validate_blueprint(path: str, with_refs: bool = False) -> None:
     """
     with open(path) as f:
         bp = json.load(f)
+        if with_refs:  # prebuild 경로 — 규칙 0-G-3 기존 화면 사전 노출(차단은 build)
+            _enforce_existing_design_gate(bp, exit_on_block=False)
     bp = _flatten_padding_objects(bp)
 
     issues = validate_blueprint(bp)
@@ -15817,6 +15979,8 @@ CLI_COMMANDS = [
      "description": "컴포넌트 가이드 + ds_catalog 통합 랭킹 검색"},
     {"name": "rule", "usage": "rule <id>|--list",
      "description": "디자인 룰 상세 원문 조회 (CLAUDE.md 압축 인덱스의 retrieval — docs/design-rules-detail.md)"},
+    {"name": "clone-variant", "usage": "clone-variant <spec.json> [--dry-run]",
+     "description": "기존 DS 본 clone + 텍스트 치환/삭제 + 인원수별 스테이지 색 + bind·verify 1회 원커맨드 (0-G-3 clone 트랙, 목표 ≤2분)"},
     {"name": "place", "usage": "place <rootId> [--center|--right]",
      "description": "새 root 배치 — 기본 뷰포트 중앙(규칙 0-H-3), --right 는 선택 노드 우측(0-H-2). 수동 조립/변환 트랙 공용"},
     {"name": "manifest", "usage": "manifest [--json]", "json": True,
@@ -16064,9 +16228,12 @@ def main():
             print("Usage: figma_mcp_client.py assemble <config.json>")
             sys.exit(1)
         cmd_assemble(sys.argv[2])
+    elif cmd == "clone-variant":
+        import clone_variant as _cv
+        sys.exit(_cv.main(sys.argv[2:]))
     elif cmd == "place":
         if len(sys.argv) < 3:
-            print("사용: place <rootId> [--center|--right]"); sys.exit(2)
+            print("사용: place <rootId> [--center|--right]"); sys.exit(1)
         _mode = "right" if "--right" in sys.argv else ("center" if "--center" in sys.argv else None)
         _used = position_new_root(sys.argv[2], mode=_mode)
         print(f"[place] {sys.argv[2]} → {_used}")

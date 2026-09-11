@@ -656,8 +656,20 @@ def _index_by_name(tree):
     return idx
 
 
+_STYLES_CACHE = None
+
+
+def get_styles_cached(refresh=False):
+    """get_styles 1회 캐시 (2026-09-11: bind_asset_paints 가 hex 마다 get_styles 를 재호출해
+    한 화면에 13회 왕복하던 낭비 제거). 스타일 추가 후엔 refresh=True."""
+    global _STYLES_CACHE
+    if _STYLES_CACHE is None or refresh:
+        _STYLES_CACHE = call('get_styles', {}) or {}
+    return _STYLES_CACHE
+
+
 def find_style_by_hex(hx):
-    st = call('get_styles', {}) or {}
+    st = get_styles_cached()
     for s in st.get('colors') or []:
         p = s.get('paint') or {}
         if p.get('type') == 'SOLID' and L.to_hex(p.get('color') or {}).lower() == hx.lower():

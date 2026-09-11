@@ -36,6 +36,7 @@ ERROR_CODES = {
     "ERR_RULE_LINT": "design_rules L2 lint ERROR (개별 코드 미부여 룰)",
     "ERR_BUILD_FAILED": "batch_build_screen 실패 — root 노드 미생성",
     "ERR_ICON_UNRESOLVED": "type:'icon' 해석 실패 — icon-missing:* placeholder 잔존 (svg_icon 교체 필요, 2026-09-04)",
+    "ERR_EXISTING_DESIGN_UNREVIEWED": "현재 페이지에 같은 화면이 있는데 검토/결정 선언 없음 — 빌드 차단 (규칙 0-G-3, 2026-09-11)",
 }
 
 # 게이트/룰 태그 → 코드. 이슈 문자열 "ERROR (<TAG>): ..." 의 <TAG> 를 매핑한다.
@@ -49,6 +50,7 @@ GATE_TAG_TO_CODE = {
     "S27": "ERR_RESTRUCTURE_MAP_MISSING",
     "novelty-gate": "ERR_NOVELTY_DUPLICATE",
     "R58": "ERR_MODAL_HOME_SECTIONS",
+    "0-G-3": "ERR_EXISTING_DESIGN_UNREVIEWED",
 }
 
 _TAG_RE = re.compile(r"^ERROR\s*\(([^)]+)\)")

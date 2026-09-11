@@ -411,6 +411,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   우측 배치 — `IMIN_PLACEMENT=right` / blueprint `_placement:"right"` / `place <rootId> --right`.
   build Step D.5·convert_screen·rebuild_track 이 `position_new_root` 로 통일, 수동 조립은
   `python3 scripts/figma_mcp_client.py place <rootId>`. 구버전 플러그인(get_viewport 없음)은 우측 폴백.
+  🔴 **생성 후 `focus_node` 로 뷰포트를 디자인 쪽으로 옮기지 말 것 (2026-09-11 사용자: "그게 아니고 애초에
+  처음 보여지는 그 곳에 디자인이 생성되어야 한다")** — 규칙은 '보고 있는 자리에 놓기'다. 엉뚱한 곳에
+  생성됐으면 `place <rootId>` 로 디자인을 옮긴다. 플러그인이 구버전이면 재실행을 먼저 요청.
 - **0-D** — modal 기본형 = bottom-sheet: root `_screenType:"bottom-sheet"` → 852 FIXED + Dim Overlay +
   Modal Sheet(루트 풀폭·top radius 16·콘텐츠 가로 padding 20·상단 pad 8/하단 24 `_asymPad`) 자동.
 - **2-D** — full modal(`_screenType:"modal"`): 상단 X 닫기만, Footer/TabBar/상단탭 없음, root HUG,
@@ -554,6 +557,20 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   검색과 Read 게이트를 건너뜀(`_should_skip_reference_step`) — 1:1 변환은 레퍼런스가 캡처 자체.
 - **0-G-2** — 같은 화면의 기존(특히 **사용자 수정**) 버전을 빌드 전 export+Read 학습 — 사용자 교정이
   최우선 레퍼런스. 컬러 시맨틱: **완료=success 계열, 브랜드 퍼플='나의 것' 한정**.
+  🔴 **0-G-3 하드 게이트 (2026-09-11 사용자: "현재 페이지에 같은 디자인이 존재하는데 검색하지 않고 처음부터
+  다시 디자인했다")** — build/prebuild 가 blueprint 의 `_navTitle`·`_wireframeContent` 타이틀·
+  `_existingSearchKeys` 로 페이지 인덱스(`scripts/_figma_index_*.json`)를 자동 검색해 같은 화면(이름 부분
+  일치·TEXT 일치)이 있으면 **`ERR_EXISTING_DESIGN_UNREVIEWED` 로 차단**. 통과 = 그 노드를 export+Read 하고
+  root 에 `_existingReviewed:[id…]` + `_existingDecision:{mode:"clone"|"redesign", reason}` 선언.
+  **기존 DS 본이 있으면 clone/변환 트랙이 기본**, 새로 그리는 건 reason 이 있어야 한다. 우회
+  `_existingReviewedSkipped:"<사유>"`. (4.5 인덱스 grep 이 재량 단계라 건너뛰던 것을 코드 게이트로.)
+  🔴 **0-G-4 clone 트랙 원커맨드 (2026-09-11 사용자: "8분이나 걸렸어?")** — 기존 DS 본이 있는 변형
+  화면은 손으로 clone·치환·verify 를 반복하지 말고 **`python3 scripts/figma_mcp_client.py clone-variant
+  <spec.json>`** 한 번(clone → 트리 1회 → 텍스트 치환/삭제/styleFrom → viewport·pinBottom →
+  **인원수별 스테이지 색** → bind 1회 → 배치 → verify 1회, 실측 ≤2분). 수동 8분의 원인 = 색 재작업
+  2분 + verify 6회 2분 + 도구 탐색 1.5분. **스테이지 상세 계열 색은 브랜드 퍼플이 아니라
+  `ds_catalog.STAGE_COLOR_STYLES`(13 pink/9 mint/7 purple/5 gray 로컬 페인트 스타일, 총 입금 n회 =
+  n명)** — `stageMembers:"auto"` 가 텍스트에서 추정. 상세: `rule 0-G-4`.
 - **0-F** — 빌드 로그 `📸 SECTION-QA-PNG` → 섹션별 재export+Read+checklist(C01~C12) 채운 뒤에만
   보고. 1장 보고 "검증 ✅" 절대 금지. FAIL 있으면 fix 후 재검증 또는 솔직 보고.
 - **0-F-3 (2026-09-08 사용자 룰 — "왜 자꾸 눈으로 보고 판단하지??")** — 🔴 **크기·굵기·간격·정렬은

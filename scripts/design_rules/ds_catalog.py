@@ -1239,3 +1239,38 @@ def detect_ds_role_structural(node: dict, parent: Optional[dict] = None):
                          and _has_role_name_hint(node, role))
             return (r[0], r[1], r[2], confident)
     return None
+
+
+# ── 스테이지 색 = 인원수별 DS 로컬 페인트 스타일 (2026-09-11 신설) ──────────────────
+# 스테이지 상세 계열(상단 Status Bar·헤더 밴드·'순번' 라벨·Num circle)의 색은 브랜드 퍼플이
+# 아니라 **인원수별 페인트 스타일**이다. 와이어가 핑크면 13명 스테이지(총 입금 13회)라는 뜻.
+# 변수 토큰이 아니라 스타일이므로 `set_fill_style_id` 로 바인딩한다. 키는 파일 로컬 스타일
+# (get_styles 로 런타임 재확인 — 이름 일치 우선, 키 폴백).
+STAGE_COLOR_STYLES = {
+    13: {"name": "stage old color/13 - pink",   "key": "475f515753a109f9ff244893b71fe2255956a8bf", "hex": "#f795ae"},
+    9:  {"name": "stage old color/9 - mint",    "key": "cc53c723e393dece2bdcad78f15fc488c8d27302", "hex": "#55c8c0"},
+    7:  {"name": "stage old color/7 - purple",  "key": "913ab602dfef87f51b24bb09465535d10ede2d0f", "hex": "#9095f9"},
+    5:  {"name": "stage old color/5 - gray",    "key": "9201f4d4963aab916120e9331d3c42d9c25031ac", "hex": "#b9b6c7"},
+}
+STAGE_COLOR_TARGET_NAMES = ("Status Bar", "Pink Header", "Stage Header", "순번", "Num circle")
+
+_STAGE_MEMBERS_RE = __import__("re").compile(r"(?:총\s*입금\s*|총\s*)?(\d{1,2})\s*(?:회|명|인)")
+
+
+def stage_color_style(members):
+    """인원수 → 스타일 dict(name/key/hex). 없는 인원수면 None (5/7/9/13 만 정의)."""
+    try:
+        return STAGE_COLOR_STYLES.get(int(members))
+    except (TypeError, ValueError):
+        return None
+
+
+def infer_stage_members(texts):
+    """텍스트 목록('총 입금 13회', '13명' 등)에서 스테이지 인원수 추정. 정의된 인원수(5/7/9/13)
+    중 첫 매칭을 반환, 없으면 None. 모호하면 명시 지정을 요구한다(날조 금지)."""
+    for t in texts or []:
+        for m in _STAGE_MEMBERS_RE.finditer(str(t)):
+            n = int(m.group(1))
+            if n in STAGE_COLOR_STYLES:
+                return n
+    return None
