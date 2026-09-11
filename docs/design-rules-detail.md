@@ -931,6 +931,29 @@
 > - `_inject` 가 raw tab-nav frame + `_segLabels`(non-forced) 뷰 전환 탭을 **underline tabs 로 자동
 >   변환**. 작성 시 underline tabs frame 에 `_underlineTabs:true`(이름은 'View Tabs' 등 자유).
 
+> 🔴 **규칙 0-F-4 — 그림자(elevation) 유무도 실측 대조 (2026-09-11 사용자 지적)**
+>
+> 사용자: *"추가 입금 진행 floating box 에 drop shadow 가 없는데, 이미지에 drop shadow 표현이 있는걸
+> 확인이 안되는거냐? 아니면 빼먹은거냐? 원인 분석해!"*
+>
+> **원인 2건 (내 스케줄 추가입금 캡처 변환 실사고):**
+> 1. 파이프라인 순서 버그 — post-fix 2-B-3 가 두 카드에 `Shadows/shadow-basic` 을 바인딩한 직후
+>    cmd_build 의 전역 `_strip_all_drop_shadows` 가 effect style 여부를 안 보고 전부 제거(브리지 로그:
+>    `set_effect_style_id` ×2 직후 `set_effects []` ×2). 수정: `_is_ds_bound_shadow` 로 DS 바인딩 보존,
+>    `_shadow_strip_targets` 순수 판별부 분리 + `scripts/tests/test_shadow_strip_ds_bound.py`.
+> 2. 검사 공백 — 그림자는 카드 박스 바깥 픽셀에만 나타나 텍스트 밴드/소형 성분/region_diff 로 안 잡혔고,
+>    실측 절차도 박스 경계·보더 색만 쟀다. 수정: `scripts/shadow_check.py`(카드 경계 바깥 밝기 램프 Δ,
+>    ref 박스는 보더에 재정렬) + qa_sweep ⑦ `shadow` 차원 CHECK + `test_shadow_check.py`.
+>
+> **실측 기준(흰 배경 위)**: 캡처 floating 카드 아래 램프 221→245(Δ24, 25px), 좌우 Δ6, 위 Δ4.
+> DS shadow-basic = DROP(0,10,blur24, 3.5%) + INNER 1px — 적용 후 gen 아래 Δ 를 같은 도구로 재측정해 보고.
+> **자동 추천/적용 (2026-09-11 사용자: "그것까지 코드화해")**: `ds/SHADOW_RAMP_CALIBRATION.json` 에 DS Shadows/*
+> 5종의 램프 시그니처(아래/좌/우 Δ + 퍼짐 px, 흰 배경 353×90 카드 실측)를 두고, shadow_check 가 ref 램프와의 거리
+> (|Δb|+|Δl|+|Δr| + 0.3·|퍼짐 차|) 최소 스타일을 표·flags·JSON(`recommend`)에 낸다. `--apply` 는 ref 에만 그림자인
+> 카드에 그 스타일을 `set_effect_style_id` 로 바인딩. `--calibrate <cardId>` 로 표 재측정(DS 스타일 변경 시).
+> 한계: DS 스타일 5종 중 최근접이지 픽셀 동일 재현이 아니다(raw 그림자는 2-E 로 금지·strip).
+> **플러그인**: get_node_info 가 `effectStyleId` 를 노출(2026-09-11) — 플러그인 재실행 후 반영.
+
 > 🔴 **절대 규칙 0-W — 상단 툴바(NavBar) = DS 'Tool Bar' 컴포넌트 인스턴스 (2026-06-12 사용자 룰)**
 >
 > 사용자 명시: *"상단 tool bar(네비게이션바)를 매번 새로 그리는게 아니라, 컴포넌트 인스턴스를

@@ -158,6 +158,24 @@ def main():
     except Exception as e:
         checks.append(('pixel-measure', 'CHECK', f'실측 실패: {e}'))
 
+    # ⑦ 그림자(elevation) 유무 — 2026-09-11 사용자 지적("floating box 에 drop shadow 가 없는데 확인이
+    #    안 되는 거냐 빼먹은 거냐"): 그림자는 카드 박스 바깥 픽셀에만 나타나 ②~⑥ 어느 차원에도 안 잡혔다.
+    #    카드 경계 바깥 밝기 램프(Δ)를 ref↔gen 대조 — ref 에 있고 gen 에 없으면 CHECK.
+    print('━━ ⑦ 그림자 유무 (shadow_check)')
+    try:
+        import shadow_check as sc7
+        gp4 = os.path.join(OUT_DIR, 'sweep_pm_gen.png')
+        rp4 = os.path.join(OUT_DIR, 'sweep_pm_ref.png')
+        if not (os.path.exists(gp4) and os.path.exists(rp4)):
+            fc.export_image(gen, gp4, 'PNG', 4)
+            fc.export_image(ref, rp4, 'PNG', 4)
+        scres = sc7.run(gen, ref, gen_png=gp4, ref_png=rp4, out_dir=OUT_DIR)
+        sf = scres['flags']
+        checks.append(('shadow', 'CHECK' if sf else 'PASS',
+                       ('; '.join(sf)) if sf else f"카드 {len(scres['rows'])}개 그림자 유무 ref 와 일치"))
+    except Exception as e:
+        checks.append(('shadow', 'CHECK', f'실측 실패: {e}'))
+
     # 요약
     ok = all(s == 'PASS' for _, s, _ in checks)
     print('\n📋 QA-SWEEP-JSON')

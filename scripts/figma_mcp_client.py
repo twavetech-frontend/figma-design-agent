@@ -14656,24 +14656,50 @@ def _strip_section_dividers(root_id: str) -> int:
     return cleared
 
 
-def _strip_all_drop_shadows(root_id: str) -> int:
-    """빌드된 트리의 모든 frame/component/instance 노드에서 visible DROP_SHADOW effect 제거 (2026-05-27).
+# DS shadow-basic 시그니처 — innerShadow(1px) + dropShadow(0,10,blur24). 2-B-3 카드 elevation 이
+# 바인딩하는 스타일. (2026-09-11 사용자 지적 "floating box 에 drop shadow 가 없다" — cmd_build 의
+# 전역 strip 이 post-fix 가 막 바인딩한 shadow-basic 을 도로 지우던 순서 버그의 판별 기준)
+_DS_SHADOW_BASIC_FP = (10.0, 24.0)
 
-    사용자 명시 절대 룰: drop-shadow 적용 금지. 카드 표면은 border 로 정의.
-    인스턴스 내부 노드(`I…;…`)는 마스터가 자기 effect 보유하므로 skip.
+
+def _is_ds_bound_shadow(node: dict) -> bool:
+    """노드의 그림자가 DS effect style(2-B-3 shadow-basic 등) 바인딩인지 판별 — 전역 strip 면제 대상.
+
+    판별 3단: ① effectStyleId / styles.effect 가 있음(플러그인이 노출하는 경우) ②
+    INNER_SHADOW + DROP_SHADOW 조합(DS Shadows/* 는 항상 inner 1px 동반, raw blueprint 그림자는
+    단일 DROP_SHADOW) ③ 첫 DROP_SHADOW 의 (offset y, radius) 가 DS fingerprint 표와 정확히 일치.
     """
-    try:
-        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
-    except Exception:
-        return 0
-    if not isinstance(items, list) or not items:
-        return 0
-    built = items[0].get("document") or items[0]
+    if not isinstance(node, dict):
+        return False
+    if node.get("effectStyleId") or (node.get("styles") or {}).get("effect"):
+        return True
+    effs = [e for e in (node.get("effects") or []) if isinstance(e, dict) and e.get("visible", True)]
+    types = [e.get("type") for e in effs]
+    if "INNER_SHADOW" in types and "DROP_SHADOW" in types:
+        return True
+    # DS Shadows/shadow-md·lg·xl·2xl 은 DROP_SHADOW 2~3겹 스택 — raw blueprint 그림자는 단일 DROP
+    if types.count("DROP_SHADOW") >= 2:
+        return True
+    fps = []
+    for e in effs:
+        if e.get("type") != "DROP_SHADOW":
+            continue
+        off = e.get("offset") or {}
+        if isinstance(off.get("y"), (int, float)) and isinstance(e.get("radius"), (int, float)):
+            fps.append((float(off["y"]), float(e["radius"])))
+    for fy, fr in fps:
+        for cy, cr in [_DS_SHADOW_BASIC_FP] + [(cy, cr) for cy, cr, _ in _DS_SHADOW_FINGERPRINTS]:
+            if abs(fy - cy) <= 0.5 and abs(fr - cr) <= 0.5:
+                return True
+    return False
 
+
+def _shadow_strip_targets(built: dict) -> list:
+    """`_strip_all_drop_shadows` 의 순수 판별부 — 제거 대상 노드 id 목록 (오프라인 테스트용).
+
+    skip: 인스턴스 내부(`;`), polish 이름 패턴, **DS effect style 바인딩 그림자(_is_ds_bound_shadow)**.
+    """
     targets = []
-
-    # 2026-05-28 polish-aware: hero/elevation/sub-card 이름 패턴은 shadow 허용 (사용자
-    # polish baseline 17389:51811 의 카드 위계 차등 표현 가능)
     POLISH_SHADOW_KEEP_RE = ("hero", "elevation", "sub-card", "sub_card",
                               "alert", "banner", "raised", "floating")
 
@@ -14681,12 +14707,14 @@ def _strip_all_drop_shadows(root_id: str) -> int:
         if not isinstance(node, dict):
             return
         nid = node.get("id") or ""
-        # 인스턴스 내부 노드는 skip
         if ";" in nid:
             return
-        # polish exception — 위 이름 패턴 노드의 shadow 는 보존
         nm_low = (node.get("name") or "").lower()
         if any(kw in nm_low for kw in POLISH_SHADOW_KEEP_RE):
+            for c in node.get("children") or []:
+                walk(c)
+            return
+        if _is_ds_bound_shadow(node):
             for c in node.get("children") or []:
                 walk(c)
             return
@@ -14703,7 +14731,26 @@ def _strip_all_drop_shadows(root_id: str) -> int:
             walk(c)
 
     walk(built)
+    return targets
 
+
+def _strip_all_drop_shadows(root_id: str) -> int:
+    """빌드된 트리의 모든 frame/component/instance 노드에서 visible DROP_SHADOW effect 제거 (2026-05-27).
+
+    사용자 명시 절대 룰: raw drop-shadow 적용 금지. 카드 표면은 border 로 정의.
+    인스턴스 내부 노드(`I…;…`)는 마스터가 자기 effect 보유하므로 skip.
+    🔴 2026-09-11: DS effect style 바인딩(2-B-3 shadow-basic)은 raw 그림자가 아니므로 보존 —
+    cmd_build 가 post-fix 뒤에 이 함수를 한 번 더 돌려 카드 elevation 을 지우던 회귀 수정.
+    """
+    try:
+        items = parse_content(call_tool("get_nodes_info", {"nodeIds": [root_id]})).get("json")
+    except Exception:
+        return 0
+    if not isinstance(items, list) or not items:
+        return 0
+    built = items[0].get("document") or items[0]
+
+    targets = _shadow_strip_targets(built)
     cleared = 0
     for nid in targets:
         try:

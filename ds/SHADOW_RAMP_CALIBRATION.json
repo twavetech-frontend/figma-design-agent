@@ -1,0 +1,42 @@
+{
+ "_note": "DS Shadows/* 램프 시그니처 (흰 배경 위 카드 경계 바깥 밝기 Δ: 먼 배경−경계 인접, extent=퍼짐 px). shadow_check.py --calibrate <cardId> 로 재측정.",
+ "card": "4506:84426",
+ "box": [
+  20,
+  736,
+  353,
+  90
+ ],
+ "styles": {
+  "Shadows/shadow-basic": {
+   "bottom": 6.6,
+   "left": 3.2,
+   "right": 3.0,
+   "extent": 15
+  },
+  "Shadows/shadow-md": {
+   "bottom": 13.3,
+   "left": 3.0,
+   "right": 2.5,
+   "extent": 5
+  },
+  "Shadows/shadow-lg": {
+   "bottom": 21.0,
+   "left": 3.7,
+   "right": 3.3,
+   "extent": 15
+  },
+  "Shadows/shadow-xl": {
+   "bottom": 23.3,
+   "left": 4.3,
+   "right": 4.0,
+   "extent": 27
+  },
+  "Shadows/shadow-2xl": {
+   "bottom": 23.1,
+   "left": 5.0,
+   "right": 4.8,
+   "extent": 38
+  }
+ }
+}

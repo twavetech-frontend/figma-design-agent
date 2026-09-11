@@ -785,6 +785,10 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
   if ("effects" in node && Array.isArray(node.effects)) {
     info.effects = node.effects;
   }
+  // 2026-09-11: DS effect style 바인딩 여부 (cmd_build 전역 shadow strip 의 면제 판별용)
+  if ("effectStyleId" in node && node.effectStyleId) {
+    info.effectStyleId = node.effectStyleId;
+  }
 
   // Opacity & blend
   if ("opacity" in node) info.opacity = node.opacity;

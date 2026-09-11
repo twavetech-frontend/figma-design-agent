@@ -557,6 +557,14 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   (`python3 scripts/pixel_measure.py <genId> <refId>` — 4x export 연결성분 지름·굵기 히스토그램 대조,
   `--band y0:y1` 집중 측정) 결과를 **표로 병기**. "≈8px 로 보임" 류의 눈대중 서술 금지. qa_sweep ⑤
   차원이 소형 반복 요소(≤16px) 규격 불일치를 CHECK 로 차단. 상세: `rule 0-F-3`.
+  🔴 **0-F-4 (2026-09-11 사용자: "floating box 에 drop shadow 가 없는데 확인이 안 되는 거냐 빼먹은 거냐")** —
+  그림자는 카드 박스 *바깥* 픽셀에만 나타나 텍스트 밴드·소형 성분·region_diff 어느 것에도 안 잡힌다.
+  `python3 scripts/shadow_check.py <genId> <refId>` = 카드(흰+보더+radius≥8, 폭≥200) 경계 바깥 밝기
+  램프 Δ(먼 배경−경계 인접) 를 ref↔gen 대조(ref Δ≥6 인데 gen 없음 → 불일치), qa_sweep ⑦ 차원이 CHECK.
+  **DS 스타일 선택도 실측**: ref 램프(아래/좌/우 Δ + 퍼짐 px)와 `ds/SHADOW_RAMP_CALIBRATION.json`(스타일별
+  실측 시그니처, `--calibrate <cardId>` 로 재측정)의 거리 최소 스타일을 shadow_check 가 **권장**하고
+  `--apply` 가 즉시 바인딩 — 눈으로 고르지 않는다. 캡처 실측 시 박스 안만 재지 말고 경계 바깥 램프도 잰다. 한글 글리프 높이→폰트 크기는 **타이틀
+  20px 실측 비율(≈0.875)** 로 환산(0.72 로 계산하면 한 단계 크게 잡음 — 내 스케줄 화면 실사고). 상세: `rule 0-F-4`.
 - **0-F-2 / 0-R** — 작업 종료 시 `cleanup-qa` 1회(스크린샷·썸네일 삭제). 빌드 성공 시 사용한
   blueprint json 은 자동 삭제(재빌드는 새로 작성 — 의도된 동작).
 - **19 / 22 / 22-B** — 스크린샷 QA 에서 PRD 전 섹션 1:1 확인(하나라도 누락 시 완료 선언 금지).
@@ -568,7 +576,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   `border-primary` / 그 외 `border-secondary`. 보더 자동부착은 흰-on-흰만. 보더리스 면 의도 시
   `_keepSurface:true`. Footer 는 배경·보더 없음.
 - **2-B-3** — 흰 카드 elevation = DS `Shadows/shadow-basic` 자동 바인딩(`_noShadow`·placeholder 제외,
-  개별 코너 radius 카드는 `_cardShadow:true` 로 강제).
+  개별 코너 radius 카드는 `_cardShadow:true` 로 강제). 🔴 **2026-09-11 회귀 수정**: cmd_build 가 post-fix 뒤에
+  돌리는 전역 drop-shadow strip 이 방금 바인딩한 shadow-basic 을 도로 지우고 있었다(빌드 로그에 "✓ 2개
+  바인딩" 과 "2건 제거" 가 함께 찍힘). 이제 strip 은 DS effect style 바인딩(`_is_ds_bound_shadow`:
+  effectStyleId / INNER+DROP 조합 / DS fingerprint 일치)을 보존 — raw 단일 DROP_SHADOW 만 제거.
 - **13** — 섹션 강조 여부·색은 작성자 자율. 단 **회색(bg-secondary) 도배 = 칙칙(지양)**,
   **bg-brand-primary 면 = 자제** — 기본은 흰 면+보더, 강조는 타이포 위계·여백·그룹화·브랜드 퍼플
   *액센트*(텍스트/CTA/아이콘/dot)로. `_band:true` 는 풀폭 *구조* 마커일 뿐(색 아님).
