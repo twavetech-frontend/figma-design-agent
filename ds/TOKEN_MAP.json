@@ -1071,7 +1071,7 @@
   },
   "--colors-text-textDisabled": {
     "figmaPath": "Colors/Text/text-disabled",
-    "value": "#dce0e5",
+    "value": "#b3bdc7",
     "type": "COLOR"
   },
   "--colors-text-textSecondaryHover": {
@@ -1176,7 +1176,7 @@
   },
   "--colors-border-borderFocus": {
     "figmaPath": "Colors/Border/border-focus",
-    "value": "#566574",
+    "value": "#2f3943",
     "type": "COLOR"
   },
   "--colors-background-bgPrimary": {
@@ -2482,6 +2482,26 @@
   "--gradient-brand-gradient5~3": {
     "figmaPath": "Gradient/Brand/Gradient-5~3",
     "value": "linear-gradient(90deg, #7700ff 20%, #b685ff 100%)",
+    "type": "COLOR"
+  },
+  "--gradient-layer-white0>100": {
+    "figmaPath": "Gradient/Layer/White 0-> 100",
+    "value": "linear-gradient(180deg, #ffffff00 0%, #ffffff 100%)",
+    "type": "COLOR"
+  },
+  "--gradient-layer-white0>100-40": {
+    "figmaPath": "Gradient/Layer/White 0-> 100(40%)",
+    "value": "linear-gradient(180deg, #ffffff00 0%, #ffffff 40%)",
+    "type": "COLOR"
+  },
+  "--gradient-layer-black0>100": {
+    "figmaPath": "Gradient/Layer/Black 0-> 100",
+    "value": "linear-gradient(180deg, #00000000 0%, #000000 100%)",
+    "type": "COLOR"
+  },
+  "--gradient-layer-black0>100-40": {
+    "figmaPath": "Gradient/Layer/Black 0-> 100(40%)",
+    "value": "linear-gradient(180deg, #00000000 0%, #000000 40%)",
     "type": "COLOR"
   },
   "--shadows-shadowXs": {
@@ -4919,6 +4939,16 @@
     "value": "#ffffff1f",
     "type": "COLOR"
   },
+  "--componentColors-alpha-alphaWhite0": {
+    "figmaPath": "Component colors/Alpha/alpha-white-0",
+    "value": "#ffffff00",
+    "type": "COLOR"
+  },
+  "--componentColors-alpha-alphaBlack0": {
+    "figmaPath": "Component colors/Alpha/alpha-black-0",
+    "value": "#00000000",
+    "type": "COLOR"
+  },
   "--carmenSans-headingLg-extraBold": {
     "figmaPath": "Carmen sans/Heading lg/ExtraBold",
     "value": {
@@ -5456,7 +5486,7 @@
   },
   "--fontFamily-fontFamilyGraphic": {
     "figmaPath": "Font family/font-family-graphic",
-    "value": "Carmen sans",
+    "value": "Carmen Sans",
     "type": "TEXT"
   },
   "--fontWeight-regular": {
