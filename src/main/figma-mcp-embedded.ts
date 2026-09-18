@@ -445,6 +445,27 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     required: ['nodeId', 'fontSize']
   }, async (params) => cmd('set_font_size', params));
 
+  reg('create_connector', 'Create a FigJam-style CONNECTOR (flow arrow) in the current editor if supported: startNodeId/endNodeId + magnets, lineType, label text, optional parentId/name/strokeWeight/strokeColor', {
+    type: 'object',
+    properties: { startNodeId: { type: 'string' }, startMagnet: { type: 'string' }, endNodeId: { type: 'string' }, endMagnet: { type: 'string' }, lineType: { type: 'string' }, text: { type: 'string' }, parentId: { type: 'string' }, name: { type: 'string' }, strokeWeight: { type: 'number' }, strokeColor: { type: 'object' }, endCap: { type: 'string' } },
+    required: []
+  }, async (params) => cmd('create_connector', params));
+
+  reg('create_shape_with_text', 'Create a FigJam-style SHAPE_WITH_TEXT (DIAMOND/SQUARE/ROUNDED_RECTANGLE/PARALLELOGRAM_RIGHT …) with label text, size, position, fill/stroke, optional parentId', {
+    type: 'object',
+    properties: { shapeType: { type: 'string' }, text: { type: 'string' }, x: { type: 'number' }, y: { type: 'number' }, width: { type: 'number' }, height: { type: 'number' }, fill: { type: 'object' }, stroke: { type: 'object' }, strokeWeight: { type: 'number' }, parentId: { type: 'string' }, name: { type: 'string' } },
+    required: []
+  }, async (params) => cmd('create_shape_with_text', params));
+
+  reg('set_connector', 'Connect a FigJam CONNECTOR node (cloned flow arrow) to nodes: startNodeId/endNodeId with magnet (AUTO|TOP|BOTTOM|LEFT|RIGHT|CENTER|NONE), optional lineType (ELBOWED|STRAIGHT|CURVED) and label text', {
+    type: 'object',
+    properties: {
+      nodeId: { type: 'string' }, startNodeId: { type: 'string' }, startMagnet: { type: 'string' },
+      endNodeId: { type: 'string' }, endMagnet: { type: 'string' }, lineType: { type: 'string' }, text: { type: 'string' }
+    },
+    required: ['nodeId']
+  }, async (params) => cmd('set_connector', params));
+
   reg('set_text_range_style', 'Style a character range [start,end) of ONE text node: fontStyle (e.g. "Bold"), fillVariable ("K:{variableKey}" DS token binding) or fillColor, textDecoration — for inline emphasis spans inside a paragraph (capture 1:1 conversion).', {
     type: 'object',
     properties: {

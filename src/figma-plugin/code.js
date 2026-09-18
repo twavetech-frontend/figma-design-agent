@@ -356,6 +356,12 @@ async function handleCommand(command, params) {
       return await detachInstanceCmd(params);
     case "set_node_visible":
       return await setNodeVisible(params);
+    case "set_connector":
+      return await setConnector(params);
+    case "create_connector":
+      return await createConnectorNode(params);
+    case "create_shape_with_text":
+      return await createShapeWithTextNode(params);
     case "set_text_content":
       return await setTextContent(params);
     case "clone_node":
@@ -761,6 +767,24 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
         } catch (e2) { info.textStyleAllBound = false; }
       }
     } catch (e) { /* mixed text props */ }
+  }
+
+  // 2026-09-18 — FigJam 커넥터/도형: flow 그리기 도구(set_connector)를 위한 엔드포인트·라벨 노출
+  if (node.type === "CONNECTOR") {
+    try {
+      info.connectorStart = node.connectorStart;
+      info.connectorEnd = node.connectorEnd;
+      info.connectorLineType = node.connectorLineType;
+      info.connectorStartStrokeCap = node.connectorStartStrokeCap;
+      info.connectorEndStrokeCap = node.connectorEndStrokeCap;
+      info.connectorText = node.text ? node.text.characters : "";
+    } catch (e) { /* ignore */ }
+  }
+  if (node.type === "SHAPE_WITH_TEXT") {
+    try {
+      info.shapeType = node.shapeType;
+      info.shapeText = node.text ? node.text.characters : "";
+    } catch (e) { /* ignore */ }
   }
 
   // Component instance info
@@ -2834,6 +2858,73 @@ async function setNodeVisible(params) {
   return { applied, errors, count: applied.length };
 }
 
+// create_connector / create_shape_with_text — Figma Design 에서 CONNECTOR/SHAPE_WITH_TEXT 는 clone 이 막혀
+// 있어(“Cloning CONNECTOR nodes is not supported in the current editor”) 생성 API 를 직접 시도한다 (2026-09-18).
+async function createConnectorNode(params) {
+  var p = params || {};
+  if (typeof figma.createConnector !== "function") throw new Error("figma.createConnector unavailable in this editor");
+  var c = figma.createConnector();
+  var parent = p.parentId ? await figma.getNodeByIdAsync(p.parentId) : figma.currentPage;
+  if (parent && "appendChild" in parent) parent.appendChild(c);
+  if (p.name) c.name = p.name;
+  if (p.startNodeId) c.connectorStart = { endpointNodeId: p.startNodeId, magnet: p.startMagnet || "AUTO" };
+  if (p.endNodeId) c.connectorEnd = { endpointNodeId: p.endNodeId, magnet: p.endMagnet || "AUTO" };
+  c.connectorLineType = p.lineType || "ELBOWED";
+  try { c.connectorEndStrokeCap = p.endCap || "ARROW_EQUILATERAL"; } catch (e) { /* ignore */ }
+  if (p.strokeWeight) c.strokeWeight = p.strokeWeight;
+  if (p.strokeColor) c.strokes = [{ type: "SOLID", color: { r: p.strokeColor.r, g: p.strokeColor.g, b: p.strokeColor.b } }];
+  var applied = {};
+  if (p.text !== undefined && c.text) {
+    try { await loadFontWithTimeout(c.text.fontName === figma.mixed ? { family: "Inter", style: "Regular" } : c.text.fontName); c.text.characters = String(p.text); applied.text = c.text.characters; }
+    catch (e) { applied.textError = e.message || String(e); }
+  }
+  return { id: c.id, name: c.name, type: c.type, applied: applied };
+}
+
+async function createShapeWithTextNode(params) {
+  var p = params || {};
+  if (typeof figma.createShapeWithText !== "function") throw new Error("figma.createShapeWithText unavailable in this editor");
+  var n = figma.createShapeWithText();
+  var parent = p.parentId ? await figma.getNodeByIdAsync(p.parentId) : figma.currentPage;
+  if (parent && "appendChild" in parent) parent.appendChild(n);
+  if (p.shapeType) n.shapeType = p.shapeType;
+  if (p.name) n.name = p.name;
+  if (p.width && p.height) n.resize(p.width, p.height);
+  if (p.x !== undefined) n.x = p.x;
+  if (p.y !== undefined) n.y = p.y;
+  if (p.fill) n.fills = [{ type: "SOLID", color: { r: p.fill.r, g: p.fill.g, b: p.fill.b } }];
+  if (p.stroke) { n.strokes = [{ type: "SOLID", color: { r: p.stroke.r, g: p.stroke.g, b: p.stroke.b } }]; n.strokeWeight = p.strokeWeight || 4; }
+  var applied = {};
+  if (p.text !== undefined && n.text) {
+    try { await loadFontWithTimeout(n.text.fontName === figma.mixed ? { family: "Inter", style: "Regular" } : n.text.fontName); n.text.characters = String(p.text); applied.text = n.text.characters; }
+    catch (e) { applied.textError = e.message || String(e); }
+  }
+  return { id: n.id, name: n.name, type: n.type, width: n.width, height: n.height, applied: applied };
+}
+
+// set_connector — FigJam 에서 복사한 CONNECTOR 의 양 끝을 노드에 연결하고 라벨을 설정 (2026-09-18).
+// magnet: AUTO | TOP | BOTTOM | LEFT | RIGHT | CENTER | NONE. text 는 커넥터 라벨.
+async function setConnector(params) {
+  var p = params || {};
+  var node = await figma.getNodeByIdAsync(p.nodeId);
+  if (!node || node.type !== "CONNECTOR") throw new Error("Node is not a CONNECTOR: " + p.nodeId);
+  var applied = {};
+  if (p.startNodeId) { node.connectorStart = { endpointNodeId: p.startNodeId, magnet: p.startMagnet || "AUTO" }; applied.start = node.connectorStart; }
+  if (p.endNodeId) { node.connectorEnd = { endpointNodeId: p.endNodeId, magnet: p.endMagnet || "AUTO" }; applied.end = node.connectorEnd; }
+  if (p.lineType) { node.connectorLineType = p.lineType; applied.lineType = p.lineType; }
+  if (p.text !== undefined && node.text) {
+    try {
+      var loaded = 0;
+      try { var fsAll = node.text.characters.length ? node.text.getRangeAllFontNames(0, node.text.characters.length) : []; for (var i = 0; i < fsAll.length; i++) { if (fsAll[i] && fsAll[i].family) { await loadFontWithTimeout(fsAll[i]); loaded++; } } } catch (e0) { /* ignore */ }
+      var fn = node.text.fontName;
+      if (fn !== figma.mixed && fn && fn.family) { await loadFontWithTimeout(fn); loaded++; }
+      if (!loaded) { await loadFontWithTimeout({ family: "Inter", style: "Regular" }); node.text.fontName = { family: "Inter", style: "Regular" }; }  // 빈 라벨 커넥터: 폰트 미지정
+      node.text.characters = String(p.text); applied.text = node.text.characters;
+    } catch (e) { applied.textError = e.message || String(e); }
+  }
+  return { id: node.id, name: node.name, applied: applied };
+}
+
 async function setTextContent(params) {
   const { nodeId, text } = params || {};
 
@@ -2848,6 +2939,16 @@ async function setTextContent(params) {
   const node = await figma.getNodeByIdAsync(nodeId);
   if (!node) {
     throw new Error(`Node not found with ID: ${nodeId}`);
+  }
+
+  if (node.type === "SHAPE_WITH_TEXT" || node.type === "CONNECTOR") {
+    // 2026-09-18 — FigJam 도형/커넥터 라벨
+    var tnode = node.text; if (!tnode) throw new Error("Node has no text: " + nodeId);
+    var fnm = tnode.fontName;
+    if (fnm === figma.mixed) { var fsl = tnode.getRangeAllFontNames(0, tnode.characters.length); for (var fi = 0; fi < fsl.length; fi++) await loadFontWithTimeout(fsl[fi]); }
+    else await loadFontWithTimeout(fnm);
+    tnode.characters = String(text);
+    return { id: node.id, name: node.name, characters: tnode.characters };
   }
 
   if (node.type !== "TEXT") {
