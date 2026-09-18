@@ -2855,7 +2855,14 @@ async function setTextContent(params) {
   }
 
   try {
-    await loadFontWithTimeout(node.fontName);
+    // 2026-09-18: 혼합 폰트(figma.mixed) 텍스트 — 예: 디스크립션 컴포넌트의 볼드/리스트 혼합 —
+    // 에서 loadFontAsync(symbol) 로 "Cannot unwrap symbol" 이 나던 결함. 범위 폰트를 전부 로드한다.
+    if (node.fontName === figma.mixed) {
+      var _fonts = node.getRangeAllFontNames(0, node.characters.length);
+      for (var _fi = 0; _fi < _fonts.length; _fi++) await loadFontWithTimeout(_fonts[_fi]);
+    } else {
+      await loadFontWithTimeout(node.fontName);
+    }
 
     // Replace <br> marker with Unicode Line Separator (U+2028)
     // This produces a Shift+Enter (soft line break) in Figma,
