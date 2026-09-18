@@ -11,7 +11,7 @@
   },
   "--colors-base-transparent": {
     "figmaPath": "Colors/Base/transparent",
-    "value": "#ffffff00",
+    "value": "#ffffff80",
     "type": "COLOR"
   },
   "--colors-grayNeutral-25": {
