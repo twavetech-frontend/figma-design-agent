@@ -69,8 +69,16 @@
     margin-top:20px;
     background:var(--ground); border-bottom:1px solid var(--line);
     box-shadow:0 10px 22px -18px rgba(23,20,31,.55);}
-  nav.toc{max-width:860px; margin:0 auto;
-    display:flex; gap:8px; flex-wrap:wrap; padding:12px 20px;}
+  .tocbar-inner{position:relative; max-width:860px; margin:0 auto;}
+  /* 좌우 이동 버튼 — 목차가 한 줄로 넘칠 때만 나타난다 (스크롤 못 하는 환경 대비) */
+  .toc-arrow{position:absolute; top:0; bottom:0; width:42px; padding:0; border:0; cursor:pointer;
+    display:none; align-items:center; justify-content:center; color:var(--ink-2); z-index:2;}
+  .toc-arrow[data-show="1"]{display:flex;}
+  .toc-arrow.prev{left:0; background:linear-gradient(to right, var(--ground) 58%, transparent);}
+  .toc-arrow.next{right:0; background:linear-gradient(to left, var(--ground) 58%, transparent);}
+  .toc-arrow:hover{color:var(--brand-ink);}
+  .toc-arrow svg{width:20px; height:20px;}
+  nav.toc{display:flex; gap:8px; flex-wrap:wrap; padding:12px 20px;}
   nav.toc a{display:inline-block; white-space:nowrap; padding:6px 12px; border:1px solid var(--line); border-radius:999px;
     background:var(--surface); color:var(--ink-2); text-decoration:none; font-size:13px;
     transition:border-color .12s, color .12s, background .12s;}
@@ -201,6 +209,11 @@
 </header>
 
 <div class="tocbar">
+  <div class="tocbar-inner">
+  <button class="toc-arrow prev" type="button" aria-label="목차 왼쪽으로 이동">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+  </button>
   <nav class="toc">
     <a href="#what">이 도구가 하는 일</a>
     <a href="#ready">준비물</a>
@@ -213,6 +226,11 @@
     <a href="#trouble">문제 해결</a>
     <a href="#gloss">용어 사전</a>
   </nav>
+  <button class="toc-arrow next" type="button" aria-label="목차 오른쪽으로 이동">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+  </div>
 </div>
 
 <div class="wrap">
@@ -625,6 +643,35 @@ npm run bridge:install:win</pre>
   }
   syncBar();
   window.addEventListener('resize', syncBar);
+  window.addEventListener('load', function(){ syncBar(); syncArrows(); });
+
+  var strip = document.querySelector('nav.toc');
+  var prevBtn = document.querySelector('.toc-arrow.prev');
+  var nextBtn = document.querySelector('.toc-arrow.next');
+  function reduceMotion(){
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+  function syncArrows(){
+    if (!strip || !prevBtn || !nextBtn) return;
+    var overflow = strip.scrollWidth - strip.clientWidth;
+    var scrollable = overflow > 4;
+    prevBtn.setAttribute('data-show', scrollable && strip.scrollLeft > 2 ? '1' : '0');
+    nextBtn.setAttribute('data-show', scrollable && strip.scrollLeft < overflow - 2 ? '1' : '0');
+  }
+  function nudge(dir){
+    if (!strip) return;
+    var step = Math.max(120, Math.round(strip.clientWidth * 0.8));
+    try {
+      strip.scrollBy({ left: dir * step, behavior: reduceMotion() ? 'auto' : 'smooth' });
+    } catch (e) {
+      strip.scrollLeft += dir * step;
+    }
+  }
+  if (prevBtn) prevBtn.addEventListener('click', function(){ nudge(-1); });
+  if (nextBtn) nextBtn.addEventListener('click', function(){ nudge(1); });
+  if (strip) strip.addEventListener('scroll', syncArrows, { passive: true });
+  window.addEventListener('resize', syncArrows);
+  syncArrows();
 
   var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
   var map = {};
@@ -653,6 +700,13 @@ npm run bridge:install:win</pre>
   if (!sections.length || !('IntersectionObserver' in window)) return;
   function mark(id){
     links.forEach(function(a){ a.classList.toggle('current', a === map[id]); });
+    var cur = map[id];
+    if (cur && strip && strip.scrollWidth - strip.clientWidth > 4) {
+      try {
+        cur.scrollIntoView({ block: 'nearest', inline: 'nearest',
+          behavior: reduceMotion() ? 'auto' : 'smooth' });
+      } catch (e) {}
+    }
   }
   var io = new IntersectionObserver(function(entries){
     var visible = entries.filter(function(e){ return e.isIntersecting; });
