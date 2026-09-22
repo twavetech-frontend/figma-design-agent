@@ -8,7 +8,7 @@
 # 처리 항목:
 #   1. Homebrew                       — Mac 패키지 매니저 (없으면 비대화식 설치)
 #   2. Python 3                       — figma_mcp_client.py 실행용 (시스템/Homebrew 자동 선택)
-#   3. Python 패키지: requests, Pillow
+#   3. Python 패키지: requests, Pillow, pypdf
 #   4. Node.js 18+ (Homebrew)         — Vite 6는 Node 18+ 필수
 #   5. npm 의존성 (--legacy-peer-deps, .npmrc에 설정됨)
 #   6. sharp 네이티브 모듈 (darwin-arm64 / darwin-x64 플랫폼 패키지)
@@ -96,7 +96,7 @@ fi
 ok "Python: $PYTHON ($("$PYTHON" --version 2>&1))"
 
 # ── 3. Python 패키지 ──────────────────────────────────────
-step '3/7 Python 패키지 설치 (requests, Pillow)'
+step '3/7 Python 패키지 설치 (requests, Pillow, pypdf)'
 pip_install() {
   # PEP 668(externally-managed-environment) 대응:
   # --break-system-packages 우선, 실패 시 --user 폴백
@@ -106,8 +106,8 @@ pip_install() {
   fi
 }
 pip_install pip
-pip_install requests Pillow
-ok 'requests, Pillow 설치/갱신 완료'
+pip_install requests Pillow pypdf
+ok 'requests, Pillow, pypdf 설치/갱신 완료'
 
 # ── 4. Node.js ────────────────────────────────────────────
 step '4/7 Node.js 18+ 확인/설치'

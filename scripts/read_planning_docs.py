@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-"""기획 문서 통합 리더 — src/기획/ 의 모든 HTML(Notion export)을 깨끗한 텍스트로 합쳐 출력.
+"""기획 문서 통합 리더 — src/기획/ 의 모든 문서를 깨끗한 텍스트로 합쳐 출력.
+
+지원 형식 (2026-09-22 확장 — 기존엔 .html 만 읽어 PDF/Word/Markdown 이 조용히 무시됐다):
+    .html/.htm  Notion export 등 (태그 제거)
+    .md/.markdown/.txt  평문 그대로
+    .docx       표준 라이브러리(zipfile)로 word/document.xml 파싱 — 외부 의존성 없음
+    .pdf        pypdf/PyPDF2 또는 pdftotext(poppler) 중 있는 것으로 추출.
+                셋 다 없으면 그 파일만 건너뛰고 digest 에 [읽기 실패] 로 남긴다.
 
 🔴 "디자인 생성 준비" 프로세스의 **마지막 단계**에서 호출 (CLAUDE.md). 새 세션에서
 imin 모바일 앱 서비스 맥락(스테이지/납입/지급/쿠폰/이탈/회원 유스케이스 전반)을 100%
@@ -44,11 +51,125 @@ def _strip_html(raw: str) -> str:
     return "\n".join(out)
 
 
-def _collect_html_files():
+def _read_text_file(path: str) -> str:
+    """평문 파일(.md/.txt) — 인코딩 깨짐에 관대하게 읽는다."""
+    with open(path, "rb") as fh:
+        raw = fh.read()
+    for enc in ("utf-8", "utf-8-sig", "cp949"):
+        try:
+            return raw.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("utf-8", errors="replace")
+
+
+def _extract_html(path: str) -> str:
+    return _strip_html(_read_text_file(path))
+
+
+def _extract_plain(path: str) -> str:
+    txt = _read_text_file(path)
+    lines = [ln.rstrip() for ln in txt.splitlines()]
+    return "\n".join(ln for ln in lines if ln.strip())
+
+
+def _extract_docx(path: str) -> str:
+    """.docx = zip + XML. 표준 라이브러리만으로 문단 텍스트 추출 (외부 의존성 없음)."""
+    import zipfile
+
+    with zipfile.ZipFile(path) as zf:
+        try:
+            xml = zf.read("word/document.xml").decode("utf-8", errors="replace")
+        except KeyError:
+            raise RuntimeError("word/document.xml 없음 — .docx 형식이 아닐 수 있음")
+    # 문단/줄바꿈/표 행 경계를 개행으로 보존
+    xml = re.sub(r"</w:p>", "\n", xml)
+    xml = re.sub(r"<w:br\s*/?>", "\n", xml)
+    xml = re.sub(r"</w:tr>", "\n", xml)
+    xml = re.sub(r"</w:tc>", "\t", xml)
+    txt = re.sub(r"<[^>]+>", "", xml)
+    txt = _html.unescape(txt)
+    lines = [re.sub(r"[ \t\u00a0]+", " ", ln).strip() for ln in txt.splitlines()]
+    return "\n".join(ln for ln in lines if ln)
+
+
+# 한글 PDF 가 폰트 CMap 없이 저장되면 추출 결과가 다른 문자 영역(데바나가리·텔루구 등)의
+# 글자로 쏟아진다("스테이지" → "झప੉૑"). 조용히 학습되면 맥락이 오염되므로 감지해 경고한다.
+_GARBLED_RANGES = (
+    (0x0900, 0x0DFF),  # 데바나가리 ~ 싱할라
+    (0x0E80, 0x0FFF),  # 라오 ~ 티베트
+    (0x1000, 0x109F),  # 미얀마
+)
+
+
+def _looks_garbled(txt: str) -> bool:
+    sample = txt[:4000]
+    letters = [c for c in sample if c.isalpha()]
+    if len(letters) < 40:
+        return False
+    odd = sum(1 for c in letters if any(lo <= ord(c) <= hi for lo, hi in _GARBLED_RANGES))
+    return odd / len(letters) > 0.05
+
+
+def _extract_pdf(path: str) -> str:
+    """.pdf — pypdf → PyPDF2 → pdftotext(poppler) 순으로 있는 것을 쓴다."""
+    for mod_name in ("pypdf", "PyPDF2"):
+        try:
+            mod = __import__(mod_name)
+        except ImportError:
+            continue
+        reader = mod.PdfReader(path)
+        pages = []
+        for pg in reader.pages:
+            try:
+                pages.append(pg.extract_text() or "")
+            except Exception:
+                pages.append("")
+        txt = "\n".join(pages)
+        if txt.strip():
+            lines = [ln.strip() for ln in txt.splitlines()]
+            return "\n".join(ln for ln in lines if ln)
+        raise RuntimeError("텍스트 추출 결과가 비어 있음 (스캔 이미지 PDF 가능성)")
+
+    import shutil
+    import subprocess
+
+    if shutil.which("pdftotext"):
+        out = subprocess.run(
+            ["pdftotext", "-layout", path, "-"], capture_output=True, timeout=120
+        )
+        txt = out.stdout.decode("utf-8", errors="replace")
+        if txt.strip():
+            lines = [ln.rstrip() for ln in txt.splitlines()]
+            return "\n".join(ln for ln in lines if ln.strip())
+        raise RuntimeError("텍스트 추출 결과가 비어 있음 (스캔 이미지 PDF 가능성)")
+
+    raise RuntimeError(
+        "PDF 추출기 없음 — `pip install pypdf` 로 설치하면 다음 학습부터 읽는다"
+    )
+
+
+# 확장자 → 추출기. 지원 형식은 여기 한 곳에서 관리한다.
+_EXTRACTORS = {
+    ".html": _extract_html,
+    ".htm": _extract_html,
+    ".md": _extract_plain,
+    ".markdown": _extract_plain,
+    ".txt": _extract_plain,
+    ".docx": _extract_docx,
+    ".pdf": _extract_pdf,
+}
+SUPPORTED_EXTS = tuple(sorted(_EXTRACTORS))
+
+
+def collect_doc_files():
+    """src/기획/ 의 학습 대상 문서 전부 (지원 형식만). UC 번호 순 정렬."""
     files = []
     for root, _dirs, names in os.walk(_PLAN_DIR):
         for n in names:
-            if n.lower().endswith(".html"):
+            if n.startswith("~$") or n.startswith("."):
+                continue  # Office 임시 파일 · 숨김 파일
+            if os.path.splitext(n)[1].lower() in _EXTRACTORS:
                 files.append(os.path.join(root, n))
     # UC 번호 순으로 정렬 (파일명 앞 숫자)
     def _key(p):
@@ -56,6 +177,10 @@ def _collect_html_files():
         m = re.match(r"\s*(\d+)", base)
         return (int(m.group(1)) if m else 9999, base)
     return sorted(files, key=_key)
+
+
+# 하위 호환 (옛 이름으로 부르는 코드 보호)
+_collect_html_files = collect_doc_files
 
 
 def fingerprint() -> dict:
@@ -67,7 +192,7 @@ def fingerprint() -> dict:
     if not os.path.isdir(_PLAN_DIR):
         return {"count": 0, "hash": "empty", "files": []}
     items = []
-    for f in _collect_html_files():
+    for f in collect_doc_files():
         try:
             st = os.stat(f)
         except OSError:
@@ -78,7 +203,7 @@ def fingerprint() -> dict:
 
 
 def build_digest(progress=None):
-    """모든 기획 HTML → 통합 digest 문자열. progress(current,total,name) 콜백 호출(있으면).
+    """모든 기획 문서(HTML·MD·TXT·DOCX·PDF) → 통합 digest 문자열. progress(current,total,name) 콜백 호출(있으면).
 
     Returns (digest_text, file_count, read_token). 폴더 없거나 0건이면 ("", 0, "").
 
@@ -87,7 +212,7 @@ def build_digest(progress=None):
     """
     if not os.path.isdir(_PLAN_DIR):
         return "", 0, ""
-    files = _collect_html_files()
+    files = collect_doc_files()
     if not files:
         return "", 0, ""
     total = len(files)
@@ -108,11 +233,20 @@ def build_digest(progress=None):
                 progress(i, total, title)
             except Exception:
                 pass
+        ext = os.path.splitext(f)[1].lower()
         try:
-            raw = open(f, encoding="utf-8").read()
-            body = _strip_html(raw)
+            body = _EXTRACTORS[ext](f)
+            if ext == ".pdf" and _looks_garbled(body):
+                warn = (
+                    f"⚠ PDF 텍스트 추출이 깨졌다 ({os.path.basename(f)}) — 폰트 매핑 없는 PDF. "
+                    "원본을 HTML/Word 로 다시 내보내 넣을 것."
+                )
+                print(f"[기획] {warn}", file=sys.stderr)
+                body = f"[추출 경고] {warn}\n" + body
         except Exception as e:
-            chunks.append(f"\n[읽기 실패] {os.path.basename(f)}: {e}")
+            msg = f"[읽기 실패] {os.path.basename(f)}: {e}"
+            print(f"[기획] ⚠ {msg}", file=sys.stderr)
+            chunks.append("\n" + msg)
             continue
         chunks.append(f"\n\n{'─' * 60}\n## {title}\n{'─' * 60}\n{body}")
     body_text = "\n".join(chunks)
@@ -140,9 +274,9 @@ def main():
         print(f"[기획] 폴더 없음: {_PLAN_DIR} — 기획 문서 단계 건너뜀", file=sys.stderr)
         return 0
 
-    files = _collect_html_files()
+    files = collect_doc_files()
     if not files:
-        print(f"[기획] HTML 문서 0건: {_PLAN_DIR}", file=sys.stderr)
+        print(f"[기획] 학습 대상 문서 0건: {_PLAN_DIR} (지원 형식: {', '.join(SUPPORTED_EXTS)})", file=sys.stderr)
         return 0
 
     if args.list:

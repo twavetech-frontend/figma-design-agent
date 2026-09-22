@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Figma Design Agent 기획자 가이드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --ground:#f6f4fa; --surface:#ffffff; --surface-2:#faf8fd;
+    --ink:#17141f; --ink-2:#4a4458; --ink-3:#6f6883;
+    --brand:#6d28d9; --brand-ink:#5b21b6; --brand-soft:#efe9fc;
+    --ok:#0d7f72; --ok-soft:#e4f5f1;
+    --warn:#a55a08; --warn-soft:#fdf2e2;
+    --line:#e6e1f0; --line-soft:#f0ecf7;
+    --term:#1d1a2b; --term-ink:#dcd6ee; --term-mut:#8f87ad; --term-ok:#7fe0c4; --term-key:#c3aaff;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#100e1a; --surface:#1a1726; --surface-2:#211d31;
+      --ink:#ece8f6; --ink-2:#bfb8d4; --ink-3:#938ca9;
+      --brand:#b49bff; --brand-ink:#c7b4ff; --brand-soft:#2a2340;
+      --ok:#5fcfb8; --ok-soft:#16302c;
+      --warn:#e6a95f; --warn-soft:#31261a;
+      --line:#2e2842; --line-soft:#252036;
+      --term:#0b0a13; --term-ink:#d9d3ea;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#100e1a; --surface:#1a1726; --surface-2:#211d31;
+    --ink:#ece8f6; --ink-2:#bfb8d4; --ink-3:#938ca9;
+    --brand:#b49bff; --brand-ink:#c7b4ff; --brand-soft:#2a2340;
+    --ok:#5fcfb8; --ok-soft:#16302c;
+    --warn:#e6a95f; --warn-soft:#31261a;
+    --line:#2e2842; --line-soft:#252036;
+    --term:#0b0a13; --term-ink:#d9d3ea;
+  }
+
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    font-size:15px; line-height:1.75; margin:0;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px; margin:0 auto; padding-inline:20px; padding-block:0 72px;}
+
+  h1,h2,h3,h4,.eyebrow,.step-n,.chip,.tag{font-family:"IBM Plex Sans KR","Noto Sans KR",sans-serif;}
+  h1{font-size:clamp(28px,5.4vw,38px); line-height:1.25; font-weight:700; margin:10px 0 12px; text-wrap:balance; letter-spacing:-.01em;}
+  h2{font-size:clamp(20px,3.4vw,24px); font-weight:700; margin:0 0 6px; text-wrap:balance;}
+  h3{font-size:16.5px; font-weight:600; margin:26px 0 8px;}
+  h4{font-size:13px; font-weight:600; margin:18px 0 6px; color:var(--brand-ink); letter-spacing:.02em;}
+  p{margin:10px 0;}
+  a{color:var(--brand-ink);}
+  strong{font-weight:700;}
+
+  /* 표지 */
+  .cover{border-bottom:1px solid var(--line); background:var(--surface); }
+  .cover .wrap{padding-block:44px 34px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--brand); font-weight:600;}
+  .cover p.lead{font-size:17px; color:var(--ink-2); margin:0; max-width:62ch;}
+  .cover .meta{margin-top:18px; font-size:12.5px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace;}
+
+  /* 목차 칩 — 화면 전체 폭으로 상단 고정 (표지가 옆으로 비치지 않게) */
+  .tocbar{position:sticky; top:env(safe-area-inset-top, 0px); z-index:30;
+    margin-top:20px;
+    background:var(--ground); border-bottom:1px solid var(--line);
+    box-shadow:0 10px 22px -18px rgba(23,20,31,.55);}
+  nav.toc{max-width:860px; margin:0 auto;
+    display:flex; gap:8px; flex-wrap:wrap; padding:12px 20px;}
+  nav.toc a{display:inline-block; white-space:nowrap; padding:6px 12px; border:1px solid var(--line); border-radius:999px;
+    background:var(--surface); color:var(--ink-2); text-decoration:none; font-size:13px;
+    transition:border-color .12s, color .12s, background .12s;}
+  nav.toc a:hover{border-color:var(--brand); color:var(--brand-ink);}
+  nav.toc a.current{background:var(--brand); border-color:var(--brand); color:#fff; font-weight:500;}
+  :root[data-theme="dark"] nav.toc a.current{color:#17141f;}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) nav.toc a.current{color:#17141f;} }
+  @media (max-width:640px){
+    nav.toc{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-block:10px;}
+    nav.toc::-webkit-scrollbar{display:none;}
+  }
+  /* 고정 목차에 가리지 않게 앵커 착지점 보정 (--bar 는 스크립트가 실제 높이로 갱신) */
+  section{scroll-margin-top:calc(env(safe-area-inset-top, 0px) + var(--bar, 64px) + 12px);}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} *{transition:none !important;} }
+
+  section{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 26px 30px; margin:20px 0;}
+  section > .sec-head{display:flex; gap:12px; align-items:flex-start; margin-bottom:4px;}
+  .sec-num{flex:0 0 auto; width:30px; height:30px; border-radius:9px; background:var(--brand-soft); color:var(--brand-ink);
+    display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; margin-top:2px;}
+  .sec-lead{color:var(--ink-3); font-size:14px; margin:2px 0 14px;}
+
+  /* 흐름도 */
+  .flow{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:18px 0 6px;}
+  .flow .node{border:1px solid var(--line); border-radius:12px; padding:14px 13px; background:var(--surface-2); position:relative;}
+  .flow .node .tag{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.1em; color:var(--brand); font-weight:600;}
+  .flow .node b{display:block; font-size:14.5px; margin:5px 0 4px;}
+  .flow .node span{font-size:12.5px; color:var(--ink-3); line-height:1.6; display:block;}
+  .flow .node::after{content:"→"; position:absolute; right:-13px; top:50%; transform:translateY(-50%);
+    color:var(--ink-3); font-size:15px; z-index:1;}
+  .flow .node:last-child::after{content:none;}
+  @media (max-width:640px){
+    .flow{grid-template-columns:1fr;}
+    .flow .node::after{content:"↓"; right:auto; left:50%; top:auto; bottom:-15px; transform:translateX(-50%);}
+  }
+  .hand{margin-top:14px; font-size:13.5px; color:var(--ink-2); background:var(--ok-soft); border-radius:10px; padding:11px 14px;}
+  .hand b{color:var(--ok);}
+
+  /* 표 */
+  .tw{overflow-x:auto; margin:14px 0;}
+  table{width:100%; border-collapse:collapse; font-size:13.8px; min-width:460px;}
+  th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--line-soft); vertical-align:top;}
+  th{font-family:"IBM Plex Sans KR",sans-serif; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-3); background:var(--surface-2); font-weight:600; border-bottom:1px solid var(--line);}
+  tr:last-child td{border-bottom:none;}
+  td code, p code, li code, dd code{font-family:"IBM Plex Mono",monospace; font-size:12.3px; background:var(--surface-2);
+    border:1px solid var(--line); border-radius:5px; padding:1px 5px; word-break:break-word;}
+
+  /* 단계 */
+  ol.steps{list-style:none; counter-reset:s; padding:0; margin:16px 0 0;}
+  ol.steps > li{counter-increment:s; position:relative; padding:0 0 22px 46px;}
+  ol.steps > li::before{content:counter(s); position:absolute; left:0; top:0; width:30px; height:30px; border-radius:50%;
+    background:var(--brand); color:#fff; display:flex; align-items:center; justify-content:center;
+    font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px;}
+  ol.steps > li::after{content:""; position:absolute; left:14.5px; top:34px; bottom:6px; width:1px; background:var(--line);}
+  ol.steps > li:last-child{padding-bottom:0;}
+  ol.steps > li:last-child::after{content:none;}
+  ol.steps > li > b{display:block; font-size:15.5px; font-family:"IBM Plex Sans KR",sans-serif; font-weight:600; padding-top:3px;}
+  ol.steps > li > p{margin:6px 0;}
+
+  /* 터미널 */
+  pre{background:var(--term); color:var(--term-ink); border-radius:12px; padding:14px 16px; margin:12px 0;
+    overflow-x:auto; font-family:"IBM Plex Mono",monospace; font-size:12.6px; line-height:1.7;}
+  pre .c{color:var(--term-mut);} pre .ok{color:var(--term-ok);} pre .k{color:var(--term-key);}
+  pre .p{color:var(--term-mut);}
+
+  /* 지시 말풍선 */
+  .say{display:flex; gap:10px; align-items:flex-start; margin:9px 0;}
+  .say .who{flex:0 0 auto; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-3);
+    border:1px solid var(--line); border-radius:6px; padding:2px 7px; margin-top:4px;}
+  .say .bubble{background:var(--brand-soft); color:var(--ink); border-radius:4px 12px 12px 12px; padding:9px 14px;
+    font-size:14.5px; line-height:1.6;}
+  .say.ai .bubble{background:var(--surface-2); border:1px solid var(--line); border-radius:12px 4px 12px 12px;}
+
+  /* 콜아웃 */
+  .note{border-left:3px solid var(--brand); background:var(--surface-2); border-radius:0 10px 10px 0;
+    padding:12px 16px; margin:14px 0; font-size:14px;}
+  .note.ok{border-color:var(--ok); background:var(--ok-soft);}
+  .note.warn{border-color:var(--warn); background:var(--warn-soft);}
+  .note b{font-family:"IBM Plex Sans KR",sans-serif;}
+
+  /* OS 2열 */
+  .os{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:12px 0;}
+  @media (max-width:640px){ .os{grid-template-columns:1fr;} }
+  .os .card{border:1px solid var(--line); border-radius:12px; padding:14px 16px 16px; background:var(--surface-2);}
+  .os .card h4{margin-top:0; color:var(--ink); font-size:14.5px; display:flex; gap:7px; align-items:center;}
+  .chip{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--brand); background:var(--brand-soft);
+    border-radius:5px; padding:2px 6px; letter-spacing:.04em; font-size:10.5px; color:var(--brand);
+    background:var(--brand-soft); white-space:nowrap;}
+  .os .card p{font-size:13.3px; color:var(--ink-2); margin:6px 0;}
+  .os .card pre{font-size:11.8px; padding:11px 13px;}
+
+  /* 좋은/아쉬운 지시 */
+  .compare{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:14px 0;}
+  @media (max-width:640px){ .compare{grid-template-columns:1fr;} }
+  .compare .col{border:1px solid var(--line); border-radius:12px; padding:14px 16px; background:var(--surface-2);}
+  .compare .col h4{margin-top:0;}
+  .compare .col.good h4{color:var(--ok);} .compare .col.meh h4{color:var(--warn);}
+  .compare ul{margin:8px 0 0; padding-left:18px; font-size:13.6px;}
+  .compare li{margin:7px 0;}
+
+  ul.plain{list-style:none; padding:0; margin:12px 0;}
+  ul.plain li{position:relative; padding-left:20px; margin:8px 0; font-size:14.2px;}
+  ul.plain li::before{content:"·"; position:absolute; left:7px; top:-1px; color:var(--brand); font-weight:700;}
+
+  dl.gloss{margin:12px 0 0; display:grid; grid-template-columns:auto 1fr; gap:10px 18px; align-items:baseline;}
+  @media (max-width:560px){ dl.gloss{grid-template-columns:1fr; gap:2px 0;} dl.gloss dd{margin-bottom:12px;} }
+  dl.gloss dt{font-family:"IBM Plex Sans KR",sans-serif; font-weight:600; font-size:14px; white-space:nowrap;}
+  dl.gloss dd{margin:0; font-size:13.8px; color:var(--ink-2);}
+
+  footer{color:var(--ink-3); font-size:12.5px; text-align:center; padding:26px 0 0; font-family:"IBM Plex Mono",monospace;}
+  :focus-visible{outline:2px solid var(--brand); outline-offset:2px; border-radius:4px;}
+</style>
+</head>
+<body>
+<header class="cover">
+  <div class="wrap">
+    <div class="eyebrow">for planners · 기획자용</div>
+    <h1>Figma Design Agent<br>설치부터 화면 생성까지</h1>
+    <p class="lead">터미널에 한국어로 “메인화면 그려”라고 말하면, imin 기획 문서와 디자인 시스템을 반영한 화면이
+      Figma 파일에 직접 그려집니다. 디자인 툴을 다룰 줄 몰라도 됩니다. 이 문서 하나로 설치와 일상 사용이 끝나도록 썼습니다.</p>
+    <div class="meta">figma-design-agent · 2026-09-21 기준</div>
+  </div>
+</header>
+
+<div class="tocbar">
+  <nav class="toc">
+    <a href="#what">이 도구가 하는 일</a>
+    <a href="#ready">준비물</a>
+    <a href="#install">설치와 첫 연결</a>
+    <a href="#daily">매일 쓰는 법</a>
+    <a href="#ask">어떻게 말할까</a>
+    <a href="#read">결과 읽는 법</a>
+    <a href="#docs">기획 문서 관리</a>
+    <a href="#notes">유의사항</a>
+    <a href="#trouble">문제 해결</a>
+    <a href="#gloss">용어 사전</a>
+  </nav>
+</div>
+
+<div class="wrap">
+
+  <!-- 1 -->
+  <section id="what">
+    <div class="sec-head"><div class="sec-num">1</div><div>
+      <h2>이 도구가 하는 일</h2>
+      <p class="sec-lead">기획한 화면을 디자이너 일정에 기대지 않고, 말로 지시해 Figma에 실물 화면으로 만들어 봅니다.</p>
+    </div></div>
+
+    <p>설치 대상은 앱이 아니라 <b>배관</b>입니다. 실제로 일하는 주체는 터미널의 AI(Claude Code)이고,
+      나머지 부품들은 AI가 Figma 안에서 손을 움직일 수 있게 연결해 줍니다.</p>
+
+    <div class="flow">
+      <div class="node"><span class="tag">YOU</span><b>기획자</b><span>한국어로 지시<br>“이 PRD로 메인화면 그려”</span></div>
+      <div class="node"><span class="tag">AI</span><b>Claude Code</b><span>기획 문서 맥락 + 디자인 룰을 반영해 화면 설계</span></div>
+      <div class="node"><span class="tag">BRIDGE</span><b>브리지</b><span>AI와 Figma를 잇는 백그라운드 프로그램</span></div>
+      <div class="node"><span class="tag">FIGMA</span><b>플러그인</b><span>Figma 안에서 실제로 화면을 그리는 손</span></div>
+    </div>
+
+    <div class="hand"><b>기획자가 직접 만지는 것은 둘뿐입니다.</b> ① 터미널에 말로 지시하기, ② Figma에서 결과 보고 피드백하기.
+      가운데 과정(설계도 작성, 빌드, 검수)은 전부 AI가 알아서 합니다.</div>
+
+    <h3>이런 작업에 씁니다</h3>
+    <ul class="plain">
+      <li>기획 중인 화면을 <b>눈으로 확인</b>하고 싶을 때 — “스테이지 상세 화면 그려”</li>
+      <li>손으로 그린 와이어프레임·캡처를 <b>실제 UI 품질</b>로 올리고 싶을 때</li>
+      <li>같은 화면의 <b>시안을 여러 개</b> 비교하고 싶을 때 — “방향 다른 3안”</li>
+      <li>리뷰·보고용으로 <b>디자인 시스템에 맞는 화면</b>이 급히 필요할 때</li>
+    </ul>
+
+    <div class="note"><b>완성 디자인을 대체하진 않습니다.</b> 만들어진 화면은 Imin Design System 컴포넌트·토큰으로 조립된
+      “진짜 Figma 파일”이라 디자이너가 그대로 이어받아 다듬을 수 있습니다. 기획–디자인 사이의 왕복을 줄이는 도구로 보시면 됩니다.</div>
+  </section>
+
+  <!-- 2 -->
+  <section id="ready">
+    <div class="sec-head"><div class="sec-num">2</div><div>
+      <h2>준비물 — 시작 전 확인</h2>
+      <p class="sec-lead">설치 스크립트가 알아서 해 주는 것과, 사람이 먼저 갖춰야 하는 것이 나뉩니다.</p>
+    </div></div>
+
+    <div class="tw"><table>
+      <thead><tr><th>필요한 것</th><th>왜 필요한가</th><th>없을 때</th></tr></thead>
+      <tbody>
+        <tr><td><b>Figma 데스크톱 앱</b></td><td>플러그인은 데스크톱 앱 안에서만 실행됩니다. 브라우저 버전으로는 안 됩니다.</td>
+          <td><a href="https://figma.com/downloads">figma.com/downloads</a> 에서 설치</td></tr>
+        <tr><td><b>Claude Code</b></td><td>지시를 해석하고 화면을 설계하는 AI 본체입니다.</td>
+          <td>설치·로그인은 사내 배포 방식을 따르세요. 직접 설치는 <code>npm install -g @anthropic-ai/claude-code</code></td></tr>
+        <tr><td><b>Git</b></td><td>이 저장소를 내려받는 데 씁니다.</td>
+          <td>Mac은 설치 스크립트가 함께 처리. Windows는 <a href="https://git-scm.com">git-scm.com</a></td></tr>
+        <tr><td><b>Figma 파일 권한</b></td><td>화면을 그려 넣을 팀 프로젝트 파일에 편집 권한이 필요합니다.</td>
+          <td>팀에 편집자 권한 요청. <b>개인 Draft는 피하세요</b> — 디자인 시스템 연결이 끊깁니다.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="note">터미널이 낯설어도 괜찮습니다. 처음에 명령어를 <b>복사·붙여넣기 2번</b>(저장소 내려받기 → Claude 실행) 하면 끝이고,
+      설치를 포함한 나머지는 평소 채팅하듯 한국어 문장으로 시킵니다.
+      <br>· macOS: <code>⌘ + Space</code> → “터미널” 검색 &nbsp;&nbsp;· Windows: 시작 메뉴 → “PowerShell”</div>
+  </section>
+
+  <!-- 3 -->
+  <section id="install">
+    <div class="sec-head"><div class="sec-num">3</div><div>
+      <h2>설치와 첫 연결 — 처음 한 번만</h2>
+      <p class="sec-lead">사람이 직접 하는 일은 <b>저장소 내려받기</b>와 <b>Figma 플러그인 실행</b> 둘뿐입니다.
+        나머지 설치는 AI에게 “디자인 생성 준비”라고 말하면 알아서 합니다.</p>
+    </div></div>
+
+    <ol class="steps">
+      <li>
+        <b>저장소 내려받기</b>
+        <p>작업 폴더(예: 문서 폴더)를 정하고, 터미널에서 아래를 그대로 실행합니다.</p>
+<pre><span class="c"># 원하는 상위 폴더에서</span>
+git clone https://github.com/twavetech-frontend/figma-design-agent.git
+cd figma-design-agent</pre>
+      </li>
+      <li>
+        <b>Claude Code 실행</b>
+<pre>claude</pre>
+        <p>Claude 데스크톱 앱을 쓰신다면, 앱에서 이 폴더를 열어 <b>Code 탭</b>에서 진행해도 똑같습니다.</p>
+      </li>
+      <li>
+        <b>“디자인 생성 준비”라고 입력 — 설치까지 여기서 끝납니다</b>
+        <div class="say"><span class="who">나</span><span class="bubble">디자인 생성 준비</span></div>
+        <p>이 한마디로 AI가 <b>지금 쓰는 OS를 판단해 설치 스크립트를 직접 실행</b>합니다.
+          Python·Node 같은 실행 환경과 라이브러리 설치, 프로젝트 빌드, 브리지 기동, 연결 검증,
+          <b>기획 문서 전체 학습</b>까지 한 번에 진행됩니다. 이미 설치된 항목은 건너뛰므로 두 번째부터는 훨씬 빠릅니다.</p>
+        <p>처음에는 5~15분 정도 걸리고, 중간에 아무것도 묻지 않습니다. 그동안 다른 일을 하셔도 됩니다.</p>
+        <div class="os">
+          <div class="card">
+            <h4><span class="chip">macOS</span> 이럴 때만 손이 갑니다</h4>
+            <p>Homebrew 설치 단계에서 <b>Mac 로그인 암호</b>를 물을 수 있습니다. 입력해 주세요
+              (입력 중 화면에 글자가 안 보이는 게 정상입니다).</p>
+          </div>
+          <div class="card">
+            <h4><span class="chip">Windows</span> 이럴 때만 손이 갑니다</h4>
+            <p><code>winget</code>이 없다는 안내가 나오면 Microsoft Store에서 <b>“앱 설치 관리자”</b>를 설치한 뒤
+              다시 “디자인 생성 준비”라고 하면 됩니다.</p>
+          </div>
+        </div>
+      </li>
+      <li>
+        <b>Figma에 플러그인 등록하고 실행 — 유일한 수동 단계</b>
+        <p>Figma <b>데스크톱 앱</b>을 열고 (처음 한 번만) 상단 메뉴
+          <code>Plugins</code> → <code>Development</code> → <code>Import plugin from manifest…</code>
+          → 내려받은 폴더의 <code>src/figma-plugin/manifest.json</code> 선택.</p>
+        <p>이후에는 <code>Plugins → Development → <b>Figma Design Agent</b></code> 로 실행만 하면 됩니다.
+          플러그인 창은 <b>작업하는 동안 열어 둡니다</b>(닫으면 연결이 끊깁니다).</p>
+      </li>
+      <li>
+        <b>상태 확인</b>
+        <div class="say"><span class="who">나</span><span class="bubble">doctor 실행해줘</span></div>
+        <p>연결·설정 상태를 ✓ / ✗ 목록으로 점검해 줍니다. 전부 ✓면 바로 그리기 시작하면 됩니다.
+          문제가 있으면 무엇을 해야 하는지도 함께 알려줍니다.</p>
+      </li>
+    </ol>
+
+    <div class="note warn"><b>“기획 문서를 또 읽는다”는 정상입니다.</b> AI는 <code>src/기획/</code> 폴더의 유스케이스 문서를
+      끝까지 읽어야만 화면 생성이 허용되도록 시스템이 막아 두었습니다. 기획 문서가 수정되면 자동으로 감지해 다시 읽습니다 —
+      덕분에 “메인화면 그려” 한마디에도 서비스 맥락이 반영됩니다.</div>
+
+    <h3>참고 — 직접 실행해야 할 때의 명령</h3>
+    <p>평소에는 쓸 일이 없습니다. 준비 도중 문제가 생겨 디자인팀이 요청할 때만 쓰세요.</p>
+    <div class="os">
+      <div class="card">
+        <h4><span class="chip">설치</span> 스크립트 직접 실행</h4>
+<pre><span class="c"># macOS</span>
+bash scripts/setup-mac.sh
+
+<span class="c"># Windows</span>
+powershell -ExecutionPolicy Bypass -File scripts\setup-windows.ps1</pre>
+      </div>
+      <div class="card">
+        <h4><span class="chip">브리지</span> 상시 켜 두기</h4>
+<pre><span class="c"># macOS</span>
+npm run bridge:install
+
+<span class="c"># Windows</span>
+npm run bridge:install:win</pre>
+        <p>한 번 등록하면 컴퓨터를 켤 때마다 자동으로 뜹니다. 등록하지 않아도 AI가 필요할 때 띄워 줍니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="daily">
+    <div class="sec-head"><div class="sec-num">4</div><div>
+      <h2>매일 쓰는 법</h2>
+      <p class="sec-lead">설치가 끝난 다음 날부터는 이 네 줄이 전부입니다.</p>
+    </div></div>
+
+    <div class="tw"><table>
+      <thead><tr><th style="width:52px">순서</th><th>할 일</th><th>걸리는 시간</th></tr></thead>
+      <tbody>
+        <tr><td><b>1</b></td><td>Figma 데스크톱에서 작업 파일 열고 <b>플러그인 실행</b></td><td>10초</td></tr>
+        <tr><td><b>2</b></td><td>저장소 폴더에서 <code>claude</code> 실행 → “디자인 생성 준비”</td><td>1~3분 (두 번째부터는 빠름)</td></tr>
+        <tr><td><b>3</b></td><td>원하는 화면을 <b>말로 요청</b></td><td>화면당 3~5분</td></tr>
+        <tr><td><b>4</b></td><td>Figma에서 결과 확인 → 고칠 점을 말로 피드백</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="note ok"><b>어디에 그려지나요?</b> 지금 Figma에서 <b>보고 있는 화면의 한가운데</b>에 새 디자인이 생성됩니다.
+      특정 위치를 원하면 “선택한 와이어 오른쪽에 생성해줘”처럼 말해 주세요.</div>
+  </section>
+
+  <!-- 5 -->
+  <section id="ask">
+    <div class="sec-head"><div class="sec-num">5</div><div>
+      <h2>어떻게 말하면 되나</h2>
+      <p class="sec-lead">정해진 명령어는 없습니다. 후배 디자이너에게 구두로 요청하듯 말하면 됩니다.</p>
+    </div></div>
+
+    <h3>① 기획 문서만으로 요청</h3>
+    <p>AI가 이미 유스케이스를 학습한 상태라 짧은 한마디도 통합니다.</p>
+    <div class="say"><span class="who">나</span><span class="bubble">메인화면 그려</span></div>
+    <div class="say"><span class="who">나</span><span class="bubble">스테이지 참여 확인 바텀시트 만들어줘</span></div>
+
+    <h3>② PRD·PSD 또는 와이어프레임 이미지 같이 주기</h3>
+    <p class="sec-lead" style="margin:2px 0 8px">여기서 <b>PSD</b>는 Project Spec Document(제품 스펙 문서)의 줄임말입니다 — 포토샵 파일이 아닙니다.</p>
+    <p>문서나 이미지 파일은 <b>경로를 알려주거나 터미널 창에 파일을 끌어다 놓으면</b> 됩니다.
+      Notion 문서는 <b>링크를 그대로 붙여넣으면</b> 됩니다.</p>
+    <div class="say"><span class="who">나</span><span class="bubble">json/홈_거래현황_PRD.json 이 PRD로 홈 화면 그려줘</span></div>
+    <div class="say"><span class="who">나</span><span class="bubble">이 캡처와 똑같은 구조로 만들어줘 (이미지 끌어다 놓기)</span></div>
+    <div class="say"><span class="who">나</span><span class="bubble">https://www.notion.so/…/1인-다계정-PRD
+      이 문서 내용 분석해서 필요한 화면들 디자인 생성해</span></div>
+    <p class="sec-lead" style="margin:6px 0 0">Notion 링크는 계정 연결(커넥터)이 돼 있어야 열립니다.
+      안 열린다고 하면 문서 내용을 복사해 붙여넣거나 PDF로 내려받아 주셔도 됩니다.</p>
+    <div class="note">PRD·와이어 파일은 <code>json/</code> 폴더에 두고 <b>파일 이름에 <code>PRD</code>를 포함</b>시키세요.
+      임시 산출물 자동 정리에서 제외되어 안전하게 남습니다.</div>
+
+    <h3>③ Figma에 있는 와이어를 가리키며 요청</h3>
+    <p>Figma에서 와이어프레임 프레임을 <b>클릭해 선택한 상태</b>로 이렇게 말하면 됩니다.</p>
+    <div class="say"><span class="who">나</span><span class="bubble">선택한 와이어프레임을 디자인으로 만들어줘</span></div>
+
+    <h3>④ 시안 비교 · 수정 요청</h3>
+    <div class="say"><span class="who">나</span><span class="bubble">같은 화면으로 방향 다른 시안 3개 만들어줘</span></div>
+    <div class="say"><span class="who">나</span><span class="bubble">방금 만든 화면에서 히어로 영역이 너무 어두워. 밝고 뉴트럴하게 다시</span></div>
+    <div class="say"><span class="who">나</span><span class="bubble">카드 안에 금액이 제일 먼저 보이게 위계 바꿔줘</span></div>
+
+    <h3>⑤ “앞으로 항상” 은 담당 디자이너에게</h3>
+    <p>같은 지적이 반복된다면 <b>규칙으로 등록</b>할 수 있습니다. 다만 규칙은 이 저장소를 관리하는
+      담당 디자이너가 등록·관리하는 영역이라, 기획자가 직접 등록하지는 않습니다.
+      아래처럼 <b>원하는 내용을 정리해 담당 디자이너에게 전달</b>해 주세요.</p>
+    <div class="say"><span class="who">전달 예시</span><span class="bubble">리스트 화면 필터는 항상 DS Select 컴포넌트를 쓰도록 규칙에 넣어 주세요.
+      지금은 화면마다 필터 모양이 달라집니다.</span></div>
+    <p>등록된 규칙은 <b>그다음 생성부터 모두에게 자동 적용</b>됩니다. 매번 같은 지적을 반복하지 않아도 됩니다.</p>
+
+    <div class="compare">
+      <div class="col good">
+        <h4>결과가 좋은 지시</h4>
+        <ul>
+          <li>화면 이름 + 상태를 함께: “스테이지 상세 <b>(참여 전)</b> 화면”</li>
+          <li>문구·숫자를 주기: 와이어의 실제 텍스트를 그대로 주면 지어내지 않습니다</li>
+          <li>의도를 말하기: “첫 화면이라 <b>가입 유도</b>가 제일 잘 보여야 해”</li>
+          <li>고칠 때 대상을 특정: “<b>하단 CTA</b> 위 안내 문구를 한 줄로”</li>
+        </ul>
+      </div>
+      <div class="col meh">
+        <h4>아쉬운 지시</h4>
+        <ul>
+          <li>“예쁘게 만들어줘” — 판단 기준이 없어 결과가 매번 흔들립니다</li>
+          <li>“이거 고쳐줘” — 어느 화면·어느 영역인지 알 수 없습니다</li>
+          <li>한 번에 5개 화면 요청 — 화면 단위로 나눠 요청하는 편이 빠르고 정확합니다</li>
+          <li>색상 코드·픽셀 값 지정 — 디자인 시스템 값으로 자동 치환되니 의도를 말하는 편이 낫습니다</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="read">
+    <div class="sec-head"><div class="sec-num">6</div><div>
+      <h2>결과 읽는 법</h2>
+      <p class="sec-lead">처음 보면 “고장 났나?” 싶은 동작들이 있는데, 대부분 의도된 품질 장치입니다.</p>
+    </div></div>
+
+    <div class="tw"><table>
+      <thead><tr><th>보게 되는 것</th><th>의미</th></tr></thead>
+      <tbody>
+        <tr><td><b>“빌드가 차단됐다(blocked)”</b></td>
+          <td><b>정상입니다.</b> 자동 검문소가 부실한 결과물을 막은 것이고, AI가 보완해 다시 시도합니다. 기획자가 할 일은 없습니다.</td></tr>
+        <tr><td><b>같은 화면인데 매번 다르게 나옴</b></td>
+          <td>의도된 설계입니다. 문구·숫자는 와이어와 1:1로 지키되, 레이아웃·위계·색은 매번 새로 설계하도록 강제돼 있습니다.
+            마음에 든 버전은 <b>그대로 두고</b> 다음 요청을 하세요.</td></tr>
+        <tr><td><b>내용 없는 흰 박스(placeholder)</b></td>
+          <td>와이어에 내용이 없는 <b>동적 영역</b>입니다. 없는 문구를 지어내는 것이 금지돼 있어 빈 면으로 둡니다.
+            내용을 원하면 실제 문구를 주세요.</td></tr>
+        <tr><td><b>AI가 스크린샷을 찍어 스스로 점검</b></td>
+          <td>생성 직후 자동 QA입니다. 문제를 찾으면 고치고 다시 확인한 뒤 보고합니다.</td></tr>
+        <tr><td><b>Status Bar·탭바·로고가 자동으로 들어감</b></td>
+          <td>공통 요소는 자동 처리됩니다. 지시에 넣지 않아도 됩니다.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="note ok"><b>직접 수정한 버전은 지우지 마세요.</b> 기획자·디자이너가 Figma에서 손본 화면은
+      AI에게 가장 강력한 학습 자료입니다. 같은 화면을 다시 만들 때 그 수정본의 글자 크기·여백·색 사용을 먼저 학습하고 따라갑니다.</div>
+  </section>
+
+  <!-- 7 -->
+  <section id="docs">
+    <div class="sec-head"><div class="sec-num">7</div><div>
+      <h2>기획 문서 관리 — 기획자만 할 수 있는 일</h2>
+      <p class="sec-lead">이 도구의 품질은 기획 문서의 품질을 그대로 따라갑니다. 여기가 기획자의 핵심 역할입니다.</p>
+    </div></div>
+
+    <div class="tw"><table>
+      <thead><tr><th>무엇을</th><th>어디에</th><th>어떻게 반영되나</th></tr></thead>
+      <tbody>
+        <tr><td>유스케이스 스펙 (정상/예외 플로우, 비즈니스 룰, 연결 화면)</td>
+          <td><code>src/기획/</code> 폴더에 <b>마크다운(.md)</b> 권장</td>
+          <td>AI가 매번 통독합니다. 문서를 고치면 자동 감지해 다시 학습합니다.</td></tr>
+        <tr><td>화면 단위 PRD·와이어 데이터</td>
+          <td><code>json/</code> 폴더, 파일명에 <code>PRD</code> 포함</td>
+          <td>요청할 때 경로를 지목해 쓰고, 자동 정리에서 보호됩니다.</td></tr>
+        <tr><td>와이어 이미지·참고 캡처</td>
+          <td>아무 폴더나 (Figma 캔버스에 붙여넣어도 됨)</td>
+          <td>경로를 알려주거나 Figma에서 선택한 뒤 “이걸로 만들어줘”</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>문서를 고쳤을 때</h3>
+    <p>따로 할 일이 없습니다. 다음 요청 때 AI가 변경을 감지해 다시 읽고 반영합니다.
+      바로 확인하고 싶으면 이렇게 말하면 됩니다.</p>
+    <div class="say"><span class="who">나</span><span class="bubble">기획 문서 수정했어. 다시 학습해줘</span></div>
+
+    <div class="note"><b>정리는 자동입니다.</b> 작업 중 생기는 임시 파일(설계도·스크린샷)은 7일이 지나면 자동 삭제됩니다.
+      <code>json/</code>의 PRD 파일과 기획 문서는 삭제 대상이 아닙니다.</div>
+  </section>
+
+  <!-- 8 -->
+  <section id="notes">
+    <div class="sec-head"><div class="sec-num">8</div><div>
+      <h2>유의사항</h2>
+      <p class="sec-lead">기획 문서를 추가·수정할 때 자주 걸리는 두 가지입니다. 이것만 알면 "넣었는데 왜 반영이 안 되지?"를 피할 수 있습니다.</p>
+    </div></div>
+
+    <h3>① 기획 문서는 <span style="color:var(--brand-ink)">마크다운(.md)</span>이 가장 좋습니다</h3>
+    <p>Notion에서 <b>내보내기 → Markdown &amp; CSV</b>로 받아 <code>src/기획/</code>에 넣어 주세요.
+      다른 형식도 읽지만, 마크다운이 가장 정확하게 전달됩니다.</p>
+    <ul class="plain">
+      <li><b>제목·표·목록 구조가 그대로 전달됩니다</b> — 어느 값이 어느 항목인지 흐려지지 않습니다</li>
+      <li><b>내용만 남습니다</b> — 지금 들어 있는 Notion HTML 문서는 파일 용량의 93%가 태그·스타일이고
+        실제 내용은 7%뿐입니다. 마크다운은 버릴 게 거의 없습니다</li>
+      <li><b>무엇이 바뀌었는지 남습니다</b> — 문서를 고쳤을 때 변경된 줄을 확인할 수 있습니다</li>
+    </ul>
+    <div class="tw"><table>
+      <thead><tr><th>형식</th><th>권장도</th><th>메모</th></tr></thead>
+      <tbody>
+        <tr><td><code>.md</code></td><td><b>권장</b></td>
+          <td>Notion → Markdown &amp; CSV로 내보내기. 구조가 가장 잘 보존됩니다.</td></tr>
+        <tr><td><code>.txt</code></td><td>무난</td>
+          <td>내용은 온전하지만 제목·표 위계가 없어 긴 문서에선 불리합니다.</td></tr>
+        <tr><td><code>.html</code></td><td>사용 가능</td>
+          <td>Notion 내보내기 HTML. 지금 들어 있는 유스케이스 문서가 이 방식입니다. 표가 평평해질 수 있습니다.</td></tr>
+        <tr><td><code>.docx</code></td><td>사용 가능</td>
+          <td>Word 문서. 본문·표 텍스트를 읽고 이미지·도형·주석은 빠집니다.</td></tr>
+        <tr><td><code>.pdf</code></td><td>되도록 피하기</td>
+          <td>한글이 깨져 나오는 PDF가 있고(폰트 정보 없는 경우), 표가 뒤섞입니다.
+            원본이 Notion·Word라면 그쪽 형식으로 넣어 주세요.</td></tr>
+      </tbody>
+    </table></div>
+    <p>목록에 없는 형식(<code>.pages</code>, <code>.key</code> 등)은 그냥 지나칩니다.
+      와이어프레임·화면 캡처처럼 <b>그림으로 봐야 하는 것</b>은 PNG·JPG로 주시면 됩니다.</p>
+    <ul class="plain">
+      <li>읽지 못한 파일은 <b>그냥 넘어가지 않고</b> 학습 자료에 “읽기 실패”로 남고, PDF 글자가 깨지면
+        “추출 경고”가 표시됩니다 — AI가 보고해 주므로 조용히 누락되지 않습니다</li>
+      <li>스캔한 PDF(사진처럼 찍힌 문서)는 글자가 없어 읽을 수 없습니다</li>
+      <li>급할 때는 그 자리에서 Claude에게 파일을 주고 "이 문서 보고 ○○ 화면 그려"라고 해도 됩니다.
+        다만 <b>그 세션 한정</b>이고, 통독 대상(서비스 맥락)으로는 쌓이지 않습니다</li>
+    </ul>
+
+    <h3>② 새 세션을 열 필요는 없습니다</h3>
+    <p>문서를 넣은 뒤 <b>진행 중이던 대화에서 그대로</b> 이렇게 말하면 됩니다.</p>
+    <div class="say"><span class="who">나</span><span class="bubble">기획 문서 추가했어. 다시 학습해줘</span></div>
+    <p>폴더의 변경(파일 목록·수정시각·크기)을 감지해 학습 자료를 다시 만들고, 이전 통독 도장을 무효화한 뒤
+      다시 통독합니다. 분량에 따라 몇 분 걸립니다.</p>
+    <div class="note ok"><b>말하지 않고 그냥 화면 생성을 요청해도 됩니다.</b> 빌드 게이트가 "통독 도장이 낡았다"는 것을
+      잡아내 차단하고, AI가 재학습·재통독을 거쳐 이어서 진행합니다. 새 세션을 여는 것과 결과는 같고,
+      오히려 진행 중이던 맥락을 잃지 않아 유리합니다.</div>
+  </section>
+
+  <!-- 9 -->
+  <section id="trouble">
+    <div class="sec-head"><div class="sec-num">9</div><div>
+      <h2>문제가 생겼을 때</h2>
+      <p class="sec-lead">순서는 항상 같습니다. ① AI에게 “doctor 실행해줘” → ② 아래 표 확인 → ③ 그래도 안 되면 디자인팀.</p>
+    </div></div>
+
+    <div class="tw"><table>
+      <thead><tr><th>증상</th><th>원인과 해결</th></tr></thead>
+      <tbody>
+        <tr><td>“플러그인이 연결되지 않았다”</td>
+          <td>Figma <b>데스크톱 앱</b>에서 “Figma Design Agent” 플러그인을 다시 실행하세요. 플러그인 창을 닫으면 연결이 끊깁니다.</td></tr>
+        <tr><td>아무 반응이 없다 / 화면이 안 그려진다</td>
+          <td>브리지가 꺼졌을 수 있습니다. AI에게 “브리지 다시 켜줘”라고 하거나 <code>npm run bridge</code>를 실행하세요.</td></tr>
+        <tr><td>색·간격이 하나도 안 입혀진 회색 화면</td>
+          <td>파일이 <b>개인 Draft</b>에 있으면 팀 디자인 시스템 연결이 끊깁니다. 팀 프로젝트 안의 파일에서 작업하세요.</td></tr>
+        <tr><td>글자가 전부 기본 폰트로 나온다</td>
+          <td>AI에게 “텍스트 스타일 다시 적용해줘”라고 하면 복구 명령을 실행합니다.</td></tr>
+        <tr><td>생성이 오래 걸리다 실패했다</td>
+          <td>타임아웃입니다. “이어서 복구해줘”라고 하면 AI가 남은 단계를 마저 처리합니다.</td></tr>
+        <tr><td>기존 화면이 이상하게 바뀐 것 같다</td>
+          <td>화면 이름을 알려주고 확인을 요청하세요. 되돌리려면 Figma의 <code>⌘Z</code> 또는 버전 기록을 쓰면 됩니다.</td></tr>
+        <tr><td>한글이 깨져 보인다 <span class="chip">Windows</span></td>
+          <td>PowerShell을 새로 열고 다시 시도하세요. 계속되면 설치 스크립트를 한 번 더 실행하면 환경 설정이 복구됩니다.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>디자인팀에 넘겨야 하는 경우</h3>
+    <ul class="plain">
+      <li>설치 스크립트가 빨간 에러로 멈춤 (에러 화면을 그대로 복사해 전달)</li>
+      <li>doctor에서 브리지·빌드 관련 ✗가 반복적으로 해결되지 않음</li>
+      <li>에러 메시지에 <code>npm</code>, <code>406</code>, <code>patch</code> 같은 단어가 반복됨</li>
+    </ul>
+    <div class="note">가장 빠른 질문 창구는 사실 <b>AI 자신</b>입니다. 터미널에 “지금 왜 안 되는지 설명해줘”라고 물으면
+      이 저장소의 문서와 규칙을 읽고 원인을 짚어 줍니다.</div>
+  </section>
+
+  <!-- 10 -->
+  <section id="gloss">
+    <div class="sec-head"><div class="sec-num">10</div><div>
+      <h2>용어 사전</h2>
+      <p class="sec-lead">AI의 보고나 로그에 자주 나오는 단어들입니다. 외울 필요는 없고, 눈에 익으면 충분합니다.</p>
+    </div></div>
+
+    <dl class="gloss">
+      <dt>브리지 (bridge)</dt><dd>AI와 Figma 플러그인을 이어 주는 백그라운드 프로그램. 상시 등록해 두면 신경 쓸 일이 없습니다.</dd>
+      <dt>플러그인</dt><dd>Figma 데스크톱 앱 안에서 실행하는 “Figma Design Agent”. 실제로 화면을 그리는 손입니다.</dd>
+      <dt>blueprint</dt><dd>AI가 작성하는 화면 설계도. 생성에 성공하면 자동으로 지워집니다(정상 동작).</dd>
+      <dt>게이트 (gate)</dt><dd>품질 검문소. 통과하지 못하면 빌드를 막고 AI가 보완해 재시도합니다.</dd>
+      <dt>통독 / ack</dt><dd>AI가 기획 문서를 끝까지 읽고(통독) 확인 도장(ack)을 찍는 절차. 이게 없으면 화면 생성이 차단됩니다.</dd>
+      <dt>PRD · PSD</dt><dd>PRD는 화면 단위 요구사항 문서, PSD는 Project Spec Document(제품 스펙 문서)입니다. 포토샵 파일과 무관합니다.</dd>
+      <dt>DS · 토큰</dt><dd>Imin Design System의 컴포넌트와 색·간격·글자 스타일 변수. 자동으로 최신 상태를 따라갑니다.</dd>
+      <dt>doctor</dt><dd>환경 종합 진단. 문제가 생기면 가장 먼저 시키는 명령입니다.</dd>
+      <dt>QA</dt><dd>생성 직후 AI가 스스로 스크린샷을 찍어 규칙 위반을 점검하는 단계입니다.</dd>
+    </dl>
+  </section>
+
+  <footer>Figma Design Agent · 기획자 가이드 · 더 깊은 내용은 저장소의 docs/ 폴더 또는 Claude Code에게 직접 물어보세요</footer>
+</div>
+
+<script>
+(function(){
+  var bar = document.querySelector('.tocbar');
+  function syncBar(){
+    if (!bar) return;
+    document.documentElement.style.setProperty('--bar', Math.round(bar.getBoundingClientRect().height) + 'px');
+  }
+  syncBar();
+  window.addEventListener('resize', syncBar);
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var map = {};
+  links.forEach(function(a){
+    var el = document.getElementById(a.getAttribute('href').slice(1));
+    if (el) map[el.id] = a;
+  });
+  var sections = Object.keys(map).map(function(id){ return document.getElementById(id); });
+
+  // 칩 클릭 — 해시 이동에 의존하지 않고 직접 스크롤 (샌드박스에서 앵커가 막히는 경우 대비)
+  links.forEach(function(a){
+    a.addEventListener('click', function(ev){
+      var target = document.getElementById(a.getAttribute('href').slice(1));
+      if (!target) return;
+      ev.preventDefault();
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      try {
+        target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      } catch (e) {
+        target.scrollIntoView(true);
+      }
+      links.forEach(function(x){ x.classList.toggle('current', x === a); });
+      try { history.replaceState(null, '', '#' + target.id); } catch (e) {}
+    });
+  });
+  if (!sections.length || !('IntersectionObserver' in window)) return;
+  function mark(id){
+    links.forEach(function(a){ a.classList.toggle('current', a === map[id]); });
+  }
+  var io = new IntersectionObserver(function(entries){
+    var visible = entries.filter(function(e){ return e.isIntersecting; });
+    if (!visible.length) return;
+    visible.sort(function(a,b){ return a.boundingClientRect.top - b.boundingClientRect.top; });
+    mark(visible[0].target.id);
+  }, { rootMargin: '-80px 0px -65% 0px', threshold: 0 });
+  sections.forEach(function(el){ io.observe(el); });
+})();
+</script>
+</body>
+</html>

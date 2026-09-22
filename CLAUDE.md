@@ -75,7 +75,7 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
    전수 확인의 1순위** — 플러그인 find_nodes_by_name(0건 오탐 실적)·scan_text_nodes(60s
    타임아웃)보다 신뢰 경로. 벡터 에셋(ico_*/img_*)이 인덱스에 있으면 crop 이식 금지.
 5. 🔴 **기획 문서 전체 학습 (맥락 100% — 2026-06-04 사용자 필수 룰)** — 디자인 생성 전,
-   `src/기획/` 폴더의 **모든 기획 HTML(유스케이스 스펙)을 읽어 imin 서비스 맥락을 완전히
+   `src/기획/` 폴더의 **모든 기획 문서(유스케이스 스펙)를 읽어 imin 서비스 맥락을 완전히
    이해한 상태**로 만든다. 🔴 **목표: 준비가 끝나면 사용자가 곧바로 "메인화면 그려"라고만 해도
    맥락을 충분히 이해한 상태로 바로 그릴 수 있어야 한다** (2026-06-04 사용자). 그래서 준비
    단계에서 통독+ack 까지 끝낸다. 3-스텝(한 번씩만):
@@ -83,6 +83,13 @@ AI 기반 Figma 디자인 생성 도구. **실제 구동은 터미널 Claude Cod
    # ① 학습 digest 생성 (플러그인 UI 에 '기획 문서 학습 중 (n/총)' progress 표시)
    python3 scripts/figma_mcp_client.py learn-planning
    ```
+   🔵 **지원 형식 (2026-09-22 확장)** — **`.md` 권장**(구조 보존 + 토큰 최소: 기존 Notion HTML 36개는
+   107만 자 중 실제 내용이 7만 4천 자(7%)뿐) · `.html/.htm`(Notion export) · `.markdown/.txt` ·
+   `.docx`(zipfile 파싱, 외부 의존성 없음) · `.pdf`(pypdf → PyPDF2 → pdftotext 순). 그 외 확장자는
+   학습 대상이 아니다. **추출 실패·깨짐은 조용히 넘기지 않는다** — 실패 파일은 digest 에
+   `[읽기 실패]` 로, 폰트 매핑 없는 한글 PDF(다른 문자 영역으로 쏟아짐)는 `[추출 경고]` 로 남고
+   stderr 에도 찍힌다(`_looks_garbled`). 경고가 보이면 원본을 HTML/Word 로 다시 내보내 넣을 것.
+   회귀 테스트: `scripts/tests/test_planning_doc_formats.py`.
    🔴 **① 의 출력이 `통독 ack 유효 … 재통독 불필요` 면 ②③ 을 건너뛴다 (2026-09-04 수정).**
    기획 문서 fingerprint 가 그대로면 digest 를 재생성하지 않고 과거 ack 를 그대로 인정한다
    (8만 자 재통독 = 준비 시간 3~4분의 주범이었음). ②③ 은 `learn-planning` 이 "재통독 필요"

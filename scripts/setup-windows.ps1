@@ -10,7 +10,7 @@
 
   처리 항목:
     1. Python 3.9+ (winget)          — figma_mcp_client.py 실행용 (없거나 구버전이면 3.12 설치)
-    2. Python 패키지: requests, Pillow
+    2. Python 패키지: requests, Pillow, pypdf
     3. PYTHONUTF8=1 사용자 환경변수  — 한글 출력 cp949 UnicodeEncodeError 방지
     4. Node.js LTS (winget)          — Vite 6는 Node 18+ 필수
     5. npm 의존성 (--legacy-peer-deps, .npmrc에 설정됨)
@@ -103,10 +103,10 @@ PowerShell을 새로 연 뒤 다시 실행하거나, https://python.org 에서 �
 Write-Ok "Python: $python  ($(& $python --version 2>&1))"
 
 # ── 2. Python 패키지 ──────────────────────────────────────
-Write-Step '2/7 Python 패키지 설치 (requests, Pillow)'
+Write-Step '2/7 Python 패키지 설치 (requests, Pillow, pypdf)'
 & $python -m pip install --upgrade pip --quiet --disable-pip-version-check
-& $python -m pip install --upgrade requests Pillow --quiet --disable-pip-version-check
-Write-Ok 'requests, Pillow 설치/갱신 완료'
+& $python -m pip install --upgrade requests Pillow pypdf --quiet --disable-pip-version-check
+Write-Ok 'requests, Pillow, pypdf 설치/갱신 완료'
 
 # ── 3. PYTHONUTF8 ─────────────────────────────────────────
 Write-Step '3/7 PYTHONUTF8 환경변수'
