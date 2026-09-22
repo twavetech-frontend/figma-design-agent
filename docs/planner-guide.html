@@ -112,13 +112,16 @@
 
   /* 표 */
   .tw{overflow-x:auto; margin:14px 0;}
-  table{width:100%; border-collapse:collapse; font-size:13.8px; min-width:460px;}
+  table{width:100%; border-collapse:collapse; font-size:13.8px; min-width:520px;}
   th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--line-soft); vertical-align:top;}
   th{font-family:"IBM Plex Sans KR",sans-serif; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
     color:var(--ink-3); background:var(--surface-2); font-weight:600; border-bottom:1px solid var(--line);}
   tr:last-child td{border-bottom:none;}
   td code, p code, li code, dd code{font-family:"IBM Plex Mono",monospace; font-size:12.3px; background:var(--surface-2);
     border:1px solid var(--line); border-radius:5px; padding:1px 5px; word-break:break-word;}
+  /* 표 안의 짧은 코드(.md, src/기획/ …)가 두 줄로 쪼개지지 않게 — 긴 명령만 .wrapcode 로 예외 */
+  td code, th code{white-space:nowrap;}
+  td code.wrapcode{white-space:normal; word-break:break-all;}
 
   /* 단계 */
   ol.steps{list-style:none; counter-reset:s; padding:0; margin:16px 0 0;}
@@ -259,7 +262,7 @@
         <tr><td><b>Figma 데스크톱 앱</b></td><td>플러그인은 데스크톱 앱 안에서만 실행됩니다. 브라우저 버전으로는 안 됩니다.</td>
           <td><a href="https://figma.com/downloads">figma.com/downloads</a> 에서 설치</td></tr>
         <tr><td><b>Claude Code</b></td><td>지시를 해석하고 화면을 설계하는 AI 본체입니다.</td>
-          <td>설치·로그인은 사내 배포 방식을 따르세요. 직접 설치는 <code>npm install -g @anthropic-ai/claude-code</code></td></tr>
+          <td>설치·로그인은 사내 배포 방식을 따르세요. 직접 설치는 <code class="wrapcode">npm install -g @anthropic-ai/claude-code</code></td></tr>
         <tr><td><b>Git</b></td><td>이 저장소를 내려받는 데 씁니다.</td>
           <td>Mac은 설치 스크립트가 함께 처리. Windows는 <a href="https://git-scm.com">git-scm.com</a></td></tr>
         <tr><td><b>Figma 파일 권한</b></td><td>화면을 그려 넣을 팀 프로젝트 파일에 편집 권한이 필요합니다.</td>
