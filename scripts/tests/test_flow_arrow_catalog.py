@@ -88,3 +88,21 @@ def test_tap_default_cannot_leave_diamond():
         raise AssertionError('ValueError 기대')
     ok = {"section": "S", "_catalog": cat, "edges": [{"from": "s1", "to": "s2"}]}
     assert FC.build_plan(ok, SECTION, tb)['need'] == {'CONNECTOR:tap': 1}
+
+
+def test_condition_label_and_completeness_warnings():
+    cat = _cat()
+    for k, tid in (('cond-yes', 't_yes'), ('cond-no', 't_no')):
+        FAC.register(cat, k, tid, k, style={}, defaults={})
+        cat['arrows'][k]['constraints'] = {'fromKind': 'DIAMOND'}
+    cat['default'] = 'tap'
+    tb = TOOLBOX + [{"id": "t_yes", "type": "CONNECTOR"}, {"id": "t_no", "type": "CONNECTOR"},
+                    {"id": "t_dia", "type": "SHAPE_WITH_TEXT", "shapeType": "DIAMOND"}]
+    spec = {"section": "S", "_catalog": cat, "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "x": 0, "y": 0}],
+            "edges": [{"from": "@q", "to": "s2", "type": "cond-yes", "label": "맞음 → 다음"}]}   # 라벨 관례 위반 + cond-no 없음
+    w = FC.build_plan(spec, SECTION, tb)['warnings']
+    assert any("'네 → …'" in x for x in w) and any('cond-no 없음' in x for x in w)
+    good = {"section": "S", "_catalog": cat, "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "x": 0, "y": 0}],
+            "edges": [{"from": "@q", "to": "s2", "type": "cond-yes", "label": "네 → 다음"},
+                      {"from": "@q", "to": "s1", "type": "cond-no", "label": "아니요 → 홈"}]}
+    assert FC.build_plan(good, SECTION, tb)['warnings'] == []

@@ -2283,6 +2283,15 @@
 > - **사용** `flow` spec 의 edge 에 `"type": "<type>"` — 미등록 type 은 ERROR(등록 목록 안내), constraints 위반
 >   (예: 시작이 ◇ 가 아닌데 cond-yes)도 ERROR. type 생략 시 `default`, default 도 없으면 툴박스 첫 커넥터.
 >
+> - **코드 강제 요약** (`flow_connect.build_plan`): ① 미등록 type → ERROR ② `constraints.fromKind`(cond-yes/no 는 ◇ 에서만)·
+>   `notFromKind`(tap/auto/input-done 는 ◇ 에서 금지)·`toKind` 위반 → ERROR ③ cond-yes 라벨은 '네 → …', cond-no 는
+>   '아니요 → …' 로 시작, 라벨 없으면 → WARN ④ spec 의 ◇ 마다 cond-yes·cond-no 가 하나씩 나가야 함(완결성) → WARN
+>   ⑤ 3슬롯 이상 BOTTOM→BOTTOM, 시작 노드 x 범위 밖 도형으로의 BOTTOM→TOP → WARN(라우팅 실측) ⑥ 배선 후 bbox 폭주
+>   (>20,000px) → errors 로 기록 ⑦ 인스턴스 내부 노드(`I…;…`) endpoint → 실패 + 힌트. 테스트 `test_flow_arrow_catalog.py`.
+> - **선택 기준 요약**: 사용자가 눌러서 가면 `tap`(default) · 입력이 자릿수/형식을 채워 버튼 없이 넘어가면 `input-done` ·
+>   조작 없이 앱이 넘기면(응답·타이머·검증 결과) `auto` · ◇ 에서 나가면 `cond-yes`/`cond-no` 만. 새 종류는 사용자가 툴박스
+>   커넥터를 선택해 용도를 말하면 `arrow-register` 로 추가하고 이 표에 행을 더한다.
+>
 > **등록된 종류 (갱신 중):**
 > | type | 템플릿 | 스타일 | 용도 | 쓰지 말 때 |
 > |---|---|---|---|---|

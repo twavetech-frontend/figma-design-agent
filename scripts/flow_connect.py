@@ -173,6 +173,24 @@ def build_plan(spec, section_children, toolbox_children=()):
             if tk is not None and tk != cons['toKind']:
                 raise ValueError(f"edge {e.get('from')}→{e.get('to')}: type '{t}' 은 끝이 {cons['toKind']} 여야 함(현재 {tk}) — 규칙 0-FLOW-2")
     warnings = []
+    # 라벨 관례(0-FLOW-2): cond-yes 는 '네', cond-no 는 '아니요' 로 시작 — 어기면 WARN
+    for e in edges:
+        t = e.get('type') or cat.get('default')
+        lab = (e.get('label') or '').strip()
+        if t == 'cond-yes' and lab and not lab.startswith('네'):
+            warnings.append(f"edge {e.get('from')}→{e.get('to')}: cond-yes 라벨은 '네 → …' 로 시작해야 함 (현재 '{lab[:20]}')")
+        if t == 'cond-no' and lab and not lab.startswith('아니요'):
+            warnings.append(f"edge {e.get('from')}→{e.get('to')}: cond-no 라벨은 '아니요 → …' 로 시작해야 함 (현재 '{lab[:20]}')")
+        if t in ('cond-yes', 'cond-no') and not lab:
+            warnings.append(f"edge {e.get('from')}→{e.get('to')}: {t} 는 라벨('네/아니요 → …') 필수")
+    # ◇ 완결성: 이 spec 에서 만드는 ◇ 마다 cond-yes 와 cond-no 가 하나씩은 나가야 함 — 어기면 WARN
+    for sh in shapes:
+        if sh['kind'].upper() != 'DIAMOND':
+            continue
+        outs = {(e.get('type') or cat.get('default')) for e in edges if e.get('from') == '@' + sh['key']}
+        missing = [t for t in ('cond-yes', 'cond-no') if t not in outs]
+        if missing and (cat.get('arrows') or {}):
+            warnings.append(f"◇ @{sh['key']}: 나가는 가지에 {', '.join(missing)} 없음 — 조건 도형은 네/아니요 둘 다 있어야 함")
     for e in edges:
         a, b = byid.get(e.get('from')), byid.get(e.get('to'))
         if a and b and abs((a.get('x') or 0) - (b.get('x') or 0)) >= LONG_EDGE_SLOTS * SLOT and \
