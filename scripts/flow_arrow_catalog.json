@@ -30,6 +30,37 @@
       "constraints": {
         "fromKind": "DIAMOND"
       }
+    },
+    "cond-no": {
+      "templateId": "4802:104152",
+      "purpose": "조건 분기 도형(◇ DIAMOND)에서 '아니요/No' 가지 — 빨간색",
+      "when": [
+        "시작 노드가 ◇ 조건 도형이고 조건이 거짓일 때 가는 가지",
+        "라벨은 '아니요 → <다음 단계>' 형식"
+      ],
+      "notWhen": [
+        "◇ 가 아닌 화면·버튼에서 나가는 일반 전이(탭·자동)에는 쓰지 않음",
+        "조건이 참인 '네' 가지에는 쓰지 않음(cond-yes)",
+        "오류·실패 결과 전이라도 ◇ 에서 나가지 않으면 쓰지 않음"
+      ],
+      "style": {
+        "strokeWeight": 4,
+        "color": "#f24822",
+        "opacity": 1,
+        "dash": null,
+        "lineType": "ELBOWED",
+        "startCap": "CIRCLE_FILLED",
+        "endCap": "ARROW_EQUILATERAL"
+      },
+      "defaults": {
+        "lineType": "ELBOWED",
+        "fromMagnet": "RIGHT",
+        "toMagnet": "LEFT"
+      },
+      "labelHint": "아니요 → 홈",
+      "constraints": {
+        "fromKind": "DIAMOND"
+      }
     }
   },
   "default": null
