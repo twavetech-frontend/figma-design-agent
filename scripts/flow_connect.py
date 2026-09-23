@@ -178,9 +178,16 @@ def build_plan(spec, section_children, toolbox_children=()):
         if a and b and abs((a.get('x') or 0) - (b.get('x') or 0)) >= LONG_EDGE_SLOTS * SLOT and \
                 (e.get('fromMagnet', 'RIGHT').upper() == 'BOTTOM' and e.get('toMagnet', 'LEFT').upper() == 'BOTTOM'):
             warnings.append(f"edge {e.get('from')}→{e.get('to')}: {LONG_EDGE_SLOTS}슬롯 이상 BOTTOM→BOTTOM — 화면을 가로지름. 슬롯 인접 후 RIGHT→LEFT 권장")
-    for e in edges:   # 2026-09-23 실측: 화면 BOTTOM → 바로 아래 도형 TOP 은 Figma elbow 라우터가 bbox 를 페이지 밖(-85k)으로 폭주시킴 → LEFT/RIGHT 로
+    for e in edges:   # 2026-09-23 실측: BOTTOM→TOP 은 도형이 시작 노드 바로 아래(x 범위 겹침)면 정상, x 가 어긋나면 elbow 폭주(bbox -85k) → 그때만 경고
         if e.get('fromMagnet', 'RIGHT').upper() == 'BOTTOM' and e.get('toMagnet', 'LEFT').upper() == 'TOP' and str(e.get('to', '')).startswith('@'):
-            warnings.append(f"edge {e.get('from')}→{e.get('to')}: BOTTOM→TOP(도형) 은 라우팅 폭주 실측 — toMagnet 을 LEFT/RIGHT 로 바꿀 것")
+            a = byid.get(e.get('from'))
+            sh = next((x for x in shapes if '@' + x['key'] == e.get('to')), None)
+            if a and sh and 'x' in sh:
+                ax0, ax1 = (a.get('x') or 0), (a.get('x') or 0) + (a.get('width') or 393)
+                if not (ax0 - 40 <= int(sh['x']) <= ax1):
+                    warnings.append(f"edge {e.get('from')}→{e.get('to')}: BOTTOM→TOP 인데 도형 x({sh['x']})가 시작 노드 x 범위({round(ax0)}~{round(ax1)}) 밖 — 라우팅 폭주 실측, toMagnet 을 LEFT/RIGHT 로")
+            else:
+                warnings.append(f"edge {e.get('from')}→{e.get('to')}: BOTTOM→TOP(도형) — 도형이 시작 노드 바로 아래가 아니면 라우팅 폭주 실측, 결과 bbox 확인")
     return {'need': need, 'alloc': alloc, 'dup': dup, 'seed': seed, 'templates': tpl, 'warnings': warnings,
             'edges': len(edges), 'shapes': len(shapes)}
 

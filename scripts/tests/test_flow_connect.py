@@ -86,4 +86,7 @@ def test_bottom_to_top_shape_edge_warns():
     spec = {"section": "S", "_catalog": NOCAT, "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "x": 0, "y": 0}],
             "edges": [{"from": "s1", "fromMagnet": "BOTTOM", "to": "@q", "toMagnet": "TOP"}]}
     plan = FC.build_plan(spec, SECTION, TOOLBOX)
-    assert any('BOTTOM→TOP' in w for w in plan['warnings'])
+    assert any('BOTTOM→TOP' in w for w in plan['warnings'])      # 도형 x=0 은 s1(x102~495) 범위 밖 → 경고
+    below = {"section": "S", "_catalog": NOCAT, "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "x": 150, "y": 1400}],
+             "edges": [{"from": "s1", "fromMagnet": "BOTTOM", "to": "@q", "toMagnet": "TOP"}]}
+    assert FC.build_plan(below, SECTION, TOOLBOX)['warnings'] == []   # 바로 아래면 정상
