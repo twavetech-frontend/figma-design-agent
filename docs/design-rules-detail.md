@@ -2288,3 +2288,4 @@
 > |---|---|---|---|---|
 > | `cond-yes` | 4802:104153 | 4px 녹색 #0ba520, ELBOWED, ●→▶ | ◇ 조건 도형의 **'네/Yes' 가지** (constraints fromKind=DIAMOND), 라벨 `네 → <다음 단계>` | 화면·버튼에서 나가는 일반 전이, '아니요' 가지 |
 > | `cond-no` | 4802:104152 | 4px 빨강 #f24822, ELBOWED, ●→▶ | ◇ 조건 도형의 **'아니요/No' 가지** (constraints fromKind=DIAMOND), 라벨 `아니요 → <다음 단계>` | 화면·버튼에서 나가는 일반 전이, '네' 가지, ◇ 밖의 오류·실패 전이 |
+> | `tap` **(default)** | 4802:104172 | 4px 파랑 #3dadff, ELBOWED, ●→▶ | **사용자 탭 일반 전이** — 화면 안 버튼·행·링크 탭 → 다음 화면 root LEFT, 라벨 `<트리거> 탭` / `<동작> → <결과> (UC)` (constraints notFromKind=DIAMOND) | ◇ 에서 나가는 가지(cond-yes/no), 시스템 자동 전이 |

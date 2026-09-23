@@ -72,3 +72,19 @@ def test_cond_yes_must_start_from_diamond():
         assert 'DIAMOND' in str(e) and '0-FLOW-2' in str(e)
     else:
         raise AssertionError('ValueError 기대')
+
+
+def test_tap_default_cannot_leave_diamond():
+    cat = _cat()
+    cat['arrows']['tap']['constraints'] = {'notFromKind': 'DIAMOND'}
+    tb = TOOLBOX + [{"id": "t_dia", "type": "SHAPE_WITH_TEXT", "shapeType": "DIAMOND"}]
+    bad = {"section": "S", "_catalog": cat, "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "x": 0, "y": 0}],
+           "edges": [{"from": "@q", "to": "s2"}]}          # type 생략 → default tap → ◇ 에서 나감 = 위반
+    try:
+        FC.build_plan(bad, SECTION, tb)
+    except ValueError as e:
+        assert 'cond-yes/cond-no' in str(e)
+    else:
+        raise AssertionError('ValueError 기대')
+    ok = {"section": "S", "_catalog": cat, "edges": [{"from": "s1", "to": "s2"}]}
+    assert FC.build_plan(ok, SECTION, tb)['need'] == {'CONNECTOR:tap': 1}

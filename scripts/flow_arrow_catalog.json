@@ -61,7 +61,38 @@
       "constraints": {
         "fromKind": "DIAMOND"
       }
+    },
+    "tap": {
+      "templateId": "4802:104172",
+      "purpose": "사용자 탭(버튼·행·링크)에 의한 일반 화면 전이 — 파란색, 기본 화살표",
+      "when": [
+        "화면 안 버튼·행·링크를 탭해 다음 화면으로 갈 때",
+        "시작 = 화면 안 트리거 노드(RIGHT, 아래로 나가면 BOTTOM/LEFT), 끝 = 다음 화면 root LEFT",
+        "라벨은 '<트리거> 탭' 또는 '<동작> → <결과> (UC)'"
+      ],
+      "notWhen": [
+        "◇ 조건 도형에서 나가는 가지(cond-yes/cond-no 사용)",
+        "사용자 조작 없이 시스템이 자동으로 넘어가는 전이(별도 type)"
+      ],
+      "style": {
+        "strokeWeight": 4,
+        "color": "#3dadff",
+        "opacity": 1,
+        "dash": null,
+        "lineType": "ELBOWED",
+        "startCap": "CIRCLE_FILLED",
+        "endCap": "ARROW_EQUILATERAL"
+      },
+      "defaults": {
+        "lineType": "ELBOWED",
+        "fromMagnet": "RIGHT",
+        "toMagnet": "LEFT"
+      },
+      "labelHint": "설정하기 탭",
+      "constraints": {
+        "notFromKind": "DIAMOND"
+      }
     }
   },
-  "default": null
+  "default": "tap"
 }

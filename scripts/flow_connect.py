@@ -164,6 +164,10 @@ def build_plan(spec, section_children, toolbox_children=()):
                 pass   # 화면 내부 노드 등 섹션 직계가 아니면 판정 불가 — 통과
             elif fk != cons['fromKind']:
                 raise ValueError(f"edge {e.get('from')}→{e.get('to')}: type '{t}' 은 시작이 {cons['fromKind']} 여야 함(현재 {fk or '화면/노드'}) — 규칙 0-FLOW-2")
+        if cons.get('notFromKind'):
+            fk = _kind_of_ref(e.get('from'))
+            if fk is not None and fk == cons['notFromKind']:
+                raise ValueError(f"edge {e.get('from')}→{e.get('to')}: type '{t}' 은 {cons['notFromKind']} 에서 나갈 수 없음 — 조건 가지는 cond-yes/cond-no (규칙 0-FLOW-2)")
         if cons.get('toKind'):
             tk = _kind_of_ref(e.get('to'))
             if tk is not None and tk != cons['toKind']:
