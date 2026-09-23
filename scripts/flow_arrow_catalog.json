@@ -92,6 +92,37 @@
       "constraints": {
         "notFromKind": "DIAMOND"
       }
+    },
+    "auto": {
+      "templateId": "4802:104150",
+      "purpose": "시스템 자동 전이 — 사용자 조작 없이 앱이 넘기는 흐름(응답 수신·타이머·검증 완료·자동 이동), 회색",
+      "when": [
+        "입력 완료·검증 통과·API 응답·타이머 후 다음 화면으로 자동 이동할 때",
+        "배치·백그라운드 처리 결과가 화면 전이를 일으킬 때",
+        "라벨은 '<조건/이벤트> → <결과>' (예: '숫자 4자리 입력 → 영문 입력', '재입력 일치 → 등록 완료')"
+      ],
+      "notWhen": [
+        "사용자가 버튼·행·링크를 탭해서 가는 전이(tap)",
+        "◇ 조건 도형에서 나가는 가지(cond-yes/cond-no)"
+      ],
+      "style": {
+        "strokeWeight": 4,
+        "color": "#757575",
+        "opacity": 1,
+        "dash": null,
+        "lineType": "ELBOWED",
+        "startCap": "CIRCLE_FILLED",
+        "endCap": "ARROW_EQUILATERAL"
+      },
+      "defaults": {
+        "lineType": "ELBOWED",
+        "fromMagnet": "RIGHT",
+        "toMagnet": "LEFT"
+      },
+      "labelHint": "재입력 일치 → 등록 완료",
+      "constraints": {
+        "notFromKind": "DIAMOND"
+      }
     }
   },
   "default": "tap"
