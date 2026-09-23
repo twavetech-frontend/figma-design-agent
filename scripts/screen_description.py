@@ -169,7 +169,7 @@ def run(spec, dry_run=False, log=print):
         if spec.get('update'):
             sib = call('get_node_tree', {'nodeId': parent, 'maxDepth': 1}).get('children') or []
             for k in sib:
-                if k.get('name') == 'Description' and abs(round(k.get('x') or 0) - (sx + MARKER_DX)) <= 2 and sy - 5 <= round(k.get('y') or 0) <= sy + (info.get('height') or 3000):
+                if str(k.get('name', '')).startswith('Description') and abs(round(k.get('x') or 0) - (sx + MARKER_DX)) <= 2 and sy - 5 <= round(k.get('y') or 0) <= sy + (info.get('height') or 3000):
                     call('delete_node', {'nodeId': k['id']})
         for r in plan['rows']:
             if r['markerY'] is None:
@@ -180,6 +180,7 @@ def run(spec, dry_run=False, log=print):
                 continue
             call('insert_child', {'childId': m, 'parentId': parent})
             call('set_instance_properties', {'nodeId': m, 'properties': {COUNT_PROP: str(r['n'])}})
+            call('rename_node', {'nodeId': m, 'name': f"Description [{r['n']}] {r['id']}"})   # 영역 id 를 심어 '마커 재생성'(regen-markers)이 추적 — 여러 영역은 regen 이 '+' 로 묶음
             call('move_node', {'nodeId': m, 'x': sx + MARKER_DX, 'y': sy + round(r['markerY'])})
             summary['markers'].append({'n': r['n'], 'id': m, 'y': sy + round(r['markerY'])})
     summary['elapsed_s'] = round(time.time() - t0, 1)

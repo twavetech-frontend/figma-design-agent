@@ -15983,6 +15983,8 @@ CLI_COMMANDS = [
      "description": "기존 DS 본 clone + 텍스트 치환/삭제 + 인원수별 스테이지 색 + bind·verify 1회 원커맨드 (0-G-3 clone 트랙, 목표 ≤2분)"},
     {"name": "describe", "usage": "describe <spec.json> [--dry-run]",
      "description": "화면 우측 description 인스턴스 + 영역별 Description Num 마커 원커맨드 (규칙 0-DESC — 행=기능 영역, x+폭+82 / 마커 x−2)"},
+    {"name": "regen-markers", "usage": "regen-markers [<screenId>] [--dry-run] [--no-draft]",
+     "description": "'마커 재생성' — 선택한 화면의 Description Num 마커를 현재 영역 위치로 재생성, 새 영역은 마커+디스크립션 초안 행 추가, 사라진 영역은 제거 (규칙 0-DESC-2)"},
     {"name": "flow", "usage": "flow <spec.json> [--dry-run]",
      "description": "FigJam 커넥터·도형으로 화면 flow 배선 원커맨드 (규칙 0-FLOW — 툴박스 풀 → macOS 메뉴 Duplicate 복제 → set_connector 라벨·magnet)"},
     {"name": "place", "usage": "place <rootId> [--center|--right]",
@@ -16238,6 +16240,9 @@ def main():
     elif cmd == "describe":
         import screen_description as _sd
         sys.exit(_sd.main(sys.argv[2:]))
+    elif cmd == "regen-markers":
+        import marker_regen as _mr
+        sys.exit(_mr.main(sys.argv[2:]))
     elif cmd == "flow":
         import flow_connect as _fl
         sys.exit(_fl.main(sys.argv[2:]))

@@ -2219,3 +2219,34 @@
 > spec `{section, toolbox?, seed?, shapes:[{key,kind,text,anchor,dx,dy | x,y}], edges:[{from,fromMagnet,to,toMagnet,label,connector?}]}`
 > (`@key` 로 같은 spec 의 도형 참조). dry-run 은 풀 할당·복제 수·장거리 경고만 출력. 완료 판정 = `FLOW-SUMMARY`
 > 의 `errors` 비어 있음 + 모든 edge `ok`. 오프라인 테스트 `scripts/tests/test_flow_connect.py`.
+
+### 0-DESC-2. 🔴 "마커 재생성" 트리거 = `regen-markers` — 화면 변경 후 마커 위치 갱신 + 새 영역 마커·디스크립션 자동 추가 (2026-09-23 사용자 룰)
+
+> 사용자: *"화면에 요소가 추가되거나 영역 크기가 변경된 후 해당 프레임을 선택 후 '마커 재생성' 이라고 하면
+> 변경된 위치로 마커가 재생성되게 하고, 요소가 추가되면 마커 추가하면서 디스크립션도 생성되게."*
+> 배경: 0-DESC 6 실사고(시트 확장 후 마커 122px 어긋남).
+>
+> **트리거**: Figma 에서 화면 root 를 선택한 채 사용자가 **"마커 재생성"** 이라고 하면 질문 없이
+> `python3 scripts/figma_mcp_client.py regen-markers` 를 실행한다(선택 노드 자동, id 를 알면 인자로).
+> 결과 `REGEN-SUMMARY` 의 `report`(kept/added/removed/orphan)와 초안 행 개수를 보고한다.
+>
+> **동작 (scripts/marker_regen.py):**
+> 1. 화면 우측 description(x ≈ 화면 x+폭+82)과 좌측 마커(x ≈ 화면 x−2, 화면 y 범위)를 찾는다. description 이
+>    없으면 중단하고 `describe` 부터 안내.
+> 2. **마커 ↔ 영역 추적은 마커 이름** `Description [n] <영역id>[+<영역id>…]` 로 한다(`describe` 가 생성 시 심고,
+>    한 행이 여러 영역을 묶어 설명하면 regen 이 '+' 로 잇는다 — 첫 id 가 마커 위치). 이름이 그냥 'Description' 인
+>    옛 마커는 y 순서를 지키는 DP 정렬(`align_legacy`, 짝 없음 비용 150px)로 영역에 귀속시켜 한 번 백필한다 —
+>    시트 확장으로 +24~122px 밀린 마커도 순서만 지켜지면 제 영역에 붙는다. **기존 화면 백필은 `--fold`**(어느 행도
+>    맡지 않은 영역을 초안 행으로 만들지 않고 가장 가까운 위 행에 접어 넣음). 2026-09-23 PRD 119 13화면 백필 완료.
+> 3. 후보 영역 = root 직계 자식 중 Status Bar/HomeIndicator/Dim Overlay/Keyboard 제외(**NavBar 는 포함** — '헤더/진입'
+>    행의 대상), 'Content'·
+>    'Contents'·'Modal Sheet' 랩은 직계 자식으로 펼침, 높이 ≥ 24, 보이는 FRAME/INSTANCE (Row Rule·Spacer 제외).
+> 4. 병합: 기존 행 유지(영역 id 기준) + **새 영역 → 마커 + 초안 행**(제목 `<영역명> 영역 (초안 — 작성 필요)`,
+>    안의 텍스트·버튼 라벨을 나열, 동작은 `{동작: 확인 필요}` — 실물만 쓰고 날조 금지) + **사라진 영역 → 마커·행
+>    제거**(요약의 removed 에 남김). 현재 y 순으로 번호를 다시 매긴다(최대 19행).
+> 5. description 행 재기입 → 마커 전부 삭제 후 새 이름·위치로 재생성. `--dry-run` 은 report 만, `--no-draft` 는
+>    초안 대신 `{확인 필요}` 한 줄, `--fold` 는 새 영역을 이웃 행에 접기(백필 전용 — 평소엔 쓰지 않는다).
+>
+> **후속 의무**: added 가 있으면 초안 행을 PRD 근거([기능]/[예외처리] + UC·BR 표기)로 채워 `describe --update`
+> 하거나 Figma 에서 직접 편집한다. 영역을 묶어 마커 수를 줄이고 싶으면 `describe` 스펙으로 재정의한다.
+> 오프라인 테스트 `scripts/tests/test_marker_regen.py`.

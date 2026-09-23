@@ -602,6 +602,10 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   원커맨드**(홈 우측 `description` 인스턴스 140:64004 + `Description Num` 140:70842). 디스크립션 x=화면 x+폭+82,
   마커 x=화면 x−2, 행=기능 영역(위→아래, 최대 19), 본문=`제목 / [기능] · 불릿 (UC·BR·AF 근거) / [예외처리]`,
   미결정은 `{…: 확인 필요}`, 다른 화면은 상대 위치("우측 화면") 대신 화면 이름으로. 상세: `rule 0-DESC`.
+- **0-DESC-2 (2026-09-23 사용자 룰)** — 🔴 **화면 root 선택 + "마커 재생성" = `regen-markers` 즉시 실행** —
+  마커를 현재 영역 y 로 다시 찍고, 새 영역은 마커 + 디스크립션 초안 행(`(초안 — 작성 필요)`, 실물 텍스트·버튼만
+  나열) 자동 추가, 사라진 영역은 제거. 마커↔영역 추적 = 마커 이름 `Description [n] <영역id>[+id…]`(옛 마커는 y 순서 DP 귀속, 백필은 `--fold`).
+  요소 추가·영역 크기 변경 뒤엔 항상 실행. 상세: `rule 0-DESC-2`.
 - **0-FLOW (2026-09-23 사용자 룰)** — 🔴 **flow 화살표는 `flow <spec.json>` 원커맨드** — 플러그인은 커넥터
   생성·clone 불가 → 툴박스 풀 소진 후 **macOS 메뉴 Edit › Duplicate 클릭**으로 복제(⌘D 키 입력은 불가) →
   `set_connector` 로 버튼 RIGHT → 다음 화면 LEFT, 라벨 `동작 → 결과 (UC)`, 조건 ◇/진입점 □/외부 절차 ▱.
