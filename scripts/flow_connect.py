@@ -27,7 +27,9 @@ spec.json:
   ]
 }
 
-배치 관례(0-FLOW): 시작 = 화면 안 버튼/행 노드 RIGHT(또는 BOTTOM) → 끝 = 다음 화면 root LEFT. 조건 분기는
+배치 관례(0-FLOW): 시작 = 화면 안 버튼/행 노드 RIGHT(또는 BOTTOM) → 끝 = 다음 화면 root LEFT. ⚠️ endpoint 는 **top-level
+노드**(화면 root·화면 안 프레임·도형)만 — 인스턴스 내부 노드(`I…;…`)는 'Invalid endpointNodeId'. 화면 BOTTOM → 바로 아래
+도형은 TOP 이 아니라 LEFT/RIGHT 로(BOTTOM→TOP 은 라우팅 폭주 실측). 조건 분기는
 DIAMOND(라벨 '네'/'아니요 → …'), 화면 밖 진입점·단계는 SQUARE, 본인확인 같은 외부 절차는 PARALLELOGRAM.
 도형은 화면 밴드 아래(y ≈ 화면 y + 1180)에 anchor 화면 기준으로 둔다. 🔴 **먼 화면(3슬롯 이상)을 BOTTOM→BOTTOM
 으로 잇지 말 것** — Figma 가 elbow 를 화면 중간 높이에 잡아 화면을 가로지른다(2026-09-18 실측). 슬롯 순서를
@@ -130,6 +132,9 @@ def build_plan(spec, section_children, toolbox_children=()):
         if a and b and abs((a.get('x') or 0) - (b.get('x') or 0)) >= LONG_EDGE_SLOTS * SLOT and \
                 (e.get('fromMagnet', 'RIGHT').upper() == 'BOTTOM' and e.get('toMagnet', 'LEFT').upper() == 'BOTTOM'):
             warnings.append(f"edge {e.get('from')}→{e.get('to')}: {LONG_EDGE_SLOTS}슬롯 이상 BOTTOM→BOTTOM — 화면을 가로지름. 슬롯 인접 후 RIGHT→LEFT 권장")
+    for e in edges:   # 2026-09-23 실측: 화면 BOTTOM → 바로 아래 도형 TOP 은 Figma elbow 라우터가 bbox 를 페이지 밖(-85k)으로 폭주시킴 → LEFT/RIGHT 로
+        if e.get('fromMagnet', 'RIGHT').upper() == 'BOTTOM' and e.get('toMagnet', 'LEFT').upper() == 'TOP' and str(e.get('to', '')).startswith('@'):
+            warnings.append(f"edge {e.get('from')}→{e.get('to')}: BOTTOM→TOP(도형) 은 라우팅 폭주 실측 — toMagnet 을 LEFT/RIGHT 로 바꿀 것")
     return {'need': need, 'alloc': alloc, 'dup': dup, 'seed': seed, 'templates': tpl, 'warnings': warnings,
             'edges': len(edges), 'shapes': len(shapes)}
 
@@ -274,9 +279,15 @@ def run(spec, dry_run=False, log=print):
                                    'endNodeId': resolve(e['to']), 'endMagnet': e.get('toMagnet', 'LEFT'),
                                    'lineType': e.get('lineType', DEFAULT_LINE), 'text': e.get('label', '')})
         ok = bool(r.get('applied') or r.get('id'))
+        if ok:   # bbox 폭주 감지(페이지 밖으로 튄 elbow) — 실패로 기록해 재배선 유도
+            g = call('get_node_info', {'nodeId': cid})
+            if abs(g.get('x') or 0) > 20000 or (g.get('width') or 0) > 20000 or (g.get('height') or 0) > 20000:
+                ok = False
+                summary['errors'].append(f"connector {cid} bbox 폭주({round(g.get('x') or 0)},{round(g.get('y') or 0)},{round(g.get('width') or 0)}×{round(g.get('height') or 0)}) — magnet 조합 변경(BOTTOM→TOP 금지)")
         summary['edges'].append({'connector': cid, 'from': resolve(e['from']), 'to': resolve(e['to']), 'label': e.get('label', ''), 'ok': ok})
-        if not ok:
-            summary['errors'].append(f'set_connector 실패 {cid}: {str(r)[:120]}')
+        if not ok and not (r.get('applied') or r.get('id')):
+            hint = ' — 인스턴스 내부 노드(I…;…)는 endpoint 불가, 화면 root 나 도형을 쓸 것' if ';' in (str(e.get('from')) + str(e.get('to'))) else ''
+            summary['errors'].append(f'set_connector 실패 {cid}: {str(r)[:120]}{hint}')
     # 4) 남은 복제본은 삭제 (툴박스 템플릿을 오염시키지 않음)
     leftovers = [nid for ids in res.values() for nid in ids]
     for nid in leftovers:

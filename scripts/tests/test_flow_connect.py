@@ -78,3 +78,10 @@ def test_duplicate_uses_menu_click_not_keystroke():
     cmd = ' '.join(FC.osascript_duplicate_cmd())
     assert 'click menu item "Duplicate" of menu "Edit"' in cmd
     assert 'keystroke' not in cmd
+
+
+def test_bottom_to_top_shape_edge_warns():
+    spec = {"section": "S", "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "x": 0, "y": 0}],
+            "edges": [{"from": "s1", "fromMagnet": "BOTTOM", "to": "@q", "toMagnet": "TOP"}]}
+    plan = FC.build_plan(spec, SECTION, TOOLBOX)
+    assert any('BOTTOM→TOP' in w for w in plan['warnings'])
