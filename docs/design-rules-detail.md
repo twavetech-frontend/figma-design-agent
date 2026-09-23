@@ -1777,8 +1777,12 @@
   select/dropdown/checkbox/radio/toggle/slider/textarea/search/segmented 또는 ds_catalog 폼 컴포넌트 키)을 CTA 에서 제외
   (`_bp_is_form_control`). ② caption 판정에서 **이름에 'label' 이 든 TEXT**(필드/KV 라벨) 제외(굵기 조건은 원 룰대로 Bold 만 제외 —
   원 사례 caption 이 SemiBold 였음). ③ `_qa_same_name_text_color`: enforcer 체인 뒤 같은 이름 TEXT('Field Label'·'KV Label'·
-  'Section Title' …)의 fontColor 가 갈리면 `[QA][consistency] ⚠️` 로그 — 같은 레벨 정보는 한 토큰. 회귀 테스트 4건
+  'Section Title' …)의 fontColor 가 갈리면 `[QA][consistency] ⚠️` 로그 — 같은 레벨 정보는 한 토큰. 회귀 테스트 6건
   (`test_cta_caption_secondary.py`). 라이브 3화면(SCR005·약관 이의신청·이의신청 조회) 라벨은 text-primary 로 재바인딩.
+  **전수 점검(같은 날)**: Badge 마커('추천'·'현재 계정'·'일반 계정')도 `_instanceText` 를 써서 같은 오인이 있었다 —
+  닉네임(Account Nick) 뒤에 배지가 오면 닉네임이 secondary 로(SCR001·SCR004·보류·확정 완료 4화면). 그래서 CTA 판정을
+  **버튼 컴포넌트 키(ds_catalog 이름에 Button) 또는 이름에 button/cta/동작 키워드**로 좁혔다(`_button_keys`) — 라벨만으로는
+  CTA 아님. 9개 TEXT 재바인딩, 5화면 verify PASS. KV Value 의 brand 강조('1개 진행 중')는 의도된 예외라 유지.
 
 ### 12. 섹션 간 간격 — 배경색 동일 + divider 없으면 gap 0
 - 인접한 섹션의 배경색이 동일(둘 다 투명/white)이고 사이에 divider가 없으면 **gap 0px** — 섹션 내부 padding이 여백 역할

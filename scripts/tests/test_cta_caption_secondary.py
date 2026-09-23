@@ -125,3 +125,20 @@ def test_qa_same_name_text_color_flags_split(capsys):
     assert "Field Label" in capsys.readouterr().out
     bp["children"][1]["children"][0]["fontColor"] = P
     assert fc._qa_same_name_text_color(bp) == 0
+
+
+def _badge(label="추천"):
+    return {"name": "Recommend Marker", "type": "instance", "componentKey": "k-badge", "_instanceText": label,
+            "instanceProperties": {"Type": "Badge color", "Color": "Brand"}}
+
+
+def test_badge_with_label_is_not_cta_and_nick_before_badge_keeps_primary():
+    assert fc._bp_is_cta(_badge()) is False
+    bp = _wrap(_T("도토리", 16, "SemiBold", P, name="Account Nick"), _badge())
+    fc._enforce_cta_caption_secondary(bp)
+    assert _first_text(bp)["fontColor"] == P
+
+
+def test_button_named_instance_with_label_is_cta():
+    assert fc._bp_is_cta({"name": "Confirm CTA", "type": "instance", "componentKey": "k", "_instanceText": "확정하기"}) is True
+    assert fc._bp_is_cta({"name": "Later Button", "type": "instance", "componentKey": "k", "_instanceText": "나중에 하기"}) is True

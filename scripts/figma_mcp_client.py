@@ -3887,6 +3887,14 @@ def _form_control_keys() -> set:
         return set()
 
 
+def _button_keys() -> set:
+    try:
+        import ds_catalog as _C
+        return {v for k, v in _C.COMPONENT_KEYS.items() if "button" in k.lower() and "tabs" not in k.lower()}
+    except Exception:
+        return set()
+
+
 def _bp_is_form_control(node: dict) -> bool:
     """blueprint instance 가 폼 컨트롤(입력·선택)인가 — 이름 키워드 또는 ds_catalog 폼 컴포넌트 키."""
     if not isinstance(node, dict) or (node.get("type") or "").lower() != "instance":
@@ -3907,9 +3915,13 @@ def _bp_is_cta(node: dict) -> bool:
     if t == "instance" and node.get("componentKey"):
         if _bp_is_form_control(node):
             return False
-        if node.get("_instanceText"):
-            return True  # 라벨 박힌 DS 버튼 = CTA
-        return any(k in nl for k in _CTA_NAME_KW)
+        # 2026-09-23 전수 점검: Badge('추천'/'일반 계정' 마커)도 _instanceText 를 쓴다 — 라벨만으로 CTA 로 보지 않는다.
+        # CTA = 버튼 컴포넌트 키(ds_catalog 이름에 Button) 또는 이름에 button/cta/동작 키워드가 있는 인스턴스.
+        if node.get("componentKey") in _button_keys():
+            return True
+        if any(k in nl for k in _CTA_NAME_KW):
+            return True
+        return False
     if t in ("frame", "") and (nl.endswith(" button") or nl.endswith(" btn")
                                or nl.endswith(" cta") or nl in ("button", "cta")):
         return True
