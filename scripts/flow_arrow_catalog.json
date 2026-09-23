@@ -123,6 +123,38 @@
       "constraints": {
         "notFromKind": "DIAMOND"
       }
+    },
+    "input-done": {
+      "templateId": "4802:104151",
+      "purpose": "입력 필드에서 입력이 완료되면 다음으로 이어지는 전이 — 진한 회색(#313131)",
+      "when": [
+        "숫자·문자 키패드, 텍스트 필드, 인증번호 등 입력이 규정 자릿수·형식을 채우는 순간 다음 화면으로 넘어갈 때",
+        "시작 = 입력 필드·키패드 영역(또는 그 화면 root), 끝 = 다음 화면 root LEFT",
+        "라벨은 '<입력 내용> 입력 완료 → <다음 단계>' (예: '숫자 4자리 입력 완료 → 영문 입력')"
+      ],
+      "notWhen": [
+        "버튼을 눌러야 넘어가는 전이(tap — 입력 후 '확인' 버튼이 있으면 tap)",
+        "입력과 무관한 시스템 자동 전이(auto — 응답·타이머·검증 결과)",
+        "◇ 조건 도형에서 나가는 가지(cond-yes/cond-no)"
+      ],
+      "style": {
+        "strokeWeight": 4,
+        "color": "#313131",
+        "opacity": 1,
+        "dash": null,
+        "lineType": "ELBOWED",
+        "startCap": "CIRCLE_FILLED",
+        "endCap": "ARROW_EQUILATERAL"
+      },
+      "defaults": {
+        "lineType": "ELBOWED",
+        "fromMagnet": "RIGHT",
+        "toMagnet": "LEFT"
+      },
+      "labelHint": "숫자 4자리 입력 완료 → 영문 입력",
+      "constraints": {
+        "notFromKind": "DIAMOND"
+      }
     }
   },
   "default": "tap"

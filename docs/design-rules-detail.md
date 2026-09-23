@@ -2290,3 +2290,4 @@
 > | `cond-no` | 4802:104152 | 4px 빨강 #f24822, ELBOWED, ●→▶ | ◇ 조건 도형의 **'아니요/No' 가지** (constraints fromKind=DIAMOND), 라벨 `아니요 → <다음 단계>` | 화면·버튼에서 나가는 일반 전이, '네' 가지, ◇ 밖의 오류·실패 전이 |
 > | `tap` **(default)** | 4802:104172 | 4px 파랑 #3dadff, ELBOWED, ●→▶ | **사용자 탭 일반 전이** — 화면 안 버튼·행·링크 탭 → 다음 화면 root LEFT, 라벨 `<트리거> 탭` / `<동작> → <결과> (UC)` (constraints notFromKind=DIAMOND) | ◇ 에서 나가는 가지(cond-yes/no), 시스템 자동 전이 |
 > | `auto` | 4802:104150 | 4px 회색 #757575, ELBOWED, ●→▶ | **시스템 자동 전이** — 입력 완료·검증 통과·API 응답·타이머 뒤 자동 이동, 라벨 `<조건/이벤트> → <결과>` (constraints notFromKind=DIAMOND) | 사용자 탭 전이(tap), ◇ 가지 |
+> | `input-done` | 4802:104151 | 4px 진회색 #313131, ELBOWED, ●→▶ | **입력 완료 전이** — 키패드·텍스트 필드·인증번호가 규정 자릿수/형식을 채우는 순간 다음 화면으로, 시작 = 입력 영역(또는 화면 root), 라벨 `<입력> 입력 완료 → <다음>` (constraints notFromKind=DIAMOND) | 입력 뒤 확인 버튼을 눌러야 가는 전이(tap), 입력과 무관한 자동 전이(auto), ◇ 가지 |
