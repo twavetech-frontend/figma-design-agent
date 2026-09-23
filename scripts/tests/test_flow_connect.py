@@ -4,6 +4,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..'))
 import flow_connect as FC  # noqa: E402
 
+NOCAT = {"arrows": {}, "default": None}   # 실제 카탈로그(등록 화살표)와 무관하게 순수 자원 할당만 검증
+
 SECTION = [
     {"id": "s1", "type": "FRAME", "name": "imin_a", "x": 102, "y": 120},
     {"id": "s2", "type": "FRAME", "name": "imin_b", "x": 1152, "y": 120},
@@ -20,7 +22,7 @@ TOOLBOX = [
 
 
 def test_toolbox_is_template_never_consumed():
-    spec = {"section": "S",
+    spec = {"section": "S", "_catalog": NOCAT,
             "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "anchor": "s2"},
                        {"key": "home", "kind": "SQUARE", "text": "홈", "x": 0, "y": 0}],
             "edges": [{"from": "s1", "to": "s2"}, {"from": "s2", "to": "@q"}, {"from": "@q", "to": "@home"},
@@ -35,7 +37,7 @@ def test_toolbox_is_template_never_consumed():
 
 
 def test_consume_pool_is_opt_in_legacy():
-    spec = {"section": "S", "consumePool": True, "edges": [{"from": "s1", "to": "s2"}, {"from": "s2", "to": "s5"}, {"from": "s1", "to": "s5"}]}
+    spec = {"section": "S", "_catalog": NOCAT, "consumePool": True, "edges": [{"from": "s1", "to": "s2"}, {"from": "s2", "to": "s5"}, {"from": "s1", "to": "s5"}]}
     plan = FC.build_plan(spec, SECTION, TOOLBOX)
     assert plan['alloc']['CONNECTOR'] == ['t1', 't2'] and plan['dup']['CONNECTOR'] == 1
 
@@ -47,13 +49,13 @@ def test_parallelogram_right_normalized():
 
 def test_unknown_shape_key_and_missing_seed_raise():
     try:
-        FC.build_plan({"section": "S", "edges": [{"from": "s1", "to": "@nope"}]}, SECTION, [])
+        FC.build_plan({"section": "S", "_catalog": NOCAT, "edges": [{"from": "s1", "to": "@nope"}]}, SECTION, [])
     except ValueError as e:
         assert 'shapes key' in str(e)
     else:
         raise AssertionError('ValueError 기대')
     try:
-        FC.build_plan({"section": "S", "shapes": [{"key": "p", "kind": "PARALLELOGRAM", "text": "t", "x": 0, "y": 0}]}, SECTION, [])
+        FC.build_plan({"section": "S", "_catalog": NOCAT, "shapes": [{"key": "p", "kind": "PARALLELOGRAM", "text": "t", "x": 0, "y": 0}]}, SECTION, [])
     except ValueError as e:
         assert 'my tool box' in str(e) and 'PARALLELOGRAM' in str(e)
     else:
@@ -61,7 +63,7 @@ def test_unknown_shape_key_and_missing_seed_raise():
 
 
 def test_long_bottom_bottom_edge_warns_but_right_left_does_not():
-    spec = {"section": "S", "edges": [
+    spec = {"section": "S", "_catalog": NOCAT, "edges": [
         {"from": "s1", "to": "s5", "fromMagnet": "BOTTOM", "toMagnet": "BOTTOM"},
         {"from": "s1", "to": "s5", "fromMagnet": "RIGHT", "toMagnet": "LEFT"},
     ]}
@@ -81,7 +83,7 @@ def test_duplicate_uses_menu_click_not_keystroke():
 
 
 def test_bottom_to_top_shape_edge_warns():
-    spec = {"section": "S", "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "x": 0, "y": 0}],
+    spec = {"section": "S", "_catalog": NOCAT, "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "x": 0, "y": 0}],
             "edges": [{"from": "s1", "fromMagnet": "BOTTOM", "to": "@q", "toMagnet": "TOP"}]}
     plan = FC.build_plan(spec, SECTION, TOOLBOX)
     assert any('BOTTOM→TOP' in w for w in plan['warnings'])
