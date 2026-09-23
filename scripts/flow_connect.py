@@ -13,10 +13,9 @@
 
 spec.json:
 {
-  "section": "4802:102913",                   # 화면·도형·커넥터가 사는 SECTION(부모)
-  "toolbox": "4544:87444",                    # (선택) 사용자가 FigJam 에서 붙여 둔 여분 풀(먼저 소진)
-  "seed": {"CONNECTOR": "4544:87446", "DIAMOND": "4544:87445", "SQUARE": "4544:87469"},
-                                              # (선택) 풀이 모자랄 때 메뉴 Duplicate 할 원본 — 없으면 섹션에서 자동 탐색
+  "section": "4802:102913",                   # (선택) 화면·도형·커넥터가 사는 SECTION — 없으면 Figma 선택(섹션 또는 화면들의 부모)
+  "toolbox": "4802:104148",                   # (선택) 템플릿 섹션 — 없으면 현재 페이지의 'my tool box' 자동 탐색
+  "seed": {"CONNECTOR": "…"},                 # (선택) kind 별 복제 원본 override — 기본은 툴박스 템플릿(원본은 절대 소비 안 함)
   "shapes": [                                 # (선택) 새 도형 — 조건=DIAMOND, 화면 밖 단계/진입점=SQUARE, 외부 절차=PARALLELOGRAM
     {"key": "q_multi", "kind": "DIAMOND", "text": "두 계정 모두\\n스테이지 진행 중?",
      "anchor": "4802:104668", "dx": 10, "dy": 1180}   # anchor 화면 기준 오프셋 (또는 "x","y" 절대)
@@ -33,9 +32,12 @@ DIAMOND(라벨 '네'/'아니요 → …'), 화면 밖 진입점·단계는 SQUAR
 도형은 화면 밴드 아래(y ≈ 화면 y + 1180)에 anchor 화면 기준으로 둔다. 🔴 **먼 화면(3슬롯 이상)을 BOTTOM→BOTTOM
 으로 잇지 말 것** — Figma 가 elbow 를 화면 중간 높이에 잡아 화면을 가로지른다(2026-09-18 실측). 슬롯 순서를
 바꿔 인접시키고 RIGHT→LEFT 로 잇는다(스크립트가 WARN).
-파이프라인: 섹션 자식 1회 조회 → 계획(풀 할당·복제 수) → 메뉴 Duplicate(맥 전용) → 도형 insert/move/텍스트 →
-커넥터 insert → set_connector → FLOW-SUMMARY JSON. macOS 가 아니면 복제 단계에서 멈추고 사용자에게
-FigJam 복사·붙여넣기를 요청한다.
+🔴 자원 규칙(2026-09-23 사용자): flow 를 이을 땐 **현재 페이지 `my tool box` 섹션의 도형·화살표를 템플릿으로 삼아
+필요한 수만큼 복제**한다 — 원본을 옮겨 쓰지 않는다(consumePool 은 레거시, 기본 off). 복제는 플러그인 clone_node
+(Design 에디터에서 CONNECTOR 불가)가 아니라 **focus_node + macOS 메뉴 Edit › Duplicate 클릭**(duplicate_via_menu).
+파이프라인: 섹션 자식 1회 조회 → 툴박스 탐색 → 계획(kind 별 복제 수) → 메뉴 Duplicate(맥 전용) → 복제본을 섹션으로
+insert → 도형 move/텍스트 → set_connector → 남은 복제본 삭제 → FLOW-SUMMARY JSON. macOS 가 아니면 복제 단계에서
+멈추고 사용자에게 FigJam 복사·붙여넣기를 요청한다.
 오프라인 테스트: scripts/tests/test_flow_connect.py.
 """
 import json
@@ -51,53 +53,76 @@ if _HERE not in sys.path:
 SLOT = 1050
 LONG_EDGE_SLOTS = 3
 SHAPE_KINDS = ('DIAMOND', 'SQUARE', 'PARALLELOGRAM', 'ROUNDED_RECTANGLE', 'ELLIPSE')
+TOOLBOX_NAME = 'my tool box'     # 현재 페이지의 템플릿 섹션 — 원본은 절대 소비하지 않고 메뉴 Duplicate 로 복제해서 쓴다
 DEFAULT_LINE = 'ELBOWED'
 TERMINAL_APP = 'Orca'
 
 
 # ── 순수 계획 ───────────────────────────────────────────────────────────────────
 def kind_of(node):
+    """CONNECTOR | DIAMOND | SQUARE | PARALLELOGRAM(_RIGHT/_LEFT 통합) | … | None"""
     if node.get('type') == 'CONNECTOR':
         return 'CONNECTOR'
     if node.get('type') == 'SHAPE_WITH_TEXT':
-        return (node.get('shapeType') or 'SQUARE').upper()
+        st = (node.get('shapeType') or 'SQUARE').upper()
+        return 'PARALLELOGRAM' if st.startswith('PARALLELOGRAM') else st
     return None
 
 
+def templates_of(toolbox_children):
+    """툴박스 자식 → kind 별 템플릿(첫 노드) id."""
+    out = {}
+    for n in toolbox_children:
+        k = kind_of(n)
+        if k and k not in out:
+            out[k] = n['id']
+    return out
+
+
 def build_plan(spec, section_children, toolbox_children=()):
-    """풀(툴박스) 우선 할당 → 부족분은 seed 복제. 반환 plan(dict). MCP 호출 없음."""
+    """규칙 0-FLOW: 툴박스(`my tool box`)의 도형·화살표는 **템플릿** — 원본을 옮겨 쓰지 않고 필요한 수만큼
+    macOS 메뉴 Duplicate 로 복제한다. 반환 plan(dict). MCP 호출 없음.
+    seed 우선순위: spec.seed[kind] > 툴박스 템플릿 > (consumePool 레거시) 섹션 안 기존 노드."""
     edges = spec.get('edges') or []
     shapes = spec.get('shapes') or []
-    for s in shapes:
-        if not s.get('key') or s.get('kind', '').upper() not in SHAPE_KINDS:
-            raise ValueError(f"shapes 항목에 key/kind(DIAMOND|SQUARE|PARALLELOGRAM…) 필요: {s}")
+    for sh in shapes:
+        if not sh.get('key') or sh.get('kind', '').upper() not in SHAPE_KINDS:
+            raise ValueError(f"shapes 항목에 key/kind(DIAMOND|SQUARE|PARALLELOGRAM…) 필요: {sh}")
     for e in edges:
         for k in ('from', 'to'):
             v = e.get(k)
             if not v:
                 raise ValueError(f'edge 에 {k} 없음: {e}')
-            if str(v).startswith('@') and v[1:] not in {s['key'] for s in shapes}:
+            if str(v).startswith('@') and v[1:] not in {sh['key'] for sh in shapes}:
                 raise ValueError(f"edge {k}='{v}' 가 shapes key 에 없음")
-    pool = {}
-    for n in toolbox_children:
-        k = kind_of(n)
-        if k:
-            pool.setdefault(k, []).append(n['id'])
     need = {'CONNECTOR': sum(1 for e in edges if not e.get('connector'))}
-    for s in shapes:
-        need[s['kind'].upper()] = need.get(s['kind'].upper(), 0) + 1
-    alloc, dup = {}, {}
+    for sh in shapes:
+        need[sh['kind'].upper()] = need.get(sh['kind'].upper(), 0) + 1
+    need = {k: v for k, v in need.items() if v > 0}
+    tpl = templates_of(toolbox_children)
+    seed = dict(spec.get('seed') or {})
+    alloc, dup, missing = {}, {}, []
+    pool = {}
+    if spec.get('consumePool'):   # 레거시: 툴박스 노드를 직접 소비 (기본 False — 규칙 0-FLOW 위반이라 명시 시에만)
+        for n in toolbox_children:
+            k = kind_of(n)
+            if k:
+                pool.setdefault(k, []).append(n['id'])
     for k, cnt in need.items():
         have = pool.get(k, [])[:cnt]
         alloc[k] = have
         dup[k] = cnt - len(have)
-    seed = dict(spec.get('seed') or {})
-    for k, cnt in dup.items():
-        if cnt > 0 and not seed.get(k):
-            cand = [n['id'] for n in section_children if kind_of(n) == k]
-            if not cand:
-                raise ValueError(f'{k} 복제 원본(seed) 없음 — 섹션에도 없음. 사용자에게 FigJam 에서 1개 붙여 달라고 요청')
-            seed[k] = cand[0]
+        if dup[k] > 0 and not seed.get(k):
+            if tpl.get(k):
+                seed[k] = tpl[k]
+            else:
+                cand = [n['id'] for n in section_children if kind_of(n) == k]
+                if cand:
+                    seed[k] = cand[0]   # 툴박스에 없으면 섹션 안 기존 노드를 템플릿으로(복제만, 소비 안 함)
+                else:
+                    missing.append(k)
+    if missing:
+        raise ValueError(f"'{TOOLBOX_NAME}' 에 {', '.join(missing)} 템플릿이 없음 — 사용자에게 FigJam 에서 해당 도형/화살표를 복사해 '{TOOLBOX_NAME}' 섹션에 붙여 달라고 요청 (플러그인은 생성·clone 불가)")
     byid = {n['id']: n for n in section_children}
     warnings = []
     for e in edges:
@@ -105,7 +130,7 @@ def build_plan(spec, section_children, toolbox_children=()):
         if a and b and abs((a.get('x') or 0) - (b.get('x') or 0)) >= LONG_EDGE_SLOTS * SLOT and \
                 (e.get('fromMagnet', 'RIGHT').upper() == 'BOTTOM' and e.get('toMagnet', 'LEFT').upper() == 'BOTTOM'):
             warnings.append(f"edge {e.get('from')}→{e.get('to')}: {LONG_EDGE_SLOTS}슬롯 이상 BOTTOM→BOTTOM — 화면을 가로지름. 슬롯 인접 후 RIGHT→LEFT 권장")
-    return {'need': need, 'alloc': alloc, 'dup': dup, 'seed': seed, 'warnings': warnings,
+    return {'need': need, 'alloc': alloc, 'dup': dup, 'seed': seed, 'templates': tpl, 'warnings': warnings,
             'edges': len(edges), 'shapes': len(shapes)}
 
 
@@ -126,6 +151,38 @@ def osascript_duplicate_cmd():
 
 
 # ── 실행 ────────────────────────────────────────────────────────────────────────
+def find_toolbox(call):
+    """현재 페이지에서 `my tool box` 섹션을 찾는다(find_nodes_by_name; 여러 개면 자식이 가장 많은 것)."""
+    r = call('find_nodes_by_name', {'name': TOOLBOX_NAME, 'matchMode': 'exact'})
+    hits = [m for m in (r.get('matches') or []) if m.get('type') in ('SECTION', 'FRAME')]
+    if not hits:
+        r = call('find_nodes_by_name', {'name': TOOLBOX_NAME})
+        hits = [m for m in (r.get('matches') or []) if m.get('type') in ('SECTION', 'FRAME')]
+    if not hits:
+        return None
+    best, bc = None, -1
+    for h in hits:
+        kids = call('get_node_tree', {'nodeId': h['id'], 'maxDepth': 1}).get('children') or []
+        c = sum(1 for k in kids if kind_of(k))
+        if c > bc:
+            best, bc = h['id'], c
+    return best
+
+
+def resolve_section_from_selection(call):
+    """spec.section 이 없으면 Figma 선택에서: SECTION 이면 그것, 화면(FRAME)들이면 공통 부모."""
+    sel = call('get_selection', {})
+    nodes = sel.get('nodes') or sel.get('selection') or []
+    if not nodes:
+        raise RuntimeError('spec.section 이 없고 Figma 선택도 없음 — 섹션 또는 화면을 선택하거나 section 을 지정')
+    if nodes[0].get('type') == 'SECTION':
+        return nodes[0]['id']
+    parents = {call('get_node_info', {'nodeId': n['id']}).get('parentId') for n in nodes}
+    if len(parents) != 1:
+        raise RuntimeError(f'선택 노드의 부모가 여러 개({len(parents)}) — 같은 섹션 안 노드만 선택')
+    return parents.pop()
+
+
 def duplicate_via_menu(call, src, n, log=print):
     """focus_node(src) → 메뉴 Duplicate ×n → 새 id 목록(get_selection 으로 확인)."""
     if sys.platform != 'darwin':
@@ -156,15 +213,20 @@ def run(spec, dry_run=False, log=print):
 
     t0 = time.time()
     fc.ensure_session()
-    sec = spec['section']
+    sec = spec.get('section') or resolve_section_from_selection(call)
     kids = call('get_node_tree', {'nodeId': sec, 'maxDepth': 1}).get('children') or []
-    tb = []
-    if spec.get('toolbox'):
-        tb = call('get_node_info', {'nodeId': spec['toolbox']}).get('children') or []
+    tb_id = spec.get('toolbox')
+    tb = (call('get_node_tree', {'nodeId': tb_id, 'maxDepth': 1}).get('children') or []) if tb_id else []
+    if not templates_of(tb):   # 지정 툴박스가 비었거나 없음 → 현재 페이지 'my tool box' 자동 탐색
+        auto = find_toolbox(call)
+        if auto and auto != tb_id:
+            tb_id = auto
+            tb = call('get_node_tree', {'nodeId': tb_id, 'maxDepth': 1}).get('children') or []
+    log(f"  [toolbox] {tb_id or '없음'} — 템플릿 {templates_of(tb)}")
     plan = build_plan(spec, kids, tb)
     for w in plan['warnings']:
         log('  ⚠️ ' + w)
-    summary = {'section': sec, 'plan': {k: plan[k] for k in ('need', 'alloc', 'dup', 'seed', 'warnings')}, 'shapes': {}, 'edges': [], 'errors': []}
+    summary = {'section': sec, 'toolbox': tb_id, 'plan': {k: plan[k] for k in ('need', 'alloc', 'dup', 'seed', 'templates', 'warnings')}, 'shapes': {}, 'edges': [], 'errors': []}
     if dry_run:
         return summary
 
@@ -215,12 +277,11 @@ def run(spec, dry_run=False, log=print):
         summary['edges'].append({'connector': cid, 'from': resolve(e['from']), 'to': resolve(e['to']), 'label': e.get('label', ''), 'ok': ok})
         if not ok:
             summary['errors'].append(f'set_connector 실패 {cid}: {str(r)[:120]}')
-    # 4) 남은 자원은 툴박스로
+    # 4) 남은 복제본은 삭제 (툴박스 템플릿을 오염시키지 않음)
     leftovers = [nid for ids in res.values() for nid in ids]
-    if leftovers and spec.get('toolbox'):
-        for nid in leftovers:
-            call('insert_child', {'childId': nid, 'parentId': spec['toolbox']})
-    summary['leftovers'] = leftovers
+    for nid in leftovers:
+        call('delete_node', {'nodeId': nid})
+    summary['leftovers_deleted'] = leftovers
     summary['elapsed_s'] = round(time.time() - t0, 1)
     return summary
 

@@ -608,8 +608,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   마커를 현재 영역 y 로 다시 찍고, 새 영역은 마커 + 디스크립션 초안 행(`(초안 — 작성 필요)`, 실물 텍스트·버튼만
   나열) 자동 추가, 사라진 영역은 제거. 마커↔영역 추적 = 마커 이름 `Description [n] <영역id>[+id…]`(옛 마커는 y 순서 DP 귀속, 백필은 `--fold`).
   요소 추가·영역 크기 변경 뒤엔 항상 실행. 상세: `rule 0-DESC-2`.
-- **0-FLOW (2026-09-23 사용자 룰)** — 🔴 **flow 화살표는 `flow <spec.json>` 원커맨드** — 플러그인은 커넥터
-  생성·clone 불가 → 툴박스 풀 소진 후 **macOS 메뉴 Edit › Duplicate 클릭**으로 복제(⌘D 키 입력은 불가) →
+- **0-FLOW (2026-09-23 사용자 룰)** — 🔴 **flow 화살표는 `flow <spec.json>` 원커맨드** — 선택 섹션/노드의 flow 는
+  **현재 페이지 `my tool box` 섹션의 도형·화살표를 템플릿으로 복제해서만** 쓴다(원본 소비 금지). 복제는 플러그인
+  clone·⌘D 가 아니라 **focus_node + macOS 메뉴 Edit › Duplicate 클릭**(duplicate_via_menu) →
   `set_connector` 로 버튼 RIGHT → 다음 화면 LEFT, 라벨 `동작 → 결과 (UC)`, 조건 ◇/진입점 □/외부 절차 ▱.
   🔴 3슬롯 이상 BOTTOM→BOTTOM 금지(화면 가로지름) — 슬롯 인접시켜 RIGHT→LEFT. 상세: `rule 0-FLOW`.
 - **0-F-2 / 0-R** — 작업 종료 시 `cleanup-qa` 1회(스크린샷·썸네일 삭제). 빌드 성공 시 사용한

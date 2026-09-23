@@ -16054,7 +16054,7 @@ CLI_COMMANDS = [
     {"name": "regen-markers", "usage": "regen-markers [<screenId>] [--dry-run] [--no-draft]",
      "description": "'마커 재생성' — 선택한 화면의 Description Num 마커를 현재 영역 위치로 재생성, 새 영역은 마커+디스크립션 초안 행 추가, 사라진 영역은 제거 (규칙 0-DESC-2)"},
     {"name": "flow", "usage": "flow <spec.json> [--dry-run]",
-     "description": "FigJam 커넥터·도형으로 화면 flow 배선 원커맨드 (규칙 0-FLOW — 툴박스 풀 → macOS 메뉴 Duplicate 복제 → set_connector 라벨·magnet)"},
+     "description": "FigJam 커넥터·도형으로 화면 flow 배선 원커맨드 (규칙 0-FLOW — 현재 페이지 'my tool box' 템플릿을 macOS 메뉴 Duplicate 로 복제(원본 소비 금지) → set_connector 라벨·magnet; section 없으면 Figma 선택)"},
     {"name": "place", "usage": "place <rootId> [--center|--right]",
      "description": "새 root 배치 — 기본 뷰포트 중앙(규칙 0-H-3), --right 는 선택 노드 우측(0-H-2). 수동 조립/변환 트랙 공용"},
     {"name": "manifest", "usage": "manifest [--json]", "json": True,

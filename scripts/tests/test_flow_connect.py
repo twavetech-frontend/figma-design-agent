@@ -19,7 +19,7 @@ TOOLBOX = [
 ]
 
 
-def test_pool_first_then_duplicate_from_auto_seed():
+def test_toolbox_is_template_never_consumed():
     spec = {"section": "S",
             "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "anchor": "s2"},
                        {"key": "home", "kind": "SQUARE", "text": "홈", "x": 0, "y": 0}],
@@ -27,10 +27,22 @@ def test_pool_first_then_duplicate_from_auto_seed():
                       {"from": "s1", "to": "s5", "connector": "c1"}]}
     plan = FC.build_plan(spec, SECTION, TOOLBOX)
     assert plan['need'] == {'CONNECTOR': 3, 'DIAMOND': 1, 'SQUARE': 1}
+    assert plan['alloc'] == {'CONNECTOR': [], 'DIAMOND': [], 'SQUARE': []}          # 원본 소비 없음
+    assert plan['dup'] == {'CONNECTOR': 3, 'DIAMOND': 1, 'SQUARE': 1}               # 전부 복제
+    assert plan['seed']['CONNECTOR'] == 't1' and plan['seed']['DIAMOND'] == 't3'    # 툴박스 템플릿
+    assert plan['seed']['SQUARE'] == 'q1'                                            # 툴박스에 없으면 섹션 노드를 템플릿으로
+    assert plan['templates'] == {'CONNECTOR': 't1', 'DIAMOND': 't3'}
+
+
+def test_consume_pool_is_opt_in_legacy():
+    spec = {"section": "S", "consumePool": True, "edges": [{"from": "s1", "to": "s2"}, {"from": "s2", "to": "s5"}, {"from": "s1", "to": "s5"}]}
+    plan = FC.build_plan(spec, SECTION, TOOLBOX)
     assert plan['alloc']['CONNECTOR'] == ['t1', 't2'] and plan['dup']['CONNECTOR'] == 1
-    assert plan['alloc']['DIAMOND'] == ['t3'] and plan['dup']['DIAMOND'] == 0
-    assert plan['dup']['SQUARE'] == 1 and plan['seed']['SQUARE'] == 'q1'   # 섹션에서 자동 탐색
-    assert plan['seed']['CONNECTOR'] == 'c1'
+
+
+def test_parallelogram_right_normalized():
+    assert FC.kind_of({"type": "SHAPE_WITH_TEXT", "shapeType": "PARALLELOGRAM_RIGHT"}) == 'PARALLELOGRAM'
+    assert FC.templates_of([{"id": "p", "type": "SHAPE_WITH_TEXT", "shapeType": "PARALLELOGRAM_RIGHT"}]) == {'PARALLELOGRAM': 'p'}
 
 
 def test_unknown_shape_key_and_missing_seed_raise():
@@ -43,7 +55,7 @@ def test_unknown_shape_key_and_missing_seed_raise():
     try:
         FC.build_plan({"section": "S", "shapes": [{"key": "p", "kind": "PARALLELOGRAM", "text": "t", "x": 0, "y": 0}]}, SECTION, [])
     except ValueError as e:
-        assert 'seed' in str(e)
+        assert 'my tool box' in str(e) and 'PARALLELOGRAM' in str(e)
     else:
         raise AssertionError('ValueError 기대')
 
