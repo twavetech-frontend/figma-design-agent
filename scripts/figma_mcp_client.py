@@ -15981,6 +15981,10 @@ CLI_COMMANDS = [
      "description": "디자인 룰 상세 원문 조회 (CLAUDE.md 압축 인덱스의 retrieval — docs/design-rules-detail.md)"},
     {"name": "clone-variant", "usage": "clone-variant <spec.json> [--dry-run]",
      "description": "기존 DS 본 clone + 텍스트 치환/삭제 + 인원수별 스테이지 색 + bind·verify 1회 원커맨드 (0-G-3 clone 트랙, 목표 ≤2분)"},
+    {"name": "describe", "usage": "describe <spec.json> [--dry-run]",
+     "description": "화면 우측 description 인스턴스 + 영역별 Description Num 마커 원커맨드 (규칙 0-DESC — 행=기능 영역, x+폭+82 / 마커 x−2)"},
+    {"name": "flow", "usage": "flow <spec.json> [--dry-run]",
+     "description": "FigJam 커넥터·도형으로 화면 flow 배선 원커맨드 (규칙 0-FLOW — 툴박스 풀 → macOS 메뉴 Duplicate 복제 → set_connector 라벨·magnet)"},
     {"name": "place", "usage": "place <rootId> [--center|--right]",
      "description": "새 root 배치 — 기본 뷰포트 중앙(규칙 0-H-3), --right 는 선택 노드 우측(0-H-2). 수동 조립/변환 트랙 공용"},
     {"name": "manifest", "usage": "manifest [--json]", "json": True,
@@ -16231,6 +16235,12 @@ def main():
     elif cmd == "clone-variant":
         import clone_variant as _cv
         sys.exit(_cv.main(sys.argv[2:]))
+    elif cmd == "describe":
+        import screen_description as _sd
+        sys.exit(_sd.main(sys.argv[2:]))
+    elif cmd == "flow":
+        import flow_connect as _fl
+        sys.exit(_fl.main(sys.argv[2:]))
     elif cmd == "place":
         if len(sys.argv) < 3:
             print("사용: place <rootId> [--center|--right]"); sys.exit(1)

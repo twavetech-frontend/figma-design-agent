@@ -598,6 +598,14 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   실측 시그니처, `--calibrate <cardId>` 로 재측정)의 거리 최소 스타일을 shadow_check 가 **권장**하고
   `--apply` 가 즉시 바인딩 — 눈으로 고르지 않는다. 캡처 실측 시 박스 안만 재지 말고 경계 바깥 램프도 잰다. 한글 글리프 높이→폰트 크기는 **타이틀
   20px 실측 비율(≈0.875)** 로 환산(0.72 로 계산하면 한 단계 크게 잡음 — 내 스케줄 화면 실사고). 상세: `rule 0-F-4`.
+- **0-DESC (2026-09-23 사용자 룰)** — 🔴 **화면마다 우측 디스크립션 + 영역 넘버 마커는 `describe <spec.json>`
+  원커맨드**(홈 우측 `description` 인스턴스 140:64004 + `Description Num` 140:70842). 디스크립션 x=화면 x+폭+82,
+  마커 x=화면 x−2, 행=기능 영역(위→아래, 최대 19), 본문=`제목 / [기능] · 불릿 (UC·BR·AF 근거) / [예외처리]`,
+  미결정은 `{…: 확인 필요}`, 다른 화면은 상대 위치("우측 화면") 대신 화면 이름으로. 상세: `rule 0-DESC`.
+- **0-FLOW (2026-09-23 사용자 룰)** — 🔴 **flow 화살표는 `flow <spec.json>` 원커맨드** — 플러그인은 커넥터
+  생성·clone 불가 → 툴박스 풀 소진 후 **macOS 메뉴 Edit › Duplicate 클릭**으로 복제(⌘D 키 입력은 불가) →
+  `set_connector` 로 버튼 RIGHT → 다음 화면 LEFT, 라벨 `동작 → 결과 (UC)`, 조건 ◇/진입점 □/외부 절차 ▱.
+  🔴 3슬롯 이상 BOTTOM→BOTTOM 금지(화면 가로지름) — 슬롯 인접시켜 RIGHT→LEFT. 상세: `rule 0-FLOW`.
 - **0-F-2 / 0-R** — 작업 종료 시 `cleanup-qa` 1회(스크린샷·썸네일 삭제). 빌드 성공 시 사용한
   blueprint json 은 자동 삭제(재빌드는 새로 작성 — 의도된 동작).
 - **19 / 22 / 22-B** — 스크린샷 QA 에서 PRD 전 섹션 1:1 확인(하나라도 누락 시 완료 선언 금지).

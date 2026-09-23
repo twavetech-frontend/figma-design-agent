@@ -2158,3 +2158,60 @@
 > 수리 1건 후에는 같은 원인 전수 스캔 + qa_sweep 재실행. convert_screen 은 verify+diff 를 자동 실행.
 
 > 🔧 **2026-09-04 면제** — `IMIN_CONVERT_TRACK=1`(1:1 변환) 또는 root `_referencesSkipped:"<사유>"`(비어있지 않은 문자열, boolean 금지)면 Step A.0 검색과 Read 게이트를 건너뛴다(`_should_skip_reference_step`). 변환에서 FALLBACK 키워드 검색 결과(무관 화면)를 Read 하라고 빌드를 1회 차단하던 낭비 제거.
+
+### 0-DESC. 🔴 화면 디스크립션 = `describe` 원커맨드 — 화면 우측 description 인스턴스 + 영역 넘버 마커 (2026-09-23 사용자 룰)
+
+> 사용자(2026-09-23): *"디스크립션 생성과 flow 연결 작업은 아주 중요한 작업이었고 성공적으로 완료됐어.
+> 이 두 태스크를 규칙화해 두고 필요하면 코드 생성도 같이 진행해줘."* — PRD 119(1인 다계정) 14화면에서 확립한
+> 관례를 고정한다. 실물 기준: 홈 화면(140:31175) 우측의 `description` 인스턴스(140:64004)와 화면 위
+> `Description Num` 마커(140:70842).
+>
+> **관례 (전부 `scripts/screen_description.py` 가 강제):**
+> 1. **위치** — 디스크립션 x = 화면 x + 화면 폭 + 82(393 화면이면 x+475), y = 화면 y, 부모 = 화면과 같은
+>    SECTION. 마커 x = 화면 x − 2, y = 화면 y + (영역의 화면 내 y). 화면 슬롯 간격 1050 은 화면 393 + 82 +
+>    디스크립션 455 + 여백 120 에서 나온 값 — 디스크립션이 옆 화면과 겹치지 않는 최소 간격.
+> 2. **행 = 기능 영역** — 화면을 위→아래로 나눈 UI 영역(헤더/진입, 안내, 목록/카드, 동의, 하단 액션 …)마다
+>    1행. 행 번호 = 마커 Count. 최대 19행(컴포넌트 `Show desc i#35:i` 프롭 한계).
+> 3. **행 본문 형식** — 첫 줄 영역 제목, 이어서 `[기능]` 불릿(`· `), 필요 시 `[예외처리]` 불릿. 각 불릿은
+>    PRD 근거를 괄호로 단다: `(UC03 2단계 · BR04 · AF02 · EX03)`. 노출 조건·진입점·닫기 동작·버튼 동작·
+>    상태 전이·증적 저장(BR09)을 빠뜨리지 않는다. 미결정/확인 필요는 `{재노출 주기: 의사결정 필요}` 처럼
+>    중괄호로 남긴다(날조 금지 — 0-E-3 와 같은 철학). 다른 화면을 가리킬 땐 "우측/좌측 화면" 같은 상대
+>    위치 대신 **화면 이름(`imin_…`)이나 SCR 번호**를 쓴다(2026-09-18 재배치 후 "우측 화면"이 틀려진 실사고).
+> 4. **재배치 시 함께 이동** — 화면을 옮기면 디스크립션(x==화면 x+475)과 마커(x==화면 x−2)를 같은 Δ로 옮긴다
+>    (`prd` 재배치 스크립트 관례). 커넥터는 자동으로 따라온다.
+> 5. **갱신** — 문구만 바꿀 땐 `update: <descId>` 로 행만 다시 채운다(마커는 지우고 재생성).
+>
+> **명령**: `python3 scripts/figma_mcp_client.py describe <spec.json> [--dry-run]` —
+> spec `{screen, rows:[{section:<경로|id>, title, text}], update?, skipMarkers?}`. dry-run 은 영역 경로 해석과
+> 마커 y 만 계산해 보여 준다(경로 오타를 clone 전에 잡음). 완료 판정 = `DESCRIBE-SUMMARY` 의
+> `rowsFilled == rows` 와 `markers` 개수. 인스턴스 내부 텍스트는 `get_node_tree(skipInstanceChildren=False)`
+> 로 찾는다(fetch_tree 는 인스턴스 자식을 비움). 오프라인 테스트 `scripts/tests/test_screen_description.py`.
+
+### 0-FLOW. 🔴 화면 flow 연결 = `flow` 원커맨드 — FigJam 커넥터·도형, 메뉴 Duplicate 복제, set_connector 배선 (2026-09-23 사용자 룰)
+
+> 같은 사용자 지시로 고정. Figma Design 에디터의 하드 제약: 플러그인은 CONNECTOR/SHAPE_WITH_TEXT 를 **만들
+> 수도 복제할 수도 없다**(`figma.createConnector` 없음, clone "not supported in the current editor" — 2026-09-18
+> 실측 3종). 그러나 사용자 질문(*"너가 cmd+d 해서 쓰면 안되는거야?"*)에서 확인한 우회: `focus_node` 로 선택한
+> 뒤 macOS `osascript` 로 Figma 메뉴 **Edit › Duplicate 를 클릭**하면 같은 부모에 새 id 로 복제된다. ⌘D
+> 키 입력은 플러그인 iframe 이 가로채 실패(2회 실측) — 메뉴 클릭만 쓴다. 복제본은 원본 endpoint 를 갖고
+> 있으므로 반드시 `set_connector` 로 재배선한다.
+>
+> **관례 (전부 `scripts/flow_connect.py` 가 강제/경고):**
+> 1. **화살표** — ELBOWED. 시작 = 화면 안의 **버튼/행 노드**(RIGHT, 아래로 나가면 BOTTOM) → 끝 = 다음 화면
+>    **root** LEFT. 라벨 = `동작 → 결과 (UC/AF/EX 번호)` 예: `동의 후 참여 계속 · 기준 계정 미확정이면 확정 화면 (UC04)`.
+> 2. **도형** — 조건 분기 = DIAMOND(가지 라벨 `네 → …` / `아니요 → …`), 화면 밖 진입점·단계 = SQUARE
+>    (예: `스테이지 참여·개설 버튼`, `홈`, `마이페이지`), 외부 절차 = PARALLELOGRAM(예: 휴대폰 본인확인).
+>    도형은 화면 밴드 아래 y ≈ 화면 y + 1180 에 anchor 화면 기준 오프셋으로 둔다.
+> 3. 🔴 **먼 화면을 BOTTOM→BOTTOM 으로 잇지 말 것** — Figma 가 elbow 높이를 화면 중간에 잡아 화면·디스크립션을
+>    가로지른다(2026-09-18 홈 배너→고지 시트 12,600px 선 실사고). 3슬롯 이상 떨어지면 **슬롯 순서를 바꿔
+>    인접시키고 RIGHT→LEFT** 로 잇는다(스크립트 WARN). 재배치는 0-DESC 4 처럼 디스크립션·마커와 함께.
+> 4. **자원** — 사용자가 FigJam 에서 붙여 둔 툴박스(`my tool box`)를 먼저 소진하고, 부족분만 메뉴 Duplicate 로
+>    복제한다(원본 = spec `seed` 또는 섹션 안 첫 커넥터/도형). 남은 자원은 툴박스로 돌려놓는다. macOS 가
+>    아니면 복제 불가 → 사용자에게 FigJam 복사·붙여넣기를 요청한다.
+> 5. **완료 확인** — 배선 후 섹션을 0.2x export 해 화살표가 화면을 가로지르지 않는지 본다(0-F 와 같은
+>    self-verify). 사용자가 직접 바꾼 커넥터(새 id, 색 변경)는 존중하고 덮어쓰지 않는다.
+>
+> **명령**: `python3 scripts/figma_mcp_client.py flow <spec.json> [--dry-run]` —
+> spec `{section, toolbox?, seed?, shapes:[{key,kind,text,anchor,dx,dy | x,y}], edges:[{from,fromMagnet,to,toMagnet,label,connector?}]}`
+> (`@key` 로 같은 spec 의 도형 참조). dry-run 은 풀 할당·복제 수·장거리 경고만 출력. 완료 판정 = `FLOW-SUMMARY`
+> 의 `errors` 비어 있음 + 모든 edge `ok`. 오프라인 테스트 `scripts/tests/test_flow_connect.py`.
