@@ -2268,3 +2268,22 @@
 > **후속 의무**: added 가 있으면 초안 행을 PRD 근거([기능]/[예외처리] + UC·BR 표기)로 채워 `describe --update`
 > 하거나 Figma 에서 직접 편집한다. 영역을 묶어 마커 수를 줄이고 싶으면 `describe` 스펙으로 재정의한다.
 > 오프라인 테스트 `scripts/tests/test_marker_regen.py`.
+
+### 0-FLOW-2. 🔴 화살표 종류 카탈로그 — 용도별 템플릿만 쓴다 (2026-09-23 사용자 룰, 등록 진행 중)
+
+> 사용자: *"Flow 를 그릴 때 올바른 arrow 사용에 대한 규칙 및 코드가 있어야 한다. 하나씩 선택하고 용도를 말해 주면
+> 그에 대한 사용 규칙 및 코드를 작성."* — `my tool box` 의 커넥터는 모양·굵기·색·캡이 다른 **용도별 템플릿**이다.
+> 코드는 스타일을 만들지 않고 **용도(type)에 맞는 템플릿을 복제**만 한다.
+>
+> - **카탈로그** `scripts/flow_arrow_catalog.json` — `arrows.<type> = {templateId, purpose, when[], notWhen[], style(등록 시
+>   실측 스냅샷), defaults(lineType/fromMagnet/toMagnet), constraints(fromKind/toKind), labelHint}`, `default`(type 생략 시).
+> - **등록** `python3 scripts/figma_mcp_client.py arrow-register <type> --purpose "…" [--when "a;b"] [--not-when "c"]
+>   [--label-hint "…"] [--node <id>] [--default]` — Figma 에서 툴박스 커넥터를 선택하고 용도를 말하면 실행한다.
+>   조회 `arrow-list`. 툴박스 밖 노드는 경고(템플릿은 툴박스 안에 있어야 원본 보존).
+> - **사용** `flow` spec 의 edge 에 `"type": "<type>"` — 미등록 type 은 ERROR(등록 목록 안내), constraints 위반
+>   (예: 시작이 ◇ 가 아닌데 cond-yes)도 ERROR. type 생략 시 `default`, default 도 없으면 툴박스 첫 커넥터.
+>
+> **등록된 종류 (갱신 중):**
+> | type | 템플릿 | 스타일 | 용도 | 쓰지 말 때 |
+> |---|---|---|---|---|
+> | `cond-yes` | 4802:104153 | 4px 녹색 #0ba520, ELBOWED, ●→▶ | ◇ 조건 도형의 **'네/Yes' 가지** (constraints fromKind=DIAMOND), 라벨 `네 → <다음 단계>` | 화면·버튼에서 나가는 일반 전이, '아니요' 가지 |

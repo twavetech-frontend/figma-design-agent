@@ -16053,6 +16053,10 @@ CLI_COMMANDS = [
      "description": "화면 우측 description 인스턴스 + 영역별 Description Num 마커 원커맨드 (규칙 0-DESC — 행=기능 영역, x+폭+82 / 마커 x−2)"},
     {"name": "regen-markers", "usage": "regen-markers [<screenId>] [--dry-run] [--no-draft]",
      "description": "'마커 재생성' — 선택한 화면의 Description Num 마커를 현재 영역 위치로 재생성, 새 영역은 마커+디스크립션 초안 행 추가, 사라진 영역은 제거 (규칙 0-DESC-2)"},
+    {"name": "arrow-register", "usage": "arrow-register <type> --purpose \"…\" [--when \"a;b\"] [--not-when \"c\"] [--label-hint \"…\"] [--node <id>] [--default]",
+     "description": "flow 화살표 용도 카탈로그 등록 — 선택된 툴박스 커넥터를 <type> 템플릿으로 (규칙 0-FLOW-2, scripts/flow_arrow_catalog.json)"},
+    {"name": "arrow-list", "usage": "arrow-list",
+     "description": "flow 화살표 카탈로그 조회 (type · 템플릿 · 용도 · 스타일 스냅샷)"},
     {"name": "flow", "usage": "flow <spec.json> [--dry-run]",
      "description": "FigJam 커넥터·도형으로 화면 flow 배선 원커맨드 (규칙 0-FLOW — 현재 페이지 'my tool box' 템플릿을 macOS 메뉴 Duplicate 로 복제(원본 소비 금지) → set_connector 라벨·magnet; section 없으면 Figma 선택)"},
     {"name": "place", "usage": "place <rootId> [--center|--right]",
@@ -16311,6 +16315,12 @@ def main():
     elif cmd == "regen-markers":
         import marker_regen as _mr
         sys.exit(_mr.main(sys.argv[2:]))
+    elif cmd == "arrow-register":
+        import flow_arrow_catalog as _fac
+        sys.exit(_fac.main(["register"] + sys.argv[2:]))
+    elif cmd == "arrow-list":
+        import flow_arrow_catalog as _fac
+        sys.exit(_fac.main(["list"]))
     elif cmd == "flow":
         import flow_connect as _fl
         sys.exit(_fl.main(sys.argv[2:]))

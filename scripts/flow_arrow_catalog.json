@@ -1,0 +1,36 @@
+{
+  "toolbox": "4802:104148",
+  "arrows": {
+    "cond-yes": {
+      "templateId": "4802:104153",
+      "purpose": "조건 분기 도형(◇ DIAMOND)에서 '네/Yes' 가지 — 녹색",
+      "when": [
+        "시작 노드가 ◇ 조건 도형이고 조건이 참일 때 가는 가지",
+        "라벨은 '네 → <다음 단계>' 형식"
+      ],
+      "notWhen": [
+        "◇ 가 아닌 화면·버튼에서 나가는 일반 전이(탭·자동)에는 쓰지 않음",
+        "조건이 거짓인 '아니요' 가지에는 쓰지 않음(별도 type)"
+      ],
+      "style": {
+        "strokeWeight": 4,
+        "color": "#0ba520",
+        "opacity": 1,
+        "dash": null,
+        "lineType": "ELBOWED",
+        "startCap": "CIRCLE_FILLED",
+        "endCap": "ARROW_EQUILATERAL"
+      },
+      "defaults": {
+        "lineType": "ELBOWED",
+        "fromMagnet": "RIGHT",
+        "toMagnet": "LEFT"
+      },
+      "labelHint": "네 → 기준 계정 선택 (UC03)",
+      "constraints": {
+        "fromKind": "DIAMOND"
+      }
+    }
+  },
+  "default": null
+}

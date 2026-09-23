@@ -21,7 +21,8 @@ spec.json:
      "anchor": "4802:104668", "dx": 10, "dy": 1180}   # anchor 화면 기준 오프셋 (또는 "x","y" 절대)
   ],
   "edges": [                                  # 화살표 — from/to 는 노드 id 또는 "@key"(위 shapes)
-    {"from": "4802:104417", "fromMagnet": "RIGHT", "to": "4802:103071", "toMagnet": "LEFT",
+    {"type": "tap",                           # (선택) 화살표 용도 = scripts/flow_arrow_catalog.json 의 type (규칙 0-FLOW-2) — 생략 시 default
+     "from": "4802:104417", "fromMagnet": "RIGHT", "to": "4802:103071", "toMagnet": "LEFT",
      "label": "동의 후 참여 계속 (UC04)", "lineType": "ELBOWED",
      "connector": "4544:87450"}               # (선택) 기존 커넥터를 재배선 — 없으면 풀/복제에서 할당
   ]
@@ -97,7 +98,26 @@ def build_plan(spec, section_children, toolbox_children=()):
                 raise ValueError(f'edge 에 {k} 없음: {e}')
             if str(v).startswith('@') and v[1:] not in {sh['key'] for sh in shapes}:
                 raise ValueError(f"edge {k}='{v}' 가 shapes key 에 없음")
-    need = {'CONNECTOR': sum(1 for e in edges if not e.get('connector'))}
+    # 커넥터 필요 수를 화살표 type(카탈로그 템플릿)별로 센다 — 'CONNECTOR' 는 type 미지정(카탈로그 default 또는 툴박스 첫 커넥터)
+    cat = spec.get('_catalog')
+    if cat is None:
+        try:
+            import flow_arrow_catalog as FAC
+            cat = FAC.load()
+        except Exception:
+            cat = {'arrows': {}, 'default': None}
+    need = {}
+    for e in edges:
+        if e.get('connector'):
+            continue
+        t = e.get('type') or cat.get('default')
+        if t:
+            if t not in (cat.get('arrows') or {}):
+                raise ValueError(f"edge {e.get('from')}→{e.get('to')}: 화살표 type '{t}' 미등록 — 등록된 type: {sorted(cat.get('arrows') or {})} (arrow-register)")
+            k = 'CONNECTOR:' + t
+        else:
+            k = 'CONNECTOR'
+        need[k] = need.get(k, 0) + 1
     for sh in shapes:
         need[sh['kind'].upper()] = need.get(sh['kind'].upper(), 0) + 1
     need = {k: v for k, v in need.items() if v > 0}
@@ -115,7 +135,9 @@ def build_plan(spec, section_children, toolbox_children=()):
         alloc[k] = have
         dup[k] = cnt - len(have)
         if dup[k] > 0 and not seed.get(k):
-            if tpl.get(k):
+            if k.startswith('CONNECTOR:'):
+                seed[k] = cat['arrows'][k.split(':', 1)[1]]['templateId']   # 카탈로그 템플릿(용도별 화살표)
+            elif tpl.get(k):
                 seed[k] = tpl[k]
             else:
                 cand = [n['id'] for n in section_children if kind_of(n) == k]
@@ -126,6 +148,26 @@ def build_plan(spec, section_children, toolbox_children=()):
     if missing:
         raise ValueError(f"'{TOOLBOX_NAME}' 에 {', '.join(missing)} 템플릿이 없음 — 사용자에게 FigJam 에서 해당 도형/화살표를 복사해 '{TOOLBOX_NAME}' 섹션에 붙여 달라고 요청 (플러그인은 생성·clone 불가)")
     byid = {n['id']: n for n in section_children}
+    shape_kind = {'@' + sh['key']: sh['kind'].upper() for sh in shapes}
+    # 화살표 type 제약(규칙 0-FLOW-2): 예) cond-yes 는 시작이 ◇ 여야 한다 — 위반은 ERROR
+    def _kind_of_ref(ref):
+        if str(ref).startswith('@'):
+            return shape_kind.get(ref)
+        n = byid.get(ref)
+        return kind_of(n) if n else None
+    for e in edges:
+        t = e.get('type') or cat.get('default')
+        cons = ((cat.get('arrows') or {}).get(t) or {}).get('constraints') or {}
+        if cons.get('fromKind'):
+            fk = _kind_of_ref(e.get('from'))
+            if fk is None and not str(e.get('from')).startswith('@') and e.get('from') not in byid:
+                pass   # 화면 내부 노드 등 섹션 직계가 아니면 판정 불가 — 통과
+            elif fk != cons['fromKind']:
+                raise ValueError(f"edge {e.get('from')}→{e.get('to')}: type '{t}' 은 시작이 {cons['fromKind']} 여야 함(현재 {fk or '화면/노드'}) — 규칙 0-FLOW-2")
+        if cons.get('toKind'):
+            tk = _kind_of_ref(e.get('to'))
+            if tk is not None and tk != cons['toKind']:
+                raise ValueError(f"edge {e.get('from')}→{e.get('to')}: type '{t}' 은 끝이 {cons['toKind']} 여야 함(현재 {tk}) — 규칙 0-FLOW-2")
     warnings = []
     for e in edges:
         a, b = byid.get(e.get('from')), byid.get(e.get('to'))
@@ -268,16 +310,25 @@ def run(spec, dry_run=False, log=print):
     # 3) 커넥터 배선
     def resolve(v):
         return keymap.get(v[1:], v) if str(v).startswith('@') else v
+    try:
+        import flow_arrow_catalog as FAC
+        cat = FAC.load()
+    except Exception:
+        cat = {'arrows': {}, 'default': None}
     for e in spec.get('edges') or []:
         cid = e.get('connector')
+        t = e.get('type') or cat.get('default')
+        entry = (cat.get('arrows') or {}).get(t) if t else None
+        d = (entry or {}).get('defaults') or {}
         if not cid:
-            if not res.get('CONNECTOR'):
-                summary['errors'].append(f"edge {e.get('from')}→{e.get('to')}: 커넥터 부족")
+            k = 'CONNECTOR:' + t if t else 'CONNECTOR'
+            if not res.get(k):
+                summary['errors'].append(f"edge {e.get('from')}→{e.get('to')}: 커넥터({k}) 부족")
                 continue
-            cid = res['CONNECTOR'].pop(0)
-        r = call('set_connector', {'nodeId': cid, 'startNodeId': resolve(e['from']), 'startMagnet': e.get('fromMagnet', 'RIGHT'),
-                                   'endNodeId': resolve(e['to']), 'endMagnet': e.get('toMagnet', 'LEFT'),
-                                   'lineType': e.get('lineType', DEFAULT_LINE), 'text': e.get('label', '')})
+            cid = res[k].pop(0)
+        r = call('set_connector', {'nodeId': cid, 'startNodeId': resolve(e['from']), 'startMagnet': e.get('fromMagnet', d.get('fromMagnet', 'RIGHT')),
+                                   'endNodeId': resolve(e['to']), 'endMagnet': e.get('toMagnet', d.get('toMagnet', 'LEFT')),
+                                   'lineType': e.get('lineType', d.get('lineType', DEFAULT_LINE)), 'text': e.get('label', '')})
         ok = bool(r.get('applied') or r.get('id'))
         if ok:   # bbox 폭주 감지(페이지 밖으로 튄 elbow) — 실패로 기록해 재배선 유도
             g = call('get_node_info', {'nodeId': cid})
