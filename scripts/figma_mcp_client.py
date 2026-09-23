@@ -3871,13 +3871,42 @@ _CTA_NAME_KW = ("button", "btn", "cta", "모으러", "참여", "하기", "가기
                 "결제", "납입", "제출", "확인", "시작", "받기", "보내기", "구매")
 
 
+# 🔴 2026-09-23 회귀 수정 — 폼 컨트롤(Input field/Select/Checkbox/Radio/Toggle …)은 `_instanceText`(placeholder)가
+# 있어도 CTA 가 아니다. SCR005 '상세 내용' 필드 라벨이 Input field 앞이라 caption 으로 오인돼 text-secondary 로
+# 바뀌었고(같은 레벨 '이의신청 사유' 라벨은 primary), clone 3화면에 전파된 실사고(사용자 지적).
+_FORM_CTRL_NAME_KW = ("input", "field", "select", "dropdown", "checkbox", "radio", "toggle", "slider",
+                      "textarea", "search", "segmented", "stepper", "picker", "switch")
+_FORM_CTRL_CATALOG_KW = ("input", "select", "dropdown", "checkbox", "radio", "toggle", "slider", "segmented")
+
+
+def _form_control_keys() -> set:
+    try:
+        import ds_catalog as _C
+        return {v for k, v in _C.COMPONENT_KEYS.items() if any(w in k.lower() for w in _FORM_CTRL_CATALOG_KW)}
+    except Exception:
+        return set()
+
+
+def _bp_is_form_control(node: dict) -> bool:
+    """blueprint instance 가 폼 컨트롤(입력·선택)인가 — 이름 키워드 또는 ds_catalog 폼 컴포넌트 키."""
+    if not isinstance(node, dict) or (node.get("type") or "").lower() != "instance":
+        return False
+    nl = (node.get("name") or "").lower()
+    if any(k in nl for k in _FORM_CTRL_NAME_KW):
+        return True
+    return node.get("componentKey") in _form_control_keys()
+
+
 def _bp_is_cta(node: dict) -> bool:
-    """blueprint 노드가 CTA(라벨 있는 액션 버튼)인가 — 라벨 텍스트 instance 또는 button 이름 frame."""
+    """blueprint 노드가 CTA(라벨 있는 액션 버튼)인가 — 라벨 텍스트 instance 또는 button 이름 frame.
+    폼 컨트롤(Input field 등 placeholder 를 _instanceText 로 쓰는 인스턴스)은 CTA 가 아니다(2026-09-23)."""
     if not isinstance(node, dict):
         return False
     t = (node.get("type") or "").lower()
     nl = (node.get("name") or "").lower()
     if t == "instance" and node.get("componentKey"):
+        if _bp_is_form_control(node):
+            return False
         if node.get("_instanceText"):
             return True  # 라벨 박힌 DS 버튼 = CTA
         return any(k in nl for k in _CTA_NAME_KW)
@@ -3913,10 +3942,13 @@ def _enforce_cta_caption_secondary(blueprint: dict) -> None:
                     col = prev.get("fontColor")
                     size = prev.get("fontSize") or 0
                     style = ((prev.get("fontName") or {}).get("style") or "")
+                    pname = (prev.get("name") or "").lower()
+                    # 2026-09-23: 이름에 'label' 이 든 TEXT(필드/KV 라벨)는 caption 이 아니다 (굵기 조건은 원 룰대로 Bold 만 제외)
                     if (isinstance(col, str) and "text-primary" in col
                             and isinstance(size, (int, float)) and not isinstance(size, bool)
                             and size <= _CAPTION_CTA_MAX_SIZE
-                            and style.lower() != "bold"):
+                            and style.lower() != "bold"
+                            and "label" not in pname):
                         prev["fontColor"] = "$token(text-secondary)"
                         cnt[0] += 1
         for c in ch:
@@ -3924,6 +3956,29 @@ def _enforce_cta_caption_secondary(blueprint: dict) -> None:
     walk(blueprint)
     if cnt[0]:
         print(f"[규칙] CTA 유도 caption {cnt[0]}건 → text-secondary (최상위 중요도 아님; opt-out: _keepTextColor)")
+
+
+def _qa_same_name_text_color(blueprint: dict) -> int:
+    """[QA][consistency] 같은 이름의 TEXT(예: 'Field Label'·'KV Label'·'Section Title')가 서로 다른 fontColor 면 WARN.
+    enforcer 체인이 한쪽만 바꿔 같은 레벨 정보의 색이 갈라지는 회귀(2026-09-23 SCR005 실사고)를 빌드 로그에서 잡는다.
+    반환: 불일치 이름 수."""
+    groups: dict = {}
+
+    def walk(n):
+        if not isinstance(n, dict):
+            return
+        if (n.get("type") or "").lower() == "text" and n.get("name"):
+            groups.setdefault(n["name"], []).append(str(n.get("fontColor") or "(default)"))
+        for c in n.get("children") or []:
+            walk(c)
+    walk(blueprint)
+    bad = 0
+    for name, cols in groups.items():
+        if len(cols) >= 2 and len(set(cols)) > 1:
+            bad += 1
+            dist = ", ".join(f"{c}×{cols.count(c)}" for c in sorted(set(cols)))
+            print(f"[QA][consistency] ⚠️ 같은 이름 TEXT '{name}' 의 색이 갈림 → {dist} — 같은 레벨 정보면 한 토큰으로 통일 (opt-out: 이름을 다르게)")
+    return bad
 
 
 def _is_footer(node: dict) -> bool:
@@ -5734,6 +5789,7 @@ def cmd_build(blueprint_file: str):
     _enforce_section_dividers(blueprint)
     _enforce_tooltip_ignore_auto_layout(blueprint)
     _enforce_disabled_slot_pattern(blueprint)
+    _qa_same_name_text_color(blueprint)  # 2026-09-23 — enforcer 가 같은 이름 TEXT 색을 갈라놓았는지 QA
 
     # 자동 바인딩용 원본 보존 ($token() 참조가 살아있는 사본 — resolve 전에 떠둠)
     original_blueprint = json.loads(json.dumps(blueprint))

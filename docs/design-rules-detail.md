@@ -1770,6 +1770,15 @@
   (강조 의도 제외) 이면 `text-secondary` 로 교정(로그 `[규칙] CTA 유도 caption N건 → text-secondary`).
   의도적 primary 유지는 노드에 `"_keepTextColor": true` 로 opt-out. 테스트 `test_cta_caption_secondary.py`.
 - **작성법:** 버튼 위 권유 문구는 처음부터 `text-secondary` 로 쓸 것(enforcer 가 백스톱).
+- 🔴 **2026-09-23 회귀 수정 (사용자: "같은 레벨의 정보인데 다르게 토큰 바인딩된 원인을 찾아봐")** — SCR005 에서
+  `Detail Group` 의 필드 라벨 '상세 내용'(14 SemiBold, 기본 primary)이 바로 뒤 **Input field 인스턴스**(placeholder 를
+  `_instanceText` 로 넣음) 때문에 caption 으로 오인돼 secondary 가 됐고, 같은 레벨 '이의신청 사유' 라벨은 primary 로
+  남아 색이 갈렸다. clone-variant 3화면에 그대로 전파. **강화 3건:** ① `_bp_is_cta` 는 폼 컨트롤(이름에 input/field/
+  select/dropdown/checkbox/radio/toggle/slider/textarea/search/segmented 또는 ds_catalog 폼 컴포넌트 키)을 CTA 에서 제외
+  (`_bp_is_form_control`). ② caption 판정에서 **이름에 'label' 이 든 TEXT**(필드/KV 라벨) 제외(굵기 조건은 원 룰대로 Bold 만 제외 —
+  원 사례 caption 이 SemiBold 였음). ③ `_qa_same_name_text_color`: enforcer 체인 뒤 같은 이름 TEXT('Field Label'·'KV Label'·
+  'Section Title' …)의 fontColor 가 갈리면 `[QA][consistency] ⚠️` 로그 — 같은 레벨 정보는 한 토큰. 회귀 테스트 4건
+  (`test_cta_caption_secondary.py`). 라이브 3화면(SCR005·약관 이의신청·이의신청 조회) 라벨은 text-primary 로 재바인딩.
 
 ### 12. 섹션 간 간격 — 배경색 동일 + divider 없으면 gap 0
 - 인접한 섹션의 배경색이 동일(둘 다 투명/white)이고 사이에 divider가 없으면 **gap 0px** — 섹션 내부 padding이 여백 역할

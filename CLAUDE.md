@@ -503,7 +503,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **0-S** — 텍스트 스타일 바인딩을 깨지 말 것 — 크기 변경은 raw set_font_size 가 아니라 더 큰/작은
   DS 텍스트 스타일 적용으로.
 - **11/11-B** — 흰 배경 위 `fg-quaternary`/`text-quaternary` 금지(거의 흰색이라 안 보임 — 흐린 회색은
-  secondary/tertiary). CTA 유도 caption(버튼 위 권유 문구)은 `text-secondary`.
+  secondary/tertiary). CTA 유도 caption(버튼 위 권유 문구)은 `text-secondary`. 🔴 **2026-09-23**: caption 판정은
+  권유 문구만 — 폼 컨트롤(Input field 등)은 CTA 아님, `*Label` 이름 TEXT 는 제외, 같은 이름 TEXT 색이
+  갈리면 `[QA][consistency]` WARN(같은 레벨 정보 = 한 토큰). 상세: `rule 11-B`.
 - **2-N (2026-09-11 신설)** — 문단 안 부분 강조(브랜드 볼드 스팬·밑줄)는 텍스트를 쪼개지 말고 빌드 후
   MCP `set_text_range_style {nodeId,start,end,fontStyle,fillVariable:"K:<key>",textDecoration}` 로 범위
   스타일 적용(변수 바인딩 유지, verify PASS). 캡처 1:1 변환의 인라인 강조 정본.

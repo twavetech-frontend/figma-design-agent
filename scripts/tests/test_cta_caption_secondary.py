@@ -87,3 +87,41 @@ def test_raw_button_frame_also_triggers():
                {"name": "Submit Button", "type": "frame", "children": [_T("제출", 16, "Bold", "$token(fg-light)")]})
     fc._enforce_cta_caption_secondary(bp)
     assert _first_text(bp)["fontColor"] == S
+
+
+# ── 2026-09-23 회귀: Input field 앞 필드 라벨이 caption 으로 오인돼 secondary 가 되던 사고 ─────────────
+def _input(name="Detail Input"):
+    return {"name": name, "type": "instance", "componentKey": "k-input", "_instanceText": "상황을 자세히 적어 주세요",
+            "instanceProperties": {"Size": "md", "State": "Placeholder"}}
+
+
+def test_input_field_with_placeholder_is_not_cta():
+    assert fc._bp_is_cta(_input()) is False
+    assert fc._bp_is_cta(_input("Search Input")) is False
+    assert fc._bp_is_cta(_cta()) is True
+
+
+def test_field_label_before_input_keeps_primary():
+    bp = _wrap(_T("상세 내용", 14, "SemiBold", P, name="Field Label"), _input())
+    fc._enforce_cta_caption_secondary(bp)
+    assert _first_text(bp)["fontColor"] == P
+
+
+def test_label_named_text_before_real_cta_keeps_primary():
+    bp = _wrap(_T("금액", 14, "Regular", P, name="KV Label"), _cta())
+    fc._enforce_cta_caption_secondary(bp)
+    assert _first_text(bp)["fontColor"] == P
+    bp = _wrap(_T("다시 모아볼까요?", 14, "Regular", P, name="Caption"), _cta())
+    fc._enforce_cta_caption_secondary(bp)
+    assert _first_text(bp)["fontColor"] == S
+
+
+def test_qa_same_name_text_color_flags_split(capsys):
+    bp = {"children": [
+        {"name": "A", "type": "frame", "children": [_T("이의신청 사유", 14, "SemiBold", P, name="Field Label")]},
+        {"name": "B", "type": "frame", "children": [_T("상세 내용", 14, "SemiBold", S, name="Field Label")]},
+    ]}
+    assert fc._qa_same_name_text_color(bp) == 1
+    assert "Field Label" in capsys.readouterr().out
+    bp["children"][1]["children"][0]["fontColor"] = P
+    assert fc._qa_same_name_text_color(bp) == 0
