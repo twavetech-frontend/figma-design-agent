@@ -106,3 +106,27 @@ def test_condition_label_and_completeness_warnings():
             "edges": [{"from": "@q", "to": "s2", "type": "cond-yes", "label": "네 → 다음"},
                       {"from": "@q", "to": "s1", "type": "cond-no", "label": "아니요 → 홈"}]}
     assert FC.build_plan(good, SECTION, tb)['warnings'] == []
+
+
+def test_condition_branches_leave_diamond_from_different_sides():
+    cat = _cat()
+    FAC.register(cat, 'cond-yes', 't_yes', '네', style={}, defaults={'fromMagnet': 'RIGHT', 'toMagnet': 'LEFT', 'lineType': 'ELBOWED'})
+    FAC.register(cat, 'cond-no', 't_no', '아니오', style={}, defaults={'fromMagnet': 'BOTTOM', 'toMagnet': 'LEFT', 'lineType': 'ELBOWED'})
+    cat['arrows']['cond-yes']['constraints'] = {'fromKind': 'DIAMOND', 'fromMagnet': 'RIGHT'}
+    cat['arrows']['cond-no']['constraints'] = {'fromKind': 'DIAMOND', 'fromMagnet': 'BOTTOM'}
+    cat['default'] = 'tap'
+    tb = TOOLBOX + [{"id": "t_yes", "type": "CONNECTOR"}, {"id": "t_no", "type": "CONNECTOR"}, {"id": "t_dia", "type": "SHAPE_WITH_TEXT", "shapeType": "DIAMOND"}]
+    shapes = [{"key": "q", "kind": "DIAMOND", "text": "?", "x": 0, "y": 0}]
+    bad = {"section": "S", "_catalog": cat, "shapes": shapes,
+           "edges": [{"from": "@q", "to": "s2", "type": "cond-yes", "fromMagnet": "RIGHT", "label": "네 → a"},
+                     {"from": "@q", "to": "s1", "type": "cond-no", "fromMagnet": "RIGHT", "label": "아니요 → b"}]}   # 아니오가 RIGHT
+    try:
+        FC.build_plan(bad, SECTION, tb)
+    except ValueError as e:
+        assert 'BOTTOM' in str(e) and 'cond-no' in str(e)
+    else:
+        raise AssertionError('ValueError 기대')
+    good = {"section": "S", "_catalog": cat, "shapes": shapes,
+            "edges": [{"from": "@q", "to": "s2", "type": "cond-yes", "label": "네 → a"},          # magnet 생략 → RIGHT
+                      {"from": "@q", "to": "s1", "type": "cond-no", "label": "아니요 → b"}]}      # magnet 생략 → BOTTOM
+    assert FC.build_plan(good, SECTION, tb)['warnings'] == []

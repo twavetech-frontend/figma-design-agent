@@ -2284,7 +2284,9 @@
 >   (예: 시작이 ◇ 가 아닌데 cond-yes)도 ERROR. type 생략 시 `default`, default 도 없으면 툴박스 첫 커넥터.
 >
 > - **코드 강제 요약** (`flow_connect.build_plan`): ① 미등록 type → ERROR ② `constraints.fromKind`(cond-yes/no 는 ◇ 에서만)·
->   `notFromKind`(tap/auto/input-done 는 ◇ 에서 금지)·`toKind` 위반 → ERROR ③ cond-yes 라벨은 '네 → …', cond-no 는
+>   `notFromKind`(tap/auto/input-done 는 ◇ 에서 금지)·`toKind` 위반 → ERROR · 🔴 **`fromMagnet`: ◇ 의 '예'(cond-yes)는
+>   오른쪽(RIGHT), '아니오'(cond-no)는 아래쪽(BOTTOM)에서만 시작 — 같은 면에서 두 가지가 나가면 ERROR, magnet 생략 시
+>   자동 적용 (2026-09-23 사용자 지적: 예·아니오가 같은 방향에서 나옴)** ③ cond-yes 라벨은 '네 → …', cond-no 는
 >   '아니요 → …' 로 시작, 라벨 없으면 → WARN ④ spec 의 ◇ 마다 cond-yes·cond-no 가 하나씩 나가야 함(완결성) → WARN
 >   ⑤ 3슬롯 이상 BOTTOM→BOTTOM, 시작 노드 x 범위 밖 도형으로의 BOTTOM→TOP → WARN(라우팅 실측) ⑥ 배선 후 bbox 폭주
 >   (>20,000px) → errors 로 기록 ⑦ 인스턴스 내부 노드(`I…;…`) endpoint → 실패 + 힌트. 테스트 `test_flow_arrow_catalog.py`.
@@ -2295,8 +2297,8 @@
 > **등록된 종류 (갱신 중):**
 > | type | 템플릿 | 스타일 | 용도 | 쓰지 말 때 |
 > |---|---|---|---|---|
-> | `cond-yes` | 4802:104153 | 4px 녹색 #0ba520, ELBOWED, ●→▶ | ◇ 조건 도형의 **'네/Yes' 가지** (constraints fromKind=DIAMOND), 라벨 `네 → <다음 단계>` | 화면·버튼에서 나가는 일반 전이, '아니요' 가지 |
-> | `cond-no` | 4802:104152 | 4px 빨강 #f24822, ELBOWED, ●→▶ | ◇ 조건 도형의 **'아니요/No' 가지** (constraints fromKind=DIAMOND), 라벨 `아니요 → <다음 단계>` | 화면·버튼에서 나가는 일반 전이, '네' 가지, ◇ 밖의 오류·실패 전이 |
+> | `cond-yes` | 4802:104153 | 4px 녹색 #0ba520, ELBOWED, ●→▶ | ◇ 조건 도형의 **'네/Yes' 가지 — ◇ 오른쪽(RIGHT)에서 시작** (constraints fromKind=DIAMOND, fromMagnet=RIGHT), 라벨 `네 → <다음 단계>` | 화면·버튼에서 나가는 일반 전이, '아니요' 가지 |
+> | `cond-no` | 4802:104152 | 4px 빨강 #f24822, ELBOWED, ●→▶ | ◇ 조건 도형의 **'아니요/No' 가지 — ◇ 아래쪽(BOTTOM)에서 시작** (constraints fromKind=DIAMOND, fromMagnet=BOTTOM), 라벨 `아니요 → <다음 단계>` | 화면·버튼에서 나가는 일반 전이, '네' 가지, ◇ 밖의 오류·실패 전이 |
 > | `tap` **(default)** | 4802:104172 | 4px 파랑 #3dadff, ELBOWED, ●→▶ | **사용자 탭 일반 전이** — 화면 안 버튼·행·링크 탭 → 다음 화면 root LEFT, 라벨 `<트리거> 탭` / `<동작> → <결과> (UC)` (constraints notFromKind=DIAMOND) | ◇ 에서 나가는 가지(cond-yes/no), 시스템 자동 전이 |
 > | `auto` | 4802:104150 | 4px 회색 #757575, ELBOWED, ●→▶ | **시스템 자동 전이** — 입력 완료·검증 통과·API 응답·타이머 뒤 자동 이동, 라벨 `<조건/이벤트> → <결과>` (constraints notFromKind=DIAMOND) | 사용자 탭 전이(tap), ◇ 가지 |
 > | `input-done` | 4802:104151 | 4px 진회색 #313131, ELBOWED, ●→▶ | **입력 완료 전이** — 키패드·텍스트 필드·인증번호가 규정 자릿수/형식을 채우는 순간 다음 화면으로, 시작 = 입력 영역(또는 화면 root), 라벨 `<입력> 입력 완료 → <다음>` (constraints notFromKind=DIAMOND) | 입력 뒤 확인 버튼을 눌러야 가는 전이(tap), 입력과 무관한 자동 전이(auto), ◇ 가지 |

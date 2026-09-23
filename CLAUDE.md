@@ -615,7 +615,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   🔴 3슬롯 이상 BOTTOM→BOTTOM 금지(화면 가로지름) — 슬롯 인접시켜 RIGHT→LEFT. 상세: `rule 0-FLOW`.
 - **0-FLOW-2 (2026-09-23 사용자 룰, 등록 진행 중)** — 🔴 **화살표는 용도별 템플릿만** — `scripts/flow_arrow_catalog.json`
   (`arrow-register <type> --purpose …` 로 선택 커넥터 등록, `arrow-list` 조회). `flow` edge 의 `type` 이 템플릿을 고르고,
-  미등록 type·제약 위반(예: `cond-yes` 는 시작이 ◇)은 ERROR. 등록: `tap`(파랑, 사용자 탭 — **default**) · `auto`(회색, 시스템 자동 전이) · `input-done`(진회색, 입력 완료 전이) · `cond-yes`(녹색, ◇ 네) · `cond-no`(빨강, ◇ 아니요). 상세: `rule 0-FLOW-2`.
+  미등록 type·제약 위반(예: `cond-yes` 는 시작이 ◇, **예=◇ RIGHT / 아니오=◇ BOTTOM 에서만**)은 ERROR. 등록: `tap`(파랑, 사용자 탭 — **default**) · `auto`(회색, 시스템 자동 전이) · `input-done`(진회색, 입력 완료 전이) · `cond-yes`(녹색, ◇ 네) · `cond-no`(빨강, ◇ 아니요). 상세: `rule 0-FLOW-2`.
 - **0-F-2 / 0-R** — 작업 종료 시 `cleanup-qa` 1회(스크린샷·썸네일 삭제). 빌드 성공 시 사용한
   blueprint json 은 자동 삭제(재빌드는 새로 작성 — 의도된 동작).
 - **19 / 22 / 22-B** — 스크린샷 QA 에서 PRD 전 섹션 1:1 확인(하나라도 누락 시 완료 선언 금지).

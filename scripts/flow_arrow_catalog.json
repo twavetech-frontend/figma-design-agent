@@ -6,7 +6,8 @@
       "purpose": "조건 분기 도형(◇ DIAMOND)에서 '네/Yes' 가지 — 녹색",
       "when": [
         "시작 노드가 ◇ 조건 도형이고 조건이 참일 때 가는 가지",
-        "라벨은 '네 → <다음 단계>' 형식"
+        "라벨은 '네 → <다음 단계>' 형식",
+        "◇ 의 오른쪽(RIGHT)에서만 시작"
       ],
       "notWhen": [
         "◇ 가 아닌 화면·버튼에서 나가는 일반 전이(탭·자동)에는 쓰지 않음",
@@ -28,7 +29,8 @@
       },
       "labelHint": "네 → 기준 계정 선택 (UC03)",
       "constraints": {
-        "fromKind": "DIAMOND"
+        "fromKind": "DIAMOND",
+        "fromMagnet": "RIGHT"
       }
     },
     "cond-no": {
@@ -36,7 +38,8 @@
       "purpose": "조건 분기 도형(◇ DIAMOND)에서 '아니요/No' 가지 — 빨간색",
       "when": [
         "시작 노드가 ◇ 조건 도형이고 조건이 거짓일 때 가는 가지",
-        "라벨은 '아니요 → <다음 단계>' 형식"
+        "라벨은 '아니요 → <다음 단계>' 형식",
+        "◇ 의 아래쪽(BOTTOM)에서만 시작"
       ],
       "notWhen": [
         "◇ 가 아닌 화면·버튼에서 나가는 일반 전이(탭·자동)에는 쓰지 않음",
@@ -54,12 +57,13 @@
       },
       "defaults": {
         "lineType": "ELBOWED",
-        "fromMagnet": "RIGHT",
+        "fromMagnet": "BOTTOM",
         "toMagnet": "LEFT"
       },
       "labelHint": "아니요 → 홈",
       "constraints": {
-        "fromKind": "DIAMOND"
+        "fromKind": "DIAMOND",
+        "fromMagnet": "BOTTOM"
       }
     },
     "tap": {

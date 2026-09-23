@@ -164,6 +164,10 @@ def build_plan(spec, section_children, toolbox_children=()):
                 pass   # 화면 내부 노드 등 섹션 직계가 아니면 판정 불가 — 통과
             elif fk != cons['fromKind']:
                 raise ValueError(f"edge {e.get('from')}→{e.get('to')}: type '{t}' 은 시작이 {cons['fromKind']} 여야 함(현재 {fk or '화면/노드'}) — 규칙 0-FLOW-2")
+        if cons.get('fromMagnet'):   # 2026-09-23 사용자 룰: ◇ 의 '예'는 RIGHT, '아니오'는 BOTTOM 에서만 시작 (같은 면에서 나가면 안 됨)
+            fm = (e.get('fromMagnet') or cons['fromMagnet']).upper()
+            if fm != cons['fromMagnet']:
+                raise ValueError(f"edge {e.get('from')}→{e.get('to')}: type '{t}' 은 시작 magnet 이 {cons['fromMagnet']} 여야 함(현재 {fm}) — 예=RIGHT, 아니오=BOTTOM (규칙 0-FLOW-2)")
         if cons.get('notFromKind'):
             fk = _kind_of_ref(e.get('from'))
             if fk is not None and fk == cons['notFromKind']:
@@ -355,7 +359,8 @@ def run(spec, dry_run=False, log=print):
                 summary['errors'].append(f"edge {e.get('from')}→{e.get('to')}: 커넥터({k}) 부족")
                 continue
             cid = res[k].pop(0)
-        r = call('set_connector', {'nodeId': cid, 'startNodeId': resolve(e['from']), 'startMagnet': e.get('fromMagnet', d.get('fromMagnet', 'RIGHT')),
+        cons = (entry or {}).get('constraints') or {}
+        r = call('set_connector', {'nodeId': cid, 'startNodeId': resolve(e['from']), 'startMagnet': e.get('fromMagnet', cons.get('fromMagnet', d.get('fromMagnet', 'RIGHT'))),
                                    'endNodeId': resolve(e['to']), 'endMagnet': e.get('toMagnet', d.get('toMagnet', 'LEFT')),
                                    'lineType': e.get('lineType', d.get('lineType', DEFAULT_LINE)), 'text': e.get('label', '')})
         ok = bool(r.get('applied') or r.get('id'))
