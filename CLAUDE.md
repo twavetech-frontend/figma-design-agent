@@ -612,6 +612,7 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   **현재 페이지 `my tool box` 섹션의 도형·화살표를 템플릿으로 복제해서만** 쓴다(원본 소비 금지). 복제는 플러그인
   clone·⌘D 가 아니라 **focus_node + macOS 메뉴 Edit › Duplicate 클릭**(duplicate_via_menu) →
   `set_connector` 로 버튼 RIGHT → 다음 화면 LEFT, 라벨 `동작 → 결과 (UC)`, 조건 ◇/진입점 □/외부 절차 ▱.
+  🔴 도형 텍스트가 잘리면 안 됨 — `fit_shape` 가 텍스트에 맞춰 도형을 키움(기존 섹션은 `flow --fit <sectionId>`).
   🔴 3슬롯 이상 BOTTOM→BOTTOM 금지(화면 가로지름) — 슬롯 인접시켜 RIGHT→LEFT. 상세: `rule 0-FLOW`.
 - **0-FLOW-2 (2026-09-23 사용자 룰, 등록 진행 중)** — 🔴 **화살표는 용도별 템플릿만** — `scripts/flow_arrow_catalog.json`
   (`arrow-register <type> --purpose …` 로 선택 커넥터 등록, `arrow-list` 조회). `flow` edge 의 `type` 이 템플릿을 고르고,

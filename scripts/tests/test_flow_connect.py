@@ -99,3 +99,16 @@ def test_accept_duplicate_rejects_section_and_wrong_parent():
     assert FC.accept_duplicate({"id": "tpl", "type": "CONNECTOR", "parentId": "toolbox"}, src, set()) is False  # 원본 자신
     assert FC.accept_duplicate({"id": "new1", "type": "CONNECTOR", "parentId": "toolbox"}, src, {"new1"}) is False
     assert FC.accept_duplicate({"id": "x", "type": "CONNECTOR", "parentId": "elsewhere"}, src, set()) is False
+
+
+def test_shape_grows_to_fit_text_but_never_shrinks():
+    # 실사고: '동일 본인확인 정보(CI)로 / 가입된 계정이 2개 이상?' 가 304x264 ◇ 에서 3줄로 잘림(…)
+    w, h = FC.shape_size_for_text('DIAMOND', '동일 본인확인 정보(CI)로\n가입된 계정이 2개 이상?', cur=(322, 264))
+    assert w > 322 and h == 264                      # 폭만 커지고 높이는 유지
+    assert FC.shape_size_for_text('DIAMOND', '홈', cur=(322, 264)) == (322, 264)   # 짧은 텍스트는 그대로
+    w2, h2 = FC.shape_size_for_text('SQUARE', '신규 스테이지 참여·개설 시도\n(기준 계정 미확정 고객)', cur=(297, 142))
+    assert w2 >= 297 and h2 >= 142                    # 2줄 짧은 문구는 최소 크기 유지
+    w3, _ = FC.shape_size_for_text('PARALLELOGRAM_RIGHT', '휴대폰 본인확인\n(UC-03 4단계)', cur=(320, 176))
+    assert w3 >= 320
+    tw, th = FC.text_metrics('abc 한글', fs=10)
+    assert 0 < tw < 100 and th == 10 * FC.SHAPE_LINE_H

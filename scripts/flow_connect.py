@@ -10,6 +10,7 @@
 사용:
   python3 scripts/flow_connect.py <spec.json> [--dry-run]
   python3 scripts/figma_mcp_client.py flow <spec.json>
+  python3 scripts/figma_mcp_client.py flow --fit <sectionId>     # 기존 도형을 텍스트에 맞춰 키우기(규칙 0-FLOW 도형 크기)
 
 spec.json:
 {
@@ -214,6 +215,72 @@ def build_plan(spec, section_children, toolbox_children=()):
             'edges': len(edges), 'shapes': len(shapes)}
 
 
+SHAPE_FONT_PX = 17          # FigJam 도형 기본 텍스트 크기 근사(플러그인이 shapeFontSize 를 주면 그 값 사용)
+SHAPE_LINE_H = 1.45
+SHAPE_MIN = {'DIAMOND': (304, 264), 'SQUARE': (297, 142), 'PARALLELOGRAM': (320, 176), 'ROUNDED_RECTANGLE': (297, 142), 'ELLIPSE': (297, 142)}
+
+
+def text_metrics(text, fs=SHAPE_FONT_PX):
+    """줄별 근사 폭(한글·전각 1.0fs, 영숫자 0.55fs, 공백 0.3fs, 기타 0.6fs)과 높이 → (max_w, h)."""
+    lines = (text or '').split('\n') or ['']
+    def cw(ch):
+        o = ord(ch)
+        if ch == ' ':
+            return 0.3
+        if 0xAC00 <= o <= 0xD7A3 or 0x3130 <= o <= 0x318F or 0x4E00 <= o <= 0x9FFF or 0xFF00 <= o <= 0xFFEF:
+            return 1.0
+        if ch.isalnum():
+            return 0.58
+        return 0.55
+    w = max(sum(cw(c) for c in ln) for ln in lines) * fs
+    return w, len(lines) * fs * SHAPE_LINE_H
+
+
+def shape_size_for_text(kind, text, cur=(0, 0), fs=SHAPE_FONT_PX):
+    """규칙 0-FLOW: 도형 텍스트가 잘리지(…) 않도록 필요한 (w,h) — 현재 크기보다 크면 그 값, 아니면 현재 크기.
+    DIAMOND 는 내접 텍스트 박스가 폭·높이의 절반이라 2배, PARALLELOGRAM 은 빗변 여유 80, 나머지는 여백 40/32."""
+    tw, th = text_metrics(text, fs)
+    kind = (kind or 'SQUARE').upper()
+    if kind == 'DIAMOND':
+        need = (2 * tw * 1.1 + 24, 2 * th * 1.1 + 24)   # 10% 여유(근사 오차)
+    elif kind.startswith('PARALLELOGRAM'):
+        need = (tw + 80, th + 32)
+    else:
+        need = (tw + 40, th + 32)
+    mn = SHAPE_MIN.get('PARALLELOGRAM' if kind.startswith('PARALLELOGRAM') else kind, (297, 142))
+    w = max(cur[0] or 0, mn[0], int(round(need[0])))
+    h = max(cur[1] or 0, mn[1], int(round(need[1])))
+    return w, h
+
+
+def fit_shape(call, nid, text=None, log=print):
+    """도형 1개를 텍스트에 맞춰 키운다(작아지진 않음). 반환 (before, after)."""
+    i = call('get_node_info', {'nodeId': nid})
+    if i.get('type') != 'SHAPE_WITH_TEXT':
+        return None
+    kind = (i.get('shapeType') or 'SQUARE').upper()
+    txt = text if text is not None else (i.get('shapeText') or '')
+    fs = i.get('shapeFontSize') if isinstance(i.get('shapeFontSize'), (int, float)) else SHAPE_FONT_PX
+    cur = (i.get('width') or 0, i.get('height') or 0)
+    w, h = shape_size_for_text(kind, txt, cur, fs)
+    if (w, h) != (round(cur[0]), round(cur[1])) and (w > cur[0] + 1 or h > cur[1] + 1):
+        call('resize_node', {'nodeId': nid, 'width': w, 'height': h})
+        log(f"  [fit-shape] {nid} {kind} {round(cur[0])}x{round(cur[1])} → {w}x{h} ({txt.splitlines()[0][:18]}…)")
+        return cur, (w, h)
+    return cur, cur
+
+
+def fit_shapes_in(call, section_id, log=print):
+    kids = call('get_node_tree', {'nodeId': section_id, 'maxDepth': 1}).get('children') or []
+    changed = 0
+    for k in kids:
+        if k.get('type') == 'SHAPE_WITH_TEXT':
+            r = fit_shape(call, k['id'], log=log)
+            if r and r[0] != r[1]:
+                changed += 1
+    return changed
+
+
 def shape_position(shape, anchor_node=None):
     if 'x' in shape and 'y' in shape:
         return int(shape['x']), int(shape['y'])
@@ -361,6 +428,7 @@ def run(spec, dry_run=False, log=print):
         x, y = shape_position(s, byid.get(s.get('anchor')))
         call('move_node', {'nodeId': nid, 'x': x, 'y': y})
         call('set_text_content', {'nodeId': nid, 'text': s['text']})
+        fit_shape(call, nid, s['text'], log=log)   # 규칙 0-FLOW: 텍스트가 도형을 벗어나면 도형을 키운다
         call('rename_node', {'nodeId': nid, 'name': 'flow_' + s['text'].split('\n')[0][:16]})
         keymap[s['key']] = nid
         summary['shapes'][s['key']] = {'id': nid, 'x': x, 'y': y}
@@ -413,6 +481,14 @@ def main(argv=None):
     if not argv or argv[0] in ('-h', '--help'):
         print(__doc__)
         return 1
+    if argv[0] == '--fit':   # 기존 섹션의 도형을 텍스트에 맞춰 키우기만
+        import figma_mcp_client as fc
+        fc.ensure_session()
+        def _call(t, a):
+            return fc.parse_content(fc.call_tool(t, a)).get('json') or {}
+        n = fit_shapes_in(_call, argv[1])
+        print(f'📋 FIT-SHAPES: {n}개 조정')
+        return 0
     spec = json.load(open(argv[0], encoding='utf-8'))
     summary = run(spec, dry_run='--dry-run' in argv)
     print('📋 FLOW-SUMMARY')

@@ -784,6 +784,12 @@ function collectNodeInfo(node, maxDepth, currentDepth) {
     try {
       info.shapeType = node.shapeType;
       info.shapeText = node.text ? node.text.characters : "";
+      // 2026-09-29 규칙 0-FLOW 도형 크기 맞춤: 텍스트 크기(혼합이면 첫 글자 기준)를 노출해 fit_shape 가 정확히 계산
+      try {
+        var sfs = node.text ? node.text.fontSize : null;
+        if (sfs === figma.mixed && node.text && node.text.characters.length > 0) sfs = node.text.getRangeFontSize(0, 1);
+        if (typeof sfs === "number") info.shapeFontSize = sfs;
+      } catch (e2) { /* ignore */ }
     } catch (e) { /* ignore */ }
   }
 
