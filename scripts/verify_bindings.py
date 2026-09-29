@@ -454,6 +454,8 @@ def main():
                 _dark = all(_col.get(k, 1) < 0.35 for k in ('r', 'g', 'b')) and _col
                 _kids2 = n.get('children') or []
                 _tx2 = [c for c in _kids2 if c.get('type') == 'TEXT']
+                _num = lambda v: v if isinstance(v, (int, float)) and not isinstance(v, bool) else 0   # cornerRadius 'mixed' 등 문자열 → 0 (2026-09-29 홈 clone verify TypeError)
+                _rad2, _h2, _w2 = _num(_rad2), _num(_h2), _num(_w2)
                 if _dark and _rad2 >= 12 and 40 <= _h2 <= 64 and _w2 >= 200 \
                         and len(_tx2) >= 1 and len(_kids2) <= 2:
                     bad_paint.append((disp, t, 'raw-toast-suspect',

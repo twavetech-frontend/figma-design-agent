@@ -90,3 +90,12 @@ def test_bottom_to_top_shape_edge_warns():
     below = {"section": "S", "_catalog": NOCAT, "shapes": [{"key": "q", "kind": "DIAMOND", "text": "?", "x": 150, "y": 1400}],
              "edges": [{"from": "s1", "fromMagnet": "BOTTOM", "to": "@q", "toMagnet": "TOP"}]}
     assert FC.build_plan(below, SECTION, TOOLBOX)['warnings'] == []   # 바로 아래면 정상
+
+
+def test_accept_duplicate_rejects_section_and_wrong_parent():
+    src = {"id": "tpl", "type": "CONNECTOR", "parentId": "toolbox"}
+    assert FC.accept_duplicate({"id": "new1", "type": "CONNECTOR", "parentId": "toolbox"}, src, set()) is True
+    assert FC.accept_duplicate({"id": "toolbox", "type": "SECTION", "parentId": "page"}, src, set()) is False   # 툴박스 섹션 오인 실사고
+    assert FC.accept_duplicate({"id": "tpl", "type": "CONNECTOR", "parentId": "toolbox"}, src, set()) is False  # 원본 자신
+    assert FC.accept_duplicate({"id": "new1", "type": "CONNECTOR", "parentId": "toolbox"}, src, {"new1"}) is False
+    assert FC.accept_duplicate({"id": "x", "type": "CONNECTOR", "parentId": "elsewhere"}, src, set()) is False

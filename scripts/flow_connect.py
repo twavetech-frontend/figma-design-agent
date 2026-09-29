@@ -263,11 +263,28 @@ def resolve_section_from_selection(call):
     return parents.pop()
 
 
+def accept_duplicate(sel_node, src_info, seen):
+    """Duplicate 직후 선택 노드가 진짜 복제본인지 — 같은 type · 같은 부모 · 새 id 만 인정.
+    2026-09-29 실사고: 선택이 잠깐 툴박스 SECTION 자체를 돌려줘 섹션이 '복제본'으로 오인돼 대상 섹션 안으로 옮겨짐."""
+    if not sel_node or not isinstance(sel_node, dict):
+        return False
+    sid = sel_node.get('id')
+    if not sid or sid == src_info.get('id') or sid in seen:
+        return False
+    if sel_node.get('type') != src_info.get('type'):
+        return False
+    par = sel_node.get('parentId')
+    return par is None or par == src_info.get('parentId')
+
+
 def duplicate_via_menu(call, src, n, log=print):
-    """focus_node(src) → 메뉴 Duplicate ×n → 새 id 목록(get_selection 으로 확인)."""
+    """focus_node(src) → 메뉴 Duplicate ×n → 새 id 목록(get_selection + accept_duplicate 로 검증)."""
     if sys.platform != 'darwin':
         raise RuntimeError('메뉴 복제는 macOS 전용 — 사용자에게 FigJam 에서 커넥터/도형을 복사해 툴박스에 붙여 달라고 요청')
     out = []
+    src_info = call('get_node_info', {'nodeId': src})
+    if src_info.get('type') not in ('CONNECTOR', 'SHAPE_WITH_TEXT'):
+        raise RuntimeError(f'복제 원본 {src} 가 CONNECTOR/SHAPE_WITH_TEXT 가 아님 ({src_info.get("type")})')
     call('focus_node', {'nodeId': src})
     time.sleep(0.5)
     for i in range(n):
@@ -276,11 +293,15 @@ def duplicate_via_menu(call, src, n, log=print):
             raise RuntimeError(f'osascript 실패(Accessibility 권한/Figma 미실행?): {r.stderr.strip()[:200]}')
         time.sleep(1.0)
         sel = call('get_selection', {})
-        ids = [x.get('id') for x in (sel.get('nodes') or sel.get('selection') or [])]
-        if ids and ids[0] != src and ids[0] not in out:
-            out.append(ids[0])
+        nodes = sel.get('nodes') or sel.get('selection') or []
+        node = nodes[0] if nodes else None
+        if node and node.get('id') and 'parentId' not in node:
+            node = dict(node, **{k: v for k, v in call('get_node_info', {'nodeId': node['id']}).items() if k in ('type', 'parentId')})
+        if accept_duplicate(node, src_info, set(out)):
+            out.append(node['id'])
         else:
-            log(f'  ⚠️ 복제 {i + 1}/{n} 미확인 (selection={ids})')
+            log(f'  ⚠️ 복제 {i + 1}/{n} 미확인/거부 (selection={[(x.get("id"), x.get("type")) for x in nodes]})')
+            call('focus_node', {'nodeId': src}); time.sleep(0.5)
     subprocess.run(['osascript', '-e', f'tell application "{TERMINAL_APP}" to activate'], capture_output=True)
     return out
 
@@ -320,8 +341,12 @@ def run(spec, dry_run=False, log=print):
                 summary['errors'].append(f'{k} 복제 {len(got)}/{cnt} — 나머지는 사용자 복사 필요')
             res[k] = res.get(k, []) + got
     for k, ids in res.items():
-        for nid in ids:
-            if call('get_node_info', {'nodeId': nid}).get('parentId') != sec:
+        for nid in list(ids):
+            gi = call('get_node_info', {'nodeId': nid})
+            if gi.get('type') not in ('CONNECTOR', 'SHAPE_WITH_TEXT'):   # 안전장치: 섹션/프레임은 절대 옮기거나 지우지 않음
+                summary['errors'].append(f'자원 {nid} 가 {gi.get("type")} — 제외')
+                ids.remove(nid); continue
+            if gi.get('parentId') != sec:
                 call('insert_child', {'childId': nid, 'parentId': sec})
 
     # 2) 도형
@@ -366,7 +391,7 @@ def run(spec, dry_run=False, log=print):
         ok = bool(r.get('applied') or r.get('id'))
         if ok:   # bbox 폭주 감지(페이지 밖으로 튄 elbow) — 실패로 기록해 재배선 유도
             g = call('get_node_info', {'nodeId': cid})
-            if abs(g.get('x') or 0) > 20000 or (g.get('width') or 0) > 20000 or (g.get('height') or 0) > 20000:
+            if (g.get('x') or 0) < -5000 or (g.get('y') or 0) < -5000 or (g.get('width') or 0) > 20000 or (g.get('height') or 0) > 20000:   # 폭주 = 음수 큰 좌표/거대 bbox (넓은 섹션의 정상 x>20000 은 오탐이었음 2026-09-29)
                 ok = False
                 summary['errors'].append(f"connector {cid} bbox 폭주({round(g.get('x') or 0)},{round(g.get('y') or 0)},{round(g.get('width') or 0)}×{round(g.get('height') or 0)}) — magnet 조합 변경(BOTTOM→TOP 금지)")
         summary['edges'].append({'connector': cid, 'from': resolve(e['from']), 'to': resolve(e['to']), 'label': e.get('label', ''), 'ok': ok})
@@ -376,7 +401,8 @@ def run(spec, dry_run=False, log=print):
     # 4) 남은 복제본은 삭제 (툴박스 템플릿을 오염시키지 않음)
     leftovers = [nid for ids in res.values() for nid in ids]
     for nid in leftovers:
-        call('delete_node', {'nodeId': nid})
+        if call('get_node_info', {'nodeId': nid}).get('type') in ('CONNECTOR', 'SHAPE_WITH_TEXT'):
+            call('delete_node', {'nodeId': nid})
     summary['leftovers_deleted'] = leftovers
     summary['elapsed_s'] = round(time.time() - t0, 1)
     return summary
