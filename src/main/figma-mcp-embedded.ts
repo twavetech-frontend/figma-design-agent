@@ -261,6 +261,18 @@ export function buildToolRegistry(figmaWS: FigmaWSServer): Map<string, ToolDefin
     return cmd('set_fill_color', { nodeId, color: { r, g, b, a: a ?? 1 }, ...rest });
   });
 
+  reg('set_gradient_fill', 'Set a LINEAR or RADIAL gradient as the fills (or strokes) of a frame/shape/text node. stops: [{position:0..1, color:{r,g,b,a?}}] (0..1 floats), angle in degrees (0 = left→right, 90 = top→bottom), optional 2x3 transform override, opacity. Works on TEXT (gradient text).', {
+    type: 'object',
+    properties: {
+      nodeId: { type: 'string' },
+      stops: { type: 'array', items: { type: 'object', properties: { position: { type: 'number' }, color: { type: 'object' } } } },
+      angle: { type: 'number' }, gradientType: { type: 'string', enum: ['LINEAR', 'RADIAL'] },
+      target: { type: 'string', enum: ['fills', 'strokes'] }, opacity: { type: 'number' },
+      transform: { type: 'array' }
+    },
+    required: ['nodeId', 'stops']
+  }, async (params) => cmd('set_gradient_fill', params));
+
   reg('set_stroke_color', 'Set stroke color of a node', {
     type: 'object',
     properties: {

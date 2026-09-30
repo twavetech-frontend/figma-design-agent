@@ -322,6 +322,8 @@ async function handleCommand(command, params) {
       return await createText(params);
     case "set_fill_color":
       return await setFillColor(params);
+    case "set_gradient_fill":
+      return await setGradientFill(params);
     case "set_stroke_color":
       return await setStrokeColor(params);
     case "set_selection_colors":
@@ -1125,6 +1127,55 @@ async function createText(params) {
     fills: textNode.fills,
     parentId: textNode.parent ? textNode.parent.id : undefined,
   };
+}
+
+// 2026-09-30 프로모션 웹페이지(사용자: "레퍼런스처럼 bg frame·text 에 그라데이션") — 선형/원형 그라데이션 fill/stroke.
+// params: { nodeId, stops:[{position, color:{r,g,b,a?}}], angle?(deg, 0=좌→우, 90=상→하), gradientType?('LINEAR'|'RADIAL'),
+//           target?('fills'|'strokes'), opacity?, transform?(2x3 행렬 직접 지정) }
+async function setGradientFill(params) {
+  var nodeId = params && params.nodeId;
+  if (!nodeId) throw new Error("Missing nodeId parameter");
+  var node = await figma.getNodeByIdAsync(nodeId);
+  if (!node) throw new Error("Node not found with ID: " + nodeId);
+  var target = (params.target === "strokes") ? "strokes" : "fills";
+  if (!(target in node)) throw new Error("Node does not support " + target + ": " + nodeId);
+  var stops = Array.isArray(params.stops) ? params.stops : [];
+  if (stops.length < 2) throw new Error("stops 는 2개 이상 필요");
+  var type = (params.gradientType || "LINEAR").toUpperCase() === "RADIAL" ? "GRADIENT_RADIAL" : "GRADIENT_LINEAR";
+  var transform = params.transform;
+  if (!transform) {
+    var ang = (typeof params.angle === "number") ? params.angle : 0;
+    var rad = ang * Math.PI / 180, c = Math.cos(rad), sn = Math.sin(rad);
+    transform = (type === "GRADIENT_RADIAL")
+      ? [[1, 0, 0], [0, 1, 0]]
+      : [[c, sn, 0.5 - 0.5 * c - 0.5 * sn], [-sn, c, 0.5 + 0.5 * sn - 0.5 * c]];
+  }
+  var paint = {
+    type: type,
+    gradientTransform: transform,
+    gradientStops: stops.map(function (st) {
+      var col = st.color || {};
+      return { position: (typeof st.position === "number") ? st.position : 0,
+               color: { r: col.r || 0, g: col.g || 0, b: col.b || 0, a: (typeof col.a === "number") ? col.a : 1 } };
+    }),
+    visible: true,
+    opacity: (typeof params.opacity === "number") ? params.opacity : 1
+  };
+  if (node.type === "TEXT") {
+    try { await loadAllFontsOfText(node); } catch (e) { try { await figma.loadFontAsync(node.fontName); } catch (e2) { /* ignore */ } }
+  }
+  node[target] = [paint];
+  return { id: node.id, name: node.name, type: type, target: target, stops: paint.gradientStops.length };
+}
+
+async function loadAllFontsOfText(node) {
+  var len = node.characters.length;
+  if (node.fontName !== figma.mixed) { await figma.loadFontAsync(node.fontName); return; }
+  var seen = {};
+  for (var i = 0; i < len; i++) {
+    var fn = node.getRangeFontName(i, i + 1); var k = fn.family + "/" + fn.style;
+    if (!seen[k]) { seen[k] = true; await figma.loadFontAsync(fn); }
+  }
 }
 
 async function setFillColor(params) {
