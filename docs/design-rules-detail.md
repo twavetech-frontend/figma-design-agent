@@ -1367,6 +1367,18 @@
   `ds/TEXT_STYLE_MAP.json` 의 **실제 사이즈 집합에서 derive** (`_ds_text_size_scale`). ±3px 안
   스타일이 없으면 **`[text-style] ⚠️ DS 스타일 미매칭` WARN** 으로 노드 이름·크기를 출력한다 —
   빌드 로그에 이 라인이 보이면 blueprint fontSize 를 위 스케일로 수정할 것.
+- 🔴 **2-C-2. Body xs(12) 허용 범위 = 이름/마커로 명시 (2026-09-30 사용자: "body xs 텍스트 토큰을 하나도 쓰지 않았더라. 왜 그런거지?")**
+  - **실사고:** 추천 모달 blueprint 는 셀 서브·조건 문구·메타·비보장 고지를 12 로 적었는데, `_enforce_min_text_size`
+    (2026-06-05 "12 남용 차단")가 조상 이름 `footer` 만 예외로 둬 **전부 14(Body sm)로 상향** → 카드 TEXT 20개 중 12개가
+    같은 스타일, Body xs 0건. 2-C 원문("디스크립션은 sm~xs, fine print 는 xs")과 코드가 어긋나 있었다.
+  - **규칙:** 12(Body xs)는 다음에만 쓴다 — 타이틀 아래 서브/디스크립션, 항목 바로 아래 **조건 문구**, 메타(개설일·카운트),
+    **고지/캡션/힌트/헬퍼/법적 문구**. 본문·라벨·값은 14 이상. 12 미만은 어디서도 금지.
+  - **코드 강제:** TEXT 노드 **이름 단어**가 `Cond/Condition/Sub/Meta/Notice/Caption/Note/Hint/Helper/Fine/Legal/
+    Disclaimer/Footnote` 중 하나이거나(예: `Cell Sub`, `Tile Cond`, `Meta Opened`, `Notice Text`, `Final Caption`),
+    blueprint 에 `"_fine": true` 마커가 있으면 하한을 12 로 둔다(`_is_fine_text`). blueprint 단계
+    (`_enforce_min_text_size`)와 라이브 단계(`_enforce_min_text_size_live`, 이름만) 둘 다 적용. 그 외 12 는 여전히 14 로 상향.
+  - **작성 요령:** 12 로 두고 싶은 텍스트는 이름에 위 단어를 넣거나 `_fine: true` 를 박는다. 이름이 `Label`/`Value`/`Title`
+    이면 12 를 적어도 14 로 올라간다(의도된 동작). 회귀 테스트: `scripts/tests/test_min_text_size.py`.
 - 🔴 **보조 텍스트는 DS `Body sm`(14) 스타일 (2026-06-05 사용자 룰):** 현황 라벨("총 스테이지 수
   86,696개"), 안내/재참여 문구("함께 모은 목돈, 다시 모아볼까요?"), 한도 디테일("한도 … 이용 중
   잔여 …"), 리스트 부제("출석 체크하고 포인트 받아요") 같은 보조 텍스트는 **`Body sm`(14px)** 이

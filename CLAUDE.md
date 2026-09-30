@@ -506,6 +506,9 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
 - **2-C** — fontSize 는 DS 스케일만: **12/14/16/20/24/32/40/48**. 기본 본문 16 / 보조·타이틀 아래
   디스크립션 14 / 미세(푸터 fine print) 12(남용 금지) / HERO 금액·수치 24~32 Bold / 섹션 헤더 16~20 Bold.
   같은 카드 안 최소 3단계 위계.
+  🔴 **2-C-2 (2026-09-30 사용자: "body xs 를 하나도 안 썼더라")** — 12(Body xs)는 **이름 단어**(Cond/Sub/Meta/Notice/
+  Caption/Note/Hint/Helper/Fine/Legal/Disclaimer) 또는 `_fine:true` 마커가 있는 TEXT 만 유지, 나머지 12 는 enforcer 가 14 로
+  상향(구현: `_is_fine_text`, footer 전용 예외 폐기). 조건 문구·메타·고지는 12 로 두어 카드 위계를 12/14/16/20 네 단계로.
 - **0-S** — 텍스트 스타일 바인딩을 깨지 말 것 — 크기 변경은 raw set_font_size 가 아니라 더 큰/작은
   DS 텍스트 스타일 적용으로.
 - **11/11-B** — 흰 배경 위 `fg-quaternary`/`text-quaternary` 금지(거의 흰색이라 안 보임 — 흐린 회색은

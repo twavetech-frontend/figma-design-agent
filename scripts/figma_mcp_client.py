@@ -4932,6 +4932,24 @@ _TEXT_FLOOR_BODY = 14   # 일반 텍스트 하한 (보조 라벨/캡션 포함)
 _TEXT_FLOOR_FINE = 12   # 푸터·미세 문구(법적 고지 등) 하한 — 12 미만 금지
 
 
+# 🔴 2-C-2 (2026-09-30 사용자: "body xs 텍스트 토큰을 하나도 쓰지 않았더라. 왜?") — 12px(Body xs) 허용 범위.
+# 기존 enforcer 는 조상 이름 'footer' 만 예외로 둬, 2-C 원문이 허용하는 "타이틀 아래 디스크립션·조건 문구·
+# 메타·고지(fine print)" 까지 전부 14 로 올려 Body xs 가 한 건도 남지 않았다(추천 모달 카드 TEXT 20개 중
+# 12개가 같은 Body sm). 이제 **이름 단어**(Cond/Sub/Meta/Notice/Caption/Note/Hint/Helper/Fine/Legal/Disclaimer)
+# 또는 blueprint 마커 `_fine: true` 인 TEXT 는 12 를 유지한다(하한 12 는 그대로 — 12 미만 금지).
+_FINE_TEXT_WORDS = frozenset({"cond", "condition", "sub", "meta", "notice", "caption", "note", "hint",
+                              "helper", "fine", "legal", "disclaimer", "footnote"})
+
+
+def _is_fine_text(name: str, node: Optional[dict] = None) -> bool:
+    """Body xs(12) 허용 텍스트인가 — 이름 단어 매칭 또는 `_fine` 마커 (규칙 2-C-2)."""
+    if isinstance(node, dict) and node.get("_fine") is True:
+        return True
+    import re as _re
+    words = [w for w in _re.split(r"[^0-9a-zA-Z가-힣]+", (name or "").lower()) if w]
+    return any(w in _FINE_TEXT_WORDS for w in words)
+
+
 def _is_symbol_only_text(t: str) -> bool:
     """장식/기호 전용 텍스트(●, >, −, + 등)는 크기 강제 대상에서 제외."""
     s = (t or "").strip()
@@ -4958,7 +4976,7 @@ def _enforce_min_text_size(blueprint: dict) -> None:
             txt = node.get("text") or node.get("characters") or ""
             cur = node.get("fontSize")
             if isinstance(cur, (int, float)) and not _is_symbol_only_text(txt):
-                floor = _TEXT_FLOOR_FINE if in_footer else _TEXT_FLOOR_BODY
+                floor = _TEXT_FLOOR_FINE if (in_footer or _is_fine_text(nm, node)) else _TEXT_FLOOR_BODY
                 if cur < floor:
                     node["fontSize"] = floor
                     bumped[0] += 1
@@ -5029,7 +5047,7 @@ def _enforce_min_text_size_live(root_node_id: str) -> int:
             size = tstyle.get("fontSize")
             txt = node.get("characters") or node.get("text") or ""
             if isinstance(size, (int, float)) and not _is_symbol_only_text(txt):
-                floor = _TEXT_FLOOR_FINE if in_footer else _TEXT_FLOOR_BODY
+                floor = _TEXT_FLOOR_FINE if (in_footer or _is_fine_text(nm)) else _TEXT_FLOOR_BODY
                 if size < floor:
                     bucket = _weight_bucket(tstyle.get("fontStyle"))
                     cached = resolved.get((floor, bucket), "MISS")
