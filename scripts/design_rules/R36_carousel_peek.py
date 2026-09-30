@@ -127,6 +127,14 @@ def _is_horizontal_carousel_tree(node: dict) -> bool:
     # FAB / icon-only 고정 사이즈 프레임은 절대 carousel 아님.
     if name == "fab" or name.endswith(" fab"):
         return False
+    # 🔴 2026-09-30 회귀 (사용자: "cta 버튼 높이가 왜케 작지?"): DS INSTANCE(Action Button 등)는
+    # 내부가 HORIZONTAL + 아이콘/Text padding 프레임 2~3개라 carousel 로 오인돼 V=HUG 로 바뀌었고
+    # post-fix 백스톱(FIXED 56)이 AUTO_FIX 순서 때문에 무력화돼 '확인' CTA 가 353×24 로 붕괴.
+    # DS 인스턴스는 0-K(내부 불변)상 carousel 후보가 아니다 — 이름이 CTA/버튼이어도 마찬가지.
+    if (node.get("type") or "").upper() == "INSTANCE":
+        return False
+    if any(k in name for k in ("cta", "button", " btn")) or name.endswith("btn"):
+        return False
     kids = [k for k in (node.get("_children_full") or node.get("children") or [])
             if isinstance(k, dict)]
     # A real card carousel has >=2 card children. icon-only frames (FAB,

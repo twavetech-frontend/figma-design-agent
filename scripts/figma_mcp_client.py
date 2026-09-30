@@ -6223,6 +6223,16 @@ def cmd_build(blueprint_file: str):
                 print(f"\n[Step E.7.6] 고정 사이즈 invariant 재강제 {n_inv2}건 (AUTO_FIX 후 회귀 차단)")
         except Exception as e:
             print(f"  [size-invariant-2] 실패 (무시): {e}")
+        # 🔴 2026-09-30 (사용자: "action button height 가 hug 로 안 풀리게 규칙 강화"): post-fix 의
+        # _enforce_action_button_height_live(FIXED 56) 를 AUTO_FIX R36 carousel-vfix 가 V=HUG 로
+        # 되돌려 엠티 뷰 '확인' CTA 가 353×24 로 붕괴. R36 자체도 INSTANCE 를 제외했지만, 어떤 룰이
+        # 뒤에 돌아도 Action Button 높이가 마지막 말이 되도록 AUTO_FIX 뒤에서 한 번 더 재단언한다.
+        try:
+            n_ab2 = _enforce_action_button_height_live(root_id)
+            if n_ab2:
+                print(f"[Step E.7.6] Action Button 높이 재단언 {n_ab2}건 (AUTO_FIX 후 HUG 회귀 차단)")
+        except Exception as e:
+            print(f"  [action-button-height-2] 실패 (무시): {e}")
 
     # ⚠️ Step E.7.7 — blueprint 명시 FIXED 폭/padding 최종 복원 (2026-06-04).
     # design_rules AUTO_FIX(E.7.5)·spacing 바인더가 author padding(paddingLeft 0 회귀)·

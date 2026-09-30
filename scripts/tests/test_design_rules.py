@@ -569,3 +569,37 @@ def test_r58_allowlist_bypass():
                 _modalAllowSections=["Lounge Section"])
     errs = [v for v in REGISTRY.run_lint(bp) if v.rule_id.startswith("R58")]
     assert not errs
+
+
+# ── R36 — DS INSTANCE / CTA 프레임은 carousel 후보가 아님 (2026-09-30 회귀) ──
+# 엠티 뷰 '확인' Action Button(INSTANCE, 내부 HORIZONTAL + 아이콘/Text padding 프레임) 이
+# carousel 로 오인돼 V=HUG → 353×24 붕괴. post-fix 백스톱(FIXED 56)은 AUTO_FIX 가 뒤에 돌아 무력화.
+
+def test_r36_never_touches_ds_instance():
+    from design_rules.R36_carousel_peek import _is_horizontal_carousel_tree as f
+    ab = {"name": "Confirm CTA", "type": "INSTANCE", "layoutMode": "HORIZONTAL", "clipsContent": True,
+          "width": 353, "children": [{"type": "FRAME", "name": "Icon leading", "width": 20},
+                                     {"type": "FRAME", "name": "Text padding", "width": 40},
+                                     {"type": "FRAME", "name": "Icon trailing", "width": 20}]}
+    assert f(ab) is False
+    # 이름이 carousel 스럽더라도 INSTANCE 면 제외
+    ab["name"] = "Lounge Carousel"
+    assert f(ab) is False
+
+
+def test_r36_skips_cta_and_button_named_frames():
+    from design_rules.R36_carousel_peek import _is_horizontal_carousel_tree as f
+    for nm in ("Download CTA", "Submit Button", "Share Btn"):
+        fr = {"name": nm, "type": "FRAME", "layoutMode": "HORIZONTAL", "clipsContent": True, "width": 353,
+              "children": [{"type": "FRAME", "width": 120, "layoutSizingHorizontal": "FIXED"},
+                           {"type": "FRAME", "width": 120, "layoutSizingHorizontal": "FIXED"}]}
+        assert f(fr) is False, nm
+
+
+def test_action_button_height_reasserted_after_autofix():
+    """E.7.6(AUTO_FIX 뒤)에서 _enforce_action_button_height_live 를 한 번 더 호출해야 한다 — 소스 가드."""
+    import os, re
+    src = open(os.path.join(os.path.dirname(__file__), "..", "figma_mcp_client.py"), encoding="utf-8").read()
+    i_inv = src.index("n_inv2 = _enforce_fixed_size_invariants_final(root_id)")
+    tail = src[i_inv:i_inv + 2500]
+    assert "_enforce_action_button_height_live(root_id)" in tail

@@ -150,6 +150,7 @@ def main():
     allow_flag_structural = []  # allow 남용(구조 FRAME/TEXT 면제) 감지 — 경고 출력
     sb_nodes = []  # (absY, id) — Status Bar 류. 한 화면 최상단 1개 게이트 (2026-08-24 규칙 1 강령)
     kb_nodes, hi_nodes = [], []  # 규칙 0-Y-2: 키보드 화면의 HomeIndicator 잔존 게이트 (2026-09-07)
+    ab_hug_nodes = []  # 규칙 2-G-6 (2026-09-30): Action Button 인스턴스 세로 HUG 금지 게이트
     checked = 0
 
     # 1콜 트리 우선 (2026-08-24 성능 수리 — 노드당 get_node_info+get_bound_variables 왕복이
@@ -180,6 +181,12 @@ def main():
                 kb_nodes.append(disp)
             if _nm_c == 'homeindicator' or _nm_c.startswith('homeindicator/') or 'bars/homeindicator' in _nm_c:
                 hi_nodes.append(disp)
+        # 🔴 규칙 2-G-6 (2026-09-30 사용자: "action button height 가 hug 로 안 풀리게") — CTA/버튼 인스턴스가
+        # 세로 HUG 면 Text padding 24 로 붕괴한 상태(AUTO_FIX R36 vfix 회귀). 완료 보고 차단.
+        if t == 'INSTANCE' and ';' not in node_id and n.get('visible') is not False \
+                and any(k in _nm_c for k in ('cta', 'button', 'btn')) \
+                and (n.get('layoutSizingVertical') or '').upper() == 'HUG':
+            ab_hug_nodes.append((disp, n.get('height')))
         # allow 노드는 서브트리 전체 면제 (2026-08-14 — 브랜드 에셋 내부색은 검사 대상 아님)
         if name in allow:
             # 🔴 allow 남용 감지 (2026-09-03 선물확인 thumb 실사고 — 구조 FRAME 을 allow 로
@@ -551,6 +558,10 @@ def main():
             bad_paint.append((h, 'INSTANCE', 'home-indicator-with-keyboard',
                               ['키보드 화면은 HomeIndicator 불필요 — 삭제(규칙 0-Y-2, '
                                '_remove_home_indicator_when_keyboard_live)']))
+    for disp_ab, h_ab in ab_hug_nodes:
+        bad_paint.append((disp_ab, 'INSTANCE', 'action-button-hug',
+                          [f'Action Button 세로 HUG(h={round(h_ab or 0)}) — FIXED + Size 마스터 높이로 재단언'
+                           ' (규칙 2-G-6, _enforce_action_button_height_live)']))
     # 🔴 화면 최소 높이 852 (2026-08-13 사용자: "화면높이의 최소 사이즈는 852야!") —
     # root 가 화면 프레임(폭 393±1)인데 h<852 면 FAIL. 섹션/컴포넌트 단품(폭≠393)은 제외.
     bad_size = []

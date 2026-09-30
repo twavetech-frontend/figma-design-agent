@@ -1426,6 +1426,33 @@
   `set_instance_properties` 자동 적용. blueprint 인스턴스에 `"instanceProperties":{"Hierarchy":"Primary",...}`
   박으면 빌드 후 자동 flip(로그 `[ds-instance-variant] ✓`). [[ds-action-button-primary-key-broken]] 우회 자동화.
 
+> 🔴 **2-G-6. Action Button 세로 HUG 절대 금지 — FIXED + Size 마스터 높이 (2026-09-30 사용자 룰)**
+>
+> 사용자: *"cta 버튼 높이가 왜케 작지?"* → *"action button height 가 hug 로 안 풀리게 규칙 강화하고 코드도 강화시켜"*.
+>
+> **실사고:** 800방 추천 모달 엠티 뷰의 '확인' Action Button(Size=2xl) 이 빌드 후 353×24(HUG) 로 붕괴.
+> 빌드 로그: `[action-button-height] 'Confirm CTA' Size=2xl FIXED/48 → FIXED 56` (post-fix 백스톱은 정상) 뒤에
+> `R36 carousel-vfix: 'Confirm CTA' V=HUG (was FIXED)` — **design_rules AUTO_FIX(E.7.5) 가 cmd_post_fix 뒤에 돌아**
+> ([[autofix-runs-after-postfix]]) 백스톱을 덮어썼다. R36 이 INSTANCE 를 carousel 로 오인한 이유: Action Button
+> 내부가 HORIZONTAL + 아이콘/Text padding 프레임 2~3개(직계 TEXT 없음) 라 기존 가드(자식 ≥2, TEXT 자식 없음)를 통과.
+>
+> **규칙:** DS Action Button(및 모든 DS 인스턴스)의 세로 사이징은 **항상 FIXED + Size 별 마스터 높이**
+> (sm 24 / md 32 / lg 40 / xl 48 / 2xl 56). HUG 는 어떤 단계에서도 허용하지 않는다(Status Bar 62→63.5 와 같은 함정).
+>
+> **시스템 강제 (3중, 코드 박힘):**
+> 1. `design_rules/R36_carousel_peek._is_horizontal_carousel_tree` — `type == INSTANCE` 즉시 False, 이름에
+>    cta/button/btn 이 든 프레임도 False (DS 인스턴스 내부는 0-K 상 불변 — carousel 후보가 아님).
+> 2. `cmd_build` Step E.7.6 — `_enforce_fixed_size_invariants_final` 직후 `_enforce_action_button_height_live(root_id)`
+>    를 **AUTO_FIX 뒤에 한 번 더** 호출해 어떤 룰이 뒤에 돌아도 높이가 마지막 말이 되게 한다(로그
+>    `[Step E.7.6] Action Button 높이 재단언 n건`).
+> 3. `verify_bindings.py` — INSTANCE 이름에 cta/button/btn 이 들어가는데 `layoutSizingVertical == HUG` 면
+>    `action-button-hug` FAIL(완료 보고 차단).
+>
+> **수동 조립/변환 트랙:** 인스턴스 생성·프롭 변경 직후 `set_layout_sizing {vertical:FIXED}` + `resize_node` 높이를
+> 재단언한다(`set_instance_properties` 만으로는 높이가 복구되지 않음 — 실측).
+> 회귀 테스트: `test_design_rules.py::test_r36_never_touches_ds_instance / test_r36_skips_cta_and_button_named_frames /
+> test_action_button_height_reasserted_after_autofix`.
+
 > 🔴 **2-G-2. ⚠️ 하단 액션바 버튼 높이 통일 — 제일 큰 것에 맞춤 (2026-06-02 사용자 룰)**
 >
 > 사용자 명시: *"버튼의 높이가 왜 다르지? 제일 큰거와 같아야 되. 이건 수정하고 규칙 강화하고 코드에 박아."*

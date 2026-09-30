@@ -476,6 +476,12 @@ python3 scripts/figma_mcp_client.py build scripts/blueprint_assembled_XXX.json
   flip(빌드 후 자동 적용). 버튼 높이는 padding(상하 16)으로 확보(규칙 20).
   **높이 백스톱(2026-09-04)**: post-fix `_enforce_action_button_height_live` 가 Action Button 인스턴스의
   세로 HUG/축소를 FIXED + Size 별 마스터 높이(sm24/md32/lg40/xl48/2xl56)로 복구 — 액션바 24px 붕괴 회귀.
+  🔴 **2-G-6 (2026-09-30 사용자: "action button height 가 hug 로 안 풀리게 규칙 강화") — Action Button 세로는
+  절대 HUG 금지, 항상 FIXED + Size 마스터 높이.** 회귀 원인 = AUTO_FIX R36 carousel-vfix 가 post-fix 뒤에 돌며
+  INSTANCE 를 carousel 로 오인해 V=HUG(엠티 뷰 '확인' 353×24). 3중 방어: ① R36 은 INSTANCE·CTA/Button 이름
+  프레임 제외 ② E.7.6(AUTO_FIX 뒤)에서 `_enforce_action_button_height_live` 재단언 ③ verify
+  `action-button-hug` FAIL(INSTANCE 이름 cta/button/btn 이 세로 HUG). 수동 조립에서도 인스턴스 생성 직후
+  `set_layout_sizing vertical FIXED` + `resize_node` 높이 재단언. 상세: `rule 2-G`.
 - **2-G-2~5** — 액션바 안 버튼 높이 통일(자동) · NavBar 우측 액션 = 아이콘 버튼(텍스트 금지, R62) ·
   세로 연속 전폭 Primary CTA 는 더 중요한 것에 `_ctaKeepPrimary:true` 명시(나머지 Outline 자동) ·
   FAB 화면의 수평 반복 동일 라벨 CTA 는 Tertiary(자동).
